@@ -158,6 +158,24 @@ export default function NewProductPage() {
                             />
                         </div>
                     </div>
+
+                    <div className="sm:col-span-2">
+                        <label htmlFor="warrantyMonths" className="block text-sm font-medium text-gray-700">
+                            Warranty Period (Months)
+                        </label>
+                        <div className="mt-1">
+                            <input
+                                type="number"
+                                name="warrantyMonths"
+                                id="warrantyMonths"
+                                defaultValue={0}
+                                min={0}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                placeholder="e.g. 12 for 1 year"
+                            />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">Enter warranty period in months (e.g., 12 for 1 year, 24 for 2 years)</p>
+                    </div>
                 </div>
 
                 <div className="pt-5">

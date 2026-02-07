@@ -17,6 +17,7 @@ type Product = {
     model: string
     description: string | null
     minStock: number
+    warrantyMonths: number
 }
 
 export default function EditProductPage({ params }: PageProps) {
@@ -32,7 +33,8 @@ export default function EditProductPage({ params }: PageProps) {
         brand: "",
         model: "",
         description: "",
-        minStock: 0
+        minStock: 0,
+        warrantyMonths: 0
     })
 
     useEffect(() => {
@@ -204,6 +206,25 @@ export default function EditProductPage({ params }: PageProps) {
                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                             />
                         </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label htmlFor="warrantyMonths" className="block text-sm font-medium text-gray-700">
+                            Warranty Period (Months)
+                        </label>
+                        <div className="mt-1">
+                            <input
+                                type="number"
+                                name="warrantyMonths"
+                                id="warrantyMonths"
+                                value={formData.warrantyMonths}
+                                onChange={(e) => setFormData({ ...formData, warrantyMonths: Number(e.target.value) })}
+                                min={0}
+                                placeholder="0 = No warranty"
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">Number of months warranty is valid from purchase date</p>
                     </div>
                 </div>
 

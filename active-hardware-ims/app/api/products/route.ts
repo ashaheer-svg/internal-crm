@@ -33,7 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const { sku, name, brand, model, description, minStock } = body
+        const { sku, name, brand, model, description, minStock, warrantyMonths } = body
 
         // Basic validation
         if (!sku || !name || !brand) {
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
                 brand,
                 model: model || '',
                 description,
-                minStock: Number(minStock) || 0
+                minStock: Number(minStock) || 0,
+                warrantyMonths: Number(warrantyMonths) || 0
             }
         })
 

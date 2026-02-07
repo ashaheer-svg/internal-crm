@@ -79,14 +79,48 @@ export default function LocationsPage() {
         }
     }
 
+    const [showTransferModal, setShowTransferModal] = useState(false)
+    const [locationToDelete, setLocationToDelete] = useState<{ id: string; name: string; inventoryCount: number } | null>(null)
+    const [transferToLocationId, setTransferToLocationId] = useState('')
+
     async function handleDelete(id: string, name: string) {
-        if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+        try {
+            const res = await fetch(`/api/locations/${id}`, {
+                method: 'DELETE'
+            })
+
+            const data = await res.json()
+
+            // If location has inventory and requires transfer
+            if (!res.ok && data.requiresTransfer) {
+                setLocationToDelete({ id, name, inventoryCount: data.inventoryCount })
+                setShowTransferModal(true)
+                setTransferToLocationId('')
+                return
+            }
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to delete location')
+            }
+
+            fetchLocations()
+            alert(data.message || 'Location deleted successfully')
+        } catch (error) {
+            alert(error instanceof Error ? error.message : 'Failed to delete location')
+        }
+    }
+
+    async function handleTransferAndDelete() {
+        if (!locationToDelete || !transferToLocationId) {
+            alert('Please select a destination location')
             return
         }
 
         try {
-            const res = await fetch(`/api/locations/${id}`, {
-                method: 'DELETE'
+            const res = await fetch(`/api/locations/${locationToDelete.id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transferToLocationId })
             })
 
             const data = await res.json()
@@ -95,7 +129,11 @@ export default function LocationsPage() {
                 throw new Error(data.error || 'Failed to delete location')
             }
 
+            setShowTransferModal(false)
+            setLocationToDelete(null)
+            setTransferToLocationId('')
             fetchLocations()
+            alert(data.message || 'Location deleted and inventory transferred successfully')
         } catch (error) {
             alert(error instanceof Error ? error.message : 'Failed to delete location')
         }
@@ -249,6 +287,62 @@ export default function LocationsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Transfer Modal */}
+            {showTransferModal && locationToDelete && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            Transfer Inventory Before Deletion
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Location <strong>{locationToDelete.name}</strong> has <strong>{locationToDelete.inventoryCount}</strong> items in stock.
+                            Please select a destination location to transfer all inventory before deletion.
+                        </p>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Transfer to Location *
+                            </label>
+                            <select
+                                value={transferToLocationId}
+                                onChange={(e) => setTransferToLocationId(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            >
+                                <option value="">Select destination location...</option>
+                                {locations
+                                    .filter(loc => loc.id !== locationToDelete.id)
+                                    .map(loc => (
+                                        <option key={loc.id} value={loc.id}>
+                                            {loc.name} ({loc._count.inventory} items)
+                                        </option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowTransferModal(false)
+                                    setLocationToDelete(null)
+                                    setTransferToLocationId('')
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleTransferAndDelete}
+                                disabled={!transferToLocationId}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Transfer & Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

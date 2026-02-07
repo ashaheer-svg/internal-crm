@@ -20,13 +20,27 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Serial number already exists' }, { status: 409 })
         }
 
+        // Fetch product to get warranty period
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: { warrantyMonths: true }
+        })
+
+        // Calculate warranty expiry date
+        let warrantyExpiry: Date | null = null
+        if (product && product.warrantyMonths > 0) {
+            warrantyExpiry = new Date()
+            warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
+        }
+
         const item = await prisma.inventoryItem.create({
             data: {
                 productId,
                 serialNumber,
                 locationId,
                 status: 'AVAILABLE',
-                unitCost: unitCost ? Number(unitCost) : 0
+                unitCost: unitCost ? Number(unitCost) : 0,
+                warrantyExpiry: warrantyExpiry
             }
         })
 

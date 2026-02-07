@@ -5,6 +5,7 @@ import { ArrowLeft, Box, MapPin, Edit } from "lucide-react"
 import AddInventoryForm from "./AddInventoryForm"
 import InventoryItemActions from "./InventoryItemActions"
 import InventoryTable from "./InventoryTable"
+import StockSummary from "./StockSummary"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -58,41 +59,12 @@ export default async function ProductDetailsPage({ params }: PageProps) {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-                {/* Main Info */}
-                <div className="lg:col-span-3 space-y-6">
-                    <InventoryTable inventory={product.inventory} locations={locations} />
-                </div>
+            {/* Stock Summary - Above Table */}
+            <StockSummary productId={product.id} inventory={product.inventory} />
 
-                {/* Stock Summary - Keep in Sidebar */}
-                <div>
-                    <div className="bg-white shadow sm:rounded-lg p-6 sticky top-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Stock Summary</h3>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-500">Total Units</span>
-                            <span className="font-bold text-2xl">{product.inventory.length}</span>
-                        </div>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-500">Min. Stock</span>
-                            <span className="text-gray-900">{product.minStock}</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t">
-                            <span className="text-gray-500">Avg. Cost</span>
-                            <span className="text-gray-900 font-semibold">
-                                Rs. {product.inventory.length > 0
-                                    ? (product.inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0) / product.inventory.length).toFixed(2)
-                                    : '0.00'
-                                }
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-gray-500">Total Value</span>
-                            <span className="text-gray-900 font-bold">
-                                Rs. {product.inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0).toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+            {/* Inventory Table - Full Width */}
+            <div className="space-y-6">
+                <InventoryTable inventory={product.inventory} locations={locations} />
             </div>
 
             {/* Add Inventory Form - Full Width Below */}

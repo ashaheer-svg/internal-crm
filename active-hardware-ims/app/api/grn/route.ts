@@ -52,6 +52,19 @@ export async function POST(request: Request) {
 
             // Create inventory items for each serial number
             for (const item of items) {
+                // Fetch product to get warranty period
+                const product = await tx.product.findUnique({
+                    where: { id: item.productId },
+                    select: { warrantyMonths: true }
+                })
+
+                // Calculate warranty expiry date
+                let warrantyExpiry: Date | null = null
+                if (product && product.warrantyMonths > 0) {
+                    warrantyExpiry = new Date()
+                    warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
+                }
+
                 for (const serialNumber of item.serialNumbers) {
                     await tx.inventoryItem.create({
                         data: {
@@ -59,7 +72,8 @@ export async function POST(request: Request) {
                             serialNumber: serialNumber.trim(),
                             locationId: item.locationId,
                             status: 'AVAILABLE',
-                            unitCost: item.unitCost
+                            unitCost: item.unitCost,
+                            warrantyExpiry: warrantyExpiry
                         }
                     })
 

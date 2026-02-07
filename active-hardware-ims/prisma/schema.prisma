@@ -26,6 +26,7 @@ model Product {
   brand       String
   model       String
   minStock    Int      @default(0)
+  warrantyMonths Int   @default(0)
   lowResellerPrice Float @default(0)
   resellerPrice    Float @default(0)
   createdAt   DateTime @default(now())
@@ -52,6 +53,7 @@ model InventoryItem {
   location        Location @relation(fields: [locationId], references: [id])
   status          String   // AVAILABLE, RESERVED, DEFECTIVE, SOLD, RMA
   unitCost        Float    @default(0) // Cost per unit for average costing
+  warrantyExpiry  DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   warrantyClaims  WarrantyClaim[]

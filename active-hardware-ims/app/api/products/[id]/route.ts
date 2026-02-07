@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     try {
         const { id } = await params
         const body = await request.json()
-        const { sku, name, brand, model, description, minStock } = body
+        const { sku, name, brand, model, description, minStock, warrantyMonths, lowResellerPrice, resellerPrice } = body
 
         const product = await prisma.product.update({
             where: { id },
@@ -36,7 +36,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 brand,
                 model,
                 description,
-                minStock: Number(minStock) || 0
+                minStock: Number(minStock) || 0,
+                warrantyMonths: Number(warrantyMonths) || 0,
+                lowResellerPrice: Number(lowResellerPrice) || 0,
+                resellerPrice: Number(resellerPrice) || 0
             }
         })
 
