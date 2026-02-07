@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String   // ADMIN, SALES, WAREHOUSE, SUPPORT
+  password  String   // Simple auth for now
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reservations Reservation[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  description String?
+  brand       String
+  model       String
+  minStock    Int      @default(0)
+  lowResellerPrice Float @default(0)
+  resellerPrice    Float @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  inventory   InventoryItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // PHYSICAL, VIRTUAL
+  address   String?
+  createdAt DateTime @default(now())
+  inventory InventoryItem[]
+}
+
+model InventoryItem {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  locationId      String
+  location        Location @relation(fields: [locationId], references: [id])
+  status          String   // AVAILABLE, RESERVED, DEFECTIVE, SOLD, RMA
+  unitCost        Float    @default(0) // Cost per unit for average costing
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  warrantyClaims  WarrantyClaim[]
+  reservations    Reservation[]
+}
+
+model Reservation {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  expiry          DateTime
+  createdAt       DateTime @default(now())
+}
+
+model WarrantyClaim {
+  id              String   @id @default(uuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  customerName    String
+  description     String
+  status          String   // PENDING, SENT_TO_VENDOR, REPAIRED, RETURNED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model GoodsReceiptNote {
+  id          String   @id @default(uuid())
+  grnNumber   String   @unique
+  supplier    String
+  poReference String?
+  receivedBy  String
+  notes       String?
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       GRNItem[]
+}
+
+model GRNItem {
+  id              String   @id @default(uuid())
+  grnId           String
+  grn             GoodsReceiptNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  productId       String
+  serialNumbers   String
+  quantity        Int
+  unitCost        Float
+  locationId      String
+  createdAt       DateTime @default(now())
+}
+
+
+model PurchaseOrder {
+  id              String   @id @default(uuid())
+  poNumber        String   @unique
+  supplier        String
+  totalAmount     Float    @default(0)
+  status          String   // DRAFT, SUBMITTED, RECEIVED, CANCELLED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  items           PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitCost        Float
+  totalCost       Float
+  receivedQty     Int      @default(0)
+  createdAt       DateTime @default(now())
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  invoiceNumber   String   @unique
+  customerName    String
+  customerEmail   String?
+  customerPhone   String?
+  totalAmount     Float    @default(0)
+  status          String   // DRAFT, ISSUED, PAID, CANCELLED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  items           InvoiceItem[]
+}
+
+model InvoiceItem {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
+  inventoryItemId String
+  productName     String   // Denormalized for historical record
+  serialNumber    String   // Denormalized for historical record
+  unitPrice       Float
+  createdAt       DateTime @default(now())
+}
+
+model TransactionLog {
+  id              String   @id @default(uuid())
+  type            String   // RECEIPT, ISSUE, TRANSFER, ADJUSTMENT
+  referenceType   String?  // PO, INVOICE, TRANSFER
+  referenceId     String?
+  productId       String?
+  serialNumber    String?
+  quantity        Int      @default(1)
+  fromLocation    String?
+  toLocation      String?
+  unitCost        Float?
+  performedBy     String?  // User who performed the action
+  notes           String?
+  createdAt       DateTime @default(now())
+}

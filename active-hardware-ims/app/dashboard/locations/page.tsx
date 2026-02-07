@@ -1,0 +1,254 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Plus, MapPin, Warehouse, Edit, Trash2, X } from "lucide-react"
+
+type Location = {
+    id: string
+    name: string
+    type: string
+    address: string | null
+    _count: { inventory: number }
+}
+
+export default function LocationsPage() {
+    const [locations, setLocations] = useState<Location[]>([])
+    const [loading, setLoading] = useState(true)
+    const [showForm, setShowForm] = useState(false)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [formData, setFormData] = useState({ name: '', type: 'PHYSICAL', address: '' })
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        fetchLocations()
+    }, [])
+
+    async function fetchLocations() {
+        try {
+            const res = await fetch('/api/locations')
+            const data = await res.json()
+            setLocations(data)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    function resetForm() {
+        setFormData({ name: '', type: 'PHYSICAL', address: '' })
+        setEditingId(null)
+        setShowForm(false)
+        setError('')
+    }
+
+    function handleEdit(location: Location) {
+        setFormData({
+            name: location.name,
+            type: location.type,
+            address: location.address || ''
+        })
+        setEditingId(location.id)
+        setShowForm(true)
+        setError('')
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        setError('')
+
+        try {
+            const url = editingId ? `/api/locations/${editingId}` : '/api/locations'
+            const method = editingId ? 'PUT' : 'POST'
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data.error || 'Failed to save location')
+            }
+
+            resetForm()
+            fetchLocations()
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Failed to save location')
+        }
+    }
+
+    async function handleDelete(id: string, name: string) {
+        if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+            return
+        }
+
+        try {
+            const res = await fetch(`/api/locations/${id}`, {
+                method: 'DELETE'
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to delete location')
+            }
+
+            fetchLocations()
+        } catch (error) {
+            alert(error instanceof Error ? error.message : 'Failed to delete location')
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="sm:flex sm:items-center sm:justify-between">
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Locations</h1>
+                <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                    <button
+                        onClick={() => {
+                            resetForm()
+                            setShowForm(!showForm)
+                        }}
+                        className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                    >
+                        <Plus className="inline-block w-4 h-4 mr-1" />
+                        Add Location
+                    </button>
+                </div>
+            </div>
+
+            {showForm && (
+                <form onSubmit={handleSubmit} className="bg-white p-6 shadow sm:rounded-lg space-y-4 border border-blue-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-medium text-gray-900">
+                            {editingId ? 'Edit Location' : 'New Location'}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="text-gray-400 hover:text-gray-500"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {error && (
+                        <div className="bg-red-50 border-l-4 border-red-400 p-3">
+                            <p className="text-sm text-red-700">{error}</p>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Name *</label>
+                            <input
+                                type="text"
+                                required
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Type *</label>
+                            <select
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            >
+                                <option value="PHYSICAL">Physical Warehouse</option>
+                                <option value="VIRTUAL">Virtual (e.g. In-Transit)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Address (Optional)</label>
+                            <input
+                                type="text"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                        >
+                            {editingId ? 'Update' : 'Save'}
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {locations.map((location) => (
+                    <div key={location.id} className="bg-white overflow-hidden shadow rounded-lg border-l-4 border-blue-500">
+                        <div className="px-4 py-5 sm:p-6">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center flex-1">
+                                    <div className="flex-shrink-0 bg-blue-50 rounded-md p-3">
+                                        <Warehouse className="h-6 w-6 text-blue-600" />
+                                    </div>
+                                    <div className="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt className="text-sm font-medium text-gray-500 truncate">{location.type}</dt>
+                                            <dd>
+                                                <div className="text-lg font-medium text-gray-900">{location.name}</div>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 ml-2">
+                                    <button
+                                        onClick={() => handleEdit(location)}
+                                        className="text-blue-600 hover:text-blue-800"
+                                        title="Edit location"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(location.id, location.name)}
+                                        className="text-red-600 hover:text-red-800"
+                                        title="Delete location"
+                                        disabled={location._count.inventory > 0}
+                                    >
+                                        <Trash2 className={`w-4 h-4 ${location._count.inventory > 0 ? 'opacity-30 cursor-not-allowed' : ''}`} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <div className="flex items-center text-sm text-gray-500">
+                                    <MapPin className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                    {location.address || "No address provided"}
+                                </div>
+                                <div className="mt-2 text-sm text-gray-500">
+                                    Stock count: <span className="font-bold text-gray-900">{location._count.inventory}</span> units
+                                </div>
+                                {location._count.inventory > 0 && (
+                                    <p className="mt-1 text-xs text-gray-400">
+                                        Cannot delete while items are in stock
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {locations.length === 0 && !loading && (
+                    <div className="col-span-full py-12 text-center text-gray-500">
+                        No locations found. Create your first warehouse.
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
