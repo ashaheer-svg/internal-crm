@@ -35,6 +35,9 @@ export async function GET(request: Request) {
             case 'location':
                 return await generateLocationReport()
 
+            case 'backorder':
+                return await generateBackorderReport()
+
             default:
                 return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })
         }
@@ -298,6 +301,53 @@ async function generateLocationReport() {
             totalLocations: locations.length,
             totalItems: reportData.reduce((sum, loc) => sum + loc.itemCount, 0),
             totalValue: reportData.reduce((sum, loc) => sum + loc.totalValue, 0)
+        }
+    })
+}
+
+async function generateBackorderReport() {
+    const backorders = await prisma.backorderItem.findMany({
+        where: {
+            status: { in: ['PENDING', 'PARTIAL'] }
+        },
+        include: {
+            product: true,
+            invoice: {
+                select: {
+                    invoiceNumber: true,
+                    customerName: true,
+                    createdAt: true
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    const reportData = backorders.map(backorder => ({
+        id: backorder.id,
+        invoiceNumber: backorder.invoice.invoiceNumber,
+        customer: backorder.invoice.customerName,
+        orderDate: backorder.invoice.createdAt,
+        productSKU: backorder.product.sku,
+        productName: `${backorder.product.brand} ${backorder.product.name}`,
+        quantityOrdered: backorder.quantityOrdered,
+        quantityFulfilled: backorder.quantityFulfilled,
+        quantityPending: backorder.quantityOrdered - backorder.quantityFulfilled,
+        status: backorder.status
+    }))
+
+    const totalPending = reportData.reduce((sum, item) => sum + item.quantityPending, 0)
+    const totalOrdered = reportData.reduce((sum, item) => sum + item.quantityOrdered, 0)
+    const totalFulfilled = reportData.reduce((sum, item) => sum + item.quantityFulfilled, 0)
+
+    return NextResponse.json({
+        type: 'backorder',
+        data: reportData,
+        summary: {
+            totalBackorders: backorders.length,
+            totalOrdered,
+            totalFulfilled,
+            totalPending
         }
     })
 }

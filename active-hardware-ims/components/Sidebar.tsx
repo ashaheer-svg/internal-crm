@@ -1,7 +1,8 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
     LayoutDashboard,
@@ -12,22 +13,67 @@ import {
     LogOut,
     ScanBarcode,
     Receipt,
-    ArrowRightLeft
+    ArrowRightLeft,
+    Users,
+    FileText
 } from "lucide-react"
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Inventory", href: "/dashboard/inventory", icon: Package },
-    { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft },
-    { name: "Locations", href: "/dashboard/locations", icon: MapPin },
-    { name: "Transactions", href: "/dashboard/transactions", icon: Receipt },
-    { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList },
-    { name: "Reports", href: "/dashboard/reports", icon: Receipt },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft, roles: ['ADMIN', 'MANAGER', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Delivery Orders", href: "/dashboard/transactions", icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
+    { name: "Backorders", href: "/dashboard/backorders", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
+    { name: "Reports", href: "/dashboard/reports", icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
 ]
+
+type User = {
+    id: string
+    name: string
+    email: string
+    role: string
+}
 
 export function Sidebar() {
     const pathname = usePathname()
+    const router = useRouter()
+    const [user, setUser] = useState<User | null>(null)
+    const [loggingOut, setLoggingOut] = useState(false)
+
+    useEffect(() => {
+        fetchUser()
+    }, [])
+
+    async function fetchUser() {
+        try {
+            const res = await fetch('/api/auth/me')
+            if (res.ok) {
+                const data = await res.json()
+                setUser(data.user)
+            }
+        } catch (error) {
+            console.error('Failed to fetch user:', error)
+        }
+    }
+
+    async function handleLogout() {
+        setLoggingOut(true)
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' })
+            router.push('/login')
+        } catch (error) {
+            console.error('Logout failed:', error)
+        } finally {
+            setLoggingOut(false)
+        }
+    }
+
+    // Filter navigation based on user role
+    const filteredNavigation = navigation.filter(item =>
+        !user || item.roles.includes(user.role)
+    )
 
     return (
         <div className="flex h-full flex-col bg-gray-900 text-white w-64">
@@ -37,7 +83,7 @@ export function Sidebar() {
             </div>
             <div className="flex-1 overflow-y-auto py-4">
                 <nav className="space-y-1 px-3">
-                    {navigation.map((item) => {
+                    {filteredNavigation.map((item) => {
                         const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
                         return (
                             <Link
@@ -62,11 +108,26 @@ export function Sidebar() {
                     })}
                 </nav>
             </div>
-            <div className="border-t border-gray-800 p-4">
-                <button className="group flex w-full items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md hover:bg-gray-800">
-                    <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white" />
-                    Sign Out
-                </button>
+
+            {/* User Info & Logout */}
+            <div className="border-t border-gray-800">
+                {user && (
+                    <div className="px-4 py-3 border-b border-gray-800">
+                        <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        <p className="text-xs text-blue-400 mt-1">{user.role}</p>
+                    </div>
+                )}
+                <div className="p-4">
+                    <button
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                        className="group flex w-full items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
+                    >
+                        <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white" />
+                        {loggingOut ? 'Signing Out...' : 'Sign Out'}
+                    </button>
+                </div>
             </div>
         </div>
     )

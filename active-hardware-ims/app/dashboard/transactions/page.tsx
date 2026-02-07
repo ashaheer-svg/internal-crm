@@ -60,7 +60,7 @@ export default function TransactionsPage() {
     return (
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Transactions</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Delivery Orders</h1>
             </div>
 
             {/* Tab Navigation */}
@@ -76,7 +76,7 @@ export default function TransactionsPage() {
                         onClick={() => setActiveTab('invoice')}
                         className={`${activeTab === 'invoice' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Invoices
+                        Delivery Orders
                     </button>
                     <button
                         onClick={() => setActiveTab('log')}
@@ -160,13 +160,13 @@ export default function TransactionsPage() {
             {activeTab === 'invoice' && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Invoices (Stock Issues)</h2>
+                        <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Stock Issues)</h2>
                         <Link
                             href="/dashboard/transactions/invoices/new"
                             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                         >
                             <Plus className="w-4 h-4 mr-2" />
-                            New Invoice
+                            New Delivery Order
                         </Link>
                     </div>
 
@@ -216,7 +216,7 @@ export default function TransactionsPage() {
                             ))}
                             {invoices.length === 0 && !loading && (
                                 <li className="px-4 py-12 text-center text-gray-500">
-                                    No invoices yet. Create your first invoice to track sales.
+                                    No delivery orders yet. Create your first delivery order to track sales.
                                 </li>
                             )}
                         </ul>

@@ -8,14 +8,67 @@ datasource db {
 }
 
 model User {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  password           String   // bcrypt hashed
+  role               String   // ADMIN, MANAGER, SALES, WAREHOUSE, VIEWER
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          String?
+  
+  // Relations
+  reservations  Reservation[]
+  auditLogs     AuditLog[]
+  sessions      Session[]
+}
+
+model Session {
   id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  role      String   // ADMIN, SALES, WAREHOUSE, SUPPORT
-  password  String   // Simple auth for now
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  reservations Reservation[]
+  
+  @@index([userId])
+  @@index([token])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entityType String   // USER, PRODUCT, INVOICE, CUSTOMER, INVENTORY, etc.
+  entityId   String?  // ID of affected entity
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  userName   String   // Cached for display
+  changes    String?  // JSON string of before/after values
+  metadata   String?  // JSON string of additional context
+  createdAt  DateTime @default(now())
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  name        String
+  contactName String?  // Contact person name
+  email       String?
+  phone       String?
+  address     String?
+  taxId       String?  // Tax/VAT ID
+  salesRep    String?  // Sales representative
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  invoices    Invoice[]
 }
 
 model Product {
@@ -33,6 +86,8 @@ model Product {
   updatedAt   DateTime @updatedAt
   inventory   InventoryItem[]
   purchaseOrderItems PurchaseOrderItem[]
+  invoiceItems InvoiceItem[]
+  backorderItems BackorderItem[]
 }
 
 model Location {
@@ -135,26 +190,64 @@ model PurchaseOrderItem {
 model Invoice {
   id              String   @id @default(uuid())
   invoiceNumber   String   @unique
+  customerInvoiceRef String?  // Customer's invoice number reference
+  customerId      String?
+  customer        Customer? @relation(fields: [customerId], references: [id])
   customerName    String
   customerEmail   String?
   customerPhone   String?
   totalAmount     Float    @default(0)
   status          String   // DRAFT, ISSUED, PAID, CANCELLED
+  hasBackorders   Boolean  @default(false)
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   items           InvoiceItem[]
+  backorderItems  BackorderItem[]
 }
 
 model InvoiceItem {
   id              String   @id @default(uuid())
   invoiceId       String
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
-  inventoryItemId String
-  productName     String   // Denormalized for historical record
-  serialNumber    String   // Denormalized for historical record
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  // Optional inventory item (null for out-of-stock items)
+  inventoryItemId String?
+  
+  // Product reference for all items
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  
+  // Item details
+  productName     String   // Snapshot for historical record
+  serialNumber    String?  // Null for out-of-stock items
   unitPrice       Float
+  quantity        Int      @default(1)
+  
+  // Fulfillment tracking
+  isFulfilled     Boolean  @default(true)  // False for backorder items
+  fulfilledAt     DateTime?
+  
   createdAt       DateTime @default(now())
+  backorderItem   BackorderItem?
+}
+
+model BackorderItem {
+  id                String   @id @default(uuid())
+  invoiceId         String
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceItemId     String   @unique
+  invoiceItem       InvoiceItem @relation(fields: [invoiceItemId], references: [id], onDelete: Cascade)
+  
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id])
+  
+  quantityOrdered   Int
+  quantityFulfilled Int      @default(0)
+  status            String   // PENDING, PARTIAL, FULFILLED, CANCELLED
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model TransactionLog {

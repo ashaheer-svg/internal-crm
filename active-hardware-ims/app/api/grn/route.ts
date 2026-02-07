@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/auth'
+import { logCreate } from '@/lib/audit'
 
 export async function GET() {
     try {
+        await requireAuth()
+
         const grns = await prisma.goodsReceiptNote.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
@@ -10,13 +14,17 @@ export async function GET() {
             }
         })
         return NextResponse.json(grns)
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch GRNs' }, { status: 500 })
+    } catch (error: any) {
+        return NextResponse.json(
+            { error: error.message || 'Failed to fetch GRNs' },
+            { status: error.message === 'Unauthorized' ? 401 : 500 }
+        )
     }
 }
 
 export async function POST(request: Request) {
     try {
+        const user = await requireAuth()
         const body = await request.json()
         const { grnNumber, supplier, poReference, receivedBy, notes, items } = body
 
@@ -98,9 +106,19 @@ export async function POST(request: Request) {
             return newGrn
         })
 
+        // Log GRN creation
+        await logCreate('GRN', grn.id, user.id, user.name, {
+            grnNumber: grn.grnNumber,
+            supplier: grn.supplier,
+            itemCount: items.length
+        })
+
         return NextResponse.json(grn)
-    } catch (error) {
+    } catch (error: any) {
         console.error(error)
-        return NextResponse.json({ error: 'Failed to create GRN' }, { status: 500 })
+        return NextResponse.json(
+            { error: error.message || 'Failed to create GRN' },
+            { status: error.message === 'Unauthorized' ? 401 : 500 }
+        )
     }
 }

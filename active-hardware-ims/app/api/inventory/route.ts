@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/auth'
+import { logCreate } from '@/lib/audit'
 
 export async function POST(request: Request) {
     try {
+        const user = await requireAuth()
         const body = await request.json()
         const { productId, serialNumber, locationId, unitCost } = body
 
@@ -44,8 +47,18 @@ export async function POST(request: Request) {
             }
         })
 
+        // Log inventory creation
+        await logCreate('INVENTORY', item.id, user.id, user.name, {
+            serialNumber: item.serialNumber,
+            productId: item.productId,
+            status: item.status
+        })
+
         return NextResponse.json(item)
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to add inventory item' }, { status: 500 })
+    } catch (error: any) {
+        return NextResponse.json(
+            { error: error.message || 'Failed to add inventory item' },
+            { status: error.message === 'Unauthorized' ? 401 : 500 }
+        )
     }
 }

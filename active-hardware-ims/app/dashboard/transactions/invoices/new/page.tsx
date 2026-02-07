@@ -1,76 +1,114 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Save, Search } from "lucide-react"
+import { ArrowLeft, Trash2, Save, Package, Upload } from "lucide-react"
+import ProductSelector from "./ProductSelector"
+import StockDisplay from "./StockDisplay"
+import BulkEntryModal from "./BulkEntryModal"
+import CustomerSelector from "./CustomerSelector"
 
-type AvailableItem = {
+type Product = {
+    id: string
+    sku: string
+    name: string
+    brand: string
+    model: string
+}
+
+type InventoryItem = {
     id: string
     serialNumber: string
     unitCost: number
-    product: {
-        id: string
-        sku: string
-        name: string
-        brand: string
-    }
     location: {
+        id: string
         name: string
     }
 }
 
 type InvoiceItem = {
-    inventoryItemId: string
+    inventoryItemId?: string
+    productId: string
     productName: string
-    serialNumber: string
+    serialNumber?: string
     unitPrice: number
+    quantity: number
+    isBackorder: boolean
 }
 
 export default function NewInvoicePage() {
     const router = useRouter()
-    const [availableItems, setAvailableItems] = useState<AvailableItem[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const [invoiceNumber, setInvoiceNumber] = useState("")
+    const [invoiceNumber, setInvoiceNumber] = useState("DO-200001")
+    const [invoiceRef, setInvoiceRef] = useState("")
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+    const [customerId, setCustomerId] = useState<string | null>(null)
     const [customerName, setCustomerName] = useState("")
     const [customerEmail, setCustomerEmail] = useState("")
     const [customerPhone, setCustomerPhone] = useState("")
     const [notes, setNotes] = useState("")
-    const [searchTerm, setSearchTerm] = useState("")
     const [selectedItems, setSelectedItems] = useState<InvoiceItem[]>([])
 
-    useEffect(() => {
-        fetchAvailableInventory()
-        // Generate invoice number
-        setInvoiceNumber(`INV-${Date.now()}`)
-    }, [])
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+    const [showStockDisplay, setShowStockDisplay] = useState(false)
+    const [showBulkEntry, setShowBulkEntry] = useState(false)
 
-    async function fetchAvailableInventory() {
-        try {
-            const res = await fetch('/api/inventory/available')
-            const data = await res.json()
-            setAvailableItems(data)
-        } catch (error) {
-            console.error(error)
+    function handleCustomerSelect(customer: any) {
+        if (customer) {
+            setSelectedCustomer(customer)
+            setCustomerId(customer.id)
+            setCustomerName(customer.name)
+            setCustomerEmail(customer.email || "")
+            setCustomerPhone(customer.phone || "")
+        } else {
+            setSelectedCustomer(null)
+            setCustomerId(null)
+            // Keep manual entries if user clears customer
         }
     }
 
-    function addItemToInvoice(item: AvailableItem) {
-        // Check if already added
-        if (selectedItems.find(i => i.inventoryItemId === item.id)) {
-            setError("Item already added to invoice")
-            return
+    function handleProductSelect(product: Product) {
+        setSelectedProduct(product)
+        setShowStockDisplay(true)
+        setError("")
+    }
+
+    function handleSelectInventoryItem(item: InventoryItem) {
+        if (!selectedProduct) return
+
+        const newItem: InvoiceItem = {
+            inventoryItemId: item.id,
+            productId: selectedProduct.id,
+            productName: `${selectedProduct.brand} ${selectedProduct.name}`,
+            serialNumber: item.serialNumber,
+            unitPrice: item.unitCost,
+            quantity: 1,
+            isBackorder: false
         }
 
-        setSelectedItems([...selectedItems, {
-            inventoryItemId: item.id,
-            productName: `${item.product.brand} ${item.product.name}`,
-            serialNumber: item.serialNumber,
-            unitPrice: item.unitCost || 0
-        }])
-        setSearchTerm("")
+        setSelectedItems([...selectedItems, newItem])
+        setShowStockDisplay(false)
+        setSelectedProduct(null)
+        setError("")
+    }
+
+    function handleAddBackorder() {
+        if (!selectedProduct) return
+
+        const newItem: InvoiceItem = {
+            productId: selectedProduct.id,
+            productName: `${selectedProduct.brand} ${selectedProduct.name}`,
+            unitPrice: 0,
+            quantity: 1,
+            isBackorder: true
+        }
+
+        setSelectedItems([...selectedItems, newItem])
+        setShowStockDisplay(false)
+        setSelectedProduct(null)
         setError("")
     }
 
@@ -84,19 +122,39 @@ export default function NewInvoicePage() {
         setSelectedItems(newItems)
     }
 
+    function updateItemQuantity(index: number, quantity: number) {
+        const newItems = [...selectedItems]
+        newItems[index].quantity = Math.max(1, quantity)
+        setSelectedItems(newItems)
+    }
+
+    function handleBulkAdd(items: any[]) {
+        const newItems = items.map(item => ({
+            inventoryItemId: item.id,
+            productId: item.product.id,
+            productName: `${item.product.brand} ${item.product.name}`,
+            serialNumber: item.serialNumber,
+            unitPrice: item.unitCost,
+            quantity: 1,
+            isBackorder: false
+        }))
+        setSelectedItems([...selectedItems, ...newItems])
+        setShowBulkEntry(false)
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setLoading(true)
         setError("")
 
         if (!invoiceNumber || !customerName) {
-            setError("Invoice Number and Customer Name are required")
+            setError("Delivery Order Number and Customer Name are required")
             setLoading(false)
             return
         }
 
         if (selectedItems.length === 0) {
-            setError("Add at least one item to the invoice")
+            setError("Add at least one item to the delivery order")
             setLoading(false)
             return
         }
@@ -107,6 +165,8 @@ export default function NewInvoicePage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     invoiceNumber,
+                    customerInvoiceRef: invoiceRef,
+                    customerId,
                     customerName,
                     customerEmail,
                     customerPhone,
@@ -117,7 +177,7 @@ export default function NewInvoicePage() {
 
             if (!res.ok) {
                 const json = await res.json()
-                throw new Error(json.error || "Failed to create invoice")
+                throw new Error(json.error || "Failed to create delivery order")
             }
 
             const data = await res.json()
@@ -129,12 +189,11 @@ export default function NewInvoicePage() {
         }
     }
 
-    const totalAmount = selectedItems.reduce((sum, item) => sum + item.unitPrice, 0)
-    const filteredItems = availableItems.filter(item =>
-        item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const totalAmount = selectedItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const selectedItemIds = selectedItems
+        .filter(item => item.inventoryItemId)
+        .map(item => item.inventoryItemId!)
+    const usedProductIds = selectedItems.map(item => item.productId)
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -142,11 +201,11 @@ export default function NewInvoicePage() {
                 <Link href="/dashboard/transactions" className="p-2 hover:bg-gray-200 rounded-full">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Invoice</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Delivery Order</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Invoice Details */}
+                {/* Left Column - Delivery Order Details */}
                 <div className="lg:col-span-2 space-y-6">
                     {error && (
                         <div className="bg-red-50 border-l-4 border-red-400 p-4">
@@ -160,7 +219,7 @@ export default function NewInvoicePage() {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">Invoice Number *</label>
+                                <label className="block text-sm font-medium text-gray-700">Delivery Order Number *</label>
                                 <input
                                     type="text"
                                     required
@@ -171,13 +230,32 @@ export default function NewInvoicePage() {
                             </div>
 
                             <div className="sm:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700">Invoice Number</label>
+                                <input
+                                    type="text"
+                                    value={invoiceRef}
+                                    onChange={(e) => setInvoiceRef(e.target.value)}
+                                    placeholder="Optional - Enter invoice number if applicable"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                />
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <CustomerSelector
+                                    onSelect={handleCustomerSelect}
+                                    selectedCustomer={selectedCustomer}
+                                />
+                            </div>
+
+                            <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Customer Name *</label>
                                 <input
                                     type="text"
                                     required
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    disabled={!!selectedCustomer}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -187,7 +265,8 @@ export default function NewInvoicePage() {
                                     type="email"
                                     value={customerEmail}
                                     onChange={(e) => setCustomerEmail(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    disabled={!!selectedCustomer}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -197,7 +276,8 @@ export default function NewInvoicePage() {
                                     type="tel"
                                     value={customerPhone}
                                     onChange={(e) => setCustomerPhone(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    disabled={!!selectedCustomer}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -213,22 +293,81 @@ export default function NewInvoicePage() {
                         </div>
                     </div>
 
+                    {/* Add Items */}
+                    <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
+                        <h2 className="text-lg font-medium text-gray-900">Add Items</h2>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Select Product
+                            </label>
+                            <ProductSelector
+                                onProductSelect={handleProductSelect}
+                                excludeProductIds={usedProductIds}
+                            />
+                        </div>
+
+                        {showStockDisplay && selectedProduct && (
+                            <div className="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                                <StockDisplay
+                                    productId={selectedProduct.id}
+                                    productName={`${selectedProduct.brand} ${selectedProduct.name}`}
+                                    onSelectItem={handleSelectInventoryItem}
+                                    onAddOutOfStock={handleAddBackorder}
+                                    selectedItemIds={selectedItemIds}
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     {/* Selected Items */}
                     <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-                        <h2 className="text-lg font-medium text-gray-900">Invoice Items</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-medium text-gray-900">Delivery Items</h2>
+                            <button
+                                type="button"
+                                onClick={() => setShowBulkEntry(true)}
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Bulk Entry
+                            </button>
+                        </div>
 
                         {selectedItems.length === 0 ? (
                             <p className="text-sm text-gray-500 text-center py-8">
-                                No items added yet. Search and select items from the inventory panel →
+                                No items added yet. Select a product above to add items.
                             </p>
                         ) : (
                             <div className="space-y-3">
                                 {selectedItems.map((item, index) => (
-                                    <div key={index} className="flex gap-3 items-center p-3 border rounded-md">
+                                    <div key={index} className={`flex gap-3 items-center p-3 border rounded-md ${item.isBackorder ? 'bg-amber-50 border-amber-200' : ''}`}>
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-900">{item.productName}</p>
-                                            <p className="text-xs text-gray-500">S/N: {item.serialNumber}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium text-gray-900">{item.productName}</p>
+                                                {item.isBackorder && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                                                        <Package className="w-3 h-3 mr-1" />
+                                                        Backorder
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {item.serialNumber && (
+                                                <p className="text-xs text-gray-500">S/N: {item.serialNumber}</p>
+                                            )}
                                         </div>
+                                        {item.isBackorder && (
+                                            <div className="w-24">
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Qty</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => updateItemQuantity(index, Number(e.target.value))}
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                />
+                                            </div>
+                                        )}
                                         <div className="w-32">
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Price</label>
                                             <input
@@ -274,49 +413,46 @@ export default function NewInvoicePage() {
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            {loading ? "Creating..." : "Create Invoice"}
+                            {loading ? "Creating..." : "Create Delivery Order"}
                         </button>
                     </div>
                 </div>
 
-                {/* Right Column - Available Inventory */}
+                {/* Right Column - Summary */}
                 <div className="space-y-4">
                     <div className="bg-white shadow sm:rounded-lg p-4 sticky top-4">
-                        <h3 className="text-sm font-medium text-gray-900 mb-3">Available Inventory</h3>
+                        <h3 className="text-sm font-medium text-gray-900 mb-3">Order Summary</h3>
 
-                        <div className="relative mb-3">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search by serial, product..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            />
-                        </div>
-
-                        <div className="max-h-96 overflow-y-auto space-y-2">
-                            {filteredItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => addItemToInvoice(item)}
-                                    className="w-full text-left p-3 border rounded-md hover:bg-gray-50 transition-colors"
-                                    disabled={selectedItems.some(i => i.inventoryItemId === item.id)}
-                                >
-                                    <p className="text-sm font-medium text-gray-900">{item.product.name}</p>
-                                    <p className="text-xs text-gray-500">S/N: {item.serialNumber}</p>
-                                    <p className="text-xs text-gray-500">SKU: {item.product.sku} | Rs. {item.unitCost.toFixed(2)}</p>
-                                    <p className="text-xs text-blue-600">{item.location.name}</p>
-                                </button>
-                            ))}
-                            {filteredItems.length === 0 && (
-                                <p className="text-sm text-gray-500 text-center py-4">No available items found</p>
-                            )}
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Total Items:</span>
+                                <span className="font-medium">{selectedItems.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">In Stock:</span>
+                                <span className="font-medium">{selectedItems.filter(i => !i.isBackorder).length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">Backorders:</span>
+                                <span className="font-medium text-amber-600">{selectedItems.filter(i => i.isBackorder).length}</span>
+                            </div>
+                            <div className="pt-2 border-t flex justify-between">
+                                <span className="text-gray-900 font-medium">Total:</span>
+                                <span className="text-lg font-bold text-gray-900">Rs. {totalAmount.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </form>
+
+            {/* Bulk Entry Modal */}
+            {showBulkEntry && (
+                <BulkEntryModal
+                    onAdd={handleBulkAdd}
+                    onClose={() => setShowBulkEntry(false)}
+                    excludedItemIds={selectedItemIds}
+                />
+            )}
         </div>
     )
 }
