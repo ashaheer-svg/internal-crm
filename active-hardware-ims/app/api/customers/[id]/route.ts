@@ -6,13 +6,14 @@ import { logUpdate, logDelete } from '@/lib/audit'
 // GET - Get single customer
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         await requireAuth()
 
         const customer = await prisma.customer.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 invoices: {
                     orderBy: { createdAt: 'desc' },
@@ -38,8 +39,9 @@ export async function GET(
 // PATCH - Update customer
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const user = await requireAuth()
         const body = await request.json()
@@ -47,7 +49,7 @@ export async function PATCH(
 
         // Get existing customer for audit log
         const existingCustomer = await prisma.customer.findUnique({
-            where: { id: params.id }
+            where: { id }
         })
 
         if (!existingCustomer) {
@@ -59,7 +61,7 @@ export async function PATCH(
             const existing = await prisma.customer.findFirst({
                 where: {
                     email,
-                    id: { not: params.id }
+                    id: { not: id }
                 }
             })
             if (existing) {
@@ -68,7 +70,7 @@ export async function PATCH(
         }
 
         const customer = await prisma.customer.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 name,
                 contactName,
@@ -110,13 +112,14 @@ export async function PATCH(
 // DELETE - Delete customer
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const user = await requireAuth()
 
         const customer = await prisma.customer.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 _count: {
                     select: { invoices: true }
@@ -137,7 +140,7 @@ export async function DELETE(
         }
 
         await prisma.customer.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         // Log customer deletion

@@ -4,8 +4,9 @@ import { prisma } from '@/lib/db'
 // POST - Allocate inventory to backorder
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const body = await request.json()
         const { inventoryItemId } = body
@@ -17,7 +18,7 @@ export async function POST(
         const result = await prisma.$transaction(async (tx) => {
             // Get backorder
             const backorder = await tx.backorderItem.findUnique({
-                where: { id: params.id },
+                where: { id },
                 include: {
                     invoiceItem: true,
                     product: true,
@@ -69,7 +70,7 @@ export async function POST(
 
             // Update backorder status
             const updatedBackorder = await tx.backorderItem.update({
-                where: { id: params.id },
+                where: { id },
                 data: {
                     quantityFulfilled: backorder.quantityFulfilled + 1,
                     status: backorder.quantityFulfilled + 1 >= backorder.quantityOrdered ? 'FULFILLED' : 'PARTIAL'

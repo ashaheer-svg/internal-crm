@@ -11,12 +11,12 @@ export async function POST() {
         // Delete all data in order (respecting foreign key constraints)
         await prisma.$transaction(async (tx) => {
             // Delete child records first
-            await tx.backorder.deleteMany({})
-            await tx.warranty.deleteMany({})
+            await tx.backorderItem.deleteMany({})
+            await tx.warrantyClaim.deleteMany({})
             await tx.invoiceItem.deleteMany({})
             await tx.invoice.deleteMany({})
             await tx.inventoryItem.deleteMany({})
-            await tx.gRN.deleteMany({})
+            await tx.goodsReceiptNote.deleteMany({})
             await tx.product.deleteMany({})
             await tx.location.deleteMany({})
             await tx.customer.deleteMany({})

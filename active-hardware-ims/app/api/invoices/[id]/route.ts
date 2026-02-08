@@ -4,11 +4,12 @@ import { prisma } from '@/lib/db'
 // GET - Fetch single invoice
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const invoice = await prisma.invoice.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 items: {
                     include: {
@@ -39,8 +40,9 @@ export async function GET(
 // PATCH - Edit invoice
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const body = await request.json()
         const { customerName, customerEmail, customerPhone, customerInvoiceRef, notes, itemsToAdd, itemsToRemove } = body
@@ -82,7 +84,7 @@ export async function PATCH(
                 for (const item of itemsToAdd) {
                     const newItem = await tx.invoiceItem.create({
                         data: {
-                            invoiceId: params.id,
+                            invoiceId: id,
                             inventoryItemId: item.inventoryItemId || null,
                             productId: item.productId,
                             productName: item.productName,
@@ -104,7 +106,7 @@ export async function PATCH(
                         // Create backorder
                         await tx.backorderItem.create({
                             data: {
-                                invoiceId: params.id,
+                                invoiceId: id,
                                 invoiceItemId: newItem.id,
                                 productId: item.productId,
                                 quantityOrdered: item.quantity || 1,
@@ -118,7 +120,7 @@ export async function PATCH(
 
             // Recalculate total and check backorders
             const updatedInvoice = await tx.invoice.findUnique({
-                where: { id: params.id },
+                where: { id },
                 include: { items: true, backorderItems: true }
             })
 
@@ -136,7 +138,7 @@ export async function PATCH(
 
             // Apply updates
             const invoice = await tx.invoice.update({
-                where: { id: params.id },
+                where: { id },
                 data: updateData,
                 include: {
                     items: {

@@ -3,11 +3,12 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const location = await prisma.location.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 _count: {
                     select: { inventory: true }
@@ -27,8 +28,9 @@ export async function GET(
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const body = await request.json()
         const { name, type, address } = body
@@ -38,7 +40,7 @@ export async function PUT(
         }
 
         const location = await prisma.location.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 name,
                 type,
@@ -54,15 +56,16 @@ export async function PUT(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     try {
         const body = await request.json().catch(() => ({}))
         const { transferToLocationId } = body
 
         // Check if location has inventory
         const location = await prisma.location.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 _count: {
                     select: { inventory: true }
@@ -90,7 +93,7 @@ export async function DELETE(
             }
 
             // Validate transfer location exists and is different
-            if (transferToLocationId === params.id) {
+            if (transferToLocationId === id) {
                 return NextResponse.json(
                     { error: 'Cannot transfer to the same location' },
                     { status: 400 }
@@ -112,7 +115,7 @@ export async function DELETE(
             await prisma.$transaction(async (tx) => {
                 // Update all inventory items to new location
                 await tx.inventoryItem.updateMany({
-                    where: { locationId: params.id },
+                    where: { locationId: id },
                     data: { locationId: transferToLocationId }
                 })
 
@@ -122,7 +125,7 @@ export async function DELETE(
                         data: {
                             type: 'TRANSFER',
                             referenceType: 'TRANSFER',
-                            referenceId: params.id,
+                            referenceId: id,
                             productId: item.productId,
                             serialNumber: item.serialNumber,
                             quantity: 1,
@@ -136,7 +139,7 @@ export async function DELETE(
 
                 // Delete the location
                 await tx.location.delete({
-                    where: { id: params.id }
+                    where: { id }
                 })
             })
 
@@ -148,7 +151,7 @@ export async function DELETE(
 
         // No inventory, safe to delete
         await prisma.location.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ success: true })
