@@ -14,7 +14,9 @@ export async function GET() {
         diagnostics.checks.environment = {
             DATABASE_URL: process.env.DATABASE_URL || 'NOT SET',
             NODE_ENV: process.env.NODE_ENV || 'NOT SET',
-            hasEnvFile: fs.existsSync(path.join(process.cwd(), '.env'))
+            hasEnvFile: fs.existsSync(path.join(process.cwd(), '.env')),
+            processWorkingDirectory: process.cwd(),
+            __dirname: __dirname
         }
 
         // 2. Check database file
