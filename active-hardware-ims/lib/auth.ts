@@ -89,7 +89,9 @@ export async function setSessionCookie(token: string) {
     const cookieStore = await cookies()
     cookieStore.set('session', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        // Only set secure if we are using HTTPS or if explicitly enabled
+        // This allows login on HTTP (IP address) deployments
+        secure: process.env.USE_SECURE_COOKIES === 'true',
         sameSite: 'lax',
         maxAge: SESSION_DURATION / 1000,
         path: '/'
