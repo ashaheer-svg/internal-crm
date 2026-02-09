@@ -27,6 +27,7 @@ export default function EditProductPage({ params }: PageProps) {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState("")
     const [productId, setProductId] = useState<string>("")
+    const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
     const [formData, setFormData] = useState<Product>({
         id: "",
         sku: "",
@@ -40,6 +41,12 @@ export default function EditProductPage({ params }: PageProps) {
     })
 
     useEffect(() => {
+        // Fetch categories
+        fetch("/api/categories")
+            .then(res => res.json())
+            .then(data => setCategories(data))
+            .catch(err => console.error("Failed to fetch categories", err))
+
         params.then(p => {
             setProductId(p.id)
             fetchProduct(p.id)
@@ -149,15 +156,21 @@ export default function EditProductPage({ params }: PageProps) {
                             Category *
                         </label>
                         <div className="mt-1">
-                            <input
-                                type="text"
+                            <select
                                 name="category"
                                 id="category"
                                 required
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                            />
+                            >
+                                <option value="">Select a category</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.name}>
+                                        {category.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
