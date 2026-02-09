@@ -82,9 +82,20 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const sequence = await prisma.sequence.update({
+        const now = new Date()
+        const year = now.getFullYear().toString().slice(-2)
+        const month = (now.getMonth() + 1).toString().padStart(2, '0')
+        const currentYearMonth = `${year}${month}`
+
+        const sequence = await prisma.sequence.upsert({
             where: { id },
-            data: { nextNumber: Number(nextNumber) }
+            update: { nextNumber: Number(nextNumber) },
+            create: {
+                id,
+                prefix: id === 'PO' ? 'PO-' : 'GRN-',
+                nextNumber: Number(nextNumber),
+                lastYearMonth: currentYearMonth
+            }
         })
 
         return NextResponse.json(sequence)

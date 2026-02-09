@@ -101,7 +101,7 @@ export default function SequencesPage() {
                                     <label className="block text-sm font-medium text-gray-700">Next Number</label>
                                     <div className="mt-1 flex rounded-md shadow-sm">
                                         <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            {seq?.prefix || (type === 'PO' ? 'PO-' : 'GRN-')}YYMM-
+                                            {seq?.prefix || (type === 'PO' ? 'PO-' : 'GRN-')}{new Date().getFullYear().toString().slice(-2)}{(new Date().getMonth() + 1).toString().padStart(2, '0')}-
                                         </span>
                                         <input
                                             type="number"

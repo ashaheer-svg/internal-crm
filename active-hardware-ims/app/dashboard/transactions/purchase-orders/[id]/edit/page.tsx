@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Save, Loader2 } from "lucide-react"
 
 type Product = {
     id: string
@@ -20,39 +20,24 @@ type POItem = {
     totalCost: number
 }
 
-export default function NewPurchaseOrderPage() {
+export default function EditPurchaseOrderPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter()
+    const { id } = use(params)
+
     const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
     const [error, setError] = useState("")
 
     const [poNumber, setPoNumber] = useState("")
     const [supplier, setSupplier] = useState("")
+    const [status, setStatus] = useState("")
     const [notes, setNotes] = useState("")
-    const [items, setItems] = useState<POItem[]>([
-        { productId: "", quantity: 1, unitCost: 0, totalCost: 0 }
-    ])
+    const [items, setItems] = useState<POItem[]>([])
 
     useEffect(() => {
-        fetchProducts()
-        fetchNextPoNumber()
-    }, [])
-
-    async function fetchNextPoNumber() {
-        try {
-            const res = await fetch("/api/sequences", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "PO" })
-            })
-            if (res.ok) {
-                const data = await res.json()
-                setPoNumber(data.number)
-            }
-        } catch (error) {
-            console.error("Failed to fetch PO sequence", error)
-        }
-    }
+        Promise.all([fetchProducts(), fetchPO()]).finally(() => setLoading(false))
+    }, [id])
 
     async function fetchProducts() {
         try {
@@ -61,6 +46,27 @@ export default function NewPurchaseOrderPage() {
             setProducts(data)
         } catch (error) {
             console.error(error)
+        }
+    }
+
+    async function fetchPO() {
+        try {
+            const res = await fetch(`/api/purchase-orders/${id}`)
+            if (!res.ok) throw new Error("Failed to fetch PO")
+            const data = await res.json()
+
+            setPoNumber(data.poNumber)
+            setSupplier(data.supplier)
+            setStatus(data.status)
+            setNotes(data.notes || "")
+            setItems(data.items.map((i: any) => ({
+                productId: i.productId,
+                quantity: i.quantity,
+                unitCost: i.unitCost,
+                totalCost: i.totalCost
+            })))
+        } catch (error) {
+            setError(error instanceof Error ? error.message : "Failed to load PO")
         }
     }
 
@@ -76,7 +82,6 @@ export default function NewPurchaseOrderPage() {
         const newItems = [...items]
         newItems[index] = { ...newItems[index], [field]: value }
 
-        // Auto-calculate total cost
         if (field === 'quantity' || field === 'unitCost') {
             newItems[index].totalCost = newItems[index].quantity * newItems[index].unitCost
         }
@@ -86,58 +91,63 @@ export default function NewPurchaseOrderPage() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        setLoading(true)
+        setSaving(true)
         setError("")
 
-        // Validation
-        if (!poNumber || !supplier) {
-            setError("PO Number and Supplier are required")
-            setLoading(false)
+        if (!supplier) {
+            setError("Supplier is required")
+            setSaving(false)
             return
         }
 
         const validItems = items.filter(item => item.productId && item.quantity > 0)
         if (validItems.length === 0) {
-            setError("Add at least one item to the purchase order")
-            setLoading(false)
+            setError("Add at least one item")
+            setSaving(false)
             return
         }
 
         try {
-            const res = await fetch("/api/purchase-orders", {
-                method: "POST",
+            const res = await fetch(`/api/purchase-orders/${id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    poNumber,
                     supplier,
                     notes,
-                    items: validItems
+                    items: validItems,
+                    status // preserving status or allowing update if needed
                 }),
             })
 
             if (!res.ok) {
                 const json = await res.json()
-                throw new Error(json.error || "Failed to create purchase order")
+                throw new Error(json.error || "Failed to update purchase order")
             }
 
-            const data = await res.json()
-            router.push(`/dashboard/transactions/purchase-orders/${data.id}`)
+            router.push(`/dashboard/transactions/purchase-orders/${id}`)
+            router.refresh()
         } catch (e) {
             setError(e instanceof Error ? e.message : "Something went wrong")
         } finally {
-            setLoading(false)
+            setSaving(false)
         }
     }
 
     const totalAmount = items.reduce((sum, item) => sum + item.totalCost, 0)
+    const isDraft = status === 'DRAFT'
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/transactions" className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href={`/dashboard/transactions/purchase-orders/${id}`} className="p-2 hover:bg-gray-200 rounded-full">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Purchase Order</h1>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Purchase Order</h1>
+                    <p className="text-sm text-gray-500">{poNumber}</p>
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -149,20 +159,7 @@ export default function NewPurchaseOrderPage() {
 
                 {/* Header Info */}
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-                    <h2 className="text-lg font-medium text-gray-900">Purchase Order Details</h2>
-
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">PO Number *</label>
-                            <input
-                                type="text"
-                                required
-                                value={poNumber}
-                                onChange={(e) => setPoNumber(e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            />
-                        </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Supplier *</label>
                             <input
@@ -173,16 +170,16 @@ export default function NewPurchaseOrderPage() {
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                             />
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Notes</label>
-                        <textarea
-                            rows={2}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Notes</label>
+                            <input
+                                type="text"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -190,15 +187,25 @@ export default function NewPurchaseOrderPage() {
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Items</h2>
-                        <button
-                            type="button"
-                            onClick={addItem}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                        >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Item
-                        </button>
+                        {isDraft && (
+                            <button
+                                type="button"
+                                onClick={addItem}
+                                className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Item
+                            </button>
+                        )}
                     </div>
+
+                    {!isDraft && (
+                        <div className="bg-yellow-50 p-4 rounded-md">
+                            <p className="text-sm text-yellow-700">
+                                This PO is not in DRAFT status. Editing items is restricted to prevent stock inconsistencies.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="space-y-3">
                         {items.map((item, index) => (
@@ -209,11 +216,12 @@ export default function NewPurchaseOrderPage() {
                                         <select
                                             value={item.productId}
                                             onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                            disabled={!isDraft}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
                                         >
                                             <option value="">Select product...</option>
                                             {products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
+                                                <option key={p.id} value={p.id}>{p.sku} - {p.name}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -225,7 +233,8 @@ export default function NewPurchaseOrderPage() {
                                             min="1"
                                             value={item.quantity}
                                             onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                            disabled={!isDraft}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
                                         />
                                     </div>
 
@@ -237,7 +246,8 @@ export default function NewPurchaseOrderPage() {
                                             min="0"
                                             value={item.unitCost}
                                             onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                            disabled={!isDraft}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
                                         />
                                     </div>
                                 </div>
@@ -245,7 +255,7 @@ export default function NewPurchaseOrderPage() {
                                 <div className="flex flex-col items-end gap-1">
                                     <span className="text-xs text-gray-500">Total</span>
                                     <span className="font-semibold text-sm">Rs. {item.totalCost.toFixed(2)}</span>
-                                    {items.length > 1 && (
+                                    {isDraft && items.length > 1 && (
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
@@ -270,18 +280,18 @@ export default function NewPurchaseOrderPage() {
                 {/* Actions */}
                 <div className="flex justify-end gap-3">
                     <Link
-                        href="/dashboard/transactions"
+                        href={`/dashboard/transactions/purchase-orders/${id}`}
                         className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         Cancel
                     </Link>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={saving}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                     >
-                        <Save className="w-4 h-4 mr-2" />
-                        {loading ? "Creating..." : "Create Purchase Order"}
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Save Changes
                     </button>
                 </div>
             </form>

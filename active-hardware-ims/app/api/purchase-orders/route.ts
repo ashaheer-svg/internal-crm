@@ -14,7 +14,7 @@ export async function GET(request: Request) {
             }
         }
         if (status) {
-            where.status = status
+            where.status = { in: status.split(',') }
         }
 
         const purchaseOrders = await prisma.purchaseOrder.findMany({
