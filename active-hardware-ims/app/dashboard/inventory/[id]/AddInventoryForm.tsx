@@ -38,25 +38,37 @@ export default function AddInventoryForm({ productId, locations }: Props) {
     const [success, setSuccess] = useState("")
     const [isLoadingData, setIsLoadingData] = useState(true)
 
+    const [isFetchingGrn, setIsFetchingGrn] = useState(false)
+
+    async function fetchNextGrn() {
+        try {
+            setIsFetchingGrn(true)
+            const seqRes = await fetch("/api/sequences", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "GRN" })
+            })
+            if (seqRes.ok) {
+                const data = await seqRes.json()
+                setGrnNumber(data.number)
+            }
+        } catch (e) {
+            console.error("Failed to fetch GRN", e)
+        } finally {
+            setIsFetchingGrn(false)
+        }
+    }
+
     useEffect(() => {
         async function loadData() {
             try {
                 // 1. Fetch Next GRN Number
-                const seqRes = await fetch("/api/sequences", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "GRN" }) // Not consuming, just previewing
-                })
-                if (seqRes.ok) {
-                    const data = await seqRes.json()
-                    setGrnNumber(data.number)
-                }
+                await fetchNextGrn()
 
                 // 2. Fetch POs for this product
                 const poRes = await fetch(`/api/purchase-orders?productId=${productId}&status=DRAFT,PARTIAL`)
                 if (poRes.ok) {
                     const data = await poRes.json()
-                    // Filter locally for active POs if API doesn't fully support all filters yet
                     setPurchaseOrders(data)
                 }
             } catch (e) {
@@ -250,11 +262,12 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                             />
                             <button
                                 type="button"
-                                onClick={() => {/* Logic to refresh if needed, usually on load is enough */ }}
-                                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"
+                                onClick={fetchNextGrn}
+                                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100"
                                 title="Auto-generated based on sequence"
+                                disabled={isFetchingGrn}
                             >
-                                <RefreshCw className="h-4 w-4" />
+                                <RefreshCw className={`h-4 w-4 ${isFetchingGrn ? 'animate-spin' : ''}`} />
                             </button>
                         </div>
                     </div>
