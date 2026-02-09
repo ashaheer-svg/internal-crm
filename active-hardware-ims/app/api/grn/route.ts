@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
+import { v4 as uuidv4 } from 'uuid' // Check if uuid is available, else use crypto
 
 export async function GET() {
     try {
@@ -32,20 +33,67 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        // Create GRN and process all items in a transaction
+        // 1. Fetch all products to get warranty info (OUTSIDE TRANSACTION)
+        const productIds = Array.from(new Set(items.map((item: any) => item.productId)))
+        const products = await prisma.product.findMany({
+            where: { id: { in: productIds as string[] } },
+            select: { id: true, warrantyMonths: true }
+        })
+
+        const productMap = new Map(products.map(p => [p.id, p]))
+
+        // 2. Prepare Inventory Items and Transaction Logs (OUTSIDE TRANSACTION)
+        const inventoryItemsToCreate: any[] = []
+        const transactionLogsToCreate: any[] = []
+        const now = new Date()
+
+        // Generate UUID manually to link GRN and logs
+        // Falling back to crypto.randomUUID if uuid package not available, but usually safe in modern node
+        const grnId = crypto.randomUUID()
+
+        for (const item of items) {
+            const product = productMap.get(item.productId)
+            let warrantyExpiry: Date | null = null
+
+            if (product && product.warrantyMonths > 0) {
+                warrantyExpiry = new Date(now)
+                warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
+            }
+
+            for (const serialNumber of item.serialNumbers) {
+                inventoryItemsToCreate.push({
+                    productId: item.productId,
+                    serialNumber: serialNumber.trim(),
+                    locationId: item.locationId,
+                    status: 'AVAILABLE',
+                    unitCost: item.unitCost,
+                    warrantyExpiry: warrantyExpiry,
+                    createdAt: now,
+                    updatedAt: now
+                })
+
+                transactionLogsToCreate.push({
+                    type: 'RECEIPT',
+                    referenceType: 'GRN',
+                    referenceId: grnId,
+                    productId: item.productId,
+                    serialNumber: serialNumber.trim(),
+                    quantity: 1,
+                    toLocation: item.locationId,
+                    unitCost: item.unitCost,
+                    performedBy: receivedBy,
+                    notes: `GRN ${grnNumber} - ${supplier}`,
+                    createdAt: now
+                })
+            }
+        }
+
+        // 3. Execute Database Writes (INSIDE TRANSACTION)
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Fetch all products to get warranty info
-            const productIds = Array.from(new Set(items.map((item: any) => item.productId)))
-            const products = await tx.product.findMany({
-                where: { id: { in: productIds as string[] } },
-                select: { id: true, warrantyMonths: true }
-            })
-
-            const productMap = new Map(products.map(p => [p.id, p]))
-
-            // 2. Create GRN
+            // Create GRN with manual ID
             const newGrn = await tx.goodsReceiptNote.create({
                 data: {
+                    id: grnId,
                     grnNumber,
                     supplier,
                     poReference,
@@ -67,52 +115,8 @@ export async function POST(request: Request) {
                 }
             })
 
-            // 3. Prepare Inventory Items and Transaction Logs
-            const inventoryItemsToCreate = []
-            const transactionLogsToCreate = []
-            const now = new Date()
-
-            for (const item of items) {
-                const product = productMap.get(item.productId)
-                let warrantyExpiry: Date | null = null
-
-                if (product && product.warrantyMonths > 0) {
-                    warrantyExpiry = new Date(now)
-                    warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
-                }
-
-                for (const serialNumber of item.serialNumbers) {
-                    inventoryItemsToCreate.push({
-                        productId: item.productId,
-                        serialNumber: serialNumber.trim(),
-                        locationId: item.locationId,
-                        status: 'AVAILABLE',
-                        unitCost: item.unitCost,
-                        warrantyExpiry: warrantyExpiry,
-                        createdAt: now,
-                        updatedAt: now
-                    })
-
-                    transactionLogsToCreate.push({
-                        type: 'RECEIPT',
-                        referenceType: 'GRN',
-                        referenceId: newGrn.id,
-                        productId: item.productId,
-                        serialNumber: serialNumber.trim(),
-                        quantity: 1,
-                        toLocation: item.locationId,
-                        unitCost: item.unitCost,
-                        performedBy: receivedBy,
-                        notes: `GRN ${grnNumber} - ${supplier}`,
-                        createdAt: now
-                    })
-                }
-            }
-
-            // 4. Batch Insert Inventory Items
+            // Batch Insert Inventory Items
             if (inventoryItemsToCreate.length > 0) {
-                // Determine batch size (SQLite has variable limit, safe bet is 500-999)
-                // We'll use a conservative batch size for safety
                 const batchSize = 100
                 for (let i = 0; i < inventoryItemsToCreate.length; i += batchSize) {
                     const batch = inventoryItemsToCreate.slice(i, i + batchSize)
@@ -122,7 +126,7 @@ export async function POST(request: Request) {
                 }
             }
 
-            // 5. Batch Insert Transaction Logs
+            // Batch Insert Transaction Logs
             if (transactionLogsToCreate.length > 0) {
                 const batchSize = 100
                 for (let i = 0; i < transactionLogsToCreate.length; i += batchSize) {
@@ -135,8 +139,8 @@ export async function POST(request: Request) {
 
             return newGrn
         }, {
-            maxWait: 10000, // 10s wait for lock
-            timeout: 20000  // 20s transaction timeout
+            maxWait: 5000,
+            timeout: 20000
         })
 
         const grn = result
