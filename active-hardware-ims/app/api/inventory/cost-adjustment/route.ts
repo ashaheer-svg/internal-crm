@@ -19,11 +19,6 @@ export async function GET(request: Request) {
             where: {
                 grnId,
                 ...(productId ? { productId } : {})
-            },
-            include: {
-                product: {
-                    select: { name: true, brand: true, model: true }
-                }
             }
         })
 
