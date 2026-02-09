@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
@@ -9,6 +9,14 @@ export default function NewProductPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
+
+    useEffect(() => {
+        fetch("/api/categories")
+            .then(res => res.json())
+            .then(data => setCategories(data))
+            .catch(err => console.error("Failed to fetch categories", err))
+    }, [])
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -24,6 +32,7 @@ export default function NewProductPage() {
             model: formData.get("model"),
             description: formData.get("description"),
             minStock: formData.get("minStock"),
+            warrantyMonths: formData.get("warrantyMonths"),
         }
 
         try {
@@ -113,6 +122,27 @@ export default function NewProductPage() {
                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                                 placeholder="e.g. ROG Strix GeForce RTX 4090"
                             />
+                        </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                            Category *
+                        </label>
+                        <div className="mt-1">
+                            <select
+                                name="category"
+                                id="category"
+                                required
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            >
+                                <option value="">Select a category</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.name}>
+                                        {category.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
