@@ -33,7 +33,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         const user = await requireAuth()
         const { id } = await params
         const body = await request.json()
-        const { sku, name, brand, model, description, minStock, warrantyMonths, lowResellerPrice, resellerPrice } = body
+        const { sku, name, brand, category, model, description, minStock, warrantyMonths, lowResellerPrice, resellerPrice } = body
 
         // Get existing for audit
         const existing = await prisma.product.findUnique({ where: { id } })
@@ -47,6 +47,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 sku,
                 name,
                 brand,
+                category,
                 model,
                 description,
                 minStock: Number(minStock) || 0,
