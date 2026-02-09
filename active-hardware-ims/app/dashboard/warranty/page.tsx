@@ -14,15 +14,16 @@ type WarrantyClaim = {
     inventoryItem: {
         id: string
         serialNumber: string
-        name: string
-        brand: string
-        category: string
-        model: string
+        product: {
+            name: string
+            brand: string
+            category: string
+            model: string
+        }
     }
     location: {
         name: string
     }
-}
 }
 
 export default function WarrantyPage() {
