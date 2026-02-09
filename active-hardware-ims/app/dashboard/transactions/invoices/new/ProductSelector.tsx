@@ -8,6 +8,7 @@ type Product = {
     sku: string
     name: string
     brand: string
+    category: string
     model: string
 }
 
@@ -45,6 +46,7 @@ export default function ProductSelector({ onProductSelect, excludeProductIds = [
             searchTerm === "" ||
             p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.model.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -61,7 +63,7 @@ export default function ProductSelector({ onProductSelect, excludeProductIds = [
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <input
                     type="text"
-                    placeholder="Search products by name, brand, SKU, or model..."
+                    placeholder="Search by name, brand, category, SKU, or model..."
                     value={searchTerm}
                     onChange={(e) => {
                         setSearchTerm(e.target.value)
@@ -105,7 +107,7 @@ export default function ProductSelector({ onProductSelect, excludeProductIds = [
                                                 {product.brand} {product.name}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                SKU: {product.sku} {product.model && `| Model: ${product.model}`}
+                                                SKU: {product.sku} | Cat: {product.category} {product.model && `| Model: ${product.model}`}
                                             </p>
                                         </div>
                                     </div>

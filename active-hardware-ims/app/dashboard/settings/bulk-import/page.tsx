@@ -109,8 +109,8 @@ export default function BulkImportPage() {
             {/* Message */}
             {message && (
                 <div className={`border-l-4 p-4 ${message.type === 'success'
-                        ? 'bg-green-50 border-green-400'
-                        : 'bg-red-50 border-red-400'
+                    ? 'bg-green-50 border-green-400'
+                    : 'bg-red-50 border-red-400'
                     }`}>
                     <div className="flex">
                         <div className="flex-shrink-0">
@@ -273,6 +273,7 @@ export default function BulkImportPage() {
                             <li><code className="bg-gray-100 px-1 rounded">sku</code> - Unique product identifier</li>
                             <li><code className="bg-gray-100 px-1 rounded">name</code> - Product name</li>
                             <li><code className="bg-gray-100 px-1 rounded">brand</code> - Brand name</li>
+                            <li><code className="bg-gray-100 px-1 rounded">category</code> - Product category</li>
                             <li><code className="bg-gray-100 px-1 rounded">model</code> - Model number/name</li>
                         </ul>
                     </div>
@@ -303,8 +304,8 @@ export default function BulkImportPage() {
                     <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Example CSV Format</h3>
                         <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto">
-                            {`sku,name,brand,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
-SKU001,Product A,Brand X,Model 1,High quality,10,12,45.00,50.00
+                            {`sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
+SKU001,Product A,Brand X,Electronics,Model 1,High quality,10,12,45.00,50.00
 SKU002,Product B,Brand Y,Model 2,Durable,5,24,90.00,100.00`}
                         </pre>
                     </div>

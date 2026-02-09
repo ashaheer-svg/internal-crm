@@ -9,6 +9,7 @@ type Product = {
     sku: string
     name: string
     brand: string
+    category: string
     inventory: any[]
     _count: {
         inventory: number
@@ -96,7 +97,7 @@ export default function StockMovementsPage() {
                                     className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                                 >
                                     <p className="font-medium text-gray-900">{product.name}</p>
-                                    <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                                    <p className="text-sm text-gray-500">SKU: {product.sku} | Cat: {product.category}</p>
                                     <p className="text-sm text-blue-600 mt-2">
                                         Current Stock: {product.inventory?.length || 0} units
                                     </p>
@@ -182,7 +183,7 @@ export default function StockMovementsPage() {
                                     className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                                 >
                                     <p className="font-medium text-gray-900">{product.name}</p>
-                                    <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                                    <p className="text-sm text-gray-500">SKU: {product.sku} | Cat: {product.category}</p>
                                     <p className="text-sm text-purple-600 mt-2">
                                         {product.inventory.length} units available for transfer
                                     </p>

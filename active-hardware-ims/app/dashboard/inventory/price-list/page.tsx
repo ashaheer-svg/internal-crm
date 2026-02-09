@@ -8,6 +8,7 @@ type Product = {
   sku: string
   name: string
   brand: string
+  category: string
   model: string
   lowResellerPrice: number
   resellerPrice: number
@@ -20,7 +21,9 @@ export default function PriceListPage() {
   const [brandSearch, setBrandSearch] = useState("")
 
   const filteredProducts = products.filter(product =>
-    brandSearch === "" || product.brand.toLowerCase().includes(brandSearch.toLowerCase())
+    brandSearch === "" ||
+    product.brand.toLowerCase().includes(brandSearch.toLowerCase()) ||
+    product.category.toLowerCase().includes(brandSearch.toLowerCase())
   )
 
   useEffect(() => {
@@ -134,8 +137,11 @@ export default function PriceListPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[35%]">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[15%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     Brand
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                    Category
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[12%]">
                     Low Reseller
@@ -159,6 +165,9 @@ export default function PriceListPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {product.brand}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {product.category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
                       Rs. {(product.lowResellerPrice || 0).toFixed(2)}

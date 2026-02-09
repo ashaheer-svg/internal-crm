@@ -76,6 +76,7 @@ export async function GET() {
                 id: p.id,
                 name: p.name,
                 brand: p.brand,
+                category: p.category,
                 sku: p.sku,
                 availableCount: p._count.inventory
             })),

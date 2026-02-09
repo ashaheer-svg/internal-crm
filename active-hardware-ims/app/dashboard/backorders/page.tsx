@@ -17,6 +17,7 @@ type BackorderItem = {
         sku: string
         name: string
         brand: string
+        category: string
     }
     invoice: {
         id: string
@@ -167,7 +168,7 @@ export default function BackordersPage() {
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <h3 className="text-base font-medium text-gray-900">
-                                            {group.product.brand} {group.product.name}
+                                            {group.product.brand} {group.product.name} ({group.product.category})
                                         </h3>
                                         <p className="text-sm text-gray-500">
                                             SKU: {group.product.sku} | Total Pending: {group.totalPending} units
@@ -253,7 +254,7 @@ export default function BackordersPage() {
             {selectedBackorder && (
                 <BackorderAllocation
                     backorderId={selectedBackorder.id}
-                    productName={`${selectedBackorder.product.brand} ${selectedBackorder.product.name}`}
+                    productName={`${selectedBackorder.product.brand} ${selectedBackorder.product.name} (${selectedBackorder.product.category})`}
                     quantityPending={selectedBackorder.quantityOrdered - selectedBackorder.quantityFulfilled}
                     onSuccess={handleAllocationSuccess}
                     onCancel={() => setSelectedBackorder(null)}

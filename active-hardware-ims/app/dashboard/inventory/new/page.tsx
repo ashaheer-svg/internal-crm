@@ -20,6 +20,7 @@ export default function NewProductPage() {
             sku: formData.get("sku"),
             name: formData.get("name"),
             brand: formData.get("brand"),
+            category: formData.get("category"),
             model: formData.get("model"),
             description: formData.get("description"),
             minStock: formData.get("minStock"),

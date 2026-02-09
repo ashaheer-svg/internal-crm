@@ -10,6 +10,7 @@ type Product = {
     sku: string
     name: string
     brand: string
+    category: string
 }
 
 type POItem = {
@@ -197,7 +198,7 @@ export default function NewPurchaseOrderPage() {
                                         >
                                             <option value="">Select product...</option>
                                             {products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.sku} - {p.name}</option>
+                                                <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
                                             ))}
                                         </select>
                                     </div>

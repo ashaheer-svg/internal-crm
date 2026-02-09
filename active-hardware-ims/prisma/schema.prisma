@@ -77,6 +77,7 @@ model Product {
   name        String
   description String?
   brand       String
+  category    String   @default("General")
   model       String
   minStock    Int      @default(0)
   warrantyMonths Int   @default(0)
@@ -264,4 +265,12 @@ model TransactionLog {
   performedBy     String?  // User who performed the action
   notes           String?
   createdAt       DateTime @default(now())
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -14,6 +14,7 @@ type Product = {
     sku: string
     name: string
     brand: string
+    category: string
     model: string
     description: string | null
     minStock: number
@@ -31,6 +32,7 @@ export default function EditProductPage({ params }: PageProps) {
         sku: "",
         name: "",
         brand: "",
+        category: "General",
         model: "",
         description: "",
         minStock: 0,
@@ -137,6 +139,23 @@ export default function EditProductPage({ params }: PageProps) {
                                 required
                                 value={formData.brand}
                                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                            Category *
+                        </label>
+                        <div className="mt-1">
+                            <input
+                                type="text"
+                                name="category"
+                                id="category"
+                                required
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                             />
                         </div>

@@ -134,6 +134,7 @@ export async function POST(request: Request) {
                         sku: row.sku,
                         name: row.name,
                         brand: row.brand,
+                        category: row.category || 'General',
                         model: row.model,
                         description: row.description || null,
                         minStock,
@@ -185,8 +186,8 @@ export async function GET() {
     try {
         await requireRole(['ADMIN'])
 
-        const template = `sku,name,brand,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
-SAMPLE001,Sample Product 1,Brand A,Model X,High quality product,10,12,45.00,50.00
+        const template = `sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
+SAMPLE001,Sample Product 1,Brand A,Electronics,Model X,High quality product,10,12,45.00,50.00
 SAMPLE002,Sample Product 2,Brand B,Model Y,Durable hardware,5,24,90.00,100.00
 SAMPLE003,Sample Product 3,Brand C,Model Z,Premium item,15,36,180.00,200.00`
 

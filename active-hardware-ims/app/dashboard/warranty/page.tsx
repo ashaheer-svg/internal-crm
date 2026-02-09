@@ -14,15 +14,15 @@ type WarrantyClaim = {
     inventoryItem: {
         id: string
         serialNumber: string
-        product: {
-            name: string
-            brand: string
-            model: string
-        }
-        location: {
-            name: string
-        }
+        name: string
+        brand: string
+        category: string
+        model: string
     }
+    location: {
+        name: string
+    }
+}
 }
 
 export default function WarrantyPage() {
@@ -208,7 +208,7 @@ export default function WarrantyPage() {
                                     {claim.customerName}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {claim.inventoryItem.product.brand} {claim.inventoryItem.product.name}
+                                    {claim.inventoryItem.product.brand} {claim.inventoryItem.product.name} ({claim.inventoryItem.product.category})
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {claim.inventoryItem.serialNumber}

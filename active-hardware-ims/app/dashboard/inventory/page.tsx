@@ -9,6 +9,7 @@ type Product = {
     sku: string
     name: string
     brand: string
+    category: string
     model: string
     _count: {
         inventory: number
@@ -31,6 +32,7 @@ export default function InventoryPage() {
         // Filter products based on search term
         const filtered = products.filter(product =>
             product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.sku.toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,7 +103,7 @@ export default function InventoryPage() {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search by brand, model, name, or SKU..."
+                        placeholder="Search by brand, category, model, name, or SKU..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -123,6 +125,7 @@ export default function InventoryPage() {
                                         <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">SKU</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Product Name</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Brand</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Model</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total Stock</th>
                                         <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -136,6 +139,7 @@ export default function InventoryPage() {
                                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{product.sku}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.name}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.brand}</td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.category}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.model}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 font-bold">
                                                 {product._count.inventory}
@@ -217,8 +221,8 @@ export default function InventoryPage() {
                                             key={pageNum}
                                             onClick={() => goToPage(pageNum)}
                                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === pageNum
-                                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                                 }`}
                                         >
                                             {pageNum}

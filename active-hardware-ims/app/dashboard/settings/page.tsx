@@ -49,6 +49,12 @@ const settingsLinks = [
         href: "/dashboard/reports",
         icon: FileText,
         description: "Configure and generate reports"
+    },
+    {
+        name: "Categories",
+        href: "/dashboard/settings/categories",
+        icon: FileText, // You might want to import a specific icon like 'Tag' or 'List'
+        description: "Manage product categories"
     }
 ]
 

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { sku, name, brand, model, description, minStock, warrantyMonths } = body
+        const { sku, name, brand, category, model, description, minStock, warrantyMonths } = body
 
         // Basic validation
         if (!sku || !name || !brand) {
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
                 sku,
                 name,
                 brand,
+                category: category || 'General',
                 model: model || '',
                 description,
                 minStock: Number(minStock) || 0,
