@@ -20,8 +20,16 @@ export async function GET() {
         }
 
         // 2. Check database file
-        const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './prisma/prod.db'
-        const fullDbPath = path.join(process.cwd(), dbPath)
+        let dbPath = process.env.DATABASE_URL?.replace('file:', '') || './prisma/prod.db'
+
+        // Handle potential query parameters in connection string (e.g. ?connection_limit=1)
+        if (dbPath.includes('?')) {
+            dbPath = dbPath.split('?')[0]
+        }
+
+        const fullDbPath = path.isAbsolute(dbPath)
+            ? dbPath
+            : path.join(process.cwd(), dbPath)
         diagnostics.checks.database = {
             path: fullDbPath,
             exists: fs.existsSync(fullDbPath),
