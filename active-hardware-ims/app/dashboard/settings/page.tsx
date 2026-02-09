@@ -55,6 +55,12 @@ const settingsLinks = [
         href: "/dashboard/settings/categories",
         icon: FileText, // You might want to import a specific icon like 'Tag' or 'List'
         description: "Manage product categories"
+    },
+    {
+        name: "Cost Adjustment",
+        href: "/dashboard/settings/cost-adjustment",
+        icon: Upload, // Reusing Upload icon for now, or could use DollarSign if imported
+        description: "Edit inventory costs by GRN and Model"
     }
 ]
 

@@ -14,6 +14,8 @@ export default function AddInventoryForm({ productId, locations }: Props) {
     const [loading, setLoading] = useState(false)
     const [serialInput, setSerialInput] = useState("")
     const [locationId, setLocationId] = useState(locations[0]?.id || "")
+    const [grnNumber, setGrnNumber] = useState("")
+    const [supplier, setSupplier] = useState("")
     const [unitCost, setUnitCost] = useState("")
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
@@ -32,6 +34,16 @@ export default function AddInventoryForm({ productId, locations }: Props) {
         e.preventDefault()
         if (!locationId) {
             setError("Please select a location first")
+            return
+        }
+
+        if (!grnNumber) {
+            setError("Please enter a GRN Number")
+            return
+        }
+
+        if (!supplier) {
+            setError("Please enter a Supplier")
             return
         }
 
@@ -58,7 +70,9 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                             productId,
                             serialNumber: serial,
                             locationId,
-                            unitCost: unitCost ? Number(unitCost) : 0
+                            unitCost: unitCost ? Number(unitCost) : 0,
+                            grnNumber,
+                            supplier
                         }),
                     })
 
@@ -128,6 +142,33 @@ export default function AddInventoryForm({ productId, locations }: Props) {
             </div>
 
             <div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">GRN Number *</label>
+                        <input
+                            type="text"
+                            required
+                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                            placeholder="e.g. GRN-2024-001"
+                            value={grnNumber}
+                            onChange={(e) => setGrnNumber(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
+                        <input
+                            type="text"
+                            required
+                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                            placeholder="e.g. Tech Distributor Inc."
+                            value={supplier}
+                            onChange={(e) => setSupplier(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Receive At Location *</label>
                 <select
                     required
@@ -162,7 +203,7 @@ export default function AddInventoryForm({ productId, locations }: Props) {
 
             <button
                 type="submit"
-                disabled={loading || locations.length === 0 || serialNumbers.length === 0}
+                disabled={loading || locations.length === 0 || serialNumbers.length === 0 || !grnNumber || !supplier}
                 className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
                 <Plus className="w-4 h-4 mr-2" />
