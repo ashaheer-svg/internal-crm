@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
-import { v4 as uuidv4 } from 'uuid' // Check if uuid is available, else use crypto
+
 
 export async function GET() {
     try {
