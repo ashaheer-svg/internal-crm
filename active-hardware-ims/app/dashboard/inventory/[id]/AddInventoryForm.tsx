@@ -1,12 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus } from "lucide-react"
+import { Plus, RefreshCw, FileText } from "lucide-react"
 
 type Props = {
     productId: string
     locations: { id: string, name: string }[]
+}
+
+type PurchaseOrder = {
+    id: string
+    poNumber: string
+    supplier: string
+    items: {
+        productId: string
+        quantity: number
+        receivedQty: number
+        unitCost: number
+    }[]
 }
 
 export default function AddInventoryForm({ productId, locations }: Props) {
@@ -17,8 +29,62 @@ export default function AddInventoryForm({ productId, locations }: Props) {
     const [grnNumber, setGrnNumber] = useState("")
     const [supplier, setSupplier] = useState("")
     const [unitCost, setUnitCost] = useState("")
+
+    // PO Selection
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
+    const [selectedPoId, setSelectedPoId] = useState("")
+
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
+    const [isLoadingData, setIsLoadingData] = useState(true)
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                // 1. Fetch Next GRN Number
+                const seqRes = await fetch("/api/sequences", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type: "GRN" }) // Not consuming, just previewing
+                })
+                if (seqRes.ok) {
+                    const data = await seqRes.json()
+                    setGrnNumber(data.number)
+                }
+
+                // 2. Fetch POs for this product
+                const poRes = await fetch(`/api/purchase-orders?productId=${productId}&status=DRAFT,PARTIAL`)
+                if (poRes.ok) {
+                    const data = await poRes.json()
+                    // Filter locally for active POs if API doesn't fully support all filters yet
+                    setPurchaseOrders(data)
+                }
+            } catch (e) {
+                console.error("Failed to load initial data", e)
+            } finally {
+                setIsLoadingData(false)
+            }
+        }
+        loadData()
+    }, [productId])
+
+    function handlePoSelect(poId: string) {
+        setSelectedPoId(poId)
+        if (!poId) {
+            setSupplier("")
+            setUnitCost("")
+            return
+        }
+
+        const po = purchaseOrders.find(p => p.id === poId)
+        if (po) {
+            setSupplier(po.supplier)
+            const item = po.items.find(i => i.productId === productId)
+            if (item) {
+                setUnitCost(item.unitCost.toString())
+            }
+        }
+    }
 
     // Parse serial numbers from input
     function parseSerialNumbers(input: string): string[] {
@@ -72,7 +138,8 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                             locationId,
                             unitCost: unitCost ? Number(unitCost) : 0,
                             grnNumber,
-                            supplier
+                            supplier,
+                            purchaseOrderId: selectedPoId || undefined
                         }),
                     })
 
@@ -91,7 +158,7 @@ export default function AddInventoryForm({ productId, locations }: Props) {
             if (successCount > 0) {
                 setSuccess(`✓ Successfully added ${successCount} item(s) to stock`)
                 setSerialInput("")
-                setUnitCost("")
+                // Don't clear unit cost or supplier as they might be adding more from same batch
                 router.refresh()
             }
 
@@ -141,18 +208,55 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                 </p>
             </div>
 
-            <div>
+            <div className="bg-gray-50 p-4 rounded-md border border-gray-200 space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Link to Purchase Order (Optional)</label>
+                    <div className="relative">
+                        <select
+                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm pl-9"
+                            value={selectedPoId}
+                            onChange={(e) => handlePoSelect(e.target.value)}
+                            disabled={isLoadingData}
+                        >
+                            <option value="">-- Select PO --</option>
+                            {purchaseOrders.map(po => {
+                                const item = po.items.find(i => i.productId === productId)
+                                const remaining = item ? item.quantity - item.receivedQty : 0
+                                return (
+                                    <option key={po.id} value={po.id}>
+                                        {po.poNumber} - {po.supplier} (Remaining: {remaining})
+                                    </option>
+                                )
+                            })}
+                        </select>
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <FileText className="h-4 w-4 text-gray-400" />
+                        </div>
+                    </div>
+                    {isLoadingData && <p className="text-xs text-gray-500 mt-1">Loading POs...</p>}
+                </div>
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">GRN Number *</label>
-                        <input
-                            type="text"
-                            required
-                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            placeholder="e.g. GRN-2024-001"
-                            value={grnNumber}
-                            onChange={(e) => setGrnNumber(e.target.value)}
-                        />
+                        <div className="flex">
+                            <input
+                                type="text"
+                                required
+                                className="block w-full rounded-l-md border-gray-300 shadow-sm border p-2 text-sm"
+                                placeholder="e.g. GRN-YYMM-0001"
+                                value={grnNumber}
+                                onChange={(e) => setGrnNumber(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {/* Logic to refresh if needed, usually on load is enough */ }}
+                                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm"
+                                title="Auto-generated based on sequence"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>

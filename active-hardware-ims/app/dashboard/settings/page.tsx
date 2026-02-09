@@ -61,6 +61,12 @@ const settingsLinks = [
         href: "/dashboard/settings/cost-adjustment",
         icon: Upload, // Reusing Upload icon for now, or could use DollarSign if imported
         description: "Edit inventory costs by GRN and Model"
+    },
+    {
+        name: "Document Sequences",
+        href: "/dashboard/settings/sequences",
+        icon: ScrollText,
+        description: "Manage PO and GRN running numbers"
     }
 ]
 

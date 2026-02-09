@@ -274,3 +274,11 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Sequence {
+  id            String   @id // "PO", "GRN"
+  nextNumber    Int      @default(1)
+  lastYearMonth String?  // "YYMM" to track month changes
+  prefix        String   // "PO-", "GRN-"
+  updatedAt     DateTime @updatedAt
+}

@@ -129,9 +129,15 @@ export default function TransactionsPage() {
                                                         <Package className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                                                         {po.supplier}
                                                     </p>
-                                                    <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                                                        {po.items.length} item(s)
-                                                    </p>
+                                                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                                        <span>{po.items.length} item(s)</span>
+                                                        {po.status !== 'DRAFT' && po.status !== 'CANCELLED' && (
+                                                            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
+                                                                {po.items.reduce((acc: number, i: any) => acc + (i.receivedQty || 0), 0)} /
+                                                                {po.items.reduce((acc: number, i: any) => acc + i.quantity, 0)} received
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                                                     <p className="font-semibold text-gray-900">

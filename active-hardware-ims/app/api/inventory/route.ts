@@ -7,44 +7,42 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { productId, serialNumber, locationId, unitCost, grnNumber, supplier } = body
+        const { productId, serialNumber, locationId, unitCost, grnNumber, supplier, purchaseOrderId } = body
 
         // Validation
         if (!productId || !serialNumber || !locationId || !grnNumber || !supplier) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        // Check for duplicate serial
-        const existing = await prisma.inventoryItem.findUnique({
-            where: { serialNumber }
-        })
-
-        if (existing) {
-            return NextResponse.json({ error: 'Serial number already exists' }, { status: 409 })
-        }
-
-        // Fetch product to get warranty period
-        const product = await prisma.product.findUnique({
-            where: { id: productId },
-            select: { warrantyMonths: true }
-        })
-
-        // Calculate warranty expiry date
-        let warrantyExpiry: Date | null = null
-        if (product && product.warrantyMonths > 0) {
-            warrantyExpiry = new Date()
-            warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
-        }
-
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Find or create the GRN
-            // We use upsert if we want to update, but usually finding first is safer for logic if we want to validate supplier matches etc.
-            // For simplicity, let's treat GRN number as unique identifier.
+            // 1. Check if serial already exists
+            const existingItem = await tx.inventoryItem.findUnique({
+                where: { serialNumber }
+            })
+
+            if (existingItem) {
+                throw new Error(`Serial number ${serialNumber} already exists`)
+            }
+
+            // 2. Handle GRN Logic
             let grn = await tx.goodsReceiptNote.findUnique({
                 where: { grnNumber }
             })
 
             if (!grn) {
+                // Check if this is a new GRN from sequence to consume it
+                const sequence = await tx.sequence.findUnique({ where: { id: 'GRN' } })
+                if (sequence) {
+                    const expectedGrn = `${sequence.prefix}${sequence.lastYearMonth}-${sequence.nextNumber.toString().padStart(4, '0')}`
+                    if (grnNumber === expectedGrn) {
+                        // Increment sequence
+                        await tx.sequence.update({
+                            where: { id: 'GRN' },
+                            data: { nextNumber: sequence.nextNumber + 1 }
+                        })
+                    }
+                }
+
                 grn = await tx.goodsReceiptNote.create({
                     data: {
                         grnNumber,
@@ -55,32 +53,47 @@ export async function POST(request: Request) {
                 })
             }
 
-            // 2. Create GRN Item (record of this specific addition)
-            // Even if adding 1 by 1, we record it.
+            // 3. Create GRN Item
             await tx.gRNItem.create({
                 data: {
                     grnId: grn.id,
                     productId,
                     serialNumbers: serialNumber,
                     quantity: 1,
-                    unitCost: unitCost ? Number(unitCost) : 0,
+                    unitCost: Number(unitCost) || 0,
                     locationId
                 }
             })
 
-            // 3. Create Inventory Item
+            // Fetch product to get warranty period
+            const product = await tx.product.findUnique({
+                where: { id: productId },
+                select: { warrantyMonths: true }
+            })
+
+            let warrantyExpiry: Date | null = null
+            if (product && product.warrantyMonths > 0) {
+                warrantyExpiry = new Date()
+                warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
+            }
+
+            // 4. Create Inventory Item
             const item = await tx.inventoryItem.create({
                 data: {
-                    productId,
                     serialNumber,
+                    productId,
                     locationId,
+                    unitCost: Number(unitCost) || 0,
                     status: 'AVAILABLE',
-                    unitCost: unitCost ? Number(unitCost) : 0,
-                    warrantyExpiry: warrantyExpiry
+                    warrantyExpiry
+                },
+                include: {
+                    product: true,
+                    location: true
                 }
             })
 
-            // 4. Log Transaction
+            // 5. Log Transaction
             await tx.transactionLog.create({
                 data: {
                     type: 'RECEIPT',
@@ -89,19 +102,75 @@ export async function POST(request: Request) {
                     productId,
                     serialNumber,
                     quantity: 1,
-                    toLocation: locationId,
-                    unitCost: unitCost ? Number(unitCost) : 0,
+                    toLocation: item.location.name,
+                    unitCost: Number(unitCost),
                     performedBy: user.name,
-                    notes: `Added via Inventory Page - GRN: ${grnNumber}`
+                    notes: `Received via GRN ${grnNumber}`
                 }
             })
 
-            // 5. Log audit (only if needed, but transaction log covers most)
+            // 6. Handle PO Fulfillment if linked
+            if (purchaseOrderId) {
+                // Find the PO item for this product
+                const poItem = await tx.purchaseOrderItem.findFirst({
+                    where: {
+                        purchaseOrderId,
+                        productId
+                    }
+                })
+
+                if (poItem) {
+                    // Update received quantity
+                    await tx.purchaseOrderItem.update({
+                        where: { id: poItem.id },
+                        data: {
+                            receivedQty: { increment: 1 }
+                        }
+                    })
+
+                    // Check PO status
+                    const po = await tx.purchaseOrder.findUnique({
+                        where: { id: purchaseOrderId },
+                        include: { items: true }
+                    })
+
+                    if (po) {
+                        const allReceived = po.items.every(item => item.receivedQty >= item.quantity)
+
+                        let newStatus = po.status
+                        if (allReceived) {
+                            newStatus = 'RECEIVED'
+                        } else if (po.status === 'DRAFT') {
+                            newStatus = 'SUBMITTED'
+                        } else if (po.items.some(i => i.receivedQty > 0)) {
+                            newStatus = 'PARTIAL'
+                        }
+
+                        // Link GRN to PO if not already
+                        if (!grn.poReference) {
+                            await tx.goodsReceiptNote.update({
+                                where: { id: grn.id },
+                                data: { poReference: po.poNumber }
+                            })
+                        }
+
+                        if (newStatus !== po.status) {
+                            await tx.purchaseOrder.update({
+                                where: { id: purchaseOrderId },
+                                data: { status: newStatus }
+                            })
+                        }
+                    }
+                }
+            }
+
+            // Log audit
             await logCreate('INVENTORY', item.id, user.id, user.name, {
                 serialNumber: item.serialNumber,
                 productId: item.productId,
                 status: item.status,
-                grn: grnNumber
+                grn: grnNumber,
+                po: purchaseOrderId
             })
 
             return item
@@ -110,7 +179,7 @@ export async function POST(request: Request) {
         return NextResponse.json(result)
     } catch (error: any) {
         return NextResponse.json(
-            { error: error.message || 'Failed to add inventory item' },
+            { error: error.message || 'Failed to add inventory' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
         )
     }
