@@ -13,7 +13,7 @@ export function Currency({ amount, className }: CurrencyProps) {
     // We use a fixed minimum width to ensure "room"
 
     return (
-        <div className={cn("inline-block text-right font-mono tabular-nums min-w-[12rem] whitespace-nowrap", className)}>
+        <div className={cn("inline-block text-right tabular-nums whitespace-nowrap overflow-hidden text-ellipsis max-w-full", className)}>
             {formatCurrency(amount)}
         </div>
     )
