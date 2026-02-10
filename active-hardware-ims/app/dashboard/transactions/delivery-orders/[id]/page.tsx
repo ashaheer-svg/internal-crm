@@ -226,7 +226,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
                 <div className="flex items-center gap-3">
                     <Link
-                        href={`/dashboard/transactions/delivery-orders/${id}/print`}
+                        href={`/print/delivery-orders/${id}`}
                         target="_blank"
                         className="px-4 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md shadow-sm flex items-center gap-2"
                     >

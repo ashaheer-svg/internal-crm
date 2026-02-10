@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
+import { Metadata } from "next"
+import PrintButton from "@/components/PrintButton"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -17,6 +19,14 @@ async function getOrder(id: string) {
             }
         }
     })
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { id } = await params
+    const order = await getOrder(id)
+    return {
+        title: order ? `Packing Slip - ${order.orderNumber}` : 'Packing Slip',
+    }
 }
 
 export default async function PrintDeliveryOrderPage({ params }: PageProps) {
@@ -40,21 +50,18 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
         notFound()
     }
 
-    // Calculate totals for summary (though prices are usually hidden on packing slips, 
-    // sometimes they are needed. We will HIDE prices for now as it is a packing slip).
-
     return (
-        <html>
-            <head>
-                <title>Packing Slip - {order.orderNumber}</title>
-                <style>{`
+        <div className="min-h-screen bg-white text-black p-8">
+            <style>{`
           @media print {
-            body { margin: 0; }
-            .no-print { display: none; }
+            body { margin: 0; padding: 0; background: white; }
+            .no-print { display: none !important; }
+            /* Hide web layout elements if they leak through (though usually they won't if outside dashboard layout) */
+            nav, header, footer, aside, .sidebar { display: none !important; }
           }
-          body {
+          /* Custom Print Styles */
+          .print-container {
             font-family: Arial, sans-serif;
-            padding: 40px;
             max-width: 800px;
             margin: 0 auto;
             color: #333;
@@ -145,13 +152,17 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             cursor: pointer;
             font-size: 14px;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .print-button:hover {
+            background-color: #2563eb;
           }
         `}</style>
-            </head>
-            <body>
-                <button className="print-button no-print" onClick={() => window.print()}>
-                    Print Packing Slip
-                </button>
+
+            <div className="print-container">
+                <PrintButton />
 
                 <div className="header">
                     <div>
@@ -206,7 +217,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {order.items.map((item) => {
+                        {order.items.map((item: any) => {
                             const shippedQty = item.reservedItems.length
                             return (
                                 <tr key={item.id}>
@@ -219,7 +230,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                                     <td>
                                         {item.reservedItems.length > 0 ? (
                                             <div style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
-                                                {item.reservedItems.map(i => i.serialNumber).join(', ')}
+                                                {item.reservedItems.map((i: any) => i.serialNumber).join(', ')}
                                             </div>
                                         ) : (
                                             <span style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>Pending Allocation</span>
@@ -243,8 +254,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                 <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
                     Generated on {new Date().toLocaleString()}
                 </div>
-
-            </body>
-        </html>
+            </div>
+        </div>
     )
 }
