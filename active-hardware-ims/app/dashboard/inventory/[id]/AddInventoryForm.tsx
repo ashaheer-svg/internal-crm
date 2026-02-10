@@ -135,48 +135,32 @@ export default function AddInventoryForm({ productId, locations }: Props) {
         setSuccess("")
 
         try {
-            let successCount = 0
-            let failedSerials: string[] = []
+            const res = await fetch("/api/inventory", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    productId,
+                    serialNumbers, // Send array of serials
+                    locationId,
+                    unitCost: unitCost ? Number(unitCost) : 0,
+                    grnNumber,
+                    supplier,
+                    purchaseOrderId: selectedPoId || undefined
+                }),
+            })
 
-            // Add each serial number individually
-            for (const serial of serialNumbers) {
-                try {
-                    const res = await fetch("/api/inventory", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            productId,
-                            serialNumber: serial,
-                            locationId,
-                            unitCost: unitCost ? Number(unitCost) : 0,
-                            grnNumber,
-                            supplier,
-                            purchaseOrderId: selectedPoId || undefined
-                        }),
-                    })
+            const json = await res.json()
 
-                    if (!res.ok) {
-                        const json = await res.json()
-                        failedSerials.push(`${serial}: ${json.error}`)
-                    } else {
-                        successCount++
-                    }
-                } catch (e) {
-                    failedSerials.push(`${serial}: Network error`)
-                }
-            }
-
-            // Show results
-            if (successCount > 0) {
-                setSuccess(`✓ Successfully added ${successCount} item(s) to stock`)
+            if (!res.ok) {
+                // Handle potential bulk error or specific validation error
+                setError(json.error || "Failed to add items")
+            } else {
+                setSuccess(`✓ Successfully added ${json.count} item(s) to stock`)
                 setSerialInput("")
                 // Don't clear unit cost or supplier as they might be adding more from same batch
                 router.refresh()
             }
 
-            if (failedSerials.length > 0) {
-                setError(`Failed to add ${failedSerials.length} item(s):\n${failedSerials.join('\n')}`)
-            }
         } catch (e) {
             setError(e instanceof Error ? e.message : "Error adding items")
         } finally {

@@ -7,24 +7,29 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { productId, serialNumber, locationId, unitCost, grnNumber, supplier, purchaseOrderId } = body
+        const { productId, serialNumber, serialNumbers, locationId, unitCost, grnNumber, supplier, purchaseOrderId } = body
+
+        // Normalize serial numbers to array
+        const serials: string[] = serialNumbers || (serialNumber ? [serialNumber] : [])
 
         // Validation
-        if (!productId || !serialNumber || !locationId || !grnNumber || !supplier) {
+        if (!productId || serials.length === 0 || !locationId || !grnNumber || !supplier) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Check if serial already exists
-            const existingItem = await tx.inventoryItem.findUnique({
-                where: { serialNumber }
+            // 1. Check if ANY serial already exists
+            const existingItems = await tx.inventoryItem.findMany({
+                where: { serialNumber: { in: serials } },
+                select: { serialNumber: true }
             })
 
-            if (existingItem) {
-                throw new Error(`Serial number ${serialNumber} already exists`)
+            if (existingItems.length > 0) {
+                const existingSerials = existingItems.map(i => i.serialNumber).join(', ')
+                throw new Error(`Serial numbers already exist: ${existingSerials}`)
             }
 
-            // 2. Handle GRN Logic
+            // 2. Handle GRN Logic (Find or Create)
             let grn = await tx.goodsReceiptNote.findUnique({
                 where: { grnNumber }
             })
@@ -53,16 +58,16 @@ export async function POST(request: Request) {
                 })
             }
 
-            // 3. Create GRN Item
-            await tx.gRNItem.create({
-                data: {
+            // 3. Create GRN Items (Bulk)
+            await tx.gRNItem.createMany({
+                data: serials.map(serial => ({
                     grnId: grn.id,
                     productId,
-                    serialNumbers: serialNumber,
+                    serialNumbers: serial,
                     quantity: 1,
                     unitCost: Number(unitCost) || 0,
                     locationId
-                }
+                }))
             })
 
             // Fetch product to get warranty period
@@ -77,36 +82,38 @@ export async function POST(request: Request) {
                 warrantyExpiry.setMonth(warrantyExpiry.getMonth() + product.warrantyMonths)
             }
 
-            // 4. Create Inventory Item
-            const item = await tx.inventoryItem.create({
-                data: {
-                    serialNumber,
+            // 4. Create Inventory Items (Bulk)
+            await tx.inventoryItem.createMany({
+                data: serials.map(serial => ({
+                    serialNumber: serial,
                     productId,
                     locationId,
                     unitCost: Number(unitCost) || 0,
                     status: 'AVAILABLE',
                     warrantyExpiry
-                },
-                include: {
-                    product: true,
-                    location: true
-                }
+                }))
             })
 
-            // 5. Log Transaction
-            await tx.transactionLog.create({
-                data: {
+            // 5. Log Transactions (Bulk - manual loop because TransactionLog might accept extra fields not in createMany or just to be safe with timestamps)
+            // Actually createMany is safer for performance.
+            // TransactionLog schema: type, referenceType, referenceId, productId, serialNumber, quantity, toLocation, unitCost, performedBy, notes
+
+            // Need location name for logging
+            const location = await tx.location.findUnique({ where: { id: locationId }, select: { name: true } })
+
+            await tx.transactionLog.createMany({
+                data: serials.map(serial => ({
                     type: 'RECEIPT',
                     referenceType: 'GRN',
                     referenceId: grn.id,
                     productId,
-                    serialNumber,
+                    serialNumber: serial,
                     quantity: 1,
-                    toLocation: item.location.name,
+                    toLocation: location?.name || 'Unknown',
                     unitCost: Number(unitCost),
                     performedBy: user.name,
                     notes: `Received via GRN ${grnNumber}`
-                }
+                }))
             })
 
             // 6. Handle PO Fulfillment if linked
@@ -120,11 +127,11 @@ export async function POST(request: Request) {
                 })
 
                 if (poItem) {
-                    // Update received quantity
+                    // Update received quantity (Bulk increment)
                     await tx.purchaseOrderItem.update({
                         where: { id: poItem.id },
                         data: {
-                            receivedQty: { increment: 1 }
+                            receivedQty: { increment: serials.length }
                         }
                     })
 
@@ -164,16 +171,37 @@ export async function POST(request: Request) {
                 }
             }
 
-            // Log audit
-            await logCreate('INVENTORY', item.id, user.id, user.name, {
-                serialNumber: item.serialNumber,
-                productId: item.productId,
-                status: item.status,
-                grn: grnNumber,
-                po: purchaseOrderId
+            // Log audit (Bulk - manually loop as AuditLog usually needs to be detailed)
+            // Or just log one summary 'BULK_RECEIPT'?
+            // Providing detailed logs for 100 items might be too much for the audit log table if done individually via library.
+            // But for consistency let's try to map it or just log a summary.
+            // The library `logCreate` does one at a time.
+            // Let's create a "BATCH" log or just loop. Loop 100 times is fine inside a transaction for simple inserts.
+            // But to be faster, let's just log one action saying "Added X items".
+            // However, audit logs are often used to trace specific serials.
+            // Let's use `createMany` for audit logs too if possible.
+            // AuditLog model has `entityId`, `entityType`, `action`.
+
+            await tx.auditLog.createMany({
+                data: serials.map(serial => ({
+                    action: 'CREATE',
+                    entityType: 'INVENTORY',
+                    // We don't have the new IDs here because createMany doesn't return them in SQLite/Postgres efficiently seamlessly in Prisma 
+                    // BUT we know serialNumber is unique.
+                    // Ideally entityId should be the ID, but for Inventory, Serial Number is a good proxy or we query them back.
+                    // Querying back 100 items might be slow.
+                    // Let's use Serial Number as entityId in the log or just leave it null and put it in metadata?
+                    // The schema says entityId is String?.
+                    // Let's skip mapping ID for now and just log the event.
+                    // OR better:
+                    // Log one big entry: "Bulk Receive"
+                    userId: user.id,
+                    userName: user.name,
+                    changes: JSON.stringify({ after: { serialNumber: serial, productId, grn: grnNumber } })
+                }))
             })
 
-            return item
+            return { count: serials.length, message: 'Success' }
         })
 
         return NextResponse.json(result)

@@ -23,11 +23,12 @@ export default function InventoryPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
+    const [showInactive, setShowInactive] = useState(false)
     const itemsPerPage = 20
 
     useEffect(() => {
         fetchProducts()
-    }, [])
+    }, [showInactive])
 
     useEffect(() => {
         // Filter products based on search term
@@ -44,7 +45,7 @@ export default function InventoryPage() {
 
     async function fetchProducts() {
         try {
-            const url = '/api/products'
+            const url = showInactive ? '/api/products?includeInactive=true' : '/api/products'
             const res = await fetch(url)
 
             if (!res.ok) {
@@ -83,6 +84,18 @@ export default function InventoryPage() {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inventory Management</h1>
+                <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={showInactive}
+                            onChange={(e) => setShowInactive(e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ms-3 text-sm font-medium text-gray-700">Show Inactive</span>
+                    </label>
+                </div>
                 <div className="flex items-center gap-2">
                     <Link
                         href="/dashboard/inventory/price-list"
