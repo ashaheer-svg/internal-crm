@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db"
 import Link from "next/link"
-import { ArrowLeft, Printer, Package } from "lucide-react"
+import { ArrowLeft, Printer, Package, Edit } from "lucide-react"
 import { notFound } from "next/navigation"
 
 interface PageProps {
@@ -40,14 +40,23 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                         <p className="text-sm text-gray-500">Purchase Order</p>
                     </div>
                 </div>
-                <Link
-                    href={`/dashboard/transactions/purchase-orders/${po.id}/print`}
-                    target="_blank"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print
-                </Link>
+                <div className="flex gap-3">
+                    <Link
+                        href={`/dashboard/transactions/purchase-orders/${po.id}/edit`}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                    </Link>
+                    <Link
+                        href={`/dashboard/transactions/purchase-orders/${po.id}/print`}
+                        target="_blank"
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                    </Link>
+                </div>
             </div>
 
             {/* PO Details */}
@@ -132,20 +141,22 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
             </div>
 
             {/* Receive Stock Section */}
-            {po.status !== 'RECEIVED' && po.status !== 'CANCELLED' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start">
-                        <Package className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-                        <div className="flex-1">
-                            <h3 className="text-sm font-medium text-blue-900">Ready to receive stock?</h3>
-                            <p className="mt-1 text-sm text-blue-700">
-                                Go to the Inventory page for each product and add items with serial numbers using the "Add Inventory" form.
-                                Enter the unit cost from this PO when adding stock.
-                            </p>
+            {
+                po.status !== 'RECEIVED' && po.status !== 'CANCELLED' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start">
+                            <Package className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                            <div className="flex-1">
+                                <h3 className="text-sm font-medium text-blue-900">Ready to receive stock?</h3>
+                                <p className="mt-1 text-sm text-blue-700">
+                                    Go to the Inventory page for each product and add items with serial numbers using the "Add Inventory" form.
+                                    Enter the unit cost from this PO when adding stock.
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

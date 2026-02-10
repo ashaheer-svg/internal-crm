@@ -129,14 +129,18 @@ export default function TransactionsPage() {
                                                         <Package className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                                                         {po.supplier}
                                                     </p>
-                                                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                                                        <span>{po.items.length} item(s)</span>
-                                                        {po.status !== 'DRAFT' && po.status !== 'CANCELLED' && (
-                                                            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                                                                {po.items.reduce((acc: number, i: any) => acc + (i.receivedQty || 0), 0)} /
-                                                                {po.items.reduce((acc: number, i: any) => acc + i.quantity, 0)} received
-                                                            </span>
-                                                        )}
+                                                    <div className="mt-2 flex flex-col gap-1 text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                                        {po.items.map((item: any) => (
+                                                            <div key={item.id} className="flex items-center gap-2">
+                                                                <span className="font-medium text-gray-900">{item.product.model || item.product.name}</span>
+                                                                <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                                    {po.status === 'DRAFT' ?
+                                                                        `Qty: ${item.quantity}` :
+                                                                        `${item.receivedQty} / ${item.quantity}`
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">

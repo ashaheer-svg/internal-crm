@@ -130,6 +130,19 @@ export default function AddInventoryForm({ productId, locations }: Props) {
             return
         }
 
+        if (selectedPoId) {
+            const po = purchaseOrders.find(p => p.id === selectedPoId)
+            const item = po?.items.find(i => i.productId === productId)
+
+            if (item) {
+                const remaining = item.quantity - item.receivedQty
+                if (serialNumbers.length > remaining) {
+                    setError(`Cannot add ${serialNumbers.length} items. Only ${remaining} remaining in this Purchase Order.`)
+                    return
+                }
+            }
+        }
+
         setLoading(true)
         setError("")
         setSuccess("")
@@ -218,9 +231,13 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                             {purchaseOrders.map(po => {
                                 const item = po.items.find(i => i.productId === productId)
                                 const remaining = item ? item.quantity - item.receivedQty : 0
+
+                                // Don't show fully received POs unless it's the currently selected one (edge case)
+                                if (remaining <= 0 && po.id !== selectedPoId) return null
+
                                 return (
                                     <option key={po.id} value={po.id}>
-                                        {po.poNumber} - {po.supplier} (Remaining: {remaining})
+                                        {po.poNumber} - {po.supplier} (Remaining: {remaining} / {item?.quantity})
                                     </option>
                                 )
                             })}
