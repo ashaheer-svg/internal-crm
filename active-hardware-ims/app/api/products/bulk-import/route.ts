@@ -188,8 +188,8 @@ export async function GET() {
 
         const template = `sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
 SAMPLE001,Sample Product 1,Brand A,Electronics,Model X,High quality product,10,12,45.00,50.00
-SAMPLE002,Sample Product 2,Brand B,Model Y,Durable hardware,5,24,90.00,100.00
-SAMPLE003,Sample Product 3,Brand C,Model Z,Premium item,15,36,180.00,200.00`
+SAMPLE002,Sample Product 2,Brand B,General,Model Y,Durable hardware,5,24,90.00,100.00
+SAMPLE003,Sample Product 3,Brand C,General,Model Z,Premium item,15,36,180.00,200.00`
 
         return new NextResponse(template, {
             headers: {
