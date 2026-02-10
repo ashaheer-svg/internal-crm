@@ -4,7 +4,9 @@ import { prisma } from '@/lib/db'
 export async function GET() {
     try {
         // Get total products count
-        const totalProducts = await prisma.product.count()
+        const totalProducts = await prisma.product.count({
+            where: { isActive: true }
+        })
 
         // Get inventory statistics
         const totalInventory = await prisma.inventoryItem.count()
@@ -36,6 +38,7 @@ export async function GET() {
 
         // Get low stock products (less than 5 available units)
         const productsWithStock = await prisma.product.findMany({
+            where: { isActive: true },
             include: {
                 _count: {
                     select: {

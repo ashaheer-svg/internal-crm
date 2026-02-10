@@ -3,11 +3,20 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await requireAuth()
 
+        const { searchParams } = new URL(request.url)
+        const includeInactive = searchParams.get('includeInactive') === 'true'
+
+        const where: any = {}
+        if (!includeInactive) {
+            where.isActive = true
+        }
+
         const products = await prisma.product.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
             include: {
                 _count: {
