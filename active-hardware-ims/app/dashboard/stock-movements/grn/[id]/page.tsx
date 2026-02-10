@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { ArrowLeft, Printer } from "lucide-react"
 import { notFound } from "next/navigation"
+import { Currency } from "@/components/Currency"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -98,7 +99,9 @@ export default async function GRNDetailPage({ params }: PageProps) {
                                     <p className="text-sm text-gray-500">Location: {item.locationId}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-semibold text-gray-900">Rs. {item.unitCost.toFixed(2)} each</p>
+                                    <p className="text-sm font-semibold text-gray-900 flex justify-end gap-1">
+                                        <Currency amount={item.unitCost} className="min-w-0" /> each
+                                    </p>
                                     <p className="text-sm text-gray-500">{item.quantity} units</p>
                                 </div>
                             </div>

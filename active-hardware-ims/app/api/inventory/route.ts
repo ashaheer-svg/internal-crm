@@ -127,15 +127,22 @@ export async function POST(request: Request) {
                 })
 
                 if (poItem) {
-                    // Update received quantity (Bulk increment)
+                    const newReceivedQty = poItem.receivedQty + serials.length
+                    const newUnitCost = Number(unitCost) || poItem.unitCost
+                    const newTotalCost = newUnitCost * poItem.quantity
+
+                    // Update received quantity and cost
                     await tx.purchaseOrderItem.update({
                         where: { id: poItem.id },
                         data: {
-                            receivedQty: { increment: serials.length }
+                            receivedQty: newReceivedQty,
+                            unitCost: newUnitCost,
+                            totalCost: newTotalCost
                         }
                     })
 
-                    // Check PO status
+                    // Recalculate PO Total Amount
+                    // Fetch all items (including the updated one) to sum up totalCost
                     const po = await tx.purchaseOrder.findUnique({
                         where: { id: purchaseOrderId },
                         include: { items: true }
@@ -143,6 +150,8 @@ export async function POST(request: Request) {
 
                     if (po) {
                         const allReceived = po.items.every(item => item.receivedQty >= item.quantity)
+
+                        const currentTotal = po.items.reduce((sum, item) => sum + item.totalCost, 0)
 
                         let newStatus = po.status
                         if (allReceived) {
@@ -161,10 +170,13 @@ export async function POST(request: Request) {
                             })
                         }
 
-                        if (newStatus !== po.status) {
+                        if (newStatus !== po.status || Math.abs(currentTotal - po.totalAmount) > 0.01) {
                             await tx.purchaseOrder.update({
                                 where: { id: purchaseOrderId },
-                                data: { status: newStatus }
+                                data: {
+                                    status: newStatus,
+                                    totalAmount: currentTotal
+                                }
                             })
                         }
                     }

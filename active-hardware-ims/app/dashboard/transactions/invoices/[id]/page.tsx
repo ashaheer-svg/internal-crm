@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Edit, Package, CheckCircle, Clock } from "lucide-react"
 import { prisma } from "@/lib/db"
+import { Currency } from "@/components/Currency"
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -140,10 +141,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                                             {item.quantity}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            Rs. {item.unitPrice.toFixed(2)}
+                                            <Currency amount={item.unitPrice} />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            Rs. {(item.unitPrice * item.quantity).toFixed(2)}
+                                            <Currency amount={item.unitPrice * item.quantity} />
                                         </td>
                                     </tr>
                                 ))}
@@ -186,10 +187,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            Rs. {item.unitPrice.toFixed(2)}
+                                            <Currency amount={item.unitPrice} />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            Rs. {(item.unitPrice * item.quantity).toFixed(2)}
+                                            <Currency amount={item.unitPrice * item.quantity} />
                                         </td>
                                     </tr>
                                 ))}
@@ -205,11 +206,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                     <div className="text-right space-y-2">
                         <div className="flex justify-between gap-8">
                             <span className="text-sm text-gray-500">Subtotal:</span>
-                            <span className="text-sm font-medium text-gray-900">Rs. {invoice.totalAmount.toFixed(2)}</span>
+                            <Currency amount={invoice.totalAmount} className="text-sm font-medium text-gray-900" />
                         </div>
                         <div className="flex justify-between gap-8 pt-2 border-t">
                             <span className="text-base font-medium text-gray-900">Total:</span>
-                            <span className="text-xl font-bold text-gray-900">Rs. {invoice.totalAmount.toFixed(2)}</span>
+                            <Currency amount={invoice.totalAmount} className="text-xl font-bold text-gray-900" />
                         </div>
                     </div>
                 </div>

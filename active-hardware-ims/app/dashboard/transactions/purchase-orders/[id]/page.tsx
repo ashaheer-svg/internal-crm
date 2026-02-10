@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { ArrowLeft, Printer, Package, Edit } from "lucide-react"
 import { notFound } from "next/navigation"
+import { Currency } from "@/components/Currency"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -85,7 +86,7 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Total Amount</p>
-                        <p className="mt-1 text-lg font-bold text-gray-900">Rs. {po.totalAmount.toFixed(2)}</p>
+                        <Currency amount={po.totalAmount} className="mt-1 text-lg font-bold text-gray-900" />
                     </div>
                 </div>
 
@@ -125,11 +126,11 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {item.quantity}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Rs. {item.unitCost.toFixed(2)}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                    <Currency amount={item.unitCost} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                                    Rs. {item.totalCost.toFixed(2)}
+                                    <Currency amount={item.totalCost} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {item.receivedQty} / {item.quantity}

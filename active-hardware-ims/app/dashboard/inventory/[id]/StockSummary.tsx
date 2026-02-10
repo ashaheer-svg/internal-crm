@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Currency } from "@/components/Currency"
 
 type InventoryItem = {
     id: string
@@ -83,18 +84,22 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t">
                             <span className="text-gray-500">Avg. Cost</span>
-                            <span className="text-gray-900 font-semibold">
-                                Rs. {inventory.length > 0
-                                    ? (inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0) / inventory.length).toFixed(2)
-                                    : '0.00'
-                                }
-                            </span>
+                            <div className="text-gray-900 font-semibold">
+                                <Currency
+                                    amount={inventory.length > 0
+                                        ? (inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0) / inventory.length)
+                                        : 0
+                                    }
+                                    className="inline-block"
+                                />
+                            </div>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-gray-500">Total Value</span>
-                            <span className="text-gray-900 font-bold text-lg">
-                                Rs. {inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0).toFixed(2)}
-                            </span>
+                            <Currency
+                                amount={inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0)}
+                                className="text-gray-900 font-bold text-lg"
+                            />
                         </div>
                     </div>
                 </div>
@@ -117,11 +122,11 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                                         <div className="space-y-1 mb-3">
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="text-gray-500">Stock Value</span>
-                                                <span className="font-semibold text-gray-900">Rs. {loc.totalValue.toFixed(2)}</span>
+                                                <Currency amount={loc.totalValue} className="font-semibold text-gray-900" />
                                             </div>
                                             <div className="flex items-center justify-between text-xs">
                                                 <span className="text-gray-500">Avg. Cost</span>
-                                                <span className="font-semibold text-gray-900">Rs. {avgCost.toFixed(2)}</span>
+                                                <Currency amount={avgCost} className="font-semibold text-gray-900" />
                                             </div>
                                         </div>
                                         <button

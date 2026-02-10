@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { Currency } from "@/components/Currency"
 import {
     Package,
     AlertTriangle,
@@ -164,7 +165,13 @@ export default function DashboardPage() {
                                 <dl>
                                     <dt className="truncate text-sm font-medium text-gray-500">{stat.name}</dt>
                                     <dd>
-                                        <div className="text-lg font-medium text-gray-900">{stat.value}</div>
+                                        <div className="text-lg font-medium text-gray-900">
+                                            {stat.name === 'Stock Value' ? (
+                                                <Currency amount={stats.totalStockValue} />
+                                            ) : (
+                                                stat.value
+                                            )}
+                                        </div>
                                     </dd>
                                 </dl>
                             </div>
@@ -191,9 +198,7 @@ export default function DashboardPage() {
                                         </p>
                                     </div>
                                     {activity.amount && (
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            Rs. {activity.amount.toLocaleString()}
-                                        </span>
+                                        <Currency amount={activity.amount} className="text-sm font-semibold text-gray-900" />
                                     )}
                                 </div>
                             ))}

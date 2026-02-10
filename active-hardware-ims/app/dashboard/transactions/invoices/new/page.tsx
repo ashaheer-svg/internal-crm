@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save, Package, Upload } from "lucide-react"
+import { Currency } from "@/components/Currency"
 import ProductSelector from "./ProductSelector"
 import StockDisplay from "./StockDisplay"
 import BulkEntryModal from "./BulkEntryModal"
@@ -392,7 +393,7 @@ export default function NewInvoicePage() {
                                 <div className="flex justify-end pt-4 border-t">
                                     <div className="text-right">
                                         <p className="text-sm text-gray-500">Total Amount</p>
-                                        <p className="text-2xl font-bold text-gray-900">Rs. {totalAmount.toFixed(2)}</p>
+                                        <Currency amount={totalAmount} className="text-2xl font-bold text-gray-900" />
                                     </div>
                                 </div>
                             </div>
@@ -438,7 +439,7 @@ export default function NewInvoicePage() {
                             </div>
                             <div className="pt-2 border-t flex justify-between">
                                 <span className="text-gray-900 font-medium">Total:</span>
-                                <span className="text-lg font-bold text-gray-900">Rs. {totalAmount.toFixed(2)}</span>
+                                <Currency amount={totalAmount} className="text-lg font-bold text-gray-900" />
                             </div>
                         </div>
                     </div>

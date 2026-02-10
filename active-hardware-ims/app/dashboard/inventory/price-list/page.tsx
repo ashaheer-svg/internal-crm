@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Printer } from "lucide-react"
+import { Currency } from "@/components/Currency"
 
 type Product = {
   id: string
@@ -179,10 +180,10 @@ export default function PriceListPage() {
                       {product.category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
-                      Rs. {(product.lowResellerPrice || 0).toFixed(2)}
+                      <Currency amount={product.lowResellerPrice} className="text-blue-600" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
-                      Rs. {(product.resellerPrice || 0).toFixed(2)}
+                      <Currency amount={product.resellerPrice} className="text-blue-600" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-center font-medium">
                       {product.inventory?.length || 0} units

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { QrCode, Search } from "lucide-react"
+import { Currency } from "@/components/Currency"
 import InventoryItemActions from "./InventoryItemActions"
 
 type InventoryItem = {
@@ -93,7 +94,7 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial Number</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty Expiry</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added</th>
                             <th scope="col" className="relative px-6 py-3">
@@ -120,14 +121,14 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                         {item.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    Rs. {(item.unitCost || 0).toFixed(2)}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                    <Currency amount={item.unitCost || 0} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     {item.warrantyExpiry ? (
                                         <span className={`${new Date(item.warrantyExpiry) < new Date()
-                                                ? 'text-red-600 font-semibold'
-                                                : 'text-gray-900'
+                                            ? 'text-red-600 font-semibold'
+                                            : 'text-gray-900'
                                             }`}>
                                             {new Date(item.warrantyExpiry).toLocaleDateString('en-GB', {
                                                 year: '2-digit',

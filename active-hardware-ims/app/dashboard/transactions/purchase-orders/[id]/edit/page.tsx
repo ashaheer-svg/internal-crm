@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { Currency } from "@/components/Currency"
 
 type Product = {
     id: string
@@ -297,7 +298,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
 
                                 <div className="flex flex-col items-end gap-1">
                                     <span className="text-xs text-gray-500">Total</span>
-                                    <span className="font-semibold text-sm">Rs. {item.totalCost.toFixed(2)}</span>
+                                    <Currency amount={item.totalCost} className="font-semibold text-sm text-right" />
                                     {!isReadOnlyItems && items.length > 1 && (
                                         <button
                                             type="button"
@@ -315,7 +316,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                     <div className="flex justify-end pt-4 border-t">
                         <div className="text-right">
                             <p className="text-sm text-gray-500">Total Amount</p>
-                            <p className="text-2xl font-bold text-gray-900">Rs. {totalAmount.toFixed(2)}</p>
+                            <Currency amount={totalAmount} className="text-2xl font-bold text-gray-900" />
                         </div>
                     </div>
                 </div>

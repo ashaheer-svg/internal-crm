@@ -4,6 +4,7 @@ import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Package, CheckCircle } from "lucide-react"
+import { Currency } from "@/components/Currency"
 
 type Invoice = {
     id: string
@@ -208,12 +209,12 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
                                             )}
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                Rs. {item.unitPrice.toFixed(2)} × {item.quantity}
+                                            <p className="text-sm font-medium text-gray-900 flex items-center justify-end gap-1">
+                                                <Currency amount={item.unitPrice} className="min-w-0" /> × {item.quantity}
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                Total: Rs. {(item.unitPrice * item.quantity).toFixed(2)}
-                                            </p>
+                                            <div className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                                                Total: <Currency amount={item.unitPrice * item.quantity} className="min-w-0" />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -235,12 +236,12 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
                                             <p className="text-xs text-amber-600">Pending fulfillment</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                Rs. {item.unitPrice.toFixed(2)} × {item.quantity}
+                                            <p className="text-sm font-medium text-gray-900 flex items-center justify-end gap-1">
+                                                <Currency amount={item.unitPrice} className="min-w-0" /> × {item.quantity}
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                Total: Rs. {(item.unitPrice * item.quantity).toFixed(2)}
-                                            </p>
+                                            <div className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                                                Total: <Currency amount={item.unitPrice * item.quantity} className="min-w-0" />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
