@@ -39,10 +39,18 @@ export default function BackordersPage() {
     async function fetchBackorders() {
         try {
             const res = await fetch('/api/backorders?status=PENDING&status=PARTIAL')
+
+            if (!res.ok) throw new Error('Failed to fetch backorders')
+
             const data = await res.json()
-            setBackorders(data)
+            if (Array.isArray(data)) {
+                setBackorders(data)
+            } else {
+                setBackorders([])
+            }
         } catch (error) {
             console.error('Failed to fetch backorders:', error)
+            setBackorders([])
         } finally {
             setLoading(false)
         }

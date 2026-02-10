@@ -48,8 +48,16 @@ export default function DashboardPage() {
     async function fetchStats() {
         try {
             const res = await fetch('/api/dashboard/stats')
+
+            if (!res.ok) throw new Error('Failed to fetch stats')
+
             const data = await res.json()
-            setStats(data)
+            // Basic validation to ensure data has required structure
+            if (data && typeof data.totalProducts === 'number') {
+                setStats(data)
+            } else {
+                console.error('Invalid stats data:', data)
+            }
         } catch (error) {
             console.error('Failed to fetch stats:', error)
         } finally {

@@ -37,8 +37,16 @@ export default function ReportsPage() {
             })
 
             const res = await fetch(`/api/reports?${params}`)
+
+            if (!res.ok) throw new Error('Failed to generate report')
+
             const data = await res.json()
-            setReportData(data)
+            if (data && data.data && data.summary) {
+                setReportData(data)
+            } else {
+                console.error('Invalid report data:', data)
+                alert('Received invalid data from server')
+            }
         } catch (error) {
             console.error('Failed to generate report:', error)
             alert('Failed to generate report')
