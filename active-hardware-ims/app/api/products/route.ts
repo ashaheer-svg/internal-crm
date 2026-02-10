@@ -39,6 +39,7 @@ export async function GET(request: Request) {
         })
         return NextResponse.json(products)
     } catch (error: any) {
+        console.error('Error in GET /api/products:', error)
         return NextResponse.json(
             { error: error.message || 'Failed to fetch products' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }

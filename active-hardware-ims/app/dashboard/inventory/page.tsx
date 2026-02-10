@@ -48,6 +48,11 @@ export default function InventoryPage() {
         try {
             const url = showInactive ? '/api/products?includeInactive=true' : '/api/products'
             const res = await fetch(url)
+
+            if (!res.ok) {
+                throw new Error('Failed to fetch products')
+            }
+
             const data = await res.json()
             setProducts(data)
             setFilteredProducts(data)
@@ -202,8 +207,8 @@ export default function InventoryPage() {
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.model}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm">
                                                 <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${product.isActive
-                                                        ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
-                                                        : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
+                                                    ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
+                                                    : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
                                                     }`}>
                                                     {product.isActive ? 'Active' : 'Inactive'}
                                                 </span>
