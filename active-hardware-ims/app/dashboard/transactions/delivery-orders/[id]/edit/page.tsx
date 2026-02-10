@@ -4,9 +4,9 @@ import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { ArrowLeft, Plus, Search, Trash2, Save, ScanLine, Box, AlertCircle, Loader2 } from "lucide-react"
-import { ProductSelector } from "@/app/components/ProductSelector"
-import { CustomerSelector } from "@/app/components/CustomerSelector"
-import { BulkEntryModal } from "@/app/components/BulkEntryModal"
+import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
+import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
+import BulkEntryModal from "@/app/dashboard/transactions/invoices/new/BulkEntryModal"
 
 interface PageProps {
     params: Promise<{ id: string }>
