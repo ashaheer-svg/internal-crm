@@ -156,14 +156,28 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
     async function handleStatusChange(newStatus: string) {
         if (!order) return
-        if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return
+
+        let createBackorder = false
+
+        if (newStatus === 'COMPLETED') {
+            const isPartial = order.items.some(i => i.reservedItems.length < i.quantity && !i.isBackorder)
+            if (isPartial) {
+                const proceed = confirm("This order is NOT fully allocated.\n\nClick OK to ship available items and CREATE A BACKORDER for the remaining items.\nClick Cancel to abort.")
+                if (!proceed) return
+                createBackorder = true
+            } else {
+                if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return
+            }
+        } else {
+            if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return
+        }
 
         setActionLoading(true)
         try {
             const res = await fetch(`/api/delivery-orders/${order.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ status: newStatus, createBackorder })
             })
 
             if (!res.ok) throw new Error("Update failed")
@@ -250,7 +264,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             </button>
                             <button
                                 onClick={() => handleStatusChange('COMPLETED')}
-                                disabled={actionLoading || order.items.some(i => i.reservedItems.length < i.quantity && !i.isBackorder)}
+                                disabled={actionLoading}
                                 className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
                             >
                                 <Truck className="w-4 h-4" />

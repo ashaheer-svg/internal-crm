@@ -84,12 +84,23 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         // 1. Status Change (Existing Logic)
         if (status && status !== order.status) {
             if (status === 'COMPLETED' || status === 'SHIPPED') {
+                const { createBackorder } = body
+
                 await prisma.$transaction(async (tx) => {
+                    // Update main order status
                     await tx.deliveryOrder.update({
                         where: { id: params.id },
                         data: { status: 'COMPLETED' }
                     })
+
+                    // Prepare for backorder creation
+                    const backorderItems: any[] = []
+
                     for (const item of order.items) {
+                        const fulfilledQty = item.reservedItems.length
+                        const shortfall = item.quantity - fulfilledQty
+
+                        // 1. Mark reserved items as SOLD
                         for (const reserved of item.reservedItems) {
                             await tx.inventoryItem.update({
                                 where: { id: reserved.id },
@@ -108,6 +119,74 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                 }
                             })
                         }
+
+                        // 2. Handle Split / Backorder Logic
+                        if (createBackorder && shortfall > 0) {
+                            // A. Add to backorder list
+                            backorderItems.push({
+                                productId: item.productId,
+                                quantity: shortfall,
+                                unitPrice: item.unitPrice,
+                                isBackorder: true // It is now a backorder
+                            })
+
+                            // B. Update original item to reflect only what was shipped
+                            // If nothing shipped, we might want to keep it as 0 or delete?
+                            // Let's keep it as 0 to show it was part of the order but not shipped?
+                            // Or better: update quantity to fulfilledQty.
+                            if (fulfilledQty > 0) {
+                                await tx.deliveryOrderItem.update({
+                                    where: { id: item.id },
+                                    data: { quantity: fulfilledQty }
+                                })
+                            } else {
+                                // If 0 shipped, maybe delete this item from the completed order 
+                                // so packing slip doesn't show 0?
+                                // Actually, packing slip MIGHT want to show 0 shipped vs ordered.
+                                // But if we split, the NEW order has the rest.
+                                // Let's set quantity to 0 for now or delete.
+                                // Deleting is cleaner for "Matched Invoice".
+                                await tx.deliveryOrderItem.delete({ where: { id: item.id } })
+                            }
+                        }
+                    }
+
+                    // 3. Create Backorder DO if needed
+                    if (backorderItems.length > 0) {
+                        // Generate BO Number
+                        // Simple logic: Append -BO-{n}
+                        // Check if orderNumber already has -BO
+                        const baseOrderNumber = order.orderNumber.split('-BO')[0]
+                        const boCount = await tx.deliveryOrder.count({
+                            where: { orderNumber: { startsWith: `${baseOrderNumber}-BO` } }
+                        })
+                        const newOrderNumber = `${baseOrderNumber}-BO-${boCount + 1}`
+
+                        await tx.deliveryOrder.create({
+                            data: {
+                                orderNumber: newOrderNumber,
+                                customerId: order.customerId,
+                                customerName: order.customerName,
+                                status: 'DRAFT',
+                                notes: `Backorder for ${order.orderNumber}. ${order.notes || ''}`,
+                                items: {
+                                    create: backorderItems.map(i => ({
+                                        productId: i.productId,
+                                        quantity: i.quantity,
+                                        unitPrice: i.unitPrice,
+                                        isBackorder: true
+                                    }))
+                                }
+                            }
+                        })
+
+                        // Update original order notes to reference backorder
+                        await tx.deliveryOrder.update({
+                            where: { id: params.id },
+                            data: {
+                                notes: `${order.notes || ''}\n[System] Created Backorder: ${newOrderNumber}`
+                            }
+                        })
                     }
                 })
                 return NextResponse.json({ success: true })
