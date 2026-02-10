@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Search, Plus, ChevronDown } from "lucide-react"
+import CustomerFormModal from "@/app/dashboard/settings/customers/CustomerFormModal"
 
 type Customer = {
     id: string
@@ -21,6 +22,7 @@ export default function CustomerSelector({ onSelect, selectedCustomer }: Custome
     const [searchQuery, setSearchQuery] = useState("")
     const [customers, setCustomers] = useState<Customer[]>([])
     const [loading, setLoading] = useState(false)
+    const [showAddModal, setShowAddModal] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -178,16 +180,27 @@ export default function CustomerSelector({ onSelect, selectedCustomer }: Custome
 
                     {/* Add New Customer Link */}
                     <div className="border-t border-gray-200 p-2">
-                        <a
-                            href="/dashboard/settings/customers"
-                            target="_blank"
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
+                        <button
+                            type="button"
+                            onClick={() => setShowAddModal(true)}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
                         >
                             <Plus className="h-4 w-4" />
                             Add New Customer
-                        </a>
+                        </button>
                     </div>
                 </div>
+            )}
+
+            {showAddModal && (
+                <CustomerFormModal
+                    onClose={() => setShowAddModal(false)}
+                    onSave={(newCustomer) => {
+                        onSelect(newCustomer)
+                        setShowAddModal(false)
+                        setIsOpen(false)
+                    }}
+                />
             )}
         </div>
     )
