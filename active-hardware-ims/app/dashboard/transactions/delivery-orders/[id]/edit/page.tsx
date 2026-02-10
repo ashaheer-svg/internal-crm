@@ -58,7 +58,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 const formattedItems = data.items.map((i: any) => ({
                     id: i.id, // Keep ID to update existing
                     productId: i.productId,
-                    productName: i.productName, // snapshot name
+                    productName: `${i.product.brand} ${i.product.name} ${i.product.model}`,
                     quantity: i.quantity,
                     unitPrice: i.unitPrice,
                     isBackorder: i.isBackorder,
