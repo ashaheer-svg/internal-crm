@@ -10,22 +10,32 @@ export async function GET(request: Request) {
         const grnId = searchParams.get('grnId')
         const productId = searchParams.get('productId')
 
-        if (!grnId) {
-            return NextResponse.json({ error: 'GRN ID is required' }, { status: 400 })
+        const serialsParam = searchParams.get('serials')
+
+        if (!grnId && !serialsParam) {
+            return NextResponse.json({ error: 'GRN ID or Serial Numbers are required' }, { status: 400 })
         }
 
-        // 1. Find GRN Items
-        const grnItems = await prisma.gRNItem.findMany({
-            where: {
-                grnId,
-                ...(productId ? { productId } : {})
-            }
-        })
+        let serials: string[] = []
 
-        // 2. Extract serial numbers
-        const serials = grnItems.flatMap(item =>
-            item.serialNumbers.split(',').map(s => s.trim())
-        )
+        if (serialsParam) {
+            // Case 1: Search by provided serials
+            serials = serialsParam.split(',').map(s => s.trim()).filter(s => s.length > 0)
+        } else if (grnId) {
+            // Case 2: Search by GRN
+            // 1. Find GRN Items
+            const grnItems = await prisma.gRNItem.findMany({
+                where: {
+                    grnId,
+                    ...(productId ? { productId } : {})
+                }
+            })
+
+            // 2. Extract serial numbers
+            serials = grnItems.flatMap(item =>
+                item.serialNumbers.split(',').map(s => s.trim())
+            )
+        }
 
         if (serials.length === 0) {
             return NextResponse.json([])
