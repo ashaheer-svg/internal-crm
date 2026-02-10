@@ -227,7 +227,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                         <button onClick={() => setCustomer(null)} className="text-red-500 text-xs hover:underline">Change</button>
                                     </div>
                                 ) : (
-                                    <CustomerSelector onSelect={setCustomer} />
+                                    <CustomerSelector onSelect={setCustomer} selectedCustomer={null} />
                                 )}
                             </div>
                         </div>
@@ -345,10 +345,10 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                             <button onClick={() => setShowProductSelector(false)}><ArrowLeft className="w-5 h-5" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
-                            <ProductSelector onSelect={(p) => {
+                            <ProductSelector onProductSelect={(p) => {
                                 handleAddItem(p)
                                 setShowProductSelector(false)
-                            }} />
+                            }} excludeProductIds={[]} />
                         </div>
                     </div>
                 </div>
