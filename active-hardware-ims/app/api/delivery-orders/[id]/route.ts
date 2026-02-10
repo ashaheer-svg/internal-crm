@@ -187,7 +187,6 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                             data: {
                                 deliveryOrderId: order.id,
                                 productId: item.productId,
-                                productName: item.productName,
                                 quantity: item.quantity,
                                 unitPrice: item.unitPrice,
                                 isBackorder: item.isBackorder || false
