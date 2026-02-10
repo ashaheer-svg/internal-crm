@@ -57,10 +57,19 @@ export default function NewPurchaseOrderPage() {
     async function fetchProducts() {
         try {
             const res = await fetch('/api/products')
+
+            if (!res.ok) throw new Error('Failed to fetch products')
+
             const data = await res.json()
-            setProducts(data)
+            if (Array.isArray(data)) {
+                setProducts(data)
+            } else {
+                setProducts([])
+                console.error('Invalid products data:', data)
+            }
         } catch (error) {
-            console.error(error)
+            console.error('Failed to fetch products:', error)
+            setProducts([])
         }
     }
 

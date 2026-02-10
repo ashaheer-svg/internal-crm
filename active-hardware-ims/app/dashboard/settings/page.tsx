@@ -63,6 +63,13 @@ const settingsLinks = [
         description: "Edit inventory costs by GRN and Model"
     },
     {
+        name: "Product Management",
+        href: "/dashboard/settings/products",
+        icon: FileText,
+        description: "Admin view for all products (Active & Inactive)",
+        adminOnly: true
+    },
+    {
         name: "Document Sequences",
         href: "/dashboard/settings/sequences",
         icon: ScrollText,

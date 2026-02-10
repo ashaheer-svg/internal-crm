@@ -110,8 +110,17 @@ export async function POST(request: Request) {
         })
 
         return NextResponse.json(purchaseOrder)
-    } catch (error) {
-        console.error(error)
-        return NextResponse.json({ error: 'Failed to create purchase order' }, { status: 500 })
+    } catch (error: any) {
+        console.error('Error creating PO:', error)
+
+        // Handle Prisma unique constraint error
+        if (error.code === 'P2002' && error.meta?.target?.includes('poNumber')) {
+            return NextResponse.json({ error: 'A purchase order with this number already exists' }, { status: 409 }) // 409 Conflict
+        }
+
+        return NextResponse.json(
+            { error: error.message || 'Failed to create purchase order' },
+            { status: 500 }
+        )
     }
 }
