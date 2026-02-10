@@ -11,6 +11,10 @@ type InventoryItem = {
     id: string
     serialNumber: string
     status: string
+    location?: {
+        id: string
+        name: string
+    }
 }
 
 type DeliveryOrderItem = {
@@ -53,8 +57,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [availableStock, setAvailableStock] = useState<any[]>([])
     const [selectedSerials, setSelectedSerials] = useState<string[]>([])
 
+    // Location Filter State
+    const [locations, setLocations] = useState<any[]>([])
+    const [selectedLocation, setSelectedLocation] = useState<string>("")
+
     useEffect(() => {
         fetchOrder()
+        fetchLocations()
     }, [id])
 
     async function fetchOrder() {
@@ -70,20 +79,42 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         }
     }
 
+    async function fetchLocations() {
+        try {
+            const res = await fetch('/api/locations')
+            const data = await res.json()
+            setLocations(data)
+        } catch (e) {
+            console.error("Failed to load locations")
+        }
+    }
+
     async function handleOpenAllocate(item: DeliveryOrderItem) {
         setAllocatingItem(item)
         setSelectedSerials(item.reservedItems.map(i => i.id))
 
-        // Fetch available stock for this product
+        // Reset location filter and fetch stock
+        setSelectedLocation("")
+        fetchAvailableStock(item.productId)
+    }
+
+    async function fetchAvailableStock(productId: string, locationId?: string) {
         try {
-            const res = await fetch(`/api/inventory?productId=${item.productId}&status=AVAILABLE`)
+            let url = `/api/inventory?productId=${productId}&status=AVAILABLE`
+            if (locationId) url += `&locationId=${locationId}`
+
+            const res = await fetch(url)
             const data = await res.json()
-            // Combine already reserved (which might not be AVAILABLE anymore) with currently available
-            // Actually, reserved items for THIS order are safe.
-            // But we need to toggle them.
             setAvailableStock(data)
         } catch (e) {
             console.error("Failed to fetch stock", e)
+        }
+    }
+
+    function handleLocationChange(locId: string) {
+        setSelectedLocation(locId)
+        if (allocatingItem) {
+            fetchAvailableStock(allocatingItem.productId, locId)
         }
     }
 
@@ -336,67 +367,101 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             {allocatingItem && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] flex flex-col">
-                        <div className="p-4 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-gray-900">Allocate Serials</h3>
-                            <button onClick={() => setAllocatingItem(null)}><XCircle className="w-5 h-5 text-gray-400" /></button>
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                            <div>
+                                <h3 className="font-bold text-gray-900">Allocate Inventory</h3>
+                                <p className="text-xs text-gray-500">{allocatingItem.product.name}</p>
+                            </div>
+                            <button onClick={() => setAllocatingItem(null)}><XCircle className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+                        </div>
+
+                        <div className="p-4 border-b bg-white">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Location</label>
+                            <select
+                                value={selectedLocation}
+                                onChange={(e) => handleLocationChange(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            >
+                                <option value="">All Locations</option>
+                                {locations.map(loc => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="p-4 overflow-y-auto flex-1">
-                            <p className="text-sm text-gray-600 mb-4">
-                                Select serials for <strong>{allocatingItem.product.brand} {allocatingItem.product.name}</strong>.
-                                <br />
-                                Required: {allocatingItem.quantity} | Selected: {selectedSerials.length}
-                            </p>
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-sm text-gray-600">
+                                    Required: <strong>{allocatingItem.quantity}</strong>
+                                </span>
+                                <span className={`text-sm font-medium ${selectedSerials.length === allocatingItem.quantity ? 'text-green-600' : 'text-blue-600'}`}>
+                                    Selected: {selectedSerials.length}
+                                </span>
+                            </div>
 
                             <div className="space-y-2">
-                                {/* Included already reserved items in the list? */}
-                                {availableStock.length === 0 && allocatingItem.reservedItems.length === 0 ? (
-                                    <p className="text-center text-gray-500 py-4">No stock available.</p>
-                                ) : (
-                                    <>
-                                        {/* Current Allocations */}
+                                {/* Current Allocations (Always show at top) */}
+                                {allocatingItem.reservedItems.length > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Currently Reserved</p>
                                         {allocatingItem.reservedItems.map(item => (
                                             <div key={item.id}
                                                 onClick={() => toggleSerialSelection(item.id)}
-                                                className={`p-3 border rounded cursor-pointer flex justify-between items-center
+                                                className={`p-3 border rounded cursor-pointer flex justify-between items-center mb-2
                                                     ${selectedSerials.includes(item.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
                                                 `}>
-                                                <span className="font-mono text-sm">{item.serialNumber}</span>
-                                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Reserved</span>
+                                                <div>
+                                                    <span className="font-mono text-sm font-medium block">{item.serialNumber}</span>
+                                                    <span className="text-xs text-gray-500">Reserved for this order</span>
+                                                </div>
+                                                {selectedSerials.includes(item.id) && <CheckCircle className="w-4 h-4 text-blue-500" />}
                                             </div>
                                         ))}
+                                    </div>
+                                )}
 
-                                        {/* Available Stock */}
-                                        {availableStock
-                                            .filter(stock => !allocatingItem.reservedItems.find(r => r.id === stock.id)) // Exclude already reserved
+                                {/* Available Stock */}
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Available Stock</p>
+                                    {availableStock.length === 0 ? (
+                                        <p className="text-center text-gray-500 py-4 italic">No available stock found in this location.</p>
+                                    ) : (
+                                        availableStock
+                                            .filter(stock => !allocatingItem.reservedItems.find(r => r.id === stock.id))
                                             .map(item => (
                                                 <div key={item.id}
                                                     onClick={() => toggleSerialSelection(item.id)}
                                                     className={`p-3 border rounded cursor-pointer flex justify-between items-center
                                                     ${selectedSerials.includes(item.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}
                                                 `}>
-                                                    <span className="font-mono text-sm">{item.serialNumber}</span>
-                                                    <span className="text-xs text-gray-500">{item.location?.name || 'In Stock'}</span>
+                                                    <div>
+                                                        <span className="font-mono text-sm font-medium block">{item.serialNumber}</span>
+                                                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                            <Truck className="w-3 h-3" />
+                                                            {item.location?.name || 'Unknown Location'}
+                                                        </span>
+                                                    </div>
+                                                    {selectedSerials.includes(item.id) && <CheckCircle className="w-4 h-4 text-blue-500" />}
                                                 </div>
-                                            ))}
-                                    </>
-                                )}
+                                            ))
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
                             <button
                                 onClick={() => setAllocatingItem(null)}
-                                className="px-4 py-2 text-sm border border-gray-300 rounded text-gray-700"
+                                className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveAllocation}
                                 disabled={actionLoading}
-                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                             >
-                                Save Allocation
+                                {actionLoading ? 'Saving...' : 'Confirm Allocation'}
                             </button>
                         </div>
                     </div>

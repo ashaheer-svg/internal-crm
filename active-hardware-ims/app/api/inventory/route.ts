@@ -3,6 +3,35 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url)
+        const productId = searchParams.get('productId')
+        const locationId = searchParams.get('locationId')
+        const status = searchParams.get('status')
+        const serialNumber = searchParams.get('serialNumber')
+
+        const where: any = {}
+        if (productId) where.productId = productId
+        if (locationId) where.locationId = locationId
+        if (status) where.status = status
+        if (serialNumber) where.serialNumber = { contains: serialNumber }
+
+        const items = await prisma.inventoryItem.findMany({
+            where,
+            include: {
+                product: true,
+                location: true
+            },
+            orderBy: { createdAt: 'asc' }
+        })
+
+        return NextResponse.json(items)
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message || 'Failed to fetch inventory' }, { status: 500 })
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const user = await requireAuth()
