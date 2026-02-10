@@ -28,12 +28,14 @@ type Invoice = {
 export default function TransactionsPage() {
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
+    const [deliveryOrders, setDeliveryOrders] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'log'>('po')
+    const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
 
     useEffect(() => {
         fetchPurchaseOrders()
         fetchInvoices()
+        fetchDeliveryOrders()
     }, [])
 
     async function fetchPurchaseOrders() {
@@ -43,8 +45,6 @@ export default function TransactionsPage() {
             setPurchaseOrders(data)
         } catch (error) {
             console.error(error)
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -55,6 +55,18 @@ export default function TransactionsPage() {
             setInvoices(data)
         } catch (error) {
             console.error(error)
+        }
+    }
+
+    async function fetchDeliveryOrders() {
+        try {
+            const res = await fetch('/api/delivery-orders')
+            const data = await res.json()
+            setDeliveryOrders(data)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -74,10 +86,16 @@ export default function TransactionsPage() {
                         Purchase Orders
                     </button>
                     <button
+                        onClick={() => setActiveTab('do')}
+                        className={`${activeTab === 'do' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                    >
+                        Delivery Orders
+                    </button>
+                    <button
                         onClick={() => setActiveTab('invoice')}
                         className={`${activeTab === 'invoice' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Delivery Orders
+                        Invoices
                     </button>
                     <button
                         onClick={() => setActiveTab('log')}
@@ -167,11 +185,76 @@ export default function TransactionsPage() {
                 </div>
             )}
 
+            {/* Delivery Orders Tab (New) */}
+            {activeTab === 'do' && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Main)</h2>
+                        <Link
+                            href="/dashboard/transactions/delivery-orders/new"
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            New Delivery Order
+                        </Link>
+                    </div>
+
+                    <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                        <ul className="divide-y divide-gray-200">
+                            {deliveryOrders.map((order) => (
+                                <li key={order.id}>
+                                    <Link href={`/dashboard/transactions/delivery-orders/${order.id}`} className="block hover:bg-gray-50">
+                                        <div className="px-4 py-4 sm:px-6">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <Package className="h-5 w-5 text-gray-400 mr-3" />
+                                                    <p className="text-sm font-medium text-blue-600 truncate">{order.orderNumber}</p>
+                                                </div>
+                                                <div className="ml-2 flex-shrink-0 flex">
+                                                    <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${order.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' : ''}
+                            ${order.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' : ''}
+                            ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : ''}
+                            ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
+                          `}>
+                                                        {order.status}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 sm:flex sm:justify-between">
+                                                <div className="sm:flex">
+                                                    <p className="flex items-center text-sm text-gray-500">
+                                                        {order.customerName}
+                                                    </p>
+                                                    <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                                        {order._count?.items || 0} item(s)
+                                                    </p>
+                                                </div>
+                                                <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                                    <p className="ml-4 text-xs">
+                                                        {new Date(order.createdAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                            {deliveryOrders.length === 0 && !loading && (
+                                <li className="px-4 py-12 text-center text-gray-500">
+                                    No delivery orders yet. Create one to manage shipments.
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
+            )}
+
             {/* Invoices Tab */}
             {activeTab === 'invoice' && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Stock Issues)</h2>
+                        <h2 className="text-lg font-medium text-gray-900">Invoices (Financial Documents)</h2>
                         <Link
                             href="/dashboard/transactions/invoices/new"
                             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"

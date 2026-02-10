@@ -69,6 +69,7 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   invoices    Invoice[]
+  deliveryOrders DeliveryOrder[]
 }
 
 model Product {
@@ -90,6 +91,7 @@ model Product {
   purchaseOrderItems PurchaseOrderItem[]
   invoiceItems InvoiceItem[]
   backorderItems BackorderItem[]
+  deliveryOrderItems DeliveryOrderItem[]
 }
 
 model Location {
@@ -115,6 +117,10 @@ model InventoryItem {
   updatedAt       DateTime @updatedAt
   warrantyClaims  WarrantyClaim[]
   reservations    Reservation[]
+  
+  // Delivery Order Reservation
+  deliveryOrderItemId String?
+  deliveryOrderItem   DeliveryOrderItem? @relation(fields: [deliveryOrderItemId], references: [id])
 }
 
 model Reservation {
@@ -282,4 +288,34 @@ model Sequence {
   lastYearMonth String?  // "YYMM" to track month changes
   prefix        String   // "PO-", "GRN-"
   updatedAt     DateTime @updatedAt
+}
+
+model DeliveryOrder {
+  id            String   @id @default(uuid())
+  orderNumber   String   @unique
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  customerName  String
+  status        String   @default("DRAFT") // DRAFT, CONFIRMED, COMPLETED, CANCELLED
+  totalAmount   Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         DeliveryOrderItem[]
+}
+
+model DeliveryOrderItem {
+  id              String   @id @default(uuid())
+  deliveryOrderId String
+  deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  quantity        Int      // Target quantity
+  unitPrice       Float
+  isBackorder     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Reservation link
+  reservedItems   InventoryItem[]
 }
