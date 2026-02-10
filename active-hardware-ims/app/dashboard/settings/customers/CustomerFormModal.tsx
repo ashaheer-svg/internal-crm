@@ -52,9 +52,9 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
 
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
                     <h3 className="text-lg font-medium text-gray-900">
                         {customer ? "Edit Customer" : "Add New Customer"}
                     </h3>
@@ -64,7 +64,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="px-6 py-4">
+                <form onSubmit={handleSubmit} className="px-6 py-4 overflow-y-auto">
                     {error && (
                         <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
                             <p className="text-sm text-red-700">{error}</p>
