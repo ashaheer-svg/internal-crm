@@ -12,9 +12,9 @@ export default async function DashboardLayout({
 
     if (!user) {
         // Clear the session cookie so middleware doesn't loop us back here
-        const cookieStore = await cookies()
-        cookieStore.delete('session')
-        redirect('/login')
+        // Redirect to a route handler that clears the cookie
+        // We cannot delete cookies in a Server Component
+        redirect('/api/auth/clear-session')
     }
 
     return (
