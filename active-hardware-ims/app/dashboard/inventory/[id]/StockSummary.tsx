@@ -25,8 +25,11 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
     const router = useRouter()
     const [loadingLocation, setLoadingLocation] = useState<string | null>(null)
 
+    // Filter out SOLD/SHIPPED items from summary
+    const activeInventory = inventory.filter(item => item.status === 'AVAILABLE' || item.status === 'RESERVED' || item.status === 'RMA')
+
     // Group inventory by location
-    const locationGroups = inventory.reduce((acc, item) => {
+    const locationGroups = activeInventory.reduce((acc, item) => {
         const locId = item.location.id
         if (!acc[locId]) {
             acc[locId] = {
@@ -80,14 +83,14 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <span className="text-gray-500">Total Units</span>
-                            <span className="font-bold text-xl text-blue-600">{inventory.length}</span>
+                            <span className="font-bold text-xl text-blue-600">{activeInventory.length}</span>
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t">
                             <span className="text-gray-500">Avg. Cost</span>
                             <div className="text-gray-900 font-semibold">
                                 <Currency
-                                    amount={inventory.length > 0
-                                        ? (inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0) / inventory.length)
+                                    amount={activeInventory.length > 0
+                                        ? (activeInventory.reduce((sum, item) => sum + (item.unitCost || 0), 0) / activeInventory.length)
                                         : 0
                                     }
                                     className="inline-block"
@@ -97,7 +100,7 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                         <div className="flex items-center justify-between">
                             <span className="text-gray-500">Total Value</span>
                             <Currency
-                                amount={inventory.reduce((sum, item) => sum + (item.unitCost || 0), 0)}
+                                amount={activeInventory.reduce((sum, item) => sum + (item.unitCost || 0), 0)}
                                 className="text-gray-900 font-bold text-lg"
                             />
                         </div>

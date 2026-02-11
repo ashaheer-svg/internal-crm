@@ -111,12 +111,18 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                     {item.serialNumber}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <LocationEditor
-                                        itemId={item.id}
-                                        currentLocationId={item.location.id}
-                                        currentLocationName={item.location.name}
-                                        locations={locations}
-                                    />
+                                    {item.status === 'SOLD' ? (
+                                        <span className="text-gray-400 italic">Sold</span>
+                                    ) : item.status === 'SHIPPED' ? (
+                                        <span className="text-gray-400 italic">Shipped</span>
+                                    ) : (
+                                        <LocationEditor
+                                            itemId={item.id}
+                                            currentLocationId={item.location.id}
+                                            currentLocationName={item.location.name}
+                                            locations={locations}
+                                        />
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
