@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/Sidebar"
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 
 export default async function DashboardLayout({
     children,
@@ -10,6 +11,9 @@ export default async function DashboardLayout({
     const user = await getCurrentUser()
 
     if (!user) {
+        // Clear the session cookie so middleware doesn't loop us back here
+        const cookieStore = await cookies()
+        cookieStore.delete('session')
         redirect('/login')
     }
 
