@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Plus, Edit, Trash2, Shield } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Shield, LogOut } from "lucide-react"
 import UserFormModal from "./UserFormModal"
+import { logoutAllUsers } from "@/app/actions/auth-actions"
 
 type User = {
     id: string
@@ -71,6 +72,21 @@ export default function UsersPage() {
         }
     }
 
+    async function handleLogoutAll() {
+        if (!confirm("Are you sure you want to log out ALL users? This will invalidate all active sessions immediately, including your own.")) {
+            return
+        }
+
+        try {
+            await logoutAllUsers()
+            alert("All users have been logged out.")
+            window.location.href = "/login"
+        } catch (error) {
+            console.error("Failed to logout users:", error)
+            alert("Failed to logout users")
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -86,16 +102,25 @@ export default function UsersPage() {
                     <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
                     <p className="text-sm text-gray-600 mt-1">Manage system users and permissions</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingUser(null)
-                        setShowModal(true)
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <Plus className="h-4 w-4" />
-                    Add User
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleLogoutAll}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Logout All Users
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingUser(null)
+                            setShowModal(true)
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Add User
+                    </button>
+                </div>
             </div>
 
             {/* Users Table */}
@@ -135,8 +160,8 @@ export default function UsersPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${user.isActive
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
                                             }`}>
                                             {user.isActive ? 'Active' : 'Inactive'}
                                         </span>
