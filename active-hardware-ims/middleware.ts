@@ -21,7 +21,12 @@ export async function middleware(request: NextRequest) {
     }
 
     // If accessing protected path without token, redirect to login
-    if (!token && (pathname.startsWith('/dashboard') || pathname.startsWith('/change-password'))) {
+    if (!token && (
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/change-password') ||
+        pathname.startsWith('/diagnostic') ||
+        pathname.startsWith('/api/diagnostic')
+    )) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
