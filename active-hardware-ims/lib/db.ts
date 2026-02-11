@@ -10,8 +10,8 @@ const globalForPrisma = globalThis as unknown as {
 const getDatabaseUrl = () => {
   const envUrl = process.env.DATABASE_URL
 
-  // Only override if we are in production and it's a file: url
-  if (process.env.NODE_ENV === 'production' && envUrl?.startsWith('file:')) {
+  // Only override if we are in production and it's a RELATIVE file url (starts with file:.)
+  if (process.env.NODE_ENV === 'production' && envUrl?.startsWith('file:.') && !envUrl.startsWith('file:/')) {
     try {
       // Construct absolute path based on CWD
       // This assumes the app is run from the project root where prisma folder is
@@ -27,6 +27,8 @@ const getDatabaseUrl = () => {
       return envUrl
     }
   }
+  console.log('--- USING CONFIG DB URL ---')
+  console.log('URL:', envUrl)
   return envUrl
 }
 
