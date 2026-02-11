@@ -27,6 +27,8 @@ export default function NewDeliveryOrderPage() {
     const [customerId, setCustomerId] = useState<string | null>(null)
     const [customerName, setCustomerName] = useState("")
     const [notes, setNotes] = useState("")
+    const [invoiceValue, setInvoiceValue] = useState<string>("")
+    const [additionalCosts, setAdditionalCosts] = useState<string>("")
 
     // Address Selection
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
@@ -174,6 +176,8 @@ export default function NewDeliveryOrderPage() {
                     customerId,
                     customerName,
                     deliveryAddress,
+                    invoiceValue: Number(invoiceValue),
+                    additionalCosts: Number(additionalCosts),
                     notes,
                     items
                 }),
@@ -238,6 +242,40 @@ export default function NewDeliveryOrderPage() {
                                     onChange={(e) => setCustomerName(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                 />
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={invoiceValue}
+                                        onChange={(e) => setInvoiceValue(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={additionalCosts}
+                                        onChange={(e) => setAdditionalCosts(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Notes</label>
@@ -439,7 +477,7 @@ export default function NewDeliveryOrderPage() {
                         </div>
                     </div>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     )
 }

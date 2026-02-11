@@ -11,6 +11,7 @@ type InventoryItem = {
     id: string
     serialNumber: string
     status: string
+    unitCost: number
     location?: {
         id: string
         name: string
@@ -39,6 +40,8 @@ type DeliveryOrder = {
     customerId: string | null
     deliveryAddress: string | null
     status: string // DRAFT, CONFIRMED, COMPLETED, CANCELLED
+    invoiceValue?: number
+    additionalCosts?: number
     notes: string | null
     createdAt: string
     items: DeliveryOrderItem[]
@@ -380,6 +383,60 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Financial Summary (Profitability) */}
+                <div className="bg-white shadow rounded-lg p-6">
+                    <h3 className="font-medium text-gray-900 mb-4">Financial Overview</h3>
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Invoice Value</span>
+                            <Currency amount={order.invoiceValue || 0} className="font-medium" />
+                        </div>
+
+                        {/* Calculate COGS based on allocated items */}
+                        {(() => {
+                            const cogs = order.items.reduce((sum, item) => {
+                                // Sum cost of allocated items
+                                const itemCogs = item.reservedItems.reduce((s, r) => s + (r.unitCost || 0), 0)
+                                return sum + itemCogs
+                            }, 0)
+                            const overhead = order.additionalCosts || 0
+                            const totalCost = cogs + overhead
+                            const revenue = order.invoiceValue || 0
+                            const grossProfit = revenue - totalCost
+                            const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0
+
+                            return (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">COGS (Allocated)</span>
+                                        <span className="text-gray-900 flex items-center gap-1">
+                                            - <Currency amount={cogs} />
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Additional Costs</span>
+                                        <span className="text-gray-900 flex items-center gap-1">
+                                            - <Currency amount={overhead} />
+                                        </span>
+                                    </div>
+                                    <div className="pt-3 border-t flex justify-between font-bold">
+                                        <span className="text-gray-900">Gross Profit</span>
+                                        <span className={grossProfit >= 0 ? "text-green-600" : "text-red-600"}>
+                                            <Currency amount={grossProfit} />
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-xs mt-1">
+                                        <span className="text-gray-400">Margin</span>
+                                        <span className={grossProfit >= 0 ? "text-green-600" : "text-red-600"}>
+                                            {margin.toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </>
+                            )
+                        })()}
                     </div>
                 </div>
             </div>

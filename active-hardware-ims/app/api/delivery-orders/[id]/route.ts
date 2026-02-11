@@ -72,7 +72,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress } = body
+        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress, invoiceValue, additionalCosts } = body
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
@@ -100,7 +100,9 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         customerName,
                         customerId,
                         orderNumber,
-                        deliveryAddress
+                        deliveryAddress,
+                        invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
+                        additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
                     }
                 })
 
@@ -115,7 +117,13 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         // 3. Simple Field Update (Fallback)
         const updated = await prisma.deliveryOrder.update({
             where: { id: params.id },
-            data: { status, notes, deliveryAddress }
+            data: {
+                status,
+                notes,
+                deliveryAddress,
+                invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
+                additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
+            }
         })
 
         return NextResponse.json(updated)

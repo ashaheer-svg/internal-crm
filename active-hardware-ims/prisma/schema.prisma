@@ -321,6 +321,8 @@ model DeliveryOrder {
   deliveryAddress String? // Snapshot of delivery address
   status        String   @default("DRAFT") // DRAFT, CONFIRMED, COMPLETED, CANCELLED
   totalAmount   Float    @default(0)
+  invoiceValue  Float    @default(0) // Revenue (Excl. Tax)
+  additionalCosts Float  @default(0) // Overhead/Shipping/etc.
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

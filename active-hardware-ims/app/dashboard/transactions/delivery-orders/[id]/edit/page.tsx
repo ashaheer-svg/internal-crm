@@ -22,6 +22,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
     const [notes, setNotes] = useState("")
     const [deliveryAddress, setDeliveryAddress] = useState("")
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
+    const [invoiceValue, setInvoiceValue] = useState<string>("")
+    const [additionalCosts, setAdditionalCosts] = useState<string>("")
 
     // Items State
     const [items, setItems] = useState<any[]>([])
@@ -56,6 +58,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 })
                 setNotes(data.notes || "")
                 setDeliveryAddress(data.deliveryAddress || "")
+                setInvoiceValue(data.invoiceValue || "")
+                setAdditionalCosts(data.additionalCosts || "")
 
                 if (data.customerId) {
                     fetch(`/api/customers/${data.customerId}/addresses`)
@@ -169,6 +173,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 customerId: customer.id,
                 customerName: customer.name,
                 deliveryAddress,
+                invoiceValue: Number(invoiceValue),
+                additionalCosts: Number(additionalCosts),
                 notes,
                 items: items.map(i => ({
                     id: i.id, // Send ID if it exists
@@ -242,6 +248,40 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 ) : (
                                     <CustomerSelector onSelect={setCustomer} selectedCustomer={null} />
                                 )}
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={invoiceValue}
+                                        onChange={(e) => setInvoiceValue(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={additionalCosts}
+                                        onChange={(e) => setAdditionalCosts(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
 
                             {/* Delivery Address Selection */}

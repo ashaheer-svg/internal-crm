@@ -57,6 +57,8 @@ export async function POST(request: Request) {
                     customerId,
                     customerName,
                     deliveryAddress: body.deliveryAddress,
+                    invoiceValue: Number(body.invoiceValue) || 0,
+                    additionalCosts: Number(body.additionalCosts) || 0,
                     notes,
                     status: 'DRAFT',
                     items: {
