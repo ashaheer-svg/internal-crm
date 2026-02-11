@@ -4,11 +4,19 @@ import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 
 // GET - List all customers
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const type = searchParams.get('type')
+        const showInactive = searchParams.get('showInactive') === 'true'
+
+        const where: any = {}
+        if (type && type !== 'ALL') where.type = type
+        if (!showInactive) where.isActive = true
 
         const customers = await prisma.customer.findMany({
+            where,
             orderBy: { name: 'asc' },
             include: {
                 _count: {
@@ -31,7 +39,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { name, contactName, email, phone, address, taxId, salesRep, notes } = body
+        const { name, contactName, email, phone, address, taxId, salesRep, notes, type } = body
 
         if (!name) {
             return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
@@ -56,7 +64,9 @@ export async function POST(request: Request) {
                 address,
                 taxId,
                 salesRep,
-                notes
+                notes,
+                type: type || 'CUSTOMER',
+                isActive: true
             }
         })
 
@@ -66,7 +76,8 @@ export async function POST(request: Request) {
             contactName: customer.contactName,
             email: customer.email,
             phone: customer.phone,
-            salesRep: customer.salesRep
+            salesRep: customer.salesRep,
+            type: customer.type
         })
 
         return NextResponse.json(customer)

@@ -18,6 +18,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
     const [taxId, setTaxId] = useState(customer?.taxId || "")
     const [salesRep, setSalesRep] = useState(customer?.salesRep || "")
     const [notes, setNotes] = useState(customer?.notes || "")
+    const [type, setType] = useState(customer?.type || "CUSTOMER")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -33,7 +34,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, contactName, email, phone, address, taxId, salesRep, notes })
+                body: JSON.stringify({ name, contactName, email, phone, address, taxId, salesRep, notes, type })
             })
 
             if (!res.ok) {
@@ -56,7 +57,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
                     <h3 className="text-lg font-medium text-gray-900">
-                        {customer ? "Edit Customer" : "Add New Customer"}
+                        {customer ? "Edit Partner" : "Add New Partner"}
                     </h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                         <X className="h-6 w-6" />
@@ -74,7 +75,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="sm:col-span-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                Customer Name *
+                                Partner Name *
                             </label>
                             <input
                                 type="text"
@@ -96,6 +97,19 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                 placeholder="Contact person name"
                             />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">Type *</label>
+                            <select
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                                value={type}
+                                onChange={(e) => setType(e.target.value)}
+                            >
+                                <option value="CUSTOMER">Customer</option>
+                                <option value="SUPPLIER">Supplier</option>
+                                <option value="BOTH">Both</option>
+                            </select>
                         </div>
 
                         <div>

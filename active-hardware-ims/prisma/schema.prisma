@@ -66,6 +66,8 @@ model Customer {
   taxId       String?  // Tax/VAT ID
   salesRep    String?  // Sales representative
   notes       String?
+  type        String   @default("CUSTOMER") // CUSTOMER, SUPPLIER, BOTH
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   invoices    Invoice[]
@@ -320,14 +322,4 @@ model DeliveryOrderItem {
   reservedItems   InventoryItem[]
 }
 
-model Partner {
-  id        String   @id @default(uuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  type      String   // SUPPLIER, CUSTOMER, BOTH
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+
