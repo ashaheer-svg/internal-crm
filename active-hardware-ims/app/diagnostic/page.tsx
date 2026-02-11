@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { logoutAllUsers } from '@/app/actions/auth-actions'
-import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut } from 'lucide-react'
+import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut, Database, RotateCcw, CheckCircle, Wrench } from 'lucide-react'
 
 export default function DiagnosticPage() {
     const [data, setData] = useState<any>(null)
@@ -143,6 +143,9 @@ export default function DiagnosticPage() {
                     )}
                 </div>
             )}
+
+            {/* Database Management Tools */}
+            <DbToolsSection />
 
             <p style={{ color: '#666' }}>Generated: {data?.timestamp}</p>
 
@@ -309,6 +312,121 @@ function CheckSection({ title, data }: { title: string, data: any }) {
             }}>
                 {JSON.stringify(data, null, 2)}
             </pre>
+        </div>
+    )
+}
+
+function DbToolsSection() {
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [output, setOutput] = useState<string>('')
+    const [activeAction, setActiveAction] = useState<string>('')
+
+    async function handleAction(action: 'reset' | 'check' | 'fix') {
+        if (action === 'reset') {
+            const confirmed = confirm("⚠️ DANGER: This will delete ALL data and reset the database to factory defaults.\\n\\nAre you absolutely sure?")
+            if (!confirmed) return
+            const doubleConfirmed = prompt("Type 'RESET' to confirm deletion:")
+            if (doubleConfirmed !== 'RESET') return
+        }
+
+        setStatus('loading')
+        setActiveAction(action)
+        setOutput(`Running ${action}...`)
+
+        try {
+            const res = await fetch('/api/diagnostic/db-tools', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            })
+            const data = await res.json()
+
+            setStatus(res.ok ? 'success' : 'error')
+            setOutput(data.output || data.message || data.error || 'Operation success')
+        } catch (error: any) {
+            setStatus('error')
+            setOutput(`Error: ${error.message}`)
+        } finally {
+            setActiveAction('')
+        }
+    }
+
+    return (
+        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e9ecef', borderRadius: '8px', border: '1px solid #ced4da' }}>
+            <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Database size={20} /> Database Management Tools
+            </h3>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                <button
+                    onClick={() => handleAction('reset')}
+                    disabled={activeAction !== ''}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '10px 20px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: activeAction ? 0.6 : 1
+                    }}
+                >
+                    <RotateCcw size={16} /> Reset DB (Default User)
+                </button>
+                <button
+                    onClick={() => handleAction('check')}
+                    disabled={activeAction !== ''}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '10px 20px',
+                        backgroundColor: '#0d6efd',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: activeAction ? 0.6 : 1
+                    }}
+                >
+                    <CheckCircle size={16} /> Check DB Sync
+                </button>
+                <button
+                    onClick={() => handleAction('fix')}
+                    disabled={activeAction !== ''}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '10px 20px',
+                        backgroundColor: '#fd7e14',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: activeAction ? 0.6 : 1
+                    }}
+                >
+                    <Wrench size={16} /> Fix/Migrate DB
+                </button>
+            </div>
+
+            {/* Output Console */}
+            <div style={{
+                backgroundColor: '#212529',
+                color: '#f8f9fa',
+                padding: '15px',
+                borderRadius: '5px',
+                fontFamily: 'monospace',
+                fontSize: '13px',
+                minHeight: '100px',
+                maxHeight: '300px',
+                overflow: 'auto',
+                whiteSpace: 'pre-wrap',
+                border: status === 'error' ? '1px solid #dc3545' : status === 'success' ? '1px solid #198754' : '1px solid #495057'
+            }}>
+                {output || 'Ready to run database operations...'}
+            </div>
         </div>
     )
 }
