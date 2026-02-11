@@ -2,14 +2,73 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 export async function GET() {
     const diagnostics: any = {
         timestamp: new Date().toISOString(),
+        system: {},
         checks: {}
     }
 
     try {
+        // 0. System Stats
+        const totalMem = os.totalmem()
+        const freeMem = os.freemem()
+        const usedMem = totalMem - freeMem
+
+        let diskInfo: any = { status: 'unknown' }
+        try {
+            // Node 18.15+ supports fs.statfs
+            if ((fs as any).statfsSync) {
+                const stats = (fs as any).statfsSync(process.cwd())
+                const totalDisk = stats.bsize * stats.blocks
+                const freeDisk = stats.bsize * stats.bavail // bavail is for non-root users
+                diskInfo = {
+                    total: totalDisk,
+                    free: freeDisk,
+                    used: totalDisk - freeDisk,
+                    percentFree: Math.round((freeDisk / totalDisk) * 100)
+                }
+            }
+        } catch (e) {
+            diskInfo.error = String(e)
+        }
+
+        let topOutput = "Not available"
+        try {
+            // Try to run top/ps command
+            if (process.platform !== 'win32') {
+                // Linux: get top 5 processes by memory
+                const { stdout } = await execAsync('ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 6')
+                topOutput = stdout
+            } else {
+                // Windows alternative (basic)
+                const { stdout } = await execAsync('tasklist /FI "MEMUSAGE gt 50000"')
+                topOutput = stdout
+            }
+        } catch (e: any) {
+            topOutput = `Error running top: ${e.message}`
+        }
+
+        diagnostics.system = {
+            os: `${os.type()} ${os.release()} (${os.arch()})`,
+            uptime: os.uptime(),
+            loadAvg: os.loadavg(),
+            memory: {
+                total: totalMem,
+                free: freeMem,
+                used: usedMem,
+                percentUsed: Math.round((usedMem / totalMem) * 100)
+            },
+            disk: diskInfo,
+            top: topOutput
+        }
+
         // 1. Check environment variables
         diagnostics.checks.environment = {
             DATABASE_URL: process.env.DATABASE_URL || 'NOT SET',
