@@ -326,6 +326,7 @@ model DeliveryOrder {
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true)
   items         DeliveryOrderItem[]
 }
 

@@ -32,11 +32,18 @@ export default function TransactionsPage() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
 
+    // Add state for filtering deleted orders
+    const [showDeletedDO, setShowDeletedDO] = useState(false)
+
     useEffect(() => {
         fetchPurchaseOrders()
         fetchInvoices()
-        fetchDeliveryOrders()
     }, [])
+
+    // Fetch DOs whenever toggle changes or on mount
+    useEffect(() => {
+        fetchDeliveryOrders()
+    }, [showDeletedDO])
 
     async function fetchPurchaseOrders() {
         try {
@@ -60,7 +67,8 @@ export default function TransactionsPage() {
 
     async function fetchDeliveryOrders() {
         try {
-            const res = await fetch('/api/delivery-orders')
+            // Pass includeInactive param based on toggle
+            const res = await fetch(`/api/delivery-orders?includeInactive=${showDeletedDO}`)
             const data = await res.json()
             setDeliveryOrders(data)
         } catch (error) {
@@ -190,25 +198,43 @@ export default function TransactionsPage() {
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Main)</h2>
-                        <Link
-                            href="/dashboard/transactions/delivery-orders/new"
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Delivery Order
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={showDeletedDO}
+                                    onChange={(e) => setShowDeletedDO(e.target.checked)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                Show Deleted
+                            </label>
+                            <Link
+                                href="/dashboard/transactions/delivery-orders/new"
+                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                New Delivery Order
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="bg-white shadow overflow-hidden sm:rounded-md">
                         <ul className="divide-y divide-gray-200">
-                            {deliveryOrders.map((order) => (
-                                <li key={order.id}>
+                            {deliveryOrders.filter(o => showDeletedDO || o.isActive !== false).map((order) => (
+                                <li key={order.id} className={order.isActive === false ? 'opacity-60 bg-gray-50' : ''}>
                                     <Link href={`/dashboard/transactions/delivery-orders/${order.id}`} className="block hover:bg-gray-50">
                                         <div className="px-4 py-4 sm:px-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <Package className="h-5 w-5 text-gray-400 mr-3" />
-                                                    <p className="text-sm font-medium text-blue-600 truncate">{order.orderNumber}</p>
+                                                    <div className="flex flex-col">
+                                                        <p className={`text-sm font-medium ${order.isActive === false ? 'text-gray-500 line-through' : 'text-blue-600'} truncate`}>
+                                                            {order.orderNumber}
+                                                        </p>
+                                                        {order.isActive === false && (
+                                                            <span className="text-xs text-red-500 font-bold">DELETED</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="ml-2 flex-shrink-0 flex">
                                                     <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 

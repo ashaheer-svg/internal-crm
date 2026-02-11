@@ -43,11 +43,13 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 if (!res.ok) throw new Error("Failed to load order")
                 const data = await res.json()
 
+                if (!data.isActive) {
+                    router.push(`/dashboard/transactions/delivery-orders/${id}`)
+                    return
+                }
+
                 if (data.status !== 'DRAFT') {
-                    // Redirect if not draft? Or allow editing notes? 
-                    // For now, assume this page is only reachable if Draft.
-                    // But if typed manually:
-                    // router.push(`/dashboard/transactions/delivery-orders/${id}`)
+                    setError(`Warning: You are editing a ${data.status} order. Changes will affect inventory immediately.`)
                 }
 
                 setOrderNumber(data.orderNumber)
@@ -58,8 +60,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 })
                 setNotes(data.notes || "")
                 setDeliveryAddress(data.deliveryAddress || "")
-                setInvoiceValue(data.invoiceValue || "")
-                setAdditionalCosts(data.additionalCosts || "")
+                setInvoiceValue(data.invoiceValue ? String(data.invoiceValue) : "")
+                setAdditionalCosts(data.additionalCosts ? String(data.additionalCosts) : "")
 
                 if (data.customerId) {
                     fetch(`/api/customers/${data.customerId}/addresses`)

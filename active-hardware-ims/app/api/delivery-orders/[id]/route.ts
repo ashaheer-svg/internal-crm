@@ -32,6 +32,8 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     const params = await props.params;
     try {
         await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const type = searchParams.get('type') // 'soft' | 'hard'
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
@@ -40,28 +42,64 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
         if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
 
-        if (order.status !== 'DRAFT' && order.status !== 'CANCELLED') {
-            return NextResponse.json({ error: 'Only Draft or Cancelled orders can be deleted' }, { status: 400 })
+        // HARD DELETE (Permanent)
+        if (type === 'hard') {
+            // Only allow Hard Delete if already Inactive (Soft Deleted) OR Draft/Cancelled
+            // But user might want to force delete. Let's allow it but warn in UI.
+
+            // Release/Restore Stock logic
+            await prisma.$transaction(async (tx) => {
+                for (const item of order.items) {
+                    if (item.reservedItems.length > 0) {
+                        await tx.inventoryItem.updateMany({
+                            where: { deliveryOrderItemId: item.id },
+                            data: {
+                                status: 'AVAILABLE', // Restore to stock
+                                deliveryOrderItemId: null
+                            }
+                        })
+                    }
+                }
+                await tx.deliveryOrder.delete({ where: { id: params.id } })
+            })
+            return NextResponse.json({ success: true, message: 'Permanently deleted' })
         }
 
-        // Release any reserved items (just in case they exist for DRAFT orders)
-        await prisma.$transaction(async (tx) => {
-            for (const item of order.items) {
-                if (item.reservedItems.length > 0) {
-                    await tx.inventoryItem.updateMany({
-                        where: { deliveryOrderItemId: item.id },
-                        data: {
-                            status: 'AVAILABLE',
-                            deliveryOrderItemId: null
-                        }
-                    })
-                }
-            }
-            // Delete the order
-            await tx.deliveryOrder.delete({ where: { id: params.id } })
-        })
+        // SOFT DELETE (Deactivate / Trash)
+        // If DRAFT/CONFIRMED -> Cancel (Release Stock)
+        // If COMPLETED -> Keep Stock Sold (Just hide)
 
-        return NextResponse.json({ success: true })
+        let newStatus = order.status
+        if (order.status === 'DRAFT' || order.status === 'CONFIRMED') {
+            newStatus = 'CANCELLED'
+            // Release stock for cancelled orders
+            await prisma.$transaction(async (tx) => {
+                for (const item of order.items) {
+                    if (item.reservedItems.length > 0) {
+                        await tx.inventoryItem.updateMany({
+                            where: { deliveryOrderItemId: item.id },
+                            data: {
+                                status: 'AVAILABLE',
+                                deliveryOrderItemId: null
+                            }
+                        })
+                    }
+                }
+                await tx.deliveryOrder.update({
+                    where: { id: params.id },
+                    data: { isActive: false, status: 'CANCELLED' }
+                })
+            })
+        } else {
+            // Just hide
+            await prisma.deliveryOrder.update({
+                where: { id: params.id },
+                data: { isActive: false }
+            })
+        }
+
+        return NextResponse.json({ success: true, message: 'Moved to trash' })
+
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
@@ -81,18 +119,60 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
         if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
 
-        // 1. Status Change (Existing Logic)
+        // 1. Status Change Logic
         if (status && status !== order.status) {
-            // ... (keep existing status change logic)
-            if (status === 'COMPLETED' || status === 'SHIPPED') {
-                // ... existing
+            // If cancelling, release all stock
+            if (status === 'CANCELLED') {
+                await prisma.$transaction(async (tx) => {
+                    // Release stock
+                    for (const item of order.items) {
+                        if (item.reservedItems.length > 0) {
+                            await tx.inventoryItem.updateMany({
+                                where: { deliveryOrderItemId: item.id },
+                                data: { status: 'AVAILABLE', deliveryOrderItemId: null }
+                            })
+                        }
+                    }
+                    // Update status
+                    await tx.deliveryOrder.update({
+                        where: { id: params.id },
+                        data: { status: 'CANCELLED' }
+                    })
+                })
+                return NextResponse.json({ success: true })
             }
-            // ... existing
+
+            // If completing (and was not completed), ensure stock is allocated/sold
+            if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
+                await prisma.$transaction(async (tx) => {
+                    // Mark allocated items as SOLD
+                    for (const item of order.items) {
+                        if (item.reservedItems.length > 0) {
+                            await tx.inventoryItem.updateMany({
+                                where: { deliveryOrderItemId: item.id },
+                                data: { status: 'SOLD' }
+                            })
+                        }
+                    }
+                    await tx.deliveryOrder.update({
+                        where: { id: params.id },
+                        data: { status: 'COMPLETED' }
+                    })
+                })
+                return NextResponse.json({ success: true })
+            }
+            // Simple status update for other transitions
+            await prisma.deliveryOrder.update({
+                where: { id: params.id },
+                data: { status }
+            })
+            return NextResponse.json({ success: true })
         }
 
-        // 2. Full Update (Edit Mode)
+        // 2. Full Update (Edit Items & Fields)
         if (items && Array.isArray(items)) {
             const updatedOrder = await prisma.$transaction(async (tx) => {
+                // Update Header Fields
                 await tx.deliveryOrder.update({
                     where: { id: params.id },
                     data: {
@@ -106,46 +186,108 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     }
                 })
 
-                // Get existing items to determine what to delete
+                // Get existing items for diffing
                 const existingItems = await tx.deliveryOrderItem.findMany({
-                    where: { deliveryOrderId: params.id }
+                    where: { deliveryOrderId: params.id },
+                    include: { reservedItems: true }
                 })
                 const existingItemIds = existingItems.map(i => i.id)
-
-                // Identify items to delete (exist in DB but not in payload)
                 const payloadIds = items.filter((i: any) => i.id).map((i: any) => i.id)
-                const itemsToDelete = existingItemIds.filter(id => !payloadIds.includes(id))
 
-                if (itemsToDelete.length > 0) {
-                    await tx.deliveryOrderItem.deleteMany({
-                        where: { id: { in: itemsToDelete } }
-                    })
+                // A. HANDLE DELETIONS
+                const itemsToDelete = existingItems.filter(i => !payloadIds.includes(i.id))
+                for (const item of itemsToDelete) {
+                    // Release inventory back to AVAILABLE
+                    if (item.reservedItems.length > 0) {
+                        await tx.inventoryItem.updateMany({
+                            where: { deliveryOrderItemId: item.id },
+                            data: { status: 'AVAILABLE', deliveryOrderItemId: null }
+                        })
+                    }
+                    await tx.deliveryOrderItem.delete({ where: { id: item.id } })
                 }
 
-                // Upsert items (Update existing or Create new)
+                // B. HANDLE UPSERTS (Update or Create)
                 for (const item of items) {
+                    let orderItemId = item.id
+
+                    // Check if new or existing
                     if (item.id && existingItemIds.includes(item.id)) {
-                        // Update
+                        // UPDATE Existing Item
                         await tx.deliveryOrderItem.update({
                             where: { id: item.id },
                             data: {
                                 productId: item.productId,
-                                quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
-                                unitPrice: Number(item.unitPrice) || 0
-                                // Note: isBackorder and reservedItems are handled via allocation, not here
+                                quantity: Number(item.quantity),
+                                unitPrice: Number(item.unitPrice)
                             }
                         })
+
+                        // Inventory Adjustment Logic
+                        const existingItem = existingItems.find(i => i.id === item.id)
+                        const currentReservedCount = existingItem?.reservedItems.length || 0
+                        const newQuantity = Number(item.quantity)
+
+                        // If we need MORE (increase qty) -> Try to auto-allocate
+                        if (newQuantity > currentReservedCount) {
+                            const needed = newQuantity - currentReservedCount
+                            const availableStock = await tx.inventoryItem.findMany({
+                                where: { productId: item.productId, status: 'AVAILABLE' },
+                                take: needed
+                            })
+
+                            if (availableStock.length > 0) { // Allocate what we can
+                                await tx.inventoryItem.updateMany({
+                                    where: { id: { in: availableStock.map(i => i.id) } },
+                                    data: {
+                                        status: order.status === 'COMPLETED' ? 'SOLD' : 'RESERVED',
+                                        deliveryOrderItemId: item.id
+                                    }
+                                })
+                            }
+                        }
+                        // If we need LESS (decrease qty) -> Release excess
+                        else if (newQuantity < currentReservedCount) {
+                            const toReleaseCount = currentReservedCount - newQuantity
+                            // Release the last N items
+                            const toRelease = existingItem?.reservedItems.slice(0, toReleaseCount) || []
+                            if (toRelease.length > 0) {
+                                await tx.inventoryItem.updateMany({
+                                    where: { id: { in: toRelease.map(i => i.id) } },
+                                    data: { status: 'AVAILABLE', deliveryOrderItemId: null }
+                                })
+                            }
+                        }
+
                     } else {
-                        // Create
-                        await tx.deliveryOrderItem.create({
+                        // CREATE New Item
+                        const newItem = await tx.deliveryOrderItem.create({
                             data: {
                                 deliveryOrderId: params.id,
                                 productId: item.productId,
-                                quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
-                                unitPrice: Number(item.unitPrice) || 0,
+                                quantity: Number(item.quantity),
+                                unitPrice: Number(item.unitPrice),
                                 isBackorder: false
                             }
                         })
+                        orderItemId = newItem.id
+
+                        // Auto-allocate logic for new item
+                        const needed = Number(item.quantity)
+                        const availableStock = await tx.inventoryItem.findMany({
+                            where: { productId: item.productId, status: 'AVAILABLE' },
+                            take: needed
+                        })
+
+                        if (availableStock.length > 0) {
+                            await tx.inventoryItem.updateMany({
+                                where: { id: { in: availableStock.map(i => i.id) } },
+                                data: {
+                                    status: order.status === 'COMPLETED' ? 'SOLD' : 'RESERVED',
+                                    deliveryOrderItemId: orderItemId
+                                }
+                            })
+                        }
                     }
                 }
 
@@ -158,7 +300,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             return NextResponse.json(updatedOrder)
         }
 
-        // 3. Simple Field Update (Fallback)
+        // 3. Fallback (Simple Patch)
         const updated = await prisma.deliveryOrder.update({
             where: { id: params.id },
             data: {
@@ -169,7 +311,6 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
             }
         })
-
         return NextResponse.json(updated)
 
     } catch (error: any) {

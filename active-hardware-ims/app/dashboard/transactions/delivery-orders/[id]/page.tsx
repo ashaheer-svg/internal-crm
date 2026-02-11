@@ -44,6 +44,7 @@ type DeliveryOrder = {
     additionalCosts?: number
     notes: string | null
     createdAt: string
+    isActive: boolean
     items: DeliveryOrderItem[]
 }
 
@@ -193,13 +194,17 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         }
     }
 
-    async function handleDelete() {
+    async function handleDelete(type: 'soft' | 'hard' = 'soft') {
         if (!order) return
-        if (!confirm("Are you sure you want to PERMANENTLY delete this order? This cannot be undone.")) return
+        const message = type === 'hard'
+            ? "Are you sure you want to PERMANENTLY delete this order? This cannot be undone."
+            : "Are you sure you want to move this order to trash?"
+
+        if (!confirm(message)) return
 
         setActionLoading(true)
         try {
-            const res = await fetch(`/api/delivery-orders/${order.id}`, {
+            const res = await fetch(`/api/delivery-orders/${order.id}?type=${type}`, {
                 method: 'DELETE',
             })
 
@@ -252,14 +257,19 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         Print Packing Slip
                     </Link>
 
-                    {isDraft && (
+                    {/* Edit Button - Available for all Active orders */}
+                    {order.isActive && (
+                        <Link
+                            href={`/dashboard/transactions/delivery-orders/${id}/edit`}
+                            className="px-4 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md shadow-sm"
+                        >
+                            Edit
+                        </Link>
+                    )}
+
+                    {/* Status Actions - Only for Active Orders */}
+                    {order.isActive && isDraft && (
                         <>
-                            <Link
-                                href={`/dashboard/transactions/delivery-orders/${id}/edit`}
-                                className="px-4 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md shadow-sm"
-                            >
-                                Edit
-                            </Link>
                             <button
                                 onClick={() => handleStatusChange('CANCELLED')}
                                 className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md border border-transparent hover:border-red-200"
@@ -277,15 +287,14 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         </>
                     )}
 
-                    {(isDraft || isCancelled) && (
-                        <button
-                            onClick={handleDelete}
-                            className="p-2 text-gray-400 hover:text-red-600"
-                            title="Delete Order"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </button>
-                    )}
+                    {/* Delete Actions */}
+                    <button
+                        onClick={() => handleDelete(order.isActive ? 'soft' : 'hard')}
+                        className="p-2 text-gray-400 hover:text-red-600"
+                        title={order.isActive ? "Move to Trash" : "Delete Permanently"}
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 

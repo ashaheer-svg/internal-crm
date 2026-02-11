@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const includeInactive = searchParams.get('includeInactive') === 'true'
+
+        const where = includeInactive ? {} : { isActive: true }
 
         const orders = await prisma.deliveryOrder.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
             include: {
                 _count: {
