@@ -8,11 +8,17 @@ export async function GET(request: Request) {
     try {
         await requireAuth()
         const { searchParams } = new URL(request.url)
-        const type = searchParams.get('type')
+        const type = searchParams.get('type') // 'CUSTOMER', 'SUPPLIER', 'PARTNER' or 'ALL'
         const showInactive = searchParams.get('showInactive') === 'true'
 
         const where: any = {}
-        if (type && type !== 'ALL') where.type = type
+
+        if (type && type !== 'ALL') {
+            if (type === 'CUSTOMER') where.isCustomer = true
+            else if (type === 'SUPPLIER') where.isSupplier = true
+            else if (type === 'PARTNER') where.isPartner = true
+        }
+
         if (!showInactive) where.isActive = true
 
         const customers = await prisma.customer.findMany({
@@ -39,7 +45,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { name, contactName, email, phone, address, taxId, salesRep, notes, type } = body
+        const { name, contactName, email, phone, address, taxId, salesRep, notes, isCustomer, isSupplier, isPartner } = body
 
         if (!name) {
             return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
@@ -65,7 +71,9 @@ export async function POST(request: Request) {
                 taxId,
                 salesRep,
                 notes,
-                type: type || 'CUSTOMER',
+                isCustomer: isCustomer || false,
+                isSupplier: isSupplier || false,
+                isPartner: isPartner || false,
                 isActive: true
             }
         })
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
             email: customer.email,
             phone: customer.phone,
             salesRep: customer.salesRep,
-            type: customer.type
+            roles: { isCustomer, isSupplier, isPartner }
         })
 
         return NextResponse.json(customer)

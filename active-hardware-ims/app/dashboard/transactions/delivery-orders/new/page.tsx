@@ -28,6 +28,10 @@ export default function NewDeliveryOrderPage() {
     const [customerName, setCustomerName] = useState("")
     const [notes, setNotes] = useState("")
 
+    // Address Selection
+    const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
+    const [deliveryAddress, setDeliveryAddress] = useState("")
+
     // Items
     const [items, setItems] = useState<DeliveryOrderItem[]>([])
 
@@ -40,9 +44,38 @@ export default function NewDeliveryOrderPage() {
             setSelectedCustomer(customer)
             setCustomerId(customer.id)
             setCustomerName(customer.name)
+
+            // Fetch addresses
+            fetch(`/api/customers/${customer.id}/addresses`)
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setAvailableAddresses(data)
+                        // Auto-select default
+                        const defaultAddr = data.find((a: any) => a.isDefault)
+                        if (defaultAddr) {
+                            setDeliveryAddress(defaultAddr.address)
+                        } else if (data.length > 0) {
+                            // Or maybe don't auto select? Let's auto select first one if no default
+                            setDeliveryAddress(data[0].address)
+                        } else {
+                            setDeliveryAddress("")
+                        }
+                    } else {
+                        setAvailableAddresses([])
+                        setDeliveryAddress("")
+                    }
+                })
+                .catch(() => {
+                    setAvailableAddresses([])
+                    setDeliveryAddress("")
+                })
+
         } else {
             setSelectedCustomer(null)
             setCustomerId(null)
+            setAvailableAddresses([])
+            setDeliveryAddress("")
         }
     }
 
@@ -140,6 +173,7 @@ export default function NewDeliveryOrderPage() {
                     orderNumber,
                     customerId,
                     customerName,
+                    deliveryAddress,
                     notes,
                     items
                 }),
@@ -213,6 +247,73 @@ export default function NewDeliveryOrderPage() {
                                     onChange={(e) => setNotes(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                 />
+                            </div>
+
+                            {/* Delivery Address Selection */}
+                            <div className="sm:col-span-2 border-t pt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
+                                {customerId ? (
+                                    <div className="space-y-3">
+                                        {availableAddresses.length > 0 ? (
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {availableAddresses.map((addr) => (
+                                                    <label key={addr.id} className={`flex items-start p-3 border rounded-md cursor-pointer hover:bg-gray-50 ${deliveryAddress === addr.address ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' : ''}`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="deliveryAddress"
+                                                            checked={deliveryAddress === addr.address}
+                                                            onChange={() => setDeliveryAddress(addr.address)}
+                                                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                        />
+                                                        <div className="ml-3">
+                                                            <span className="block text-sm font-medium text-gray-900">{addr.label}</span>
+                                                            <span className="block text-sm text-gray-500">{addr.address}</span>
+                                                            {(addr.contactName || addr.phone) && (
+                                                                <span className="block text-xs text-gray-400 mt-1">
+                                                                    {addr.contactName} {addr.phone && `• ${addr.phone}`}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                                <label className="flex items-center space-x-2 mt-2">
+                                                    <input
+                                                        type="radio"
+                                                        name="deliveryAddress"
+                                                        checked={deliveryAddress === ''} // Or separate "Custom" state? simplified: if not matching any known address
+                                                        onChange={() => setDeliveryAddress("")}
+                                                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">Custom / None</span>
+                                                </label>
+                                                {(!availableAddresses.some(a => a.address === deliveryAddress) && deliveryAddress !== "") && (
+                                                    <div className="mt-2">
+                                                        <label className="block text-xs text-gray-500">Custom Address</label>
+                                                        <textarea
+                                                            value={deliveryAddress}
+                                                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                                                            rows={2}
+                                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-500 italic">
+                                                No saved addresses found for this partner.
+                                                <textarea
+                                                    value={deliveryAddress}
+                                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                                    rows={2}
+                                                    placeholder="Enter delivery address..."
+                                                    className="mt-2 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">Select a customer to view delivery addresses.</p>
+                                )}
                             </div>
                         </div>
                     </div>

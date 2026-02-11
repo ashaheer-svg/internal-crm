@@ -56,6 +56,7 @@ export async function POST(request: Request) {
                     orderNumber,
                     customerId,
                     customerName,
+                    deliveryAddress: body.deliveryAddress,
                     notes,
                     status: 'DRAFT',
                     items: {

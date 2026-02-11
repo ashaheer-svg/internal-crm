@@ -37,6 +37,7 @@ type DeliveryOrder = {
     orderNumber: string
     customerName: string
     customerId: string | null
+    deliveryAddress: string | null
     status: string // DRAFT, CONFIRMED, COMPLETED, CANCELLED
     notes: string | null
     createdAt: string
@@ -366,6 +367,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         <h3 className="font-medium text-gray-900 mb-4">Customer Details</h3>
                         <div className="space-y-3 text-sm">
                             <p className="text-gray-900 font-medium">{order.customerName}</p>
+                            {order.deliveryAddress && (
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Delivery Address</p>
+                                    <p className="text-gray-600 whitespace-pre-wrap">{order.deliveryAddress}</p>
+                                </div>
+                            )}
                             {order.notes && (
                                 <div className="pt-3 border-t">
                                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Notes</p>

@@ -20,6 +20,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
     const [orderNumber, setOrderNumber] = useState("")
     const [customer, setCustomer] = useState<any>(null)
     const [notes, setNotes] = useState("")
+    const [deliveryAddress, setDeliveryAddress] = useState("")
+    const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
 
     // Items State
     const [items, setItems] = useState<any[]>([])
@@ -53,6 +55,16 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                     // other fields not stored on DO but that's okay
                 })
                 setNotes(data.notes || "")
+                setDeliveryAddress(data.deliveryAddress || "")
+
+                if (data.customerId) {
+                    fetch(`/api/customers/${data.customerId}/addresses`)
+                        .then(res => res.json())
+                        .then(addrs => {
+                            if (Array.isArray(addrs)) setAvailableAddresses(addrs)
+                        })
+                        .catch(err => console.error("Failed to load addresses", err))
+                }
 
                 // transform items
                 const formattedItems = data.items.map((i: any) => ({
@@ -156,6 +168,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 orderNumber,
                 customerId: customer.id,
                 customerName: customer.name,
+                deliveryAddress,
                 notes,
                 items: items.map(i => ({
                     id: i.id, // Send ID if it exists
@@ -228,6 +241,76 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     </div>
                                 ) : (
                                     <CustomerSelector onSelect={setCustomer} selectedCustomer={null} />
+                                )}
+                            </div>
+
+                            {/* Delivery Address Selection */}
+                            <div className="col-span-2 border-t pt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
+                                {customer ? (
+                                    <div className="space-y-3">
+                                        {availableAddresses.length > 0 ? (
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {availableAddresses.map((addr) => (
+                                                    <label key={addr.id} className={`flex items-start p-3 border rounded-md cursor-pointer hover:bg-gray-50 ${deliveryAddress === addr.address ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' : ''}`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="deliveryAddress"
+                                                            checked={deliveryAddress === addr.address}
+                                                            onChange={() => setDeliveryAddress(addr.address)}
+                                                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                        />
+                                                        <div className="ml-3">
+                                                            <span className="block text-sm font-medium text-gray-900">{addr.label}</span>
+                                                            <span className="block text-sm text-gray-500">{addr.address}</span>
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                                <label className="flex items-center space-x-2 mt-2">
+                                                    <input
+                                                        type="radio"
+                                                        name="deliveryAddress"
+                                                        checked={deliveryAddress === '' || (deliveryAddress !== '' && !availableAddresses.some(a => a.address === deliveryAddress))}
+                                                        onChange={() => {
+                                                            // If currently selected is custom, keep it, otherwise clear? 
+                                                            // Logic: If clicking "Custom", we start blank or keep whatever custom text was there?
+                                                            // Actually, if we switch from Preset to Custom, we might want to keep the text or clear it. 
+                                                            // Let's assume clear if it was a Preset.
+                                                            if (availableAddresses.some(a => a.address === deliveryAddress)) {
+                                                                setDeliveryAddress("")
+                                                            }
+                                                        }}
+                                                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">Custom / None</span>
+                                                </label>
+                                                {((deliveryAddress === '') || (!availableAddresses.some(a => a.address === deliveryAddress))) && (
+                                                    <div className="mt-2">
+                                                        <textarea
+                                                            value={deliveryAddress}
+                                                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                                                            rows={2}
+                                                            placeholder="Enter custom delivery address..."
+                                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-500 italic">
+                                                No saved addresses found.
+                                                <textarea
+                                                    value={deliveryAddress}
+                                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                                    rows={2}
+                                                    placeholder="Enter delivery address..."
+                                                    className="mt-2 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">Select a customer to view delivery addresses.</p>
                                 )}
                             </div>
                         </div>

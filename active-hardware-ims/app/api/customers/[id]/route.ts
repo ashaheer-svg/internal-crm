@@ -45,7 +45,7 @@ export async function PATCH(
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { name, contactName, email, phone, address, taxId, salesRep, notes } = body
+        const { name, contactName, email, phone, address, taxId, salesRep, notes, isCustomer, isSupplier, isPartner, isActive } = body
 
         // Get existing customer for audit log
         const existingCustomer = await prisma.customer.findUnique({
@@ -79,7 +79,11 @@ export async function PATCH(
                 address,
                 taxId,
                 salesRep,
-                notes
+                notes,
+                isCustomer: isCustomer !== undefined ? isCustomer : existingCustomer.isCustomer,
+                isSupplier: isSupplier !== undefined ? isSupplier : existingCustomer.isSupplier,
+                isPartner: isPartner !== undefined ? isPartner : existingCustomer.isPartner,
+                isActive: isActive !== undefined ? isActive : existingCustomer.isActive
             }
         })
 

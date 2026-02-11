@@ -66,12 +66,32 @@ model Customer {
   taxId       String?  // Tax/VAT ID
   salesRep    String?  // Sales representative
   notes       String?
-  type        String   @default("CUSTOMER") // CUSTOMER, SUPPLIER, BOTH
+  // Roles (Multi-select)
+  isCustomer  Boolean  @default(false) // End Customer
+  isSupplier  Boolean  @default(false) // Supplier
+  isPartner   Boolean  @default(false) // Partner (e.g. Reseller)
+  
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   invoices    Invoice[]
   deliveryOrders DeliveryOrder[]
+  deliveryAddresses DeliveryAddress[]
+}
+
+model DeliveryAddress {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label       String   // e.g. "Main Warehouse", "Branch A"
+  address     String   // Full address
+  contactName String?
+  phone       String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([customerId])
 }
 
 model Product {
@@ -298,6 +318,7 @@ model DeliveryOrder {
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
   customerName  String
+  deliveryAddress String? // Snapshot of delivery address
   status        String   @default("DRAFT") // DRAFT, CONFIRMED, COMPLETED, CANCELLED
   totalAmount   Float    @default(0)
   notes         String?
