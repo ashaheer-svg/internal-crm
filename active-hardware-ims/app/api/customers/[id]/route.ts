@@ -126,7 +126,10 @@ export async function DELETE(
             where: { id },
             include: {
                 _count: {
-                    select: { invoices: true }
+                    select: {
+                        invoices: true,
+                        deliveryOrders: true
+                    }
                 }
             }
         })
@@ -135,10 +138,10 @@ export async function DELETE(
             return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
         }
 
-        // Check if customer has invoices
-        if (customer._count.invoices > 0) {
+        // Check if customer has associated records
+        if (customer._count.invoices > 0 || customer._count.deliveryOrders > 0) {
             return NextResponse.json(
-                { error: `Cannot delete customer with ${customer._count.invoices} existing delivery order(s)` },
+                { error: `Cannot delete customer with existing invoices or delivery orders` },
                 { status: 400 }
             )
         }

@@ -106,12 +106,56 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     }
                 })
 
-                // ... (rest of items update)
-                // Need to match context carefully 
+                // Get existing items to determine what to delete
+                const existingItems = await tx.deliveryOrderItem.findMany({
+                    where: { deliveryOrderId: params.id }
+                })
+                const existingItemIds = existingItems.map(i => i.id)
+
+                // Identify items to delete (exist in DB but not in payload)
                 const payloadIds = items.filter((i: any) => i.id).map((i: any) => i.id)
-                // ...
+                const itemsToDelete = existingItemIds.filter(id => !payloadIds.includes(id))
+
+                if (itemsToDelete.length > 0) {
+                    await tx.deliveryOrderItem.deleteMany({
+                        where: { id: { in: itemsToDelete } }
+                    })
+                }
+
+                // Upsert items (Update existing or Create new)
+                for (const item of items) {
+                    if (item.id && existingItemIds.includes(item.id)) {
+                        // Update
+                        await tx.deliveryOrderItem.update({
+                            where: { id: item.id },
+                            data: {
+                                productId: item.productId,
+                                quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+                                unitPrice: Number(item.unitPrice) || 0
+                                // Note: isBackorder and reservedItems are handled via allocation, not here
+                            }
+                        })
+                    } else {
+                        // Create
+                        await tx.deliveryOrderItem.create({
+                            data: {
+                                deliveryOrderId: params.id,
+                                productId: item.productId,
+                                quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+                                unitPrice: Number(item.unitPrice) || 0,
+                                isBackorder: false
+                            }
+                        })
+                    }
+                }
+
+                return tx.deliveryOrder.findUnique({
+                    where: { id: params.id },
+                    include: { items: true }
+                })
             })
-            // ...
+
+            return NextResponse.json(updatedOrder)
         }
 
         // 3. Simple Field Update (Fallback)
