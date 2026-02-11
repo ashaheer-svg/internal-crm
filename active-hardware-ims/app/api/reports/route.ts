@@ -38,6 +38,9 @@ export async function GET(request: Request) {
             case 'backorder':
                 return await generateBackorderReport()
 
+            case 'profitability':
+                return await generateProfitabilityReport(dateFilter)
+
             default:
                 return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })
         }
@@ -349,6 +352,85 @@ async function generateBackorderReport() {
             totalOrdered,
             totalFulfilled,
             totalPending
+        }
+    })
+}
+
+import { requireRole } from '@/lib/auth'
+
+async function generateProfitabilityReport(dateFilter: any) {
+    // 1. Enforce Admin Role
+    try {
+        await requireRole(['ADMIN'])
+    } catch (error) {
+        return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
+    }
+
+    // 2. Fetch Delivery Orders with Items and Allocated Inventory (for COGS)
+    const deliveryOrders = await prisma.deliveryOrder.findMany({
+        where: {
+            ...dateFilter,
+            status: { in: ['COMPLETED', 'CONFIRMED'] } // Only include confirmed/completed orders
+        },
+        include: {
+            items: {
+                include: {
+                    product: true,
+                    reservedItems: true // Allocated inventory items (source of true cost)
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    // 3. Process Data
+    const reportData: any[] = []
+
+    for (const order of deliveryOrders) {
+        for (const item of order.items) {
+            // Calculate COGS from allocated items
+            // If no items allocated (e.g. unallocated order), allow fallback to 0 or standard cost if we had it
+            // For now, specialized strict COGS: sum of unitCost of all reserved items
+            const totalCost = item.reservedItems.reduce((sum: number, inv: any) => sum + inv.unitCost, 0)
+
+            // If quantity > reservedItems (partial allocation), we might miss some cost data.
+            // We could estimate using the average of reserved items for the remainder,
+            // but strict accounting prefers actuals.
+            // We will report what we know.
+
+            const totalRevenue = item.unitPrice * item.quantity
+            const grossProfit = totalRevenue - totalCost
+            const margin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
+
+            reportData.push({
+                orderDate: order.createdAt,
+                orderNumber: order.orderNumber,
+                customer: order.customerName,
+                product: `${item.product.brand} ${item.product.model}`,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalRevenue,
+                totalCost,
+                grossProfit,
+                margin: parseFloat(margin.toFixed(1)) + '%'
+            })
+        }
+    }
+
+    // 4. Summaries
+    const totalRevenue = reportData.reduce((sum, item) => sum + item.totalRevenue, 0)
+    const totalCost = reportData.reduce((sum, item) => sum + item.totalCost, 0)
+    const totalProfit = totalRevenue - totalCost
+    const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+
+    return NextResponse.json({
+        type: 'profitability',
+        data: reportData,
+        summary: {
+            totalRevenue,
+            totalCost,
+            totalProfit,
+            avgMargin: parseFloat(avgMargin.toFixed(1)) + '%'
         }
     })
 }

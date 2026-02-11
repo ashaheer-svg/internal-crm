@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FileText, Download, Printer, Calendar } from "lucide-react"
 
-type ReportType = 'inventory-valuation' | 'stock-movement' | 'sales' | 'purchase' | 'warranty' | 'location'
+type ReportType = 'inventory-valuation' | 'stock-movement' | 'sales' | 'purchase' | 'warranty' | 'location' | 'profitability'
 
 type ReportData = {
     type: string
@@ -18,14 +18,27 @@ export default function ReportsPage() {
     const [reportData, setReportData] = useState<ReportData | null>(null)
     const [loading, setLoading] = useState(false)
 
+    const [user, setUser] = useState<any>(null)
+
+    useEffect(() => {
+        // Fetch user role
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => setUser(data.user || null))
+            .catch(err => console.error('Failed to fetch user', err))
+    }, [])
+
     const reportTypes = [
-        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product' },
-        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements' },
-        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue' },
-        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary' },
-        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status' },
-        { id: 'location', name: 'Location Report', description: 'Stock distribution by location' }
+        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product', roles: ['ADMIN', 'MANAGER'] },
+        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements', roles: ['ADMIN', 'MANAGER', 'WAREHOUSE'] },
+        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue', roles: ['ADMIN', 'MANAGER', 'SALES'] },
+        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary', roles: ['ADMIN', 'MANAGER'] },
+        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status', roles: ['ADMIN', 'MANAGER', 'SALES'] },
+        { id: 'location', name: 'Location Report', description: 'Stock distribution by location', roles: ['ADMIN', 'MANAGER', 'WAREHOUSE'] },
+        { id: 'profitability', name: 'Profitability Report', description: 'GP Analysis per Order (Admin Only)', roles: ['ADMIN'] }
     ]
+
+    const availableReports = reportTypes.filter(r => !r.roles || (user && r.roles.includes(user.role)))
 
     async function generateReport() {
         setLoading(true)
@@ -99,7 +112,7 @@ export default function ReportsPage() {
             <div className="bg-white shadow sm:rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Select Report Type</h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {reportTypes.map((report) => (
+                    {availableReports.map((report) => (
                         <button
                             key={report.id}
                             onClick={() => setSelectedReport(report.id as ReportType)}
@@ -122,7 +135,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Date Range Filter */}
-            {['stock-movement', 'sales', 'purchase', 'warranty'].includes(selectedReport) && (
+            {['stock-movement', 'sales', 'purchase', 'warranty', 'profitability'].includes(selectedReport) && (
                 <div className="bg-white shadow sm:rounded-lg p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Calendar className="w-5 h-5 text-gray-400" />
