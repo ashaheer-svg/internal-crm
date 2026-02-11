@@ -75,13 +75,6 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
         )
     }
 
-    return (
-        <button
-            onClick={() => setIsTransferring(true)}
-            className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-1.5 rounded-full transition-colors flex items-center justify-center"
-            title="Transfer Location"
-        >
-            <ArrowRightLeft className="w-4 h-4" />
-        </button>
-    )
+    // Location transfer is now handled inline in the table
+    return null
 }

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { QrCode, Search } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import InventoryItemActions from "./InventoryItemActions"
+import LocationEditor from "./LocationEditor"
 
 type InventoryItem = {
     id: string
@@ -110,7 +111,12 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                     {item.serialNumber}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {item.location.name}
+                                    <LocationEditor
+                                        itemId={item.id}
+                                        currentLocationId={item.location.id}
+                                        currentLocationName={item.location.name}
+                                        locations={locations}
+                                    />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
