@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET() {
     try {
+        await requireAuth()
+
         // Get total products count
         const totalProducts = await prisma.product.count({
             where: { isActive: true }
@@ -99,7 +102,10 @@ export async function GET() {
                 }))
             ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10)
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'Unauthorized' || error.message === 'Account is inactive') {
+            return new NextResponse('Unauthorized', { status: 401 })
+        }
         console.error('Failed to fetch dashboard stats:', error)
         // Return default values instead of error to prevent frontend crash
         return NextResponse.json({
