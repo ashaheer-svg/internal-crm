@@ -20,7 +20,7 @@ async function main() {
                 data: {
                     name: 'Sold',
                     address: 'Virtual Location',
-                    description: 'Items that have been sold'
+                    type: 'VIRTUAL'
                 }
             })
             console.log("Created 'Sold' location")

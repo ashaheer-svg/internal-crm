@@ -78,7 +78,11 @@ export async function POST(request: Request) {
                     let soldLocation = await tx.location.findFirst({ where: { name: 'Sold' } })
                     if (!soldLocation) {
                         soldLocation = await tx.location.create({
-                            data: { name: 'Sold', address: 'Virtual', description: 'Sold Items' }
+                            data: {
+                                name: 'Sold',
+                                address: 'Virtual',
+                                type: 'VIRTUAL'
+                            }
                         })
                     }
 
