@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { logoutAllUsers } from '@/app/actions/auth-actions'
-import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut, Database, RotateCcw, CheckCircle, Wrench } from 'lucide-react'
+import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut, Database, RotateCcw, CheckCircle, Wrench, ChevronLeft, ChevronRight, Edit, Save, X, RefreshCcw as RefreshIcon } from 'lucide-react'
 
 export default function DiagnosticPage() {
     const [data, setData] = useState<any>(null)
@@ -146,6 +146,9 @@ export default function DiagnosticPage() {
 
             {/* Database Management Tools */}
             <DbToolsSection />
+
+            {/* Table Manager */}
+            <TableManager />
 
             <p style={{ color: '#666' }}>Generated: {data?.timestamp}</p>
 
@@ -321,12 +324,15 @@ function DbToolsSection() {
     const [output, setOutput] = useState<string>('')
     const [activeAction, setActiveAction] = useState<string>('')
 
-    async function handleAction(action: 'reset' | 'check' | 'fix') {
+    async function handleAction(action: 'reset' | 'check' | 'fix' | 'restore-admin') {
         if (action === 'reset') {
             const confirmed = confirm("⚠️ DANGER: This will delete ALL data and reset the database to factory defaults.\\n\\nAre you absolutely sure?")
             if (!confirmed) return
             const doubleConfirmed = prompt("Type 'RESET' to confirm deletion:")
             if (doubleConfirmed !== 'RESET') return
+        }
+        if (action === 'restore-admin') {
+            if (!confirm("This will reset the 'admin@activehardware.com' user's password to 'Admin@123'. Existing data will be preserved.")) return
         }
 
         setStatus('loading')
@@ -409,6 +415,23 @@ function DbToolsSection() {
                 >
                     <Wrench size={16} /> Fix/Migrate DB
                 </button>
+                <button
+                    onClick={() => handleAction('restore-admin')}
+                    disabled={activeAction !== ''}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '10px 20px',
+                        backgroundColor: '#198754',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: activeAction ? 0.6 : 1
+                    }}
+                >
+                    <CheckCircle size={16} /> Restore Admin (Keep Data)
+                </button>
             </div>
 
             {/* Output Console */}
@@ -427,6 +450,238 @@ function DbToolsSection() {
             }}>
                 {output || 'Ready to run database operations...'}
             </div>
+        </div>
+    )
+}
+
+function TableManager() {
+    const [models, setModels] = useState<string[]>([])
+    const [selectedModel, setSelectedModel] = useState<string>('')
+    const [records, setRecords] = useState<any[]>([])
+    const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const [loading, setLoading] = useState(false)
+    const [editingRecord, setEditingRecord] = useState<any>(null)
+    const [editJson, setEditJson] = useState('')
+
+    useEffect(() => {
+        // Load models
+        fetch('/api/diagnostic/models')
+            .then(res => res.json())
+            .then(data => {
+                if (data.models) setModels(data.models)
+            })
+    }, [])
+
+    useEffect(() => {
+        if (selectedModel) {
+            loadRecords(1)
+        } else {
+            setRecords([])
+        }
+    }, [selectedModel])
+
+    function loadRecords(p: number) {
+        setLoading(true)
+        fetch(`/api/diagnostic/models?model=${selectedModel}&page=${p}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.data) {
+                    setRecords(data.data)
+                    setPage(data.page)
+                    setTotalPages(data.totalPages)
+                }
+            })
+            .finally(() => setLoading(false))
+    }
+
+    function handleEdit(record: any) {
+        setEditingRecord(record)
+        setEditJson(JSON.stringify(record, null, 2))
+    }
+
+    async function handleSave() {
+        try {
+            const data = JSON.parse(editJson)
+            // Remove ID from data payload if it exists, strict update
+            const { id, ...updateData } = data
+            // Also remove createdAt/updatedAt if present as they are auto-managed usually,
+            // but for "admin fix" maybe we want to force them? 
+            // Prisma complains if we update unsettable fields. 
+            // Better to let user manually remove fields they don't want to update from the JSON.
+            // But ID is definitely immutable in update query usually.
+
+            const res = await fetch('/api/diagnostic/models', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: selectedModel,
+                    id: editingRecord.id,
+                    data: updateData
+                })
+            })
+
+            if (res.ok) {
+                alert('Record updated!')
+                setEditingRecord(null)
+                loadRecords(page)
+            } else {
+                const err = await res.json()
+                alert('Error: ' + err.error)
+            }
+        } catch (e: any) {
+            alert('Invalid JSON: ' + e.message)
+        }
+    }
+
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure you want to delete this record?')) return
+        const res = await fetch(`/api/diagnostic/models?model=${selectedModel}&id=${id}`, {
+            method: 'DELETE'
+        })
+        if (res.ok) {
+            loadRecords(page)
+        } else {
+            alert('Failed to delete')
+        }
+    }
+
+    return (
+        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e9ecef', borderRadius: '8px', border: '1px solid #ced4da' }}>
+            <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={20} /> Table Manager
+            </h3>
+
+            <div style={{ marginBottom: '15px' }}>
+                <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
+                >
+                    <option value="">Select a Table...</option>
+                    {models.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                    ))}
+                </select>
+                <button
+                    onClick={() => loadRecords(page)}
+                    disabled={!selectedModel}
+                    style={{ marginLeft: '10px', padding: '8px', cursor: 'pointer' }}
+                >
+                    <RefreshIcon size={16} />
+                </button>
+            </div>
+
+            {selectedModel && (
+                <>
+                    <div style={{ overflowX: 'auto', backgroundColor: 'white', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                                    <th style={{ padding: '8px', textAlign: 'left' }}>Actions</th>
+                                    <th style={{ padding: '8px', textAlign: 'left' }}>ID</th>
+                                    <th style={{ padding: '8px', textAlign: 'left' }}>Data Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center' }}>Loading...</td></tr>
+                                ) : records.length === 0 ? (
+                                    <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center' }}>No records found</td></tr>
+                                ) : (
+                                    records.map(r => (
+                                        <tr key={r.id || JSON.stringify(r)} style={{ borderBottom: '1px solid #dee2e6' }}>
+                                            <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
+                                                <button onClick={() => handleEdit(r)} style={{ marginRight: '5px', color: '#0d6efd', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button onClick={() => handleDelete(r.id)} style={{ color: '#dc3545', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                            <td style={{ padding: '8px', fontFamily: 'monospace' }}>{r.id?.substring(0, 8)}...</td>
+                                            <td style={{ padding: '8px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {JSON.stringify(r)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                        <button
+                            disabled={page <= 1}
+                            onClick={() => loadRecords(page - 1)}
+                            style={{ padding: '5px 10px', cursor: 'pointer' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <span>Page {page} of {totalPages}</span>
+                        <button
+                            disabled={page >= totalPages}
+                            onClick={() => loadRecords(page + 1)}
+                            style={{ padding: '5px 10px', cursor: 'pointer' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Edit Modal / Overlay */}
+            {editingRecord && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white', padding: '20px', borderRadius: '8px',
+                        width: '80%', maxWidth: '800px', maxHeight: '90%', display: 'flex', flexDirection: 'column'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <h3 style={{ margin: 0 }}>Edit Record ({selectedModel})</h3>
+                            <button onClick={() => setEditingRecord(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div style={{ flex: 1, marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
+                            <p style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>
+                                Edit the JSON below. Be careful with types (e.g. booleans, numbers). ID fields are ignored on update.
+                            </p>
+                            <textarea
+                                value={editJson}
+                                onChange={(e) => setEditJson(e.target.value)}
+                                style={{
+                                    flex: 1, width: '100%', fontFamily: 'monospace', fontSize: '14px',
+                                    padding: '10px', border: '1px solid #ccc', borderRadius: '4px', resize: 'none',
+                                    minHeight: '400px'
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button
+                                onClick={() => setEditingRecord(null)}
+                                style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', background: 'white' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                style={{
+                                    padding: '8px 16px', borderRadius: '4px', cursor: 'pointer',
+                                    background: '#0d6efd', color: 'white', border: 'none',
+                                    display: 'flex', alignItems: 'center', gap: '5px'
+                                }}
+                            >
+                                <Save size={16} /> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

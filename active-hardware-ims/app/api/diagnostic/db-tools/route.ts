@@ -21,6 +21,8 @@ export async function POST(req: Request) {
                 return await handleCheck()
             case 'fix':
                 return await handleFix()
+            case 'restore-admin':
+                return await handleRestoreAdmin()
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
         }
@@ -148,5 +150,36 @@ async function handleFix() {
             success: false,
             output: error.stdout || error.stderr || error.message
         })
+    }
+}
+
+async function handleRestoreAdmin() {
+    try {
+        const hashedPassword = await bcrypt.hash('Admin@123', 10)
+
+        await prisma.user.upsert({
+            where: { email: 'admin@activehardware.com' },
+            update: {
+                password: hashedPassword,
+                role: 'ADMIN',
+                isActive: true,
+                // Unlock if locked?
+            },
+            create: {
+                name: 'System Administrator',
+                email: 'admin@activehardware.com',
+                password: hashedPassword,
+                role: 'ADMIN',
+                isActive: true,
+                mustChangePassword: true
+            }
+        })
+
+        return NextResponse.json({
+            success: true,
+            message: 'Admin user restored. Login: admin@activehardware.com / Admin@123'
+        })
+    } catch (error: any) {
+        return NextResponse.json({ error: `Restore Admin failed: ${error.message}` }, { status: 500 })
     }
 }
