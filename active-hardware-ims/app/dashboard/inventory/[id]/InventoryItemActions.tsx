@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowRightLeft } from "lucide-react"
+import { ArrowRightLeft, Check, X, MapPin } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 type Props = {
@@ -41,7 +41,7 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
 
     if (isTransferring) {
         return (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-end space-x-2">
                 <select
                     className="block w-32 rounded-md border-gray-300 shadow-sm border p-1 text-xs"
                     value={targetLocation}
@@ -54,19 +54,23 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
                     ))}
                 </select>
-                <button
-                    onClick={handleTransfer}
-                    disabled={loading || !targetLocation}
-                    className="text-green-600 hover:text-green-800 text-xs font-bold"
-                >
-                    {loading ? "..." : "Confirm"}
-                </button>
-                <button
-                    onClick={() => setIsTransferring(false)}
-                    className="text-gray-500 hover:text-gray-700 text-xs"
-                >
-                    Cancel
-                </button>
+                <div className="flex items-center space-x-1">
+                    <button
+                        onClick={handleTransfer}
+                        disabled={loading || !targetLocation}
+                        className="p-1 rounded-full text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors"
+                        title="Confirm Transfer"
+                    >
+                        {loading ? <span className="animate-spin h-4 w-4 border-2 border-green-600 rounded-full border-t-transparent block"></span> : <Check className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={() => setIsTransferring(false)}
+                        className="p-1 rounded-full text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors"
+                        title="Cancel"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         )
     }
@@ -74,11 +78,10 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
     return (
         <button
             onClick={() => setIsTransferring(true)}
-            className="text-blue-600 hover:text-blue-900 flex items-center text-xs"
-            title="Transfer Stock"
+            className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-1.5 rounded-full transition-colors flex items-center justify-center"
+            title="Transfer Location"
         >
-            <ArrowRightLeft className="w-3.5 h-3.5 mr-1" />
-            Move
+            <ArrowRightLeft className="w-4 h-4" />
         </button>
     )
 }
