@@ -31,15 +31,27 @@ interface InventoryTableProps {
 
 export default function InventoryTable({ inventory, locations }: InventoryTableProps) {
     const [searchTerm, setSearchTerm] = useState("")
+    const [filterStatus, setFilterStatus] = useState<'ALL' | 'UNSOLD'>('UNSOLD')
+    const [filterLocation, setFilterLocation] = useState<string>("")
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
 
-    // Filter inventory by serial number
+    // Filter inventory
     const filteredInventory = useMemo(() => {
-        return inventory.filter(item =>
-            item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    }, [inventory, searchTerm])
+        return inventory.filter(item => {
+            // 1. Search Filter
+            const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
+
+            // 2. Status Filter
+            // If ALL, match everything. If UNSOLD, exclude SOLD and SHIPPED
+            const matchesStatus = filterStatus === 'ALL' || (item.status !== 'SOLD' && item.status !== 'SHIPPED')
+
+            // 3. Location Filter
+            const matchesLocation = filterLocation === "" || item.location.id === filterLocation
+
+            return matchesSearch && matchesStatus && matchesLocation
+        })
+    }, [inventory, searchTerm, filterStatus, filterLocation])
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredInventory.length / itemsPerPage)
@@ -60,14 +72,57 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
     return (
         <div className="bg-white shadow sm:rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                     <div>
                         <h3 className="text-lg leading-6 font-medium text-gray-900">Inventory Items</h3>
                         <p className="mt-1 max-w-2xl text-sm text-gray-500">Track individual units by serial number.</p>
                     </div>
                     <div className="text-sm text-gray-500">
                         {filteredInventory.length} {filteredInventory.length === 1 ? 'item' : 'items'}
-                        {searchTerm && ` (filtered from ${inventory.length})`}
+                        {(searchTerm || filterStatus !== 'ALL' || filterLocation) && ` (filtered from ${inventory.length})`}
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-4 items-end sm:items-center">
+                    {/* Location Filter */}
+                    <div className="w-full sm:w-auto">
+                        <label htmlFor="location-filter" className="block text-xs font-medium text-gray-700 mb-1">
+                            Filter by Location
+                        </label>
+                        <select
+                            id="location-filter"
+                            value={filterLocation}
+                            onChange={(e) => {
+                                setFilterLocation(e.target.value)
+                                setCurrentPage(1)
+                            }}
+                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        >
+                            <option value="">All Locations</option>
+                            {locations.map((loc) => (
+                                <option key={loc.id} value={loc.id}>
+                                    {loc.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Show All Toggle */}
+                    <div className="flex items-center pb-2">
+                        <label className="inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={filterStatus === 'ALL'}
+                                onChange={(e) => {
+                                    setFilterStatus(e.target.checked ? 'ALL' : 'UNSOLD')
+                                    setCurrentPage(1)
+                                }}
+                                className="sr-only peer"
+                            />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span className="ms-3 text-sm font-medium text-gray-700">Show Sold/Shipped Items</span>
+                        </label>
                     </div>
                 </div>
 
