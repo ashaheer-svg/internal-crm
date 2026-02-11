@@ -96,15 +96,26 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     // Prepare for backorder creation
                     const backorderItems: any[] = []
 
+                    // Find or create 'Sold' location
+                    let soldLocation = await tx.location.findFirst({ where: { name: 'Sold' } })
+                    if (!soldLocation) {
+                        soldLocation = await tx.location.create({
+                            data: { name: 'Sold', address: 'Virtual', description: 'Sold Items' }
+                        })
+                    }
+
                     for (const item of order.items) {
                         const fulfilledQty = item.reservedItems.length
                         const shortfall = item.quantity - fulfilledQty
 
-                        // 1. Mark reserved items as SOLD
+                        // 1. Mark reserved items as SOLD and move to Sold location
                         for (const reserved of item.reservedItems) {
                             await tx.inventoryItem.update({
                                 where: { id: reserved.id },
-                                data: { status: 'SOLD' }
+                                data: {
+                                    status: 'SOLD',
+                                    locationId: soldLocation.id
+                                }
                             })
                             await tx.transactionLog.create({
                                 data: {

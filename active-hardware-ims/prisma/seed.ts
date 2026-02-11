@@ -13,6 +13,18 @@ async function main() {
 
     if (existingAdmin) {
         console.log('Admin user already exists')
+        // Ensure 'Sold' location exists even if admin exists
+        const soldLocation = await prisma.location.findFirst({ where: { name: 'Sold' } })
+        if (!soldLocation) {
+            await prisma.location.create({
+                data: {
+                    name: 'Sold',
+                    address: 'Virtual Location',
+                    description: 'Items that have been sold'
+                }
+            })
+            console.log("Created 'Sold' location")
+        }
         return
     }
 

@@ -14,6 +14,11 @@ export async function POST(request: Request) {
         const item = await prisma.inventoryItem.findUnique({ where: { id: inventoryItemId } })
         if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
 
+        // Block transfer for SOLD items
+        if (item.status === 'SOLD') {
+            return NextResponse.json({ error: 'Cannot transfer SOLD items' }, { status: 400 })
+        }
+
         const location = await prisma.location.findUnique({ where: { id: targetLocationId } })
         if (!location) return NextResponse.json({ error: 'Location not found' }, { status: 404 })
 

@@ -74,10 +74,21 @@ export async function POST(request: Request) {
             // Process each item
             for (const item of items) {
                 if (item.inventoryItemId) {
-                    // Update inventory item to SOLD status
+                    // Find or create 'Sold' location
+                    let soldLocation = await tx.location.findFirst({ where: { name: 'Sold' } })
+                    if (!soldLocation) {
+                        soldLocation = await tx.location.create({
+                            data: { name: 'Sold', address: 'Virtual', description: 'Sold Items' }
+                        })
+                    }
+
+                    // Update inventory item to SOLD status and move to Sold location
                     await tx.inventoryItem.update({
                         where: { id: item.inventoryItemId },
-                        data: { status: 'SOLD' }
+                        data: {
+                            status: 'SOLD',
+                            locationId: soldLocation.id
+                        }
                     })
 
                     // Create transaction log
