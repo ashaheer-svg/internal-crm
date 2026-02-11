@@ -319,3 +319,15 @@ model DeliveryOrderItem {
   // Reservation link
   reservedItems   InventoryItem[]
 }
+
+model Partner {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  type      String   // SUPPLIER, CUSTOMER, BOTH
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

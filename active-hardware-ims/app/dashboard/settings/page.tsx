@@ -74,6 +74,12 @@ const settingsLinks = [
         href: "/dashboard/settings/sequences",
         icon: ScrollText,
         description: "Manage PO and GRN running numbers"
+    },
+    {
+        name: "Partners",
+        href: "/dashboard/settings/partners",
+        icon: Users,
+        description: "Manage vendors and customers (Soft/Hard Delete available)"
     }
 ]
 
