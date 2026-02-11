@@ -57,10 +57,26 @@ export default function CustomersPage() {
         try {
             const res = await fetch(`/api/customers?type=${typeFilter}&showInactive=${showInactive}`)
             const data = await res.json()
-            setCustomers(data)
-            setFilteredCustomers(data)
+
+            if (!res.ok) {
+                console.error("Failed to fetch customers:", data.error)
+                setCustomers([])
+                setFilteredCustomers([])
+                return
+            }
+
+            if (Array.isArray(data)) {
+                setCustomers(data)
+                setFilteredCustomers(data)
+            } else {
+                console.error("Received invalid data format:", data)
+                setCustomers([])
+                setFilteredCustomers([])
+            }
         } catch (error) {
             console.error(error)
+            setCustomers([])
+            setFilteredCustomers([])
         } finally {
             setLoading(false)
         }
