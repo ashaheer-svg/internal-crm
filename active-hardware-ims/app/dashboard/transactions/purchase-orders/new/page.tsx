@@ -211,55 +211,65 @@ export default function NewPurchaseOrderPage() {
                     </div>
 
                     <div className="space-y-3">
+                        {/* Header Row */}
+                        <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <div className="flex-[2]">Product</div>
+                            <div className="w-24">Quantity</div>
+                            <div className="w-32">Unit Cost</div>
+                            <div className="w-32 text-right">Total</div>
+                            <div className="w-8"></div>
+                        </div>
+
                         {items.map((item, index) => (
-                            <div key={index} className="flex gap-2 items-start p-3 border rounded-md">
-                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Product</label>
-                                        <select
-                                            value={item.productId}
-                                            onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        >
-                                            <option value="">Select product...</option>
-                                            {products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={item.quantity}
-                                            onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Unit Cost</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={item.unitCost}
-                                            onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        />
-                                    </div>
+                            <div key={index} className="flex gap-4 items-center p-3 border rounded-md text-sm">
+                                <div className="flex-[2]">
+                                    <select
+                                        value={item.productId}
+                                        onChange={(e) => updateItem(index, 'productId', e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        aria-label="Product"
+                                    >
+                                        <option value="">Select product...</option>
+                                        {products.map(p => (
+                                            <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
+                                        ))}
+                                    </select>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className="text-xs text-gray-500">Total</span>
-                                    <Currency amount={item.totalCost} className="font-semibold text-sm text-right" />
+                                <div className="w-24">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        aria-label="Quantity"
+                                    />
+                                </div>
+
+                                <div className="w-32">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={item.unitCost}
+                                        onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        aria-label="Unit Cost"
+                                    />
+                                </div>
+
+                                <div className="w-32 text-right font-semibold">
+                                    <Currency amount={item.totalCost} className="text-gray-900" />
+                                </div>
+
+                                <div className="w-8 flex justify-end">
                                     {items.length > 1 && (
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
-                                            className="mt-1 p-1 text-red-600 hover:text-red-800"
+                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            title="Remove item"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>

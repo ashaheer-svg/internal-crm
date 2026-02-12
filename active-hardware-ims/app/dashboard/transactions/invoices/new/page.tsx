@@ -341,11 +341,19 @@ export default function NewInvoicePage() {
                             </p>
                         ) : (
                             <div className="space-y-3">
+                                {/* Header Row */}
+                                <div className="hidden sm:flex gap-3 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <div className="flex-1">Product Items</div>
+                                    <div className="w-24 text-center">Qty</div>
+                                    <div className="w-32 text-right">Price</div>
+                                    <div className="w-8"></div>
+                                </div>
+
                                 {selectedItems.map((item, index) => (
-                                    <div key={index} className={`flex gap-3 items-center p-3 border rounded-md ${item.isBackorder ? 'bg-amber-50 border-amber-200' : ''}`}>
+                                    <div key={index} className={`flex gap-3 items-center p-3 border rounded-md text-sm ${item.isBackorder ? 'bg-amber-50 border-amber-200' : ''}`}>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium text-gray-900">{item.productName}</p>
+                                                <p className="font-medium text-gray-900">{item.productName}</p>
                                                 {item.isBackorder && (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                                                         <Package className="w-3 h-3 mr-1" />
@@ -357,33 +365,39 @@ export default function NewInvoicePage() {
                                                 <p className="text-xs text-gray-500">S/N: {item.serialNumber}</p>
                                             )}
                                         </div>
-                                        {item.isBackorder && (
-                                            <div className="w-24">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">Qty</label>
+
+                                        <div className="w-24 text-center">
+                                            {item.isBackorder ? (
                                                 <input
                                                     type="number"
                                                     min="1"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItemQuantity(index, Number(e.target.value))}
-                                                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-center"
+                                                    aria-label="Quantity"
                                                 />
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <span className="text-gray-600 block py-2">{item.quantity}</span>
+                                            )}
+                                        </div>
+
                                         <div className="w-32">
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Price</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 value={item.unitPrice}
                                                 onChange={(e) => updateItemPrice(index, Number(e.target.value))}
-                                                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-right"
+                                                aria-label="Price"
                                             />
                                         </div>
+
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
-                                            className="p-2 text-red-600 hover:text-red-800"
+                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            title="Remove item"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -391,9 +405,9 @@ export default function NewInvoicePage() {
                                 ))}
 
                                 <div className="flex justify-end pt-4 border-t">
-                                    <div className="text-right">
-                                        <p className="text-sm text-gray-500">Total Amount</p>
-                                        <Currency amount={totalAmount} className="text-2xl font-bold text-gray-900" />
+                                    <div className="text-right flex items-center gap-4">
+                                        <p className="text-sm font-medium text-gray-700">Total Amount:</p>
+                                        <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
                                     </div>
                                 </div>
                             </div>

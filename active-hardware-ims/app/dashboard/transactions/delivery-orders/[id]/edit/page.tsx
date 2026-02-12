@@ -388,34 +388,53 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                             </div>
                         ) : (
                             <div className="space-y-3">
+                                {/* Header Row */}
+                                <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <div className="flex-1">Product</div>
+                                    <div className="w-24 text-center">Qty</div>
+                                    <div className="w-32 text-right pr-6">Price</div>
+                                    <div className="w-8"></div>
+                                </div>
+
                                 {items.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-4 p-3 bg-white border rounded-md shadow-sm">
+                                    <div key={idx} className="flex items-center gap-4 p-3 bg-white border rounded-md shadow-sm text-sm">
                                         <div className="flex-1">
                                             <div className="font-medium text-gray-900">{item.productName}</div>
-                                            <div className="text-xs text-gray-500">
-                                                Rs. {Number(item.unitPrice).toLocaleString()}
-                                            </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="w-24">
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => handleUpdateQuantity(idx, parseInt(e.target.value))}
-                                                className="w-20 px-2 py-1 border rounded text-center"
+                                                className="w-full p-2 border border-gray-300 rounded-md text-center focus:ring-blue-500 focus:border-blue-500"
+                                                aria-label="Quantity"
                                             />
                                         </div>
 
-                                        <div className="text-right w-24 font-medium">
-                                            Rs. {(item.quantity * item.unitPrice).toLocaleString()}
+                                        <div className="w-32">
+                                            <div className="relative rounded-md shadow-sm">
+                                                <input
+                                                    type="number"
+                                                    value={item.unitPrice}
+                                                    onChange={(e) => {
+                                                        const newItems = [...items]
+                                                        newItems[idx].unitPrice = Number(e.target.value)
+                                                        setItems(newItems)
+                                                    }}
+                                                    className="w-full p-2 border border-gray-300 rounded-md text-right pr-6 focus:ring-blue-500 focus:border-blue-500"
+                                                    aria-label="Price"
+                                                />
+                                            </div>
                                         </div>
 
                                         <button
                                             onClick={() => handleRemoveItem(idx)}
-                                            className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                                            title="Remove item"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
                                     </div>
                                 ))}
