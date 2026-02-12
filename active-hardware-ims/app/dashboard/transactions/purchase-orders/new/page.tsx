@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { ArrowLeft, Trash2, Save } from "lucide-react"
 import { Currency } from "@/components/Currency"
+import ProductSelector from "../../invoices/new/ProductSelector"
 
 type Product = {
     id: string
@@ -12,6 +13,7 @@ type Product = {
     name: string
     brand: string
     category: string
+    model: string
 }
 
 type POItem = {
@@ -19,23 +21,20 @@ type POItem = {
     quantity: number
     unitCost: number
     totalCost: number
+    product: Product
 }
 
 export default function NewPurchaseOrderPage() {
     const router = useRouter()
-    const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
     const [poNumber, setPoNumber] = useState("")
     const [supplier, setSupplier] = useState("")
     const [notes, setNotes] = useState("")
-    const [items, setItems] = useState<POItem[]>([
-        { productId: "", quantity: 1, unitCost: 0, totalCost: 0 }
-    ])
+    const [items, setItems] = useState<POItem[]>([])
 
     useEffect(() => {
-        fetchProducts()
         fetchNextPoNumber()
     }, [])
 
@@ -55,27 +54,22 @@ export default function NewPurchaseOrderPage() {
         }
     }
 
-    async function fetchProducts() {
-        try {
-            const res = await fetch('/api/products')
-
-            if (!res.ok) throw new Error('Failed to fetch products')
-
-            const data = await res.json()
-            if (Array.isArray(data)) {
-                setProducts(data)
-            } else {
-                setProducts([])
-                console.error('Invalid products data:', data)
-            }
-        } catch (error) {
-            console.error('Failed to fetch products:', error)
-            setProducts([])
+    function handleProductSelect(product: Product) {
+        // Check if already added
+        if (items.some(i => i.productId === product.id)) {
+            setError(`Product ${product.sku} is already in the list`)
+            setTimeout(() => setError(""), 3000)
+            return
         }
-    }
 
-    function addItem() {
-        setItems([...items, { productId: "", quantity: 1, unitCost: 0, totalCost: 0 }])
+        const newItem: POItem = {
+            productId: product.id,
+            quantity: 1,
+            unitCost: 0, // Default to 0, or could fetch last cost if available
+            totalCost: 0,
+            product: product
+        }
+        setItems([...items, newItem])
     }
 
     function removeItem(index: number) {
@@ -84,13 +78,14 @@ export default function NewPurchaseOrderPage() {
 
     function updateItem(index: number, field: keyof POItem, value: any) {
         const newItems = [...items]
-        newItems[index] = { ...newItems[index], [field]: value }
+        const item = { ...newItems[index], [field]: value } as POItem
 
         // Auto-calculate total cost
         if (field === 'quantity' || field === 'unitCost') {
-            newItems[index].totalCost = newItems[index].quantity * newItems[index].unitCost
+            item.totalCost = item.quantity * item.unitCost
         }
 
+        newItems[index] = item
         setItems(newItems)
     }
 
@@ -106,8 +101,7 @@ export default function NewPurchaseOrderPage() {
             return
         }
 
-        const validItems = items.filter(item => item.productId && item.quantity > 0)
-        if (validItems.length === 0) {
+        if (items.length === 0) {
             setError("Add at least one item to the purchase order")
             setLoading(false)
             return
@@ -121,7 +115,12 @@ export default function NewPurchaseOrderPage() {
                     poNumber,
                     supplier,
                     notes,
-                    items: validItems
+                    items: items.map(i => ({
+                        productId: i.productId,
+                        quantity: i.quantity,
+                        unitCost: i.unitCost,
+                        totalCost: i.totalCost
+                    }))
                 }),
             })
 
@@ -140,6 +139,7 @@ export default function NewPurchaseOrderPage() {
     }
 
     const totalAmount = items.reduce((sum, item) => sum + item.totalCost, 0)
+    const usedProductIds = items.map(i => i.productId)
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -198,91 +198,89 @@ export default function NewPurchaseOrderPage() {
 
                 {/* Items */}
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Items</h2>
-                        <button
-                            type="button"
-                            onClick={addItem}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                        >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Item
-                        </button>
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 mb-4">Items</h2>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Add Product</label>
+                            <ProductSelector
+                                onProductSelect={handleProductSelect}
+                                excludeProductIds={usedProductIds}
+                            />
+                        </div>
                     </div>
 
-                    <div className="space-y-3">
-                        {/* Header Row */}
-                        <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            <div className="flex-[2]">Product</div>
-                            <div className="w-24">Quantity</div>
-                            <div className="w-32">Unit Cost</div>
-                            <div className="w-32 text-right">Total</div>
-                            <div className="w-8"></div>
+                    {items.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                            No items added through search yet.
                         </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {/* Header Row */}
+                            <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <div className="flex-[2]">Product</div>
+                                <div className="w-24 text-center">Quantity</div>
+                                <div className="w-32 text-right pr-2">Unit Cost</div>
+                                <div className="w-32 text-right">Total</div>
+                                <div className="w-8"></div>
+                            </div>
 
-                        {items.map((item, index) => (
-                            <div key={index} className="flex gap-4 items-center p-3 border rounded-md text-sm">
-                                <div className="flex-[2]">
-                                    <select
-                                        value={item.productId}
-                                        onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        aria-label="Product"
-                                    >
-                                        <option value="">Select product...</option>
-                                        {products.map(p => (
-                                            <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            {items.map((item, index) => (
+                                <div key={index} className="flex gap-4 items-center p-3 border rounded-md text-sm bg-gray-50">
+                                    <div className="flex-[2]">
+                                        <p className="font-medium text-gray-900">
+                                            {item.product.brand} {item.product.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            SKU: {item.product.sku}
+                                        </p>
+                                    </div>
 
-                                <div className="w-24">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={item.quantity}
-                                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        aria-label="Quantity"
-                                    />
-                                </div>
+                                    <div className="w-24">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-center focus:ring-blue-500 focus:border-blue-500"
+                                            aria-label="Quantity"
+                                        />
+                                    </div>
 
-                                <div className="w-32">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={item.unitCost}
-                                        onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        aria-label="Unit Cost"
-                                    />
-                                </div>
+                                    <div className="w-32">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={item.unitCost}
+                                            onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-right focus:ring-blue-500 focus:border-blue-500"
+                                            aria-label="Unit Cost"
+                                        />
+                                    </div>
 
-                                <div className="w-32 text-right font-semibold">
-                                    <Currency amount={item.totalCost} className="text-gray-900" />
-                                </div>
+                                    <div className="w-32 text-right font-semibold">
+                                        <Currency amount={item.totalCost} className="text-gray-900" />
+                                    </div>
 
-                                <div className="w-8 flex justify-end">
-                                    {items.length > 1 && (
+                                    <div className="w-8 flex justify-end">
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
                                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                                             title="Remove item"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="flex justify-end pt-4 border-t">
-                        <div className="text-right">
-                            <p className="text-sm text-gray-500">Total Amount</p>
-                            <Currency amount={totalAmount} className="text-2xl font-bold text-gray-900" />
+                        <div className="text-right flex items-center gap-4">
+                            <p className="text-sm font-medium text-gray-700">Total Amount:</p>
+                            <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
                         </div>
                     </div>
                 </div>
