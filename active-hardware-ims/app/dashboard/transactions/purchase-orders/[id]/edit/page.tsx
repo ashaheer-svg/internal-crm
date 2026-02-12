@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save } from "lucide-react"
 import { Currency } from "@/components/Currency"
-import ProductSelector from "../../invoices/new/ProductSelector"
+import ProductSelector from "../../../invoices/new/ProductSelector"
 
 type Product = {
     id: string
