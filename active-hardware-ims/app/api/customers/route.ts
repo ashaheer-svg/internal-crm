@@ -33,6 +33,10 @@ export async function GET(request: Request) {
         return NextResponse.json(customers)
     } catch (error: any) {
         console.error(error)
+        // Log to file for debugging
+        const fs = require('fs');
+        fs.appendFileSync('debug_error.log', `${new Date().toISOString()} - Customer API Error: ${error.message}\n${error.stack}\n`);
+
         return NextResponse.json(
             { error: error.message || 'Failed to fetch customers' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
