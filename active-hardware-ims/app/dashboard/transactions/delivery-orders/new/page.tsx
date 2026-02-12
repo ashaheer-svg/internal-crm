@@ -408,44 +408,53 @@ export default function NewDeliveryOrderPage() {
                             </div>
                         ) : (
                             <div className="space-y-3">
+                                {/* Header Row */}
+                                <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <div className="flex-1">Product</div>
+                                    <div className="w-24 text-center">Qty</div>
+                                    <div className="w-32 text-right pr-6">Price</div>
+                                    <div className="w-8"></div>
+                                </div>
+
                                 {items.map((item, idx) => (
-                                    <div key={idx} className="flex gap-4 items-center p-3 border rounded-md bg-gray-50">
+                                    <div key={idx} className="flex gap-4 items-center p-3 border rounded-md bg-gray-50 text-sm">
                                         <div className="flex-1">
                                             <p className="font-medium text-gray-900">{item.productName}</p>
                                         </div>
                                         <div className="w-24">
-                                            <label className="block text-xs text-gray-500 mb-1">Qty</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => updateItemQuantity(idx, Number(e.target.value))}
-                                                className="w-full p-1 border rounded text-sm text-center"
+                                                className="w-full p-2 border border-gray-300 rounded-md text-center focus:ring-blue-500 focus:border-blue-500"
+                                                aria-label="Quantity"
                                             />
                                         </div>
                                         <div className="w-32">
-                                            <label className="block text-xs text-gray-500 mb-1">Price</label>
-                                            <div className="relative">
+                                            <div className="relative rounded-md shadow-sm">
                                                 <input
                                                     type="number"
                                                     value={item.unitPrice}
                                                     onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                                                    className="w-full p-1 border rounded text-sm text-right pr-6"
+                                                    className="w-full p-2 border border-gray-300 rounded-md text-right pr-6 focus:ring-blue-500 focus:border-blue-500"
+                                                    aria-label="Price"
                                                 />
                                             </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => removeItem(idx)}
-                                            className="text-red-500 hover:text-red-700 p-2"
+                                            className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                                            title="Remove item"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
                                     </div>
                                 ))}
                                 <div className="pt-4 border-t flex justify-end items-center gap-4">
-                                    <span className="font-medium">Total Amount:</span>
-                                    <Currency amount={totalAmount} className="text-xl font-bold" />
+                                    <span className="font-medium text-gray-700">Total Amount:</span>
+                                    <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
                                 </div>
                             </div>
                         )}

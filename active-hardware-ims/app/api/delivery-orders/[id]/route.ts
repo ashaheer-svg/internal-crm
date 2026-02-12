@@ -66,39 +66,30 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
         }
 
         // SOFT DELETE (Deactivate / Trash)
-        // If DRAFT/CONFIRMED -> Cancel (Release Stock)
-        // If COMPLETED -> Keep Stock Sold (Just hide)
+        // For ALL statuses (DRAFT, CONFIRMED, COMPLETED, CANCELLED), we effectively "Cancel" the order
+        // and release any held/sold stock back to AVAILABLE.
 
-        let newStatus = order.status
-        if (order.status === 'DRAFT' || order.status === 'CONFIRMED') {
-            newStatus = 'CANCELLED'
-            // Release stock for cancelled orders
-            await prisma.$transaction(async (tx) => {
-                for (const item of order.items) {
-                    if (item.reservedItems.length > 0) {
-                        await tx.inventoryItem.updateMany({
-                            where: { deliveryOrderItemId: item.id },
-                            data: {
-                                status: 'AVAILABLE',
-                                deliveryOrderItemId: null
-                            }
-                        })
-                    }
+        // Release stock / Restore inventory
+        await prisma.$transaction(async (tx) => {
+            for (const item of order.items) {
+                if (item.reservedItems.length > 0) {
+                    await tx.inventoryItem.updateMany({
+                        where: { deliveryOrderItemId: item.id },
+                        data: {
+                            status: 'AVAILABLE',
+                            deliveryOrderItemId: null
+                        }
+                    })
                 }
-                await tx.deliveryOrder.update({
-                    where: { id: params.id },
-                    data: { isActive: false, status: 'CANCELLED' }
-                })
-            })
-        } else {
-            // Just hide
-            await prisma.deliveryOrder.update({
+            }
+            // Mark as Cancelled and Inactive
+            await tx.deliveryOrder.update({
                 where: { id: params.id },
-                data: { isActive: false }
+                data: { isActive: false, status: 'CANCELLED' }
             })
-        }
+        })
 
-        return NextResponse.json({ success: true, message: 'Moved to trash' })
+        return NextResponse.json({ success: true, message: 'Moved to trash and stock released' })
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 })
