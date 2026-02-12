@@ -3,13 +3,16 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { ArrowLeft, Trash2, Save } from "lucide-react"
+import ProductSelector from "../../../transactions/invoices/new/ProductSelector"
 
 type Product = {
     id: string
     sku: string
     name: string
     brand: string
+    category: string
+    model: string
 }
 
 type Location = {
@@ -22,11 +25,11 @@ type GRNItem = {
     serialNumbers: string[]
     unitCost: number
     locationId: string
+    product: Product
 }
 
 export default function NewGRNPage() {
     const router = useRouter()
-    const [products, setProducts] = useState<Product[]>([])
     const [locations, setLocations] = useState<Location[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -36,26 +39,13 @@ export default function NewGRNPage() {
     const [poReference, setPoReference] = useState("")
     const [receivedBy, setReceivedBy] = useState("")
     const [notes, setNotes] = useState("")
-    const [items, setItems] = useState<GRNItem[]>([
-        { productId: "", serialNumbers: [], unitCost: 0, locationId: "" }
-    ])
+    const [items, setItems] = useState<GRNItem[]>([])
 
     useEffect(() => {
-        fetchProducts()
         fetchLocations()
         // Generate GRN number
         setGrnNumber(`GRN-${Date.now()}`)
     }, [])
-
-    async function fetchProducts() {
-        try {
-            const res = await fetch('/api/products')
-            const data = await res.json()
-            setProducts(data)
-        } catch (error) {
-            console.error(error)
-        }
-    }
 
     async function fetchLocations() {
         try {
@@ -67,8 +57,20 @@ export default function NewGRNPage() {
         }
     }
 
-    function addItem() {
-        setItems([...items, { productId: "", serialNumbers: [], unitCost: 0, locationId: "" }])
+    function handleProductSelect(product: Product) {
+        // Items can be added multiple times if different locations or serials, but usually one block is enough.
+        // Let's allow duplicates but maybe warn? For GRN, distinguishing by serials is key.
+        // User might want to split same product into two lines for different locations.
+        // So we won't strictly block duplicates.
+
+        const newItem: GRNItem = {
+            productId: product.id,
+            serialNumbers: [],
+            unitCost: 0,
+            locationId: "",
+            product: product
+        }
+        setItems([...items, newItem])
     }
 
     function removeItem(index: number) {
@@ -77,7 +79,8 @@ export default function NewGRNPage() {
 
     function updateItem(index: number, field: keyof GRNItem, value: any) {
         const newItems = [...items]
-        newItems[index] = { ...newItems[index], [field]: value }
+        const item = { ...newItems[index], [field]: value } as GRNItem
+        newItems[index] = item
         setItems(newItems)
     }
 
@@ -111,7 +114,7 @@ export default function NewGRNPage() {
         )
 
         if (validItems.length === 0) {
-            setError("Add at least one item with serial numbers")
+            setError("Add at least one item with serial numbers, location, and cost")
             setLoading(false)
             return
         }
@@ -126,7 +129,12 @@ export default function NewGRNPage() {
                     poReference,
                     receivedBy,
                     notes,
-                    items: validItems
+                    items: validItems.map(i => ({
+                        productId: i.productId,
+                        serialNumbers: i.serialNumbers,
+                        unitCost: i.unitCost,
+                        locationId: i.locationId
+                    }))
                 }),
             })
 
@@ -145,6 +153,7 @@ export default function NewGRNPage() {
     }
 
     const totalItems = items.reduce((sum, item) => sum + item.serialNumbers.length, 0)
+    const usedProductIds = items.map(i => i.productId)
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
@@ -228,49 +237,39 @@ export default function NewGRNPage() {
 
                 {/* Items */}
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Items ({totalItems} units)</h2>
-                        <button
-                            type="button"
-                            onClick={addItem}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                        >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Product
-                        </button>
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 mb-4">Items ({totalItems} units)</h2>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Add Product</label>
+                            <ProductSelector
+                                onProductSelect={handleProductSelect}
+                            // We allow duplicates for GRN to support split locations, so no exclude
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-4">
-                        {items.map((item, index) => (
-                            <div key={index} className="border rounded-lg p-4 space-y-3">
+                        {items.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                                No items added. Search for a product to begin.
+                            </div>
+                        ) : (items.map((item, index) => (
+                            <div key={index} className="border rounded-lg p-4 space-y-3 bg-gray-50">
                                 <div className="flex justify-between items-start">
-                                    <h3 className="text-sm font-medium text-gray-700">Product #{index + 1}</h3>
-                                    {items.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeItem(index)}
-                                            className="text-red-600 hover:text-red-800"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                    <div className="flex-1">
+                                        <h3 className="text-sm font-medium text-gray-900">{item.product.brand} {item.product.name}</h3>
+                                        <p className="text-xs text-gray-500">SKU: {item.product.sku}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeItem(index)}
+                                        className="text-gray-400 hover:text-red-600 transition-colors"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Product *</label>
-                                        <select
-                                            value={item.productId}
-                                            onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                        >
-                                            <option value="">Select product...</option>
-                                            {products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.sku} - {p.brand} {p.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Location *</label>
                                         <select
@@ -314,7 +313,7 @@ export default function NewGRNPage() {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )))}
                     </div>
                 </div>
 

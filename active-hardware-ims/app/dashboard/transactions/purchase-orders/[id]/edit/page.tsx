@@ -3,8 +3,9 @@
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { ArrowLeft, Trash2, Save } from "lucide-react"
 import { Currency } from "@/components/Currency"
+import ProductSelector from "../../invoices/new/ProductSelector"
 
 type Product = {
     id: string
@@ -12,6 +13,7 @@ type Product = {
     name: string
     brand: string
     category: string
+    model: string
 }
 
 type POItem = {
@@ -20,6 +22,7 @@ type POItem = {
     unitCost: number
     totalCost: number
     receivedQty?: number
+    product: Product
 }
 
 type Props = {
@@ -29,20 +32,18 @@ type Props = {
 export default function EditPurchaseOrderPage({ params }: Props) {
     const { id } = use(params)
     const router = useRouter()
-    const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true) // Start loading to fetch data
+    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState("")
 
     const [poNumber, setPoNumber] = useState("")
     const [supplier, setSupplier] = useState("")
     const [notes, setNotes] = useState("")
-    const [status, setStatus] = useState("")
     const [items, setItems] = useState<POItem[]>([])
     const [isReadOnlyItems, setIsReadOnlyItems] = useState(false)
 
     useEffect(() => {
-        Promise.all([fetchProducts(), fetchPoDetails()]).finally(() => setLoading(false))
+        fetchPoDetails()
     }, [])
 
     async function fetchPoDetails() {
@@ -54,7 +55,6 @@ export default function EditPurchaseOrderPage({ params }: Props) {
             setPoNumber(data.poNumber)
             setSupplier(data.supplier)
             setNotes(data.notes || "")
-            setStatus(data.status)
 
             // Map items
             const poItems = data.items.map((item: any) => ({
@@ -62,53 +62,63 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                 quantity: item.quantity,
                 unitCost: item.unitCost,
                 totalCost: item.totalCost,
-                receivedQty: item.receivedQty
+                receivedQty: item.receivedQty,
+                product: item.product
             }))
             setItems(poItems)
 
             // Check if items should be locked
-            // If any item has receivedQty > 0 or status is not DRAFT, we might want to lock items
-            // API logic: "Cannot edit items of a PO that has received stock."
             const hasReceived = poItems.some((i: any) => i.receivedQty > 0)
-            if (hasReceived) { // || data.status !== 'DRAFT' // Relaxing Draft check to allow editing items if nothing received yet, unless API blocks it. API blocks if received > 0.
+            if (hasReceived) {
                 setIsReadOnlyItems(true)
             }
 
         } catch (e) {
             setError("Failed to load Purchase Order")
             console.error(e)
+        } finally {
+            setLoading(false)
         }
     }
 
-    async function fetchProducts() {
-        try {
-            const res = await fetch('/api/products')
-            if (res.ok) {
-                const data = await res.json()
-                setProducts(data)
-            }
-        } catch (error) {
-            console.error("Failed to fetch products", error)
-        }
-    }
+    function handleProductSelect(product: Product) {
+        if (isReadOnlyItems) return
 
-    function addItem() {
-        setItems([...items, { productId: "", quantity: 1, unitCost: 0, totalCost: 0 }])
+        // Check if already added
+        if (items.some(i => i.productId === product.id)) {
+            setError(`Product ${product.sku} is already in the list`)
+            setTimeout(() => setError(""), 3000)
+            return
+        }
+
+        const newItem: POItem = {
+            productId: product.id,
+            quantity: 1,
+            unitCost: 0,
+            totalCost: 0,
+            receivedQty: 0,
+            product: product
+        }
+        setItems([...items, newItem])
     }
 
     function removeItem(index: number) {
+        if (isReadOnlyItems) return
         setItems(items.filter((_, i) => i !== index))
     }
 
     function updateItem(index: number, field: keyof POItem, value: any) {
+        if (isReadOnlyItems) return
+
         const newItems = [...items]
-        newItems[index] = { ...newItems[index], [field]: value }
+        const item = { ...newItems[index], [field]: value } as POItem
 
         // Auto-calculate total cost
         if (field === 'quantity' || field === 'unitCost') {
-            newItems[index].totalCost = newItems[index].quantity * newItems[index].unitCost
+            item.totalCost = item.quantity * item.unitCost
         }
 
+        newItems[index] = item
         setItems(newItems)
     }
 
@@ -137,12 +147,16 @@ export default function EditPurchaseOrderPage({ params }: Props) {
             const body: any = {
                 supplier,
                 notes,
-                status // Preserve status or allow changing? Usually status change is a separate action, but here we keep it simple.
             }
 
             // Only send items if they are editable
             if (!isReadOnlyItems) {
-                body.items = validItems
+                body.items = validItems.map(i => ({
+                    productId: i.productId,
+                    quantity: i.quantity,
+                    unitCost: i.unitCost,
+                    totalCost: i.totalCost
+                }))
             }
 
             const res = await fetch(`/api/purchase-orders/${id}`, {
@@ -166,6 +180,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
     }
 
     const totalAmount = items.reduce((sum, item) => sum + item.totalCost, 0)
+    const usedProductIds = items.map(i => i.productId)
 
     if (loading) return <div className="p-6">Loading...</div>
 
@@ -237,75 +252,76 @@ export default function EditPurchaseOrderPage({ params }: Props) {
 
                 {/* Items */}
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Items</h2>
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 mb-4">Items</h2>
                         {!isReadOnlyItems && (
-                            <button
-                                type="button"
-                                onClick={addItem}
-                                className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Add Item
-                            </button>
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Add Product</label>
+                                <ProductSelector
+                                    onProductSelect={handleProductSelect}
+                                    excludeProductIds={usedProductIds}
+                                />
+                            </div>
                         )}
                     </div>
 
                     <div className="space-y-3">
+                        {/* Header Row */}
+                        <div className="hidden sm:flex gap-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <div className="flex-[2]">Product</div>
+                            <div className="w-24 text-center">Quantity</div>
+                            <div className="w-32 text-right pr-2">Unit Cost</div>
+                            <div className="w-32 text-right">Total</div>
+                            <div className="w-8"></div>
+                        </div>
+
                         {items.map((item, index) => (
-                            <div key={index} className={`flex gap-2 items-start p-3 border rounded-md ${isReadOnlyItems ? 'bg-gray-50' : ''}`}>
-                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Product</label>
-                                        <select
-                                            value={item.productId}
-                                            onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                            disabled={isReadOnlyItems}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
-                                        >
-                                            <option value="">Select product...</option>
-                                            {products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.sku} - {p.name} ({p.category})</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={item.quantity}
-                                            onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                            disabled={isReadOnlyItems}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700 mb-1">Unit Cost</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={item.unitCost}
-                                            onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
-                                            disabled={isReadOnlyItems}
-                                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100"
-                                        />
-                                    </div>
+                            <div key={index} className={`flex gap-4 items-center p-3 border rounded-md text-sm ${isReadOnlyItems || item.receivedQty && item.receivedQty > 0 ? 'bg-gray-50' : ''}`}>
+                                <div className="flex-[2]">
+                                    <p className="font-medium text-gray-900">
+                                        {item.product?.brand} {item.product?.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        SKU: {item.product?.sku} {item.receivedQty ? `| Received: ${item.receivedQty}` : ''}
+                                    </p>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className="text-xs text-gray-500">Total</span>
-                                    <Currency amount={item.totalCost} className="font-semibold text-sm text-right" />
-                                    {!isReadOnlyItems && items.length > 1 && (
+                                <div className="w-24">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                        disabled={isReadOnlyItems}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-center disabled:bg-gray-100"
+                                    />
+                                </div>
+
+                                <div className="w-32">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={item.unitCost}
+                                        onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                                        disabled={isReadOnlyItems}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-right disabled:bg-gray-100"
+                                    />
+                                </div>
+
+                                <div className="w-32 text-right font-semibold">
+                                    <Currency amount={item.totalCost} className="text-gray-900" />
+                                </div>
+
+                                <div className="w-8 flex justify-end">
+                                    {!isReadOnlyItems && (
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
-                                            className="mt-1 p-1 text-red-600 hover:text-red-800"
+                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            title="Remove item"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
                                     )}
                                 </div>
@@ -314,9 +330,9 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                     </div>
 
                     <div className="flex justify-end pt-4 border-t">
-                        <div className="text-right">
-                            <p className="text-sm text-gray-500">Total Amount</p>
-                            <Currency amount={totalAmount} className="text-2xl font-bold text-gray-900" />
+                        <div className="text-right flex items-center gap-4">
+                            <p className="text-sm font-medium text-gray-700">Total Amount:</p>
+                            <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
                         </div>
                     </div>
                 </div>
