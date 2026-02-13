@@ -53,20 +53,7 @@ export async function POST(request: Request) {
                 const isSupplier = type.includes('supplier');
                 const isCustomer = !isPartner && !isSupplier; // Default to Customer if not specified
 
-                // 1. Upsert Customer
-                const customer = await prisma.customer.upsert({
-                    where: {
-                        // We strictly don't have a unique name constraint in schema, but for import we treat name as key
-                        // Realistically we should search first. Prisma upsert needs a unique constraint. 
-                        // Since 'name' isn't @unique in schema (it's just String), we can't use upsert on name.
-                        // We must findFirst then update or create.
-                        id: "PLACEHOLDER_WILL_BE_REPLACED_BELOW"
-                    },
-                    update: {},
-                    create: { id: "temp", name: "temp" } // Dummy
-                }).catch(() => null); // Silent fail, we'll do manual find/create
-
-                // Manual Find/Create Logic
+                // 1. Process Customer (Upsert Logic)
                 let dbCustomer = await prisma.customer.findFirst({
                     where: { name: name }
                 });
