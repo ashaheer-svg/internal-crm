@@ -6,6 +6,7 @@ import Link from "next/link"
 
 export default function WarrantyImportPage() {
     const [uploading, setUploading] = useState(false)
+    const [progress, setProgress] = useState<number | null>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [result, setResult] = useState<any | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -22,7 +23,16 @@ export default function WarrantyImportPage() {
             setMessage(null)
             setResult(null)
             setPreviewData(null)
+            setProgress(null)
         }
+    }
+
+    function chunkArray<T>(array: T[], size: number): T[][] {
+        const chunks: T[][] = []
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size))
+        }
+        return chunks
     }
 
     function handleDownloadTemplate() {
@@ -47,26 +57,28 @@ export default function WarrantyImportPage() {
         if (preview) {
             setResult(null)
             setPreviewData(null)
+        } else {
+            setProgress(0)
         }
 
         try {
-            const formData = new FormData()
-            formData.append('file', selectedFile)
-
-            const url = preview ? '/api/warranty/import?preview=true' : '/api/warranty/import'
-
-            const res = await fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to import data')
-            }
-
             if (preview) {
+                const formData = new FormData()
+                formData.append('file', selectedFile)
+
+                const url = '/api/warranty/import?preview=true'
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to import data')
+                }
+
                 if (data.preview && Array.isArray(data.preview)) {
                     setPreviewData(data.preview)
                     if (data.errors && data.errors.length > 0) {
@@ -76,24 +88,64 @@ export default function WarrantyImportPage() {
                     throw new Error("Invalid preview data received")
                 }
             } else {
-                setResult(data)
+                // Chunked Import Logic
+                if (!previewData) return
+
+                const chunks = chunkArray(previewData, 50)
+                let successCount = 0
+                let errorCount = 0
+                const allErrors: any[] = []
+                let processedDocs = 0
+
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunk = chunks[i]
+
+                    const res = await fetch('/api/warranty/import', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ items: chunk })
+                    })
+
+                    const data = await res.json()
+
+                    if (!res.ok) {
+                        errorCount += chunk.length
+                        allErrors.push(`Batch ${i + 1} failed: ${data.error || res.statusText}`)
+                    } else {
+                        successCount += data.successCount
+                        errorCount += data.errorCount
+                        if (data.errors) {
+                            allErrors.push(...data.errors.map((e: any) => `${e.serial}: ${e.error}`))
+                        }
+                    }
+
+                    processedDocs += chunk.length
+                    setProgress(Math.round((processedDocs / previewData.length) * 100))
+                }
+
                 setPreviewData(null)
-                if (data.failed === 0) {
+                setProgress(null)
+                setResult({ errors: allErrors })
+
+                if (errorCount === 0) {
                     setMessage({
                         type: 'success',
-                        text: `Successfully imported ${data.success} historical records!`
+                        text: `Successfully imported ${successCount} historical records!`
                     })
                     setSelectedFile(null)
                 } else {
                     setMessage({
                         type: 'error',
-                        text: `Import completed with issues. Success: ${data.success}, Failed: ${data.failed}`
+                        text: `Import completed with issues. Success: ${successCount}, Failed: ${errorCount}`
                     })
                 }
             }
 
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
+            setProgress(null)
         } finally {
             setUploading(false)
         }
@@ -124,6 +176,20 @@ export default function WarrantyImportPage() {
                             <p className={`text-sm ${message.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>{message.text}</p>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Progress Bar */}
+            {progress !== null && (
+                <div className="bg-white shadow rounded-lg p-6 mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Importing Warranty Data...</h3>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div
+                            className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2 text-right">{progress}% Complete</p>
                 </div>
             )}
 
