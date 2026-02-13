@@ -1,10 +1,82 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireRole } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
+
+        const user = await requireRole(['ADMIN'])
+        const contentType = request.headers.get('content-type') || ''
+
+        // Handle JSON Batch Import (Chunked)
+        if (contentType.includes('application/json')) {
+            const body = await request.json()
+            const { items } = body
+
+            if (!Array.isArray(items)) {
+                return NextResponse.json({ error: 'Invalid data format. Expected array of items.' }, { status: 400 })
+            }
+
+            // Fetch a default location for these items (required by schema)
+            const defaultLocation = await prisma.location.findFirst();
+            if (!defaultLocation) {
+                return NextResponse.json({ error: 'System has no locations configured. Please create a location first.' }, { status: 500 });
+            }
+
+            let successCount = 0
+            let errorCount = 0
+            const errors: any[] = []
+
+            for (const item of items) {
+                try {
+                    // Find product by SKU
+                    const product = await prisma.product.findUnique({
+                        where: { sku: item.sku }
+                    });
+
+                    if (!product) {
+                        throw new Error(`Product with SKU '${item.sku}' not found`);
+                    }
+
+                    // Create Inventory Item (SOLD status)
+                    const inventoryItem = await prisma.inventoryItem.create({
+                        data: {
+                            productId: product.id,
+                            serialNumber: item.serialNumber,
+                            status: 'SOLD',
+                            locationId: defaultLocation.id, // Must be a valid location ID
+                            createdAt: new Date(item.soldDate), // Use sold date as creation for age
+                            warrantyExpiry: new Date(item.warrantyExpiry)
+                        }
+                    });
+
+                    // Create Transaction Log
+                    await prisma.transactionLog.create({
+                        data: {
+                            type: 'IMPORT_HISTORY',
+                            // Schema does not have inventoryItemId relation, uses loose reference
+                            productId: product.id,
+                            serialNumber: item.serialNumber,
+                            quantity: 1,
+                            referenceId: `IMPORT-${new Date().getTime()}`,
+                            fromLocation: 'SYSTEM',
+                            toLocation: 'CUSTOMER',
+                            notes: `Historical Import. Customer: ${item.customer || 'Unknown'}. Invoice: ${item.invoiceNumber || 'N/A'}. ${item.notes || ''}`,
+                            performedBy: user.id
+                        }
+                    });
+
+                    successCount++
+                } catch (error: any) {
+                    errorCount++
+                    errors.push({ serial: item.serialNumber, error: error.message })
+                }
+            }
+
+            return NextResponse.json({ success: true, successCount, errorCount, errors })
+        }
 
         const formData = await request.formData();
         const file = formData.get('file') as File;

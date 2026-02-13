@@ -14,6 +14,7 @@ type ImportResult = {
 
 export default function BulkImportPage() {
     const [uploading, setUploading] = useState(false)
+    const [progress, setProgress] = useState<number | null>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [result, setResult] = useState<ImportResult | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -30,7 +31,16 @@ export default function BulkImportPage() {
             setMessage(null)
             setResult(null)
             setPreviewData(null)
+            setProgress(null)
         }
+    }
+
+    function chunkArray<T>(array: T[], size: number): T[][] {
+        const chunks: T[][] = []
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size))
+        }
+        return chunks
     }
 
     async function handleDownloadTemplate() {
@@ -60,29 +70,33 @@ export default function BulkImportPage() {
 
         setUploading(true)
         setMessage(null)
+
         if (preview) {
             setResult(null)
             setPreviewData(null)
+        } else {
+            setProgress(0)
         }
 
         try {
-            const formData = new FormData()
-            formData.append('file', selectedFile)
-
-            const url = preview ? '/api/products/bulk-import?preview=true' : '/api/products/bulk-import'
-
-            const res = await fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to import products')
-            }
-
             if (preview) {
+                // ... Existing Preview Logic ...
+                const formData = new FormData()
+                formData.append('file', selectedFile)
+
+                const url = '/api/products/bulk-import?preview=true'
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to parse file')
+                }
+
                 if (data.preview && Array.isArray(data.preview)) {
                     setPreviewData(data.preview)
                     if (data.errors && data.errors.length > 0) {
@@ -93,30 +107,82 @@ export default function BulkImportPage() {
                             errorCount: data.errorCount,
                             errors: data.errors,
                             createdProducts: []
-                        }) // Show parsing errors if any
+                        })
                     }
                 } else {
                     throw new Error("Invalid preview data received")
                 }
+
             } else {
-                setResult(data)
+                // ... Chunked Import Logic ...
+                if (!previewData) return
+
+                const chunks = chunkArray(previewData, 50)
+                let successCount = 0
+                let errorCount = 0
+                const allErrors: any[] = []
+                let processedDocs = 0
+
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunk = chunks[i]
+
+                    const res = await fetch('/api/products/bulk-import', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ products: chunk })
+                    })
+
+                    const data = await res.json()
+
+                    if (!res.ok) {
+                        // If a chunk fails entirely
+                        errorCount += chunk.length
+                        allErrors.push({ row: i, sku: 'BATCH', error: `Batch ${i + 1} failed: ${data.error || res.statusText}` })
+                    } else {
+                        successCount += data.successCount
+                        errorCount += data.errorCount
+                        if (data.errors && Array.isArray(data.errors)) {
+                            allErrors.push(...data.errors)
+                        }
+                    }
+
+                    processedDocs += chunk.length
+                    setProgress(Math.round((processedDocs / previewData.length) * 100))
+                }
+
                 setPreviewData(null)
-                if (data.errorCount === 0) {
+                setProgress(null)
+
+                const finalResult: ImportResult = {
+                    success: errorCount === 0,
+                    totalRows: previewData.length,
+                    successCount,
+                    errorCount,
+                    errors: allErrors,
+                    createdProducts: [] // We don't track created details for bulk to save memory
+                }
+
+                setResult(finalResult)
+
+                if (errorCount === 0) {
                     setMessage({
                         type: 'success',
-                        text: `Successfully imported ${data.successCount} products!`
+                        text: `Successfully imported ${successCount} products!`
                     })
                     setSelectedFile(null)
                 } else {
                     setMessage({
                         type: 'error',
-                        text: `Imported ${data.successCount} products with ${data.errorCount} errors. See details below.`
+                        text: `Import finished with ${errorCount} errors. See details below.`
                     })
                 }
             }
 
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
+            setProgress(null)
         } finally {
             setUploading(false)
         }
@@ -152,6 +218,20 @@ export default function BulkImportPage() {
                             </p>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Progress Bar */}
+            {progress !== null && (
+                <div className="bg-white shadow rounded-lg p-6 mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Importing Products...</h3>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div
+                            className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2 text-right">{progress}% Complete</p>
                 </div>
             )}
 

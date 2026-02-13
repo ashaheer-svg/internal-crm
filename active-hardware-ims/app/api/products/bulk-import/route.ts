@@ -41,10 +41,51 @@ function parseCSV(text: string): any[] {
 
 export async function POST(request: Request) {
     try {
+        const user = await requireRole(['ADMIN'])
+        const contentType = request.headers.get('content-type') || ''
+
+        // Handle JSON Batch Import (Chunked)
+        if (contentType.includes('application/json')) {
+            const body = await request.json()
+            const { products } = body
+
+            if (!Array.isArray(products)) {
+                return NextResponse.json({ error: 'Invalid data format. Expected array of products.' }, { status: 400 })
+            }
+
+            let successCount = 0
+            let errorCount = 0
+            const errors: any[] = []
+
+            for (const item of products) {
+                try {
+                    await prisma.product.create({
+                        data: {
+                            sku: item.sku,
+                            name: item.name,
+                            brand: item.brand,
+                            category: item.category,
+                            model: item.model,
+                            description: item.description,
+                            minStock: item.minStock,
+                            warrantyMonths: item.warrantyMonths,
+                            lowResellerPrice: item.lowResellerPrice,
+                            resellerPrice: item.resellerPrice
+                        }
+                    })
+                    successCount++
+                } catch (error: any) {
+                    errorCount++
+                    errors.push({ sku: item.sku, error: error.message })
+                }
+            }
+
+            return NextResponse.json({ success: true, successCount, errorCount, errors })
+        }
+
+        // Handle CSV File Upload (Preview or Legacy Full Import)
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
-
-        const user = await requireRole(['ADMIN'])
 
         const formData = await request.formData()
         const file = formData.get('file') as File
@@ -175,7 +216,7 @@ export async function POST(request: Request) {
         }
 
         if (!isPreview) {
-            // Log the import only if not preview
+            // Log the import only if not preview (or if using legacy full file upload without preview)
             await logCreate('PRODUCT', 'bulk-import', user.id, user.name, {
                 filename: file.name,
                 totalRows: result.totalRows,
