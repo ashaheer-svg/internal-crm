@@ -75,6 +75,13 @@ const settingsLinks = [
         icon: ScrollText,
         description: "Manage PO and GRN running numbers"
     },
+    {
+        name: "Historical Warranty Import",
+        href: "/dashboard/settings/warranty-import",
+        icon: Shield,
+        description: "Import legacy warranty data from CSV",
+        adminOnly: true
+    },
 
 ]
 

@@ -128,6 +128,13 @@ export default function WarrantyPage() {
                         <Plus className="w-4 h-4 mr-2" />
                         New Claim
                     </Link>
+                    <Link
+                        href="/dashboard/warranty/lookup"
+                        className="ml-3 inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
+                    >
+                        <Search className="w-4 h-4 mr-2" />
+                        Lookup
+                    </Link>
                 </div>
             </div>
 
