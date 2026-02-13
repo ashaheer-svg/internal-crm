@@ -399,10 +399,39 @@ export default function NewDeliveryOrderPage() {
 
                             {/* Delivery Address Selection */}
                             <div className="sm:col-span-2 border-t pt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Delivery Address ({saleType === "PARTNER" ? "End Customer" : "Customer"})
-                                </label>
-                                {(saleType === "DIRECT" ? customerId : endCustomerId) ? (
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Delivery Address
+                                    </label>
+
+                                    {saleType === "PARTNER" && (
+                                        <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeliveryAddressSource("PARTNER")}
+                                                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "PARTNER"
+                                                    ? "bg-white shadow text-gray-900"
+                                                    : "text-gray-500 hover:text-gray-900"
+                                                    }`}
+                                            >
+                                                Partner Address
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeliveryAddressSource("END_CUSTOMER")}
+                                                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "END_CUSTOMER"
+                                                    ? "bg-white shadow text-gray-900"
+                                                    : "text-gray-500 hover:text-gray-900"
+                                                    }`}
+                                            >
+                                                End Customer Address
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {((saleType === "DIRECT" && customerId) ||
+                                    (saleType === "PARTNER" && ((deliveryAddressSource === "PARTNER" && customerId) || (deliveryAddressSource === "END_CUSTOMER" && endCustomerId)))) ? (
                                     <div className="space-y-3">
                                         {availableAddresses.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-2">
@@ -463,7 +492,7 @@ export default function NewDeliveryOrderPage() {
                                     </div>
                                 ) : (
                                     <p className="text-sm text-gray-500 italic">
-                                        Select a {saleType === "PARTNER" ? "End Customer" : "Customer"} to view delivery addresses.
+                                        Select a {saleType === "PARTNER" ? (deliveryAddressSource === "PARTNER" ? "Partner" : "End Customer") : "Customer"} to view delivery addresses.
                                     </p>
                                 )}
                             </div>
