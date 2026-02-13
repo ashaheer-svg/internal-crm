@@ -257,6 +257,7 @@ export default function PartnerImportPage() {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Partner Name</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Roles</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Contact</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Address</th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Locations</th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 filter drop-shadow-sm">Employees</th>
                                 </tr>
@@ -278,6 +279,9 @@ export default function PartnerImportPage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">{item.email}</div>
                                             <div className="text-sm text-gray-500">{item.phone}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={item.address}>
+                                            {item.address}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                                             <span className="font-bold text-gray-900">{item.locations.length}</span>
@@ -356,8 +360,8 @@ export default function PartnerImportPage() {
                                                     key={pageNum}
                                                     onClick={() => handlePageChange(pageNum)}
                                                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === pageNum
-                                                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                                         }`}
                                                 >
                                                     {pageNum}
