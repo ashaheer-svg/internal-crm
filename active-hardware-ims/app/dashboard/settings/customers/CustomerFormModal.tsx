@@ -443,23 +443,23 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     )}
                                 </>
                             )}
+
+                            {/* Employees Section */}
+                            <div className="pt-6 border-t mt-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-md font-medium text-gray-900">Partner Employees</h4>
+                                </div>
+
+                                {!customer ? (
+                                    <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded text-center">
+                                        Please save the partner first to manage employees.
+                                    </p>
+                                ) : (
+                                    <EmployeeManager customerId={customer.id} />
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Employees Section */}
-                <div className="px-6 pb-6 pt-2 border-t mt-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-md font-medium text-gray-900">Partner Employees</h4>
-                    </div>
-
-                    {!customer ? (
-                        <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded text-center">
-                            Please save the partner first to manage employees.
-                        </p>
-                    ) : (
-                        <EmployeeManager customerId={customer.id} />
-                    )}
                 </div>
 
                 {/* Footer */}
