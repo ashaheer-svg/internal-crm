@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 
 export async function POST(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const isPreview = searchParams.get('preview') === 'true';
+
         const formData = await request.formData();
         const file = formData.get('file') as File;
 
@@ -20,7 +23,8 @@ export async function POST(request: Request) {
         const results = {
             created: 0,
             updated: 0,
-            errors: [] as string[]
+            errors: [] as string[],
+            preview: [] as any[]
         };
 
         // Group rows by Customer Name
@@ -53,7 +57,63 @@ export async function POST(request: Request) {
                 const isSupplier = type.includes('supplier');
                 const isCustomer = !isPartner && !isSupplier; // Default to Customer if not specified
 
-                // 1. Process Customer (Upsert Logic)
+                // Build the customer object structure
+                const customerData = {
+                    name: name,
+                    email: mainRow.email,
+                    phone: mainRow.phone,
+                    address: mainRow.address,
+                    taxId: mainRow.taxid,
+                    roles: {
+                        isPartner,
+                        isSupplier,
+                        isCustomer
+                    },
+                    locations: [] as any[],
+                    employees: [] as any[]
+                };
+
+
+                // Process Locations (Deduplicate by label)
+                const locationMap = new Map();
+                for (const row of groupRows) {
+                    if (row.locationlabel && row.locationaddress) {
+                        const key = row.locationlabel;
+                        if (!locationMap.has(key)) {
+                            locationMap.set(key, {
+                                label: row.locationlabel,
+                                address: row.locationaddress,
+                                contactName: row.locationcontact
+                            });
+                        }
+                    }
+                }
+                customerData.locations = Array.from(locationMap.values());
+
+                // Process Employees (Deduplicate by name)
+                const employeeMap = new Map();
+                for (const row of groupRows) {
+                    if (row.employeename) {
+                        const key = row.employeename;
+                        if (!employeeMap.has(key)) {
+                            employeeMap.set(key, {
+                                name: row.employeename,
+                                email: row.employeeemail,
+                                designation: row.employeerole
+                            });
+                        }
+                    }
+                }
+                customerData.employees = Array.from(employeeMap.values());
+
+                if (isPreview) {
+                    results.preview.push(customerData);
+                    continue; // Skip DB operations in preview mode
+                }
+
+                // --- DB OPERATIONS (Only if not preview) ---
+
+                // 1. Upsert Customer
                 let dbCustomer = await prisma.customer.findFirst({
                     where: { name: name }
                 });
@@ -91,48 +151,45 @@ export async function POST(request: Request) {
                 }
 
                 // 2. Process Locations (Delivery Addresses)
-                for (const row of groupRows) {
-                    if (row.locationlabel && row.locationaddress) {
-                        // Check if exists
-                        const existingLoc = await prisma.deliveryAddress.findFirst({
-                            where: {
+                for (const loc of customerData.locations) {
+                    const existingLoc = await prisma.deliveryAddress.findFirst({
+                        where: {
+                            customerId: dbCustomer.id,
+                            label: loc.label
+                        }
+                    });
+
+                    if (!existingLoc) {
+                        await prisma.deliveryAddress.create({
+                            data: {
                                 customerId: dbCustomer.id,
-                                label: row.locationlabel
+                                label: loc.label,
+                                address: loc.address,
+                                contactName: loc.contactName,
+                                isDefault: false
                             }
                         });
-
-                        if (!existingLoc) {
-                            await prisma.deliveryAddress.create({
-                                data: {
-                                    customerId: dbCustomer.id,
-                                    label: row.locationlabel,
-                                    address: row.locationaddress,
-                                    contactName: row.locationcontact,
-                                    isDefault: false // Creating multiple, careful with default
-                                }
-                            });
-                        }
                     }
+                }
 
-                    // 3. Process Employees
-                    if (row.employeename) {
-                        const existingEmp = await prisma.partnerEmployee.findFirst({
-                            where: {
+                // 3. Process Employees
+                for (const emp of customerData.employees) {
+                    const existingEmp = await prisma.partnerEmployee.findFirst({
+                        where: {
+                            customerId: dbCustomer.id,
+                            name: emp.name
+                        }
+                    });
+
+                    if (!existingEmp) {
+                        await prisma.partnerEmployee.create({
+                            data: {
                                 customerId: dbCustomer.id,
-                                name: row.employeename
+                                name: emp.name,
+                                email: emp.email,
+                                designation: emp.designation
                             }
                         });
-
-                        if (!existingEmp) {
-                            await prisma.partnerEmployee.create({
-                                data: {
-                                    customerId: dbCustomer.id,
-                                    name: row.employeename,
-                                    email: row.employeeemail,
-                                    designation: row.employeerole
-                                }
-                            });
-                        }
                     }
                 }
 
