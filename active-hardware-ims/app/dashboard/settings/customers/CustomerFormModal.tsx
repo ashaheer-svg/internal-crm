@@ -170,6 +170,10 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
         }
     }
 
+    const inputClass = "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+    const buttonPrimaryClass = "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+    const buttonSecondaryClass = "px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
@@ -200,7 +204,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     required
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className={inputClass}
                                 />
                             </div>
 
@@ -244,7 +248,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                         type="text"
                                         value={contactName}
                                         onChange={(e) => setContactName(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        className={inputClass}
                                     />
                                 </div>
                                 <div>
@@ -253,7 +257,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                         type="tel"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        className={inputClass}
                                     />
                                 </div>
                             </div>
@@ -264,7 +268,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className={inputClass}
                                 />
                             </div>
 
@@ -274,7 +278,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
                                     rows={2}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className={inputClass}
                                 />
                             </div>
 
@@ -285,7 +289,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                         type="text"
                                         value={taxId}
                                         onChange={(e) => setTaxId(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        className={inputClass}
                                     />
                                 </div>
                                 <div>
@@ -294,7 +298,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                         type="text"
                                         value={salesRep}
                                         onChange={(e) => setSalesRep(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        className={inputClass}
                                     />
                                 </div>
                             </div>
@@ -305,7 +309,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     rows={2}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className={inputClass}
                                 />
                             </div>
                         </form>
@@ -340,7 +344,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                         type="text"
                                                         value={addrLabel}
                                                         onChange={(e) => setAddrLabel(e.target.value)}
-                                                        className="mt-1 block w-full rounded border-gray-300 text-sm p-1 border"
+                                                        className={inputClass}
                                                     />
                                                 </div>
                                                 <div>
@@ -349,7 +353,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                         value={addrText}
                                                         onChange={(e) => setAddrText(e.target.value)}
                                                         rows={2}
-                                                        className="mt-1 block w-full rounded border-gray-300 text-sm p-1 border"
+                                                        className={inputClass}
                                                     />
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2">
@@ -359,7 +363,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                             type="text"
                                                             value={addrContact}
                                                             onChange={(e) => setAddrContact(e.target.value)}
-                                                            className="mt-1 block w-full rounded border-gray-300 text-sm p-1 border"
+                                                            className={inputClass}
                                                         />
                                                     </div>
                                                     <div>
@@ -368,7 +372,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                             type="text"
                                                             value={addrPhone}
                                                             onChange={(e) => setAddrPhone(e.target.value)}
-                                                            className="mt-1 block w-full rounded border-gray-300 text-sm p-1 border"
+                                                            className={inputClass}
                                                         />
                                                     </div>
                                                 </div>
@@ -384,13 +388,13 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                 <div className="flex justify-end gap-2 mt-2">
                                                     <button
                                                         onClick={() => setShowAddressForm(false)}
-                                                        className="text-xs text-gray-600 hover:text-gray-800"
+                                                        className={buttonSecondaryClass}
                                                     >
                                                         Cancel
                                                     </button>
                                                     <button
                                                         onClick={handleSaveAddress}
-                                                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                                                        className={buttonPrimaryClass}
                                                     >
                                                         Save Address
                                                     </button>
@@ -463,7 +467,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className={buttonSecondaryClass}
                     >
                         Close
                     </button>
@@ -471,7 +475,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                         form="partner-form"
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                        className={buttonPrimaryClass}
                     >
                         {loading ? "Saving..." : customer ? "Update Partner" : "Create Partner"}
                     </button>

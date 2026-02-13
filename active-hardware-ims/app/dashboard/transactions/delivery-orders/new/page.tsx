@@ -23,9 +23,20 @@ export default function NewDeliveryOrderPage() {
     const [error, setError] = useState("")
 
     const [orderNumber, setOrderNumber] = useState("DO-" + new Date().toISOString().slice(2, 7).replace(/-/g, "") + Math.floor(Math.random() * 1000))
+
+    // Sale Type State
+    const [saleType, setSaleType] = useState<"DIRECT" | "PARTNER">("DIRECT")
+
+    // Bill To (Partner or Direct Customer)
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
     const [customerId, setCustomerId] = useState<string | null>(null)
     const [customerName, setCustomerName] = useState("")
+
+    // Ship To (End Customer - for Partner sales)
+    const [selectedEndCustomer, setSelectedEndCustomer] = useState<any>(null)
+    const [endCustomerId, setEndCustomerId] = useState<string | null>(null)
+    const [endCustomerName, setEndCustomerName] = useState("")
+
     const [notes, setNotes] = useState("")
     const [invoiceValue, setInvoiceValue] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
@@ -41,53 +52,91 @@ export default function NewDeliveryOrderPage() {
     const [serialInput, setSerialInput] = useState("")
     const [findingSerial, setFindingSerial] = useState(false)
 
+    // Clear state when switching sale types? Maybe not strictly necessary but cleaner
+    function handleSaleTypeChange(type: "DIRECT" | "PARTNER") {
+        setSaleType(type)
+        // Optional: clear selections to avoid confusion
+        setSelectedCustomer(null)
+        setCustomerId(null)
+        setCustomerName("")
+        setSelectedEndCustomer(null)
+        setEndCustomerId(null)
+        setEndCustomerName("")
+        setAvailableAddresses([])
+        setDeliveryAddress("")
+    }
+
+    // Handle "Bill To" Customer Selection
     function handleCustomerSelect(customer: any) {
         if (customer) {
             setSelectedCustomer(customer)
             setCustomerId(customer.id)
             setCustomerName(customer.name)
 
-            // Fetch addresses
-            fetch(`/api/customers/${customer.id}/addresses`)
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        setAvailableAddresses(data)
-                        // Auto-select default
-                        const defaultAddr = data.find((a: any) => a.isDefault)
-                        if (defaultAddr) {
-                            setDeliveryAddress(defaultAddr.address)
-                        } else if (data.length > 0) {
-                            // Or maybe don't auto select? Let's auto select first one if no default
-                            setDeliveryAddress(data[0].address)
-                        } else {
-                            setDeliveryAddress("")
-                        }
-                    } else {
-                        setAvailableAddresses([])
-                        setDeliveryAddress("")
-                    }
-                })
-                .catch(() => {
-                    setAvailableAddresses([])
-                    setDeliveryAddress("")
-                })
-
+            // If Direct Sale, this is also the Ship To customer, so fetch addresses
+            if (saleType === "DIRECT") {
+                fetchAddresses(customer.id)
+            }
         } else {
             setSelectedCustomer(null)
             setCustomerId(null)
+            setCustomerName("")
+            if (saleType === "DIRECT") {
+                setAvailableAddresses([])
+                setDeliveryAddress("")
+            }
+        }
+    }
+
+    // Handle "Ship To" Customer Selection (Partner Sales only)
+    function handleEndCustomerSelect(customer: any) {
+        if (customer) {
+            setSelectedEndCustomer(customer)
+            setEndCustomerId(customer.id)
+            setEndCustomerName(customer.name)
+
+            // For Partner sales, addresses come from the End Customer
+            fetchAddresses(customer.id)
+        } else {
+            setSelectedEndCustomer(null)
+            setEndCustomerId(null)
+            setEndCustomerName("")
             setAvailableAddresses([])
             setDeliveryAddress("")
         }
+    }
+
+    function fetchAddresses(id: string) {
+        fetch(`/api/customers/${id}/addresses`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setAvailableAddresses(data)
+                    // Auto-select default
+                    const defaultAddr = data.find((a: any) => a.isDefault)
+                    if (defaultAddr) {
+                        setDeliveryAddress(defaultAddr.address)
+                    } else if (data.length > 0) {
+                        setDeliveryAddress(data[0].address)
+                    } else {
+                        setDeliveryAddress("")
+                    }
+                } else {
+                    setAvailableAddresses([])
+                    setDeliveryAddress("")
+                }
+            })
+            .catch(() => {
+                setAvailableAddresses([])
+                setDeliveryAddress("")
+            })
     }
 
     function handleProductSelect(product: any) {
         // Check if already exists
         const existingInfo = items.find(i => i.productId === product.id)
         if (existingInfo) {
-            // increment or just alert? Let's just alert for now or add new line? 
-            // Better to allow duplicates? No, unique lines per product usually better but...
-            // Let's just add a new line for simplicity
+            // Logic for duplicate handling if needed
         }
 
         const newItem: DeliveryOrderItem = {
@@ -106,8 +155,6 @@ export default function NewDeliveryOrderPage() {
         setError("")
 
         try {
-            // Find inventory item by serial
-            // We can reuse the cost-adjustment API or create a specific lookup
             const res = await fetch(`/api/inventory/cost-adjustment?serials=${encodeURIComponent(serialInput)}`)
             if (!res.ok) throw new Error("Search failed")
             const data = await res.json()
@@ -116,12 +163,11 @@ export default function NewDeliveryOrderPage() {
                 setError("Serial number not found in inventory")
             } else {
                 const item = data[0]
-                // Add as item
                 const newItem: DeliveryOrderItem = {
                     productId: item.product.id,
                     productName: `${item.product.brand} ${item.product.name} (S/N: ${item.serialNumber})`,
                     quantity: 1,
-                    unitPrice: item.product.resellerPrice || 0, // Fallback to product price? Or item cost? Delivery usually uses sell price
+                    unitPrice: item.product.resellerPrice || 0,
                     isBackorder: false
                 }
                 setItems([...items, newItem])
@@ -155,8 +201,20 @@ export default function NewDeliveryOrderPage() {
         setLoading(true)
         setError("")
 
-        if (!orderNumber || !customerName) {
-            setError("Order Number and Customer Name are required")
+        if (!orderNumber) {
+            setError("Order Number is required")
+            setLoading(false)
+            return
+        }
+
+        if (!customerId) {
+            setError(saleType === "PARTNER" ? "Partner selection is required" : "Customer selection is required")
+            setLoading(false)
+            return
+        }
+
+        if (saleType === "PARTNER" && !endCustomerId) {
+            setError("End Customer selection is required for Partner Sales")
             setLoading(false)
             return
         }
@@ -168,19 +226,25 @@ export default function NewDeliveryOrderPage() {
         }
 
         try {
+            const payload = {
+                orderNumber,
+                customerId,
+                customerName,
+                // Add End Customer info
+                endCustomerId: saleType === "PARTNER" ? endCustomerId : null,
+                endCustomerName: saleType === "PARTNER" ? endCustomerName : null,
+                saleType,
+                deliveryAddress,
+                invoiceValue: Number(invoiceValue),
+                additionalCosts: Number(additionalCosts),
+                notes,
+                items
+            }
+
             const res = await fetch("/api/delivery-orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    orderNumber,
-                    customerId,
-                    customerName,
-                    deliveryAddress,
-                    invoiceValue: Number(invoiceValue),
-                    additionalCosts: Number(additionalCosts),
-                    notes,
-                    items
-                }),
+                body: JSON.stringify(payload),
             })
 
             const data = await res.json()
@@ -213,9 +277,36 @@ export default function NewDeliveryOrderPage() {
                         </div>
                     )}
 
-                    {/* Customer Info */}
+                    {/* Order Details */}
                     <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
                         <h2 className="text-lg font-medium text-gray-900">Order Details</h2>
+
+                        {/* Sale Type Selector */}
+                        <div className="flex gap-6 border-b pb-4 mb-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="saleType"
+                                    value="DIRECT"
+                                    checked={saleType === "DIRECT"}
+                                    onChange={() => handleSaleTypeChange("DIRECT")}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Direct Sale</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="saleType"
+                                    value="PARTNER"
+                                    checked={saleType === "PARTNER"}
+                                    onChange={() => handleSaleTypeChange("PARTNER")}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Partner Sale</span>
+                            </label>
+                        </div>
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Order Number *</label>
@@ -227,22 +318,41 @@ export default function NewDeliveryOrderPage() {
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                 />
                             </div>
+
+                            {/* Customer / Partner Selection */}
                             <div className="sm:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"} *
+                                </label>
                                 <CustomerSelector
                                     onSelect={handleCustomerSelect}
                                     selectedCustomer={selectedCustomer}
+                                    type={saleType === "PARTNER" ? "PARTNER" : undefined}
                                 />
                             </div>
-                            <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">Customer Name *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                                />
-                            </div>
+
+                            {/* End Customer Selection (Partner Sale Only) */}
+                            {saleType === "PARTNER" && (
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Ship To (End Customer) *
+                                    </label>
+                                    <CustomerSelector
+                                        onSelect={handleEndCustomerSelect}
+                                        selectedCustomer={selectedEndCustomer}
+                                        type="CUSTOMER"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Only show name input if manual overwrite needed, or maybe just remove manual string input? */}
+                            {/* The original code had a manual 'customerName' input. We should probably keep it hidden or auto-filled.
+                                Let's keep it visible but readonly if selected? Or just rely on selector?
+                                The original code synced 'customerName' from selector. 
+                                Let's auto-fill it but allow edit if they really want? 
+                                Actually, 'customerName' state IS used for submission. 
+                            */}
+
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
                                 <div className="relative mt-1 rounded-md shadow-sm">
@@ -289,8 +399,10 @@ export default function NewDeliveryOrderPage() {
 
                             {/* Delivery Address Selection */}
                             <div className="sm:col-span-2 border-t pt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
-                                {customerId ? (
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Delivery Address ({saleType === "PARTNER" ? "End Customer" : "Customer"})
+                                </label>
+                                {(saleType === "DIRECT" ? customerId : endCustomerId) ? (
                                     <div className="space-y-3">
                                         {availableAddresses.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-2">
@@ -318,7 +430,7 @@ export default function NewDeliveryOrderPage() {
                                                     <input
                                                         type="radio"
                                                         name="deliveryAddress"
-                                                        checked={deliveryAddress === ''} // Or separate "Custom" state? simplified: if not matching any known address
+                                                        checked={deliveryAddress === ''}
                                                         onChange={() => setDeliveryAddress("")}
                                                         className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                                     />
@@ -338,7 +450,7 @@ export default function NewDeliveryOrderPage() {
                                             </div>
                                         ) : (
                                             <div className="text-sm text-gray-500 italic">
-                                                No saved addresses found for this partner.
+                                                No saved addresses found.
                                                 <textarea
                                                     value={deliveryAddress}
                                                     onChange={(e) => setDeliveryAddress(e.target.value)}
@@ -350,7 +462,9 @@ export default function NewDeliveryOrderPage() {
                                         )}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500 italic">Select a customer to view delivery addresses.</p>
+                                    <p className="text-sm text-gray-500 italic">
+                                        Select a {saleType === "PARTNER" ? "End Customer" : "Customer"} to view delivery addresses.
+                                    </p>
                                 )}
                             </div>
                         </div>

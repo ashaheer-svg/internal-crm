@@ -76,6 +76,7 @@ model Customer {
   updatedAt   DateTime @updatedAt
   invoices    Invoice[]
   deliveryOrders DeliveryOrder[]
+  endCustomerDeliveryOrders DeliveryOrder[] @relation("EndCustomer")
   deliveryAddresses DeliveryAddress[]
   employees   PartnerEmployee[]
 }
@@ -331,10 +332,17 @@ model Sequence {
 model DeliveryOrder {
   id            String   @id @default(uuid())
   orderNumber   String   @unique
+  deliveryAddress String? // Snapshot of delivery address
+  saleType      String   @default("DIRECT") // DIRECT, PARTNER
+  
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
   customerName  String
-  deliveryAddress String? // Snapshot of delivery address
+
+  endCustomerId String?
+  endCustomer   Customer? @relation("EndCustomer", fields: [endCustomerId], references: [id])
+  endCustomerName String?
+
   status        String   @default("DRAFT") // DRAFT, CONFIRMED, COMPLETED, CANCELLED
   totalAmount   Float    @default(0)
   invoiceValue  Float    @default(0) // Revenue (Excl. Tax)

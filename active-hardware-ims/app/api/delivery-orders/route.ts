@@ -33,17 +33,21 @@ export async function POST(request: Request) {
     try {
         await requireAuth()
         const body = await request.json()
-        const { orderNumber, customerId, customerName, notes, items } = body
+        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items } = body
 
         if (!orderNumber || !customerName) {
             return NextResponse.json({ error: 'Order Number and Customer Name are required' }, { status: 400 })
+        }
+
+        if (saleType === 'PARTNER' && !endCustomerId) {
+            return NextResponse.json({ error: 'End Customer is required for Partner Sales' }, { status: 400 })
         }
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: 'At least one item is required' }, { status: 400 })
         }
 
-        console.log("Creating DO:", { orderNumber, customerId, itemsCount: items.length })
+        console.log("Creating DO:", { orderNumber, customerId, saleType, itemsCount: items.length })
 
         // Start transaction
         const order = await prisma.$transaction(async (tx) => {
@@ -55,12 +59,23 @@ export async function POST(request: Request) {
                 }
             }
 
+            // Check End Customer if provided
+            if (endCustomerId) {
+                const endCustomer = await tx.customer.findUnique({ where: { id: endCustomerId } })
+                if (!endCustomer) {
+                    throw new Error(`End Customer with ID ${endCustomerId} not found`)
+                }
+            }
+
             // Create Delivery Order
             const newOrder = await tx.deliveryOrder.create({
                 data: {
                     orderNumber,
                     customerId,
                     customerName,
+                    saleType: saleType || "DIRECT",
+                    endCustomerId,
+                    endCustomerName,
                     deliveryAddress: body.deliveryAddress,
                     invoiceValue: Number(body.invoiceValue) || 0,
                     additionalCosts: Number(body.additionalCosts) || 0,

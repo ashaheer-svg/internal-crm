@@ -6,15 +6,25 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url)
         const query = searchParams.get('q') || ''
+        const type = searchParams.get('type') // 'CUSTOMER', 'SUPPLIER', 'PARTNER' or 'ALL'
+
+        const where: any = {
+            OR: [
+                { name: { contains: query } },
+                { email: { contains: query } },
+                { phone: { contains: query } }
+            ],
+            isActive: true
+        }
+
+        if (type && type !== 'ALL') {
+            if (type === 'CUSTOMER') where.isCustomer = true
+            else if (type === 'SUPPLIER') where.isSupplier = true
+            else if (type === 'PARTNER') where.isPartner = true
+        }
 
         const customers = await prisma.customer.findMany({
-            where: {
-                OR: [
-                    { name: { contains: query } },
-                    { email: { contains: query } },
-                    { phone: { contains: query } }
-                ]
-            },
+            where,
             orderBy: { name: 'asc' },
             take: 20
         })
