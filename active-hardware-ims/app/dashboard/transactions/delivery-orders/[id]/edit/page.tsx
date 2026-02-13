@@ -18,10 +18,15 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
 
     // Header State
     const [orderNumber, setOrderNumber] = useState("")
-    const [customer, setCustomer] = useState<any>(null)
+    const [customer, setCustomer] = useState<any>(null) // Bill To
+    const [saleType, setSaleType] = useState<"DIRECT" | "PARTNER">("DIRECT")
+    const [endCustomer, setEndCustomer] = useState<any>(null) // Ship To (Partner only)
+
     const [notes, setNotes] = useState("")
     const [deliveryAddress, setDeliveryAddress] = useState("")
+    const [deliveryAddressSource, setDeliveryAddressSource] = useState<"PARTNER" | "END_CUSTOMER">("END_CUSTOMER")
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
+
     const [invoiceValue, setInvoiceValue] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
 
@@ -53,18 +58,36 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 }
 
                 setOrderNumber(data.orderNumber)
+                setSaleType(data.saleType || "DIRECT")
+
+                // Bill To Customer
                 setCustomer({
                     id: data.customerId,
                     name: data.customerName,
-                    // other fields not stored on DO but that's okay
                 })
+
+                // End Customer
+                if (data.endCustomerId) {
+                    setEndCustomer({
+                        id: data.endCustomerId,
+                        name: data.endCustomerName
+                    })
+                }
+
                 setNotes(data.notes || "")
                 setDeliveryAddress(data.deliveryAddress || "")
                 setInvoiceValue(data.invoiceValue ? String(data.invoiceValue) : "")
                 setAdditionalCosts(data.additionalCosts ? String(data.additionalCosts) : "")
 
-                if (data.customerId) {
-                    fetch(`/api/customers/${data.customerId}/addresses`)
+                // Fetch Addresses based on context
+                // If Partner sale, check where address likely came from?
+                // We don't store "address source" in DB, but we can guess or just default?
+                // Or we can just fetch both/relevant and see if current address matches one of them?
+                // For simplicity, let's load based on saleType logic similar to New Page
+
+                const targetId = (data.saleType === "PARTNER" && data.endCustomerId) ? data.endCustomerId : data.customerId
+                if (targetId) {
+                    fetch(`/api/customers/${targetId}/addresses`)
                         .then(res => res.json())
                         .then(addrs => {
                             if (Array.isArray(addrs)) setAvailableAddresses(addrs)
@@ -156,11 +179,49 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
         }
     }
 
+    // Helper to fetch addresses
+    function fetchAddresses(customerId: string) {
+        fetch(`/api/customers/${customerId}/addresses`)
+            .then(res => res.json())
+            .then(addrs => {
+                if (Array.isArray(addrs)) setAvailableAddresses(addrs)
+                else setAvailableAddresses([])
+            })
+            .catch(() => setAvailableAddresses([]))
+    }
+
+    // Effect to handle address source switching during edit
+    useEffect(() => {
+        if (loading) return // Don't run this during initial load to avoid overwriting
+
+        if (saleType === "DIRECT") {
+            if (customer?.id) fetchAddresses(customer.id)
+            else setAvailableAddresses([])
+        } else {
+            // Partner Sale
+            if (deliveryAddressSource === "PARTNER") {
+                if (customer?.id) fetchAddresses(customer.id)
+                else setAvailableAddresses([])
+            } else {
+                // End Customer
+                if (endCustomer?.id) fetchAddresses(endCustomer.id)
+                else setAvailableAddresses([])
+            }
+        }
+    }, [saleType, deliveryAddressSource, customer, endCustomer, loading])
+
+
     const handleSubmit = async () => {
         if (!customer) {
-            setError("Please select a customer")
+            setError("Please select a customer (Partner/Direct)")
             return
         }
+
+        if (saleType === "PARTNER" && !endCustomer) {
+            setError("Please select an End Customer for Partner Sale")
+            return
+        }
+
         if (items.length === 0) {
             setError("Please add at least one item")
             return
@@ -174,6 +235,11 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 orderNumber,
                 customerId: customer.id,
                 customerName: customer.name,
+
+                saleType,
+                endCustomerId: saleType === "PARTNER" ? endCustomer?.id : null,
+                endCustomerName: saleType === "PARTNER" ? endCustomer?.name : null,
+
                 deliveryAddress,
                 invoiceValue: Number(invoiceValue),
                 additionalCosts: Number(additionalCosts),
@@ -230,6 +296,39 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                     {/* Customer Section */}
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <h2 className="text-lg font-semibold mb-4">Customer Details</h2>
+
+                        {/* Sale Type */}
+                        <div className="flex gap-6 border-b pb-4 mb-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="saleType"
+                                    value="DIRECT"
+                                    checked={saleType === "DIRECT"}
+                                    onChange={() => {
+                                        setSaleType("DIRECT")
+                                        setDeliveryAddressSource("END_CUSTOMER")
+                                    }}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Direct Sale</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="saleType"
+                                    value="PARTNER"
+                                    checked={saleType === "PARTNER"}
+                                    onChange={() => {
+                                        setSaleType("PARTNER")
+                                        setDeliveryAddressSource("END_CUSTOMER")
+                                    }}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Partner Sale</span>
+                            </label>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Order #</label>
@@ -240,17 +339,48 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     className="w-full px-3 py-2 border rounded-md"
                                 />
                             </div>
+
+                            {/* Bill To */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"}
+                                </label>
                                 {customer ? (
                                     <div className="flex items-center justify-between p-2 bg-gray-50 rounded border">
                                         <span className="font-medium">{customer.name}</span>
                                         <button onClick={() => setCustomer(null)} className="text-red-500 text-xs hover:underline">Change</button>
                                     </div>
                                 ) : (
-                                    <CustomerSelector onSelect={setCustomer} selectedCustomer={null} />
+                                    <CustomerSelector
+                                        onSelect={setCustomer}
+                                        selectedCustomer={null}
+                                        type={saleType === "PARTNER" ? "PARTNER" : undefined}
+                                    />
                                 )}
                             </div>
+
+                            {/* Ship To (End Customer) for Partner Sales */}
+                            {saleType === "PARTNER" && (
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Ship To (End Customer)
+                                    </label>
+                                    {endCustomer ? (
+                                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                                            <span className="font-medium">{endCustomer.name}</span>
+                                            <button onClick={() => setEndCustomer(null)} className="text-red-500 text-xs hover:underline">Change</button>
+                                        </div>
+                                    ) : (
+                                        <CustomerSelector
+                                            onSelect={setEndCustomer}
+                                            selectedCustomer={null}
+                                            type="CUSTOMER"
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
                                 <div className="relative mt-1 rounded-md shadow-sm">
@@ -288,8 +418,39 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
 
                             {/* Delivery Address Selection */}
                             <div className="col-span-2 border-t pt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
-                                {customer ? (
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Delivery Address
+                                    </label>
+
+                                    {saleType === "PARTNER" && (
+                                        <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeliveryAddressSource("PARTNER")}
+                                                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "PARTNER"
+                                                        ? "bg-white shadow text-gray-900"
+                                                        : "text-gray-500 hover:text-gray-900"
+                                                    }`}
+                                            >
+                                                Partner Address
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeliveryAddressSource("END_CUSTOMER")}
+                                                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "END_CUSTOMER"
+                                                        ? "bg-white shadow text-gray-900"
+                                                        : "text-gray-500 hover:text-gray-900"
+                                                    }`}
+                                            >
+                                                End Customer Address
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {((saleType === "DIRECT" && customer) ||
+                                    (saleType === "PARTNER" && ((deliveryAddressSource === "PARTNER" && customer) || (deliveryAddressSource === "END_CUSTOMER" && endCustomer)))) ? (
                                     <div className="space-y-3">
                                         {availableAddresses.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-2">
@@ -314,10 +475,6 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                         name="deliveryAddress"
                                                         checked={deliveryAddress === '' || (deliveryAddress !== '' && !availableAddresses.some(a => a.address === deliveryAddress))}
                                                         onChange={() => {
-                                                            // If currently selected is custom, keep it, otherwise clear? 
-                                                            // Logic: If clicking "Custom", we start blank or keep whatever custom text was there?
-                                                            // Actually, if we switch from Preset to Custom, we might want to keep the text or clear it. 
-                                                            // Let's assume clear if it was a Preset.
                                                             if (availableAddresses.some(a => a.address === deliveryAddress)) {
                                                                 setDeliveryAddress("")
                                                             }
@@ -352,7 +509,9 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                         )}
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500 italic">Select a customer to view delivery addresses.</p>
+                                    <p className="text-sm text-gray-500 italic">
+                                        Select a {saleType === "PARTNER" ? (deliveryAddressSource === "PARTNER" ? "Partner" : "End Customer") : "Customer"} to view delivery addresses.
+                                    </p>
                                 )}
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save, Package, ScanLine, Search } from "lucide-react"
@@ -44,6 +44,7 @@ export default function NewDeliveryOrderPage() {
     // Address Selection
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
     const [deliveryAddress, setDeliveryAddress] = useState("")
+    const [deliveryAddressSource, setDeliveryAddressSource] = useState<"PARTNER" | "END_CUSTOMER">("END_CUSTOMER")
 
     // Items
     const [items, setItems] = useState<DeliveryOrderItem[]>([])
@@ -55,6 +56,9 @@ export default function NewDeliveryOrderPage() {
     // Clear state when switching sale types? Maybe not strictly necessary but cleaner
     function handleSaleTypeChange(type: "DIRECT" | "PARTNER") {
         setSaleType(type)
+        // Reset address source to default
+        setDeliveryAddressSource("END_CUSTOMER")
+
         // Optional: clear selections to avoid confusion
         setSelectedCustomer(null)
         setCustomerId(null)
@@ -65,6 +69,24 @@ export default function NewDeliveryOrderPage() {
         setAvailableAddresses([])
         setDeliveryAddress("")
     }
+
+    // Effect to update addresses when source changes or relevant customer changes
+    useEffect(() => {
+        if (saleType === "DIRECT") {
+            if (customerId) fetchAddresses(customerId)
+            else setAvailableAddresses([])
+        } else {
+            // Partner Sale
+            if (deliveryAddressSource === "PARTNER") {
+                if (customerId) fetchAddresses(customerId)
+                else setAvailableAddresses([])
+            } else {
+                // End Customer
+                if (endCustomerId) fetchAddresses(endCustomerId)
+                else setAvailableAddresses([])
+            }
+        }
+    }, [saleType, deliveryAddressSource, customerId, endCustomerId])
 
     // Handle "Bill To" Customer Selection
     function handleCustomerSelect(customer: any) {

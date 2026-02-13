@@ -168,8 +168,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     where: { id: params.id },
                     data: {
                         notes,
-                        customerName,
                         customerId,
+                        customerName,
+                        saleType: body.saleType,
+                        endCustomerId: body.endCustomerId,
+                        endCustomerName: body.endCustomerName,
                         orderNumber,
                         deliveryAddress,
                         invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
@@ -298,6 +301,9 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 status,
                 notes,
                 deliveryAddress,
+                saleType: body.saleType,
+                endCustomerId: body.endCustomerId,
+                endCustomerName: body.endCustomerName,
                 invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
                 additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
             }
