@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 
 export async function POST(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const isPreview = searchParams.get('preview') === 'true';
+
         const formData = await request.formData();
         const file = formData.get('file') as File;
 
@@ -22,16 +25,40 @@ export async function POST(request: Request) {
         }
 
         const results = {
-            success: 0,
+            success: 0, // In preview, this counts valid rows
             failed: 0,
-            errors: [] as string[]
+            errors: [] as string[],
+            preview: [] as any[]
         };
 
         // Get a default location for these items (e.g. first available)
+        // We need this even for preview to ensure configuration is correct
         const defaultLocation = await prisma.location.findFirst();
         if (!defaultLocation) {
             return NextResponse.json({ error: 'System has no locations configured. Please create a location first.' }, { status: 500 });
         }
+
+        // Pre-fetch all products and existing serials to optimize validation
+        const products = await prisma.product.findMany({ select: { id: true, sku: true, warrantyMonths: true, resellerPrice: true } });
+        const productMap = new Map(products.map(p => [p.sku, p]));
+
+        // For serial check, we can't easily fetch all if dataset is huge, but for import batch it's okay to check locally or one update query? 
+        // Better to check individually or fetch match in batch key if possible. 
+        // For simplicity and safety in import, checking individually or pre-fetching existing serials from the list is safer.
+        // Let's get list of serials involved in this import to check DB once.
+        const importSerials = rows.slice(1).map(r => {
+            const row = r.split(',').map(c => c.trim());
+            const data: any = {};
+            headers.forEach((h, index) => data[h] = row[index]);
+            return data.serialnumber;
+        }).filter(s => s);
+
+        const dbSerials = await prisma.inventoryItem.findMany({
+            where: { serialNumber: { in: importSerials } },
+            select: { serialNumber: true }
+        });
+        const existingSerialSet = new Set(dbSerials.map(i => i.serialNumber));
+
 
         // Process rows (skip header)
         for (let i = 1; i < rows.length; i++) {
@@ -49,29 +76,28 @@ export async function POST(request: Request) {
                 }
 
                 // 1. Find Product
-                const product = await prisma.product.findUnique({
-                    where: { sku: sku }
-                });
-
+                const product = productMap.get(sku);
                 if (!product) {
                     throw new Error(`Product SKU '${sku}' not found`);
                 }
 
                 // 2. Check duplicate serial
-                const existing = await prisma.inventoryItem.findUnique({
-                    where: { serialNumber: serialnumber }
-                });
-
-                if (existing) {
+                if (existingSerialSet.has(serialnumber)) {
                     throw new Error(`Serial '${serialnumber}' already exists`);
                 }
 
                 // 3. Calculate Expiry
                 let warrantyExpiry: Date;
                 const saleDate = new Date(solddate);
+                if (isNaN(saleDate.getTime())) {
+                    throw new Error(`Invalid sold date '${solddate}'`);
+                }
 
                 if (expirydate) {
                     warrantyExpiry = new Date(expirydate);
+                    if (isNaN(warrantyExpiry.getTime())) {
+                        throw new Error(`Invalid expiry date '${expirydate}'`);
+                    }
                 } else {
                     // Calc based on product default
                     const months = product.warrantyMonths || 12; // Default 1 year if 0
@@ -82,44 +108,58 @@ export async function POST(request: Request) {
                 // Format notes for the log
                 const logNotes = `Historical Import. Customer: ${customername}. Sold on: ${solddate}. Invoice: ${invoicenumber || 'N/A'}. ${notes ? `Notes: ${notes}` : ''}`;
 
-                // 4. Create Transaction
-                await prisma.$transaction(async (tx) => {
-                    // Create Item
-                    const newItem = await tx.inventoryItem.create({
-                        data: {
-                            serialNumber: serialnumber,
-                            productId: product.id,
-                            locationId: defaultLocation.id,
-                            status: 'SOLD',
-                            warrantyExpiry: warrantyExpiry,
-                            createdAt: saleDate, // Backdate creation to sold date
-                            unitCost: product.resellerPrice * 0.7 // Approximate cost if unknown
-                        }
+                if (isPreview) {
+                    results.preview.push({
+                        serialNumber: serialnumber,
+                        sku: sku,
+                        productName: product.sku, // or fetch name if needed, but sku is enough for verification
+                        soldDate: saleDate.toISOString().split('T')[0],
+                        customer: customername,
+                        warrantyExpiry: warrantyExpiry.toISOString().split('T')[0],
+                        status: 'Valid'
                     });
+                    results.success++;
+                } else {
+                    // 4. Create Transaction (DB Write)
+                    await prisma.$transaction(async (tx) => {
+                        // Create Item
+                        const newItem = await tx.inventoryItem.create({
+                            data: {
+                                serialNumber: serialnumber,
+                                productId: product.id,
+                                locationId: defaultLocation.id,
+                                status: 'SOLD',
+                                warrantyExpiry: warrantyExpiry,
+                                createdAt: saleDate, // Backdate creation to sold date
+                                unitCost: product.resellerPrice * 0.7 // Approximate cost if unknown
+                            }
+                        });
 
-                    // Create History Log
-                    await tx.transactionLog.create({
-                        data: {
-                            type: 'IMPORT_HISTORY',
-                            referenceType: 'LEGACY_IMPORT',
-                            referenceId: newItem.id,
-                            productId: product.id,
-                            serialNumber: serialnumber,
-                            quantity: 1,
-                            fromLocation: defaultLocation.name,
-                            toLocation: 'CUSTOMER',
-                            performedBy: 'SYSTEM_IMPORT',
-                            notes: logNotes,
-                            createdAt: saleDate // Backdate log
-                        }
+                        // Create History Log
+                        await tx.transactionLog.create({
+                            data: {
+                                type: 'IMPORT_HISTORY',
+                                referenceType: 'LEGACY_IMPORT',
+                                referenceId: newItem.id,
+                                productId: product.id,
+                                serialNumber: serialnumber,
+                                quantity: 1,
+                                fromLocation: defaultLocation.name,
+                                toLocation: 'CUSTOMER',
+                                performedBy: 'SYSTEM_IMPORT',
+                                notes: logNotes,
+                                createdAt: saleDate // Backdate log
+                            }
+                        });
                     });
-                });
-
-                results.success++;
+                    results.success++;
+                }
 
             } catch (err: any) {
                 results.failed++;
                 results.errors.push(`Row ${i + 1} (${data.serialnumber || 'Unknown'}): ${err.message}`);
+                // If preview, we want to know about failures too?
+                // The errors array already captures it.
             }
         }
 
