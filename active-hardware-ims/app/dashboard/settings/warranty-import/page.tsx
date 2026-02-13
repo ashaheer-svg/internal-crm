@@ -227,6 +227,8 @@ export default function WarrantyImportPage() {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sold Date</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty Expiry</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -237,6 +239,8 @@ export default function WarrantyImportPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.customer}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.soldDate}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.warrantyExpiry}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.invoiceNumber || '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={item.notes}>{item.notes || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

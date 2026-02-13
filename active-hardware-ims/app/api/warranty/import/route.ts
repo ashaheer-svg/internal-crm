@@ -116,6 +116,8 @@ export async function POST(request: Request) {
                         soldDate: saleDate.toISOString().split('T')[0],
                         customer: customername,
                         warrantyExpiry: warrantyExpiry.toISOString().split('T')[0],
+                        invoiceNumber: invoicenumber || '',
+                        notes: notes || '',
                         status: 'Valid'
                     });
                     results.success++;

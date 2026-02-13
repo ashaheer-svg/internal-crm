@@ -279,8 +279,11 @@ export default function BulkImportPage() {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand / Category</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desc</th>
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price (Reseller)</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Low ($)</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Reseller ($)</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -293,7 +296,10 @@ export default function BulkImportPage() {
                                             <div className="text-xs text-gray-400">{item.category}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.model}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={item.description}>{item.description || '-'}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.minStock}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.warrantyMonths}m</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.lowResellerPrice}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.resellerPrice}</td>
                                     </tr>
                                 ))}
