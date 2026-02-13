@@ -17,6 +17,7 @@ export default function BulkImportPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [result, setResult] = useState<ImportResult | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [previewData, setPreviewData] = useState<any[] | null>(null)
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -28,6 +29,7 @@ export default function BulkImportPage() {
             setSelectedFile(file)
             setMessage(null)
             setResult(null)
+            setPreviewData(null)
         }
     }
 
@@ -53,18 +55,23 @@ export default function BulkImportPage() {
         }
     }
 
-    async function handleUpload() {
+    async function handleUpload(preview: boolean = true) {
         if (!selectedFile) return
 
         setUploading(true)
         setMessage(null)
-        setResult(null)
+        if (preview) {
+            setResult(null)
+            setPreviewData(null)
+        }
 
         try {
             const formData = new FormData()
             formData.append('file', selectedFile)
 
-            const res = await fetch('/api/products/bulk-import', {
+            const url = preview ? '/api/products/bulk-import?preview=true' : '/api/products/bulk-import'
+
+            const res = await fetch(url, {
                 method: 'POST',
                 body: formData
             })
@@ -75,21 +82,39 @@ export default function BulkImportPage() {
                 throw new Error(data.error || 'Failed to import products')
             }
 
-            setResult(data)
-
-            if (data.errorCount === 0) {
-                setMessage({
-                    type: 'success',
-                    text: `Successfully imported ${data.successCount} products!`
-                })
+            if (preview) {
+                if (data.preview && Array.isArray(data.preview)) {
+                    setPreviewData(data.preview)
+                    if (data.errors && data.errors.length > 0) {
+                        setResult({
+                            success: false,
+                            totalRows: data.totalRows,
+                            successCount: data.successCount,
+                            errorCount: data.errorCount,
+                            errors: data.errors,
+                            createdProducts: []
+                        }) // Show parsing errors if any
+                    }
+                } else {
+                    throw new Error("Invalid preview data received")
+                }
             } else {
-                setMessage({
-                    type: 'error',
-                    text: `Imported ${data.successCount} products with ${data.errorCount} errors. See details below.`
-                })
+                setResult(data)
+                setPreviewData(null)
+                if (data.errorCount === 0) {
+                    setMessage({
+                        type: 'success',
+                        text: `Successfully imported ${data.successCount} products!`
+                    })
+                    setSelectedFile(null)
+                } else {
+                    setMessage({
+                        type: 'error',
+                        text: `Imported ${data.successCount} products with ${data.errorCount} errors. See details below.`
+                    })
+                }
             }
 
-            setSelectedFile(null)
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message })
         } finally {
@@ -130,86 +155,153 @@ export default function BulkImportPage() {
                 </div>
             )}
 
-            {/* Upload Section */}
-            <div className="bg-white shadow rounded-lg p-6">
-                <div className="flex items-center gap-3 mb-4">
-                    <Upload className="h-6 w-6 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Upload CSV File</h2>
-                </div>
+            {!previewData ? (
+                <>
+                    {/* Upload Section */}
+                    <div className="bg-white shadow rounded-lg p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Upload className="h-6 w-6 text-blue-600" />
+                            <h2 className="text-lg font-semibold text-gray-900">Upload CSV File</h2>
+                        </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select CSV File
-                        </label>
-                        <input
-                            type="file"
-                            accept=".csv"
-                            onChange={handleFileSelect}
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                        {selectedFile && (
-                            <p className="mt-2 text-sm text-gray-600">
-                                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
-                            </p>
-                        )}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select CSV File
+                                </label>
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleFileSelect}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {selectedFile && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                                    </p>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={() => handleUpload(true)}
+                                disabled={!selectedFile || uploading}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Upload className="h-4 w-4" />
+                                {uploading ? 'Processing...' : 'Preview Import'}
+                            </button>
+                        </div>
                     </div>
 
-                    <button
-                        onClick={handleUpload}
-                        disabled={!selectedFile || uploading}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Upload className="h-4 w-4" />
-                        {uploading ? 'Importing...' : 'Import Products'}
-                    </button>
+                    {/* Template Download */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Download className="h-6 w-6 text-blue-600" />
+                            <h2 className="text-lg font-semibold text-gray-900">Download CSV Template</h2>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-4">
+                            Download a CSV template with sample data. The template opens perfectly in Excel and can be edited there.
+                        </p>
+
+                        <button
+                            onClick={handleDownloadTemplate}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download CSV Template
+                        </button>
+                    </div>
+
+                    {/* Excel Users Info */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <FileText className="h-6 w-6 text-yellow-600" />
+                            <h2 className="text-lg font-semibold text-gray-900">Using Excel?</h2>
+                        </div>
+
+                        <p className="text-sm text-gray-700 mb-3">
+                            You can create and edit your product list in Excel, then save it as CSV:
+                        </p>
+
+                        <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 ml-2">
+                            <li>Download the CSV template above</li>
+                            <li>Open it in Excel (it will open automatically)</li>
+                            <li>Edit your product data in Excel</li>
+                            <li>Click <strong>File → Save As</strong></li>
+                            <li>Choose <strong>CSV (Comma delimited) (*.csv)</strong> as the file type</li>
+                            <li>Save and upload the CSV file here</li>
+                        </ol>
+
+                        <p className="text-sm text-gray-600 mt-3 italic">
+                            💡 Tip: Excel will warn you about losing features when saving as CSV - this is normal, just click "Yes" to continue.
+                        </p>
+                    </div>
+                </>
+            ) : (
+                /* Preview Section */
+                <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-amber-50 flex justify-between items-center">
+                        <div>
+                            <h3 className="text-lg font-medium text-amber-900 flex items-center gap-2">
+                                <FileText className="h-5 w-5" />
+                                Review Product Data
+                            </h3>
+                            <p className="text-sm text-amber-700 mt-1">
+                                Found {previewData.length} valid products. Please verify before importing.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setPreviewData(null)
+                                    setResult(null)
+                                }}
+                                className="px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleUpload(false)}
+                                disabled={uploading}
+                                className="px-4 py-2 bg-green-600 text-white shadow-sm text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
+                            >
+                                {uploading ? 'Importing...' : 'Confirm Import'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-200 sticky top-0">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand / Category</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price (Reseller)</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {previewData.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.sku}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div>{item.brand}</div>
+                                            <div className="text-xs text-gray-400">{item.category}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.model}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.minStock}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.resellerPrice}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-
-            {/* Template Download */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex items-center gap-3 mb-4">
-                    <Download className="h-6 w-6 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Download CSV Template</h2>
-                </div>
-
-                <p className="text-sm text-gray-600 mb-4">
-                    Download a CSV template with sample data. The template opens perfectly in Excel and can be edited there.
-                </p>
-
-                <button
-                    onClick={handleDownloadTemplate}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <Download className="h-4 w-4" />
-                    Download CSV Template
-                </button>
-            </div>
-
-            {/* Excel Users Info */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                <div className="flex items-center gap-3 mb-3">
-                    <FileText className="h-6 w-6 text-yellow-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Using Excel?</h2>
-                </div>
-
-                <p className="text-sm text-gray-700 mb-3">
-                    You can create and edit your product list in Excel, then save it as CSV:
-                </p>
-
-                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 ml-2">
-                    <li>Download the CSV template above</li>
-                    <li>Open it in Excel (it will open automatically)</li>
-                    <li>Edit your product data in Excel</li>
-                    <li>Click <strong>File → Save As</strong></li>
-                    <li>Choose <strong>CSV (Comma delimited) (*.csv)</strong> as the file type</li>
-                    <li>Save and upload the CSV file here</li>
-                </ol>
-
-                <p className="text-sm text-gray-600 mt-3 italic">
-                    💡 Tip: Excel will warn you about losing features when saving as CSV - this is normal, just click "Yes" to continue.
-                </p>
-            </div>
+            )}
 
             {/* Results */}
             {result && (
