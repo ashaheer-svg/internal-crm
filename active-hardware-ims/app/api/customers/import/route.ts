@@ -1,10 +1,131 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireRole } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
+
+        const user = await requireRole(['ADMIN', 'MANAGER'])
+        const contentType = request.headers.get('content-type') || ''
+
+        // Handle JSON Batch Import (Chunked)
+        if (contentType.includes('application/json')) {
+            const body = await request.json()
+            const { customers } = body
+
+            if (!Array.isArray(customers)) {
+                return NextResponse.json({ error: 'Invalid data format. Expected array of customers.' }, { status: 400 })
+            }
+
+            let successCount = 0
+            let errorCount = 0
+            const errors: any[] = []
+
+            for (const item of customers) {
+                try {
+                    // 1. Upsert Customer
+                    let dbCustomer = await prisma.customer.findFirst({
+                        where: { name: item.name }
+                    });
+
+                    if (dbCustomer) {
+                        // Update existing
+                        dbCustomer = await prisma.customer.update({
+                            where: { id: dbCustomer.id },
+                            data: {
+                                email: item.email || dbCustomer.email,
+                                phone: item.phone || dbCustomer.phone,
+                                address: item.address || dbCustomer.address,
+                                taxId: item.taxId || dbCustomer.taxId,
+                                salesRep: item.salesRep || dbCustomer.salesRep,
+                                notes: item.notes || dbCustomer.notes,
+                                isPartner: item.roles?.isPartner ?? dbCustomer.isPartner,
+                                isSupplier: item.roles?.isSupplier ?? dbCustomer.isSupplier,
+                                isCustomer: item.roles?.isCustomer ?? dbCustomer.isCustomer
+                            }
+                        })
+                    } else {
+                        // Create new
+                        dbCustomer = await prisma.customer.create({
+                            data: {
+                                name: item.name,
+                                email: item.email,
+                                phone: item.phone,
+                                address: item.address,
+                                taxId: item.taxId,
+                                salesRep: item.salesRep,
+                                notes: item.notes,
+                                isPartner: item.roles?.isPartner || false,
+                                isSupplier: item.roles?.isSupplier || false,
+                                isCustomer: item.roles?.isCustomer || true, // Default
+                                isActive: true
+                            }
+                        })
+                    }
+
+                    // 2. Process Locations
+                    if (item.locations && Array.isArray(item.locations)) {
+                        for (const loc of item.locations) {
+                            if (!loc.label || !loc.address) continue;
+
+                            const existingLoc = await prisma.deliveryAddress.findFirst({
+                                where: {
+                                    customerId: dbCustomer.id,
+                                    label: loc.label
+                                }
+                            });
+
+                            if (!existingLoc) {
+                                await prisma.deliveryAddress.create({
+                                    data: {
+                                        customerId: dbCustomer.id,
+                                        label: loc.label,
+                                        address: loc.address,
+                                        contactName: loc.contactName,
+                                        phone: loc.phone
+                                    }
+                                })
+                            }
+                        }
+                    }
+
+                    // 3. Process Employees
+                    if (item.employees && Array.isArray(item.employees)) {
+                        for (const emp of item.employees) {
+                            if (!emp.name) continue;
+
+                            const existingEmp = await prisma.partnerEmployee.findFirst({
+                                where: {
+                                    customerId: dbCustomer.id,
+                                    name: emp.name
+                                }
+                            });
+
+                            if (!existingEmp) {
+                                await prisma.partnerEmployee.create({
+                                    data: {
+                                        customerId: dbCustomer.id,
+                                        name: emp.name,
+                                        email: emp.email,
+                                        phone: emp.phone,
+                                        designation: emp.designation
+                                    }
+                                })
+                            }
+                        }
+                    }
+
+                    successCount++
+                } catch (error: any) {
+                    errorCount++
+                    errors.push({ name: item.name, error: error.message })
+                }
+            }
+
+            return NextResponse.json({ success: true, successCount, errorCount, errors })
+        }
 
         const formData = await request.formData();
         const file = formData.get('file') as File;
