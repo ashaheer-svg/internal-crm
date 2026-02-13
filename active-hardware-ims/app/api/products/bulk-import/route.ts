@@ -41,6 +41,9 @@ function parseCSV(text: string): any[] {
 
 export async function POST(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const isPreview = searchParams.get('preview') === 'true';
+
         const user = await requireRole(['ADMIN'])
 
         const formData = await request.formData()
@@ -77,13 +80,14 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        const result: ImportResult = {
+        const result: ImportResult & { preview?: any[] } = {
             success: true,
             totalRows: rows.length,
             successCount: 0,
             errorCount: 0,
             errors: [],
-            createdProducts: []
+            createdProducts: [],
+            preview: []
         }
 
         // Get existing SKUs to check for duplicates
@@ -128,28 +132,37 @@ export async function POST(request: Request) {
                     throw new Error('Reseller price must be a non-negative number')
                 }
 
-                // Create product
-                const product = await prisma.product.create({
-                    data: {
-                        sku: row.sku,
-                        name: row.name,
-                        brand: row.brand,
-                        category: row.category || 'General',
-                        model: row.model,
-                        description: row.description || null,
-                        minStock,
-                        warrantyMonths,
-                        lowResellerPrice,
-                        resellerPrice
-                    }
-                })
+                const productData = {
+                    sku: row.sku,
+                    name: row.name,
+                    brand: row.brand,
+                    category: row.category || 'General',
+                    model: row.model,
+                    description: row.description || null,
+                    minStock,
+                    warrantyMonths,
+                    lowResellerPrice,
+                    resellerPrice
+                };
 
-                result.successCount++
-                result.createdProducts.push({
-                    sku: product.sku,
-                    name: product.name
-                })
-                existingSKUs.add(row.sku)
+                if (isPreview) {
+                    result.preview?.push(productData);
+                    result.successCount++;
+                    // In preview, we pretend we added it to check for duplicates within the file itself
+                    existingSKUs.add(row.sku);
+                } else {
+                    // Create product
+                    const product = await prisma.product.create({
+                        data: productData
+                    })
+
+                    result.successCount++
+                    result.createdProducts.push({
+                        sku: product.sku,
+                        name: product.name
+                    })
+                    existingSKUs.add(row.sku)
+                }
 
             } catch (error: any) {
                 result.errorCount++
@@ -161,14 +174,16 @@ export async function POST(request: Request) {
             }
         }
 
-        // Log the import
-        await logCreate('PRODUCT', 'bulk-import', user.id, user.name, {
-            filename: file.name,
-            totalRows: result.totalRows,
-            successCount: result.successCount,
-            errorCount: result.errorCount,
-            timestamp: new Date().toISOString()
-        })
+        if (!isPreview) {
+            // Log the import only if not preview
+            await logCreate('PRODUCT', 'bulk-import', user.id, user.name, {
+                filename: file.name,
+                totalRows: result.totalRows,
+                successCount: result.successCount,
+                errorCount: result.errorCount,
+                timestamp: new Date().toISOString()
+            })
+        }
 
         return NextResponse.json(result)
 
