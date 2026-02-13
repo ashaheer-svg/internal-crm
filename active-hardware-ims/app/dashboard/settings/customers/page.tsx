@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, Search, Archive, AlertTriangle } from "lucide-react"
+import Link from "next/link"
+import { Plus, Edit, Trash2, Search, Archive, AlertTriangle, Upload } from "lucide-react"
 import CustomerFormModal from "./CustomerFormModal"
 
 type Customer = {
@@ -124,16 +125,25 @@ export default function CustomersPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Partner Management</h1>
                     <p className="text-sm text-gray-500">Manage customers, suppliers, and partners</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingCustomer(null)
-                        setShowModal(true)
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
-                >
-                    <Plus className="w-4 h-4" />
-                    Add Partner
-                </button>
+                <div className="flex gap-2">
+                    <Link
+                        href="/dashboard/settings/customers/import"
+                        className="flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 bg-white rounded-md hover:bg-blue-50 shadow-sm"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Import
+                    </Link>
+                    <button
+                        onClick={() => {
+                            setEditingCustomer(null)
+                            setShowModal(true)
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Partner
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
