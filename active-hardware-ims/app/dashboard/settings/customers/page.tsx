@@ -139,7 +139,7 @@ export default function CustomersPage() {
         )
     }
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading partners...</div>
+
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -218,9 +218,13 @@ export default function CustomersPage() {
 
             {/* List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                {customers.length === 0 ? (
+                {loading ? (
                     <div className="p-12 text-center text-gray-500">
-                        {loading ? "Loading..." : "No partners found."}
+                        Loading partners...
+                    </div>
+                ) : customers.length === 0 ? (
+                    <div className="p-12 text-center text-gray-500">
+                        No partners found.
                     </div>
                 ) : (
                     <>
@@ -341,8 +345,8 @@ export default function CustomersPage() {
                                                     key={i + 1}
                                                     onClick={() => setPage(i + 1)}
                                                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === i + 1
-                                                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                                         }`}
                                                 >
                                                     {i + 1}
