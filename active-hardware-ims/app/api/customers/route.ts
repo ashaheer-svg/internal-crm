@@ -3,37 +3,69 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 
-// GET - List all customers
+// GET - List all customers with pagination and filtering
 export async function GET(request: Request) {
     try {
         await requireAuth()
         const { searchParams } = new URL(request.url)
-        const type = searchParams.get('type') // 'CUSTOMER', 'SUPPLIER', 'PARTNER' or 'ALL'
+
+        // Pagination params
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '10')
+        const skip = (page - 1) * limit
+
+        // Filtering params
+        const search = searchParams.get('search') || ''
+        const roles = searchParams.get('roles')?.split(',').filter(Boolean) || []
         const showInactive = searchParams.get('showInactive') === 'true'
 
         const where: any = {}
 
-        if (type && type !== 'ALL') {
-            if (type === 'CUSTOMER') where.isCustomer = true
-            else if (type === 'SUPPLIER') where.isSupplier = true
-            else if (type === 'PARTNER') where.isPartner = true
+        // Role filtering (OR condition)
+        if (roles.length > 0) {
+            where.OR = roles.map(role => ({ [role]: true }))
+        }
+
+        // Search filtering
+        if (search) {
+            where.AND = [
+                ...(where.AND || []),
+                {
+                    OR: [
+                        { name: { contains: search } },
+                        { email: { contains: search } },
+                        { contactName: { contains: search } },
+                        { phone: { contains: search } }
+                    ]
+                }
+            ]
         }
 
         if (!showInactive) where.isActive = true
 
-        const customers = await prisma.customer.findMany({
-            where,
-            orderBy: { name: 'asc' },
-            include: {
-                _count: {
-                    select: { invoices: true }
+        const [customers, totalCount] = await Promise.all([
+            prisma.customer.findMany({
+                where,
+                orderBy: { name: 'asc' },
+                skip,
+                take: limit,
+                include: {
+                    _count: {
+                        select: { invoices: true }
+                    }
                 }
-            }
+            }),
+            prisma.customer.count({ where })
+        ])
+
+        return NextResponse.json({
+            customers,
+            totalCount,
+            page,
+            totalPages: Math.ceil(totalCount / limit)
         })
-        return NextResponse.json(customers)
     } catch (error: any) {
         console.error(error)
-        // Log to file for debugging
         const fs = require('fs');
         fs.appendFileSync('debug_error.log', `${new Date().toISOString()} - Customer API Error: ${error.message}\n${error.stack}\n`);
 
