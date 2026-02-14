@@ -13,7 +13,8 @@ async function getInvoice(id: string) {
   return await prisma.invoice.findUnique({
     where: { id },
     include: {
-      items: true
+      items: true,
+      salesRep: true
     }
   })
 }
@@ -174,6 +175,10 @@ export default async function PrintInvoicePage({ params }: PageProps) {
             <div className="info-item">
               <div className="info-label">Date</div>
               <div className="info-value">{formatDate(invoice.createdAt)}</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Sales Representative</div>
+              <div className="info-value">{invoice.salesRep?.name || '-'}</div>
             </div>
             <div className="info-item">
               <div className="info-label">Status</div>

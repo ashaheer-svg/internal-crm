@@ -24,6 +24,9 @@ type Invoice = {
     status: string
     createdAt: string
     items: any[]
+    salesRep?: {
+        name: string
+    }
 }
 
 export default function TransactionsPage() {
@@ -328,6 +331,11 @@ export default function TransactionsPage() {
                                                     <p className="flex items-center text-sm text-gray-500">
                                                         {inv.customerName}
                                                     </p>
+                                                    {inv.salesRep?.name && (
+                                                        <p className="flex items-center text-sm text-gray-500 sm:ml-6">
+                                                            Rep: <span className="ml-1 text-gray-700 font-medium">{inv.salesRep.name}</span>
+                                                        </p>
+                                                    )}
                                                     <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                                                         {inv.items.length} item(s)
                                                     </p>

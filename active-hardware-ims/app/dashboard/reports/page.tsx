@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { FileText, Download, Printer, Calendar } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import DocumentFooter from "@/components/DocumentFooter"
 
 type ReportType = 'inventory-valuation' | 'stock-movement' | 'sales' | 'purchase' | 'warranty' | 'location' | 'profitability'
 
@@ -296,7 +297,7 @@ export default function ReportsPage() {
                             <div>
                                 <div className="hidden print:block">
                                     <h1 className="text-lg font-black text-blue-600 uppercase tracking-tighter leading-none">Active Solutions</h1>
-                                    <p className="text-[9px] text-gray-500 font-bold leading-tight">32/2-2/1 Nandimithra Place, Colombo 6.</p>
+                                    <p className="text-[9px] text-gray-500 font-bold leading-tight">32/2-2/1 Nandimithra Place, Colombo 6, Sri Lanka.</p>
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 uppercase tracking-tight print:text-base print:mt-1">
                                     {reportTypes.find(r => r.id === selectedReport)?.name}
@@ -395,6 +396,7 @@ export default function ReportsPage() {
                                 No data available for this report
                             </div>
                         )}
+                        <DocumentFooter />
                     </div>
                 )}
             </div>

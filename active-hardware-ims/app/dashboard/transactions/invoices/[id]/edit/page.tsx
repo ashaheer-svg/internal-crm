@@ -16,6 +16,7 @@ type Invoice = {
     totalAmount: number
     status: string
     hasBackorders: boolean
+    salesRepId: string | null
     items: InvoiceItem[]
 }
 
@@ -44,10 +45,25 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
     const [customerEmail, setCustomerEmail] = useState("")
     const [customerPhone, setCustomerPhone] = useState("")
     const [notes, setNotes] = useState("")
+    const [salesRepId, setSalesRepId] = useState("")
+    const [salesReps, setSalesReps] = useState<any[]>([])
 
     useEffect(() => {
         fetchInvoice()
+        fetchSalesReps()
     }, [id])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch("/api/sales-reps")
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data.filter((r: any) => r.isActive))
+            }
+        } catch (error) {
+            console.error("Failed to fetch sales reps")
+        }
+    }
 
     async function fetchInvoice() {
         try {
@@ -58,6 +74,7 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
             setCustomerEmail(data.customerEmail || "")
             setCustomerPhone(data.customerPhone || "")
             setNotes(data.notes || "")
+            setSalesRepId(data.salesRepId || "")
         } catch (error) {
             console.error('Failed to fetch invoice:', error)
             setError("Failed to load invoice")
@@ -79,7 +96,8 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
                     customerName,
                     customerEmail,
                     customerPhone,
-                    notes
+                    notes,
+                    salesRepId: salesRepId || null
                 }),
             })
 
@@ -182,6 +200,20 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
                                 onChange={(e) => setNotes(e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                             />
+                        </div>
+
+                        <div className="sm:col-span-1">
+                            <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                            <select
+                                value={salesRepId}
+                                onChange={(e) => setSalesRepId(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                <option value="">Select Sales Rep</option>
+                                {salesReps.map(rep => (
+                                    <option key={rep.id} value={rep.id}>{rep.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </div>

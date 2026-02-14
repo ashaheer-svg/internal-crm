@@ -23,7 +23,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 include: {
                     product: true
                 }
-            }
+            },
+            salesRep: true
         }
     })
 
@@ -91,6 +92,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                             <dd className="mt-1 text-sm text-gray-900">{invoice.customerPhone}</dd>
                         </div>
                     )}
+                    <div>
+                        <dt className="text-sm font-medium text-gray-500">Sales Representative</dt>
+                        <dd className="mt-1 text-sm text-gray-900">{invoice.salesRep?.name || '-'}</dd>
+                    </div>
                     <div>
                         <dt className="text-sm font-medium text-gray-500">Status</dt>
                         <dd className="mt-1">

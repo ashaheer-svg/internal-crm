@@ -10,7 +10,8 @@ export async function GET() {
         const invoices = await prisma.invoice.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
-                items: true
+                items: true,
+                salesRep: true
             }
         })
         return NextResponse.json(invoices)
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth() // Require authentication
         const body = await request.json()
-        const { invoiceNumber, customerInvoiceRef, customerId, customerName, customerEmail, customerPhone, items, notes } = body
+        const { invoiceNumber, customerInvoiceRef, customerId, customerName, customerEmail, customerPhone, items, notes, salesRepId } = body
 
         if (!invoiceNumber || !customerName || !items || items.length === 0) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
                     status: 'ISSUED',
                     hasBackorders,
                     notes,
+                    salesRepId: salesRepId || null,
                     items: {
                         create: items.map((item: any) => ({
                             inventoryItemId: item.inventoryItemId || null,

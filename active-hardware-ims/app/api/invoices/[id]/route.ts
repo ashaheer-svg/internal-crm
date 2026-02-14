@@ -22,7 +22,8 @@ export async function GET(
                         product: true,
                         invoiceItem: true
                     }
-                }
+                },
+                salesRep: true
             }
         })
 
@@ -45,7 +46,7 @@ export async function PATCH(
     const { id } = await params
     try {
         const body = await request.json()
-        const { customerName, customerEmail, customerPhone, customerInvoiceRef, notes, itemsToAdd, itemsToRemove } = body
+        const { customerName, customerEmail, customerPhone, customerInvoiceRef, notes, itemsToAdd, itemsToRemove, salesRepId } = body
 
         const result = await prisma.$transaction(async (tx) => {
             // Update invoice basic info
@@ -55,6 +56,7 @@ export async function PATCH(
             if (customerPhone !== undefined) updateData.customerPhone = customerPhone
             if (customerInvoiceRef !== undefined) updateData.customerInvoiceRef = customerInvoiceRef
             if (notes !== undefined) updateData.notes = notes
+            if (salesRepId !== undefined) updateData.salesRepId = salesRepId
 
             // Remove items if specified
             if (itemsToRemove && itemsToRemove.length > 0) {
@@ -147,11 +149,7 @@ export async function PATCH(
                             backorderItem: true
                         }
                     },
-                    backorderItems: {
-                        include: {
-                            product: true
-                        }
-                    }
+                    salesRep: true
                 }
             })
 

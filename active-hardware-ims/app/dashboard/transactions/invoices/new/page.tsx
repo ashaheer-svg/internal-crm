@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save, Package, Upload } from "lucide-react"
@@ -51,11 +51,29 @@ export default function NewInvoicePage() {
     const [customerEmail, setCustomerEmail] = useState("")
     const [customerPhone, setCustomerPhone] = useState("")
     const [notes, setNotes] = useState("")
+    const [salesRepId, setSalesRepId] = useState("")
+    const [salesReps, setSalesReps] = useState<any[]>([])
     const [selectedItems, setSelectedItems] = useState<InvoiceItem[]>([])
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
     const [showStockDisplay, setShowStockDisplay] = useState(false)
     const [showBulkEntry, setShowBulkEntry] = useState(false)
+
+    useEffect(() => {
+        fetchSalesReps()
+    }, [])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch("/api/sales-reps")
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data.filter((r: any) => r.isActive))
+            }
+        } catch (error) {
+            console.error("Failed to fetch sales reps")
+        }
+    }
 
     function handleCustomerSelect(customer: any) {
         if (customer) {
@@ -64,6 +82,9 @@ export default function NewInvoicePage() {
             setCustomerName(customer.name)
             setCustomerEmail(customer.email || "")
             setCustomerPhone(customer.phone || "")
+            if (customer.salesRepId) {
+                setSalesRepId(customer.salesRepId)
+            }
         } else {
             setSelectedCustomer(null)
             setCustomerId(null)
@@ -172,6 +193,7 @@ export default function NewInvoicePage() {
                     customerEmail,
                     customerPhone,
                     notes,
+                    salesRepId: salesRepId || null,
                     items: selectedItems
                 }),
             })
@@ -290,6 +312,20 @@ export default function NewInvoicePage() {
                                     onChange={(e) => setNotes(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                 />
+                            </div>
+
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                                <select
+                                    value={salesRepId}
+                                    onChange={(e) => setSalesRepId(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="">Select Sales Rep</option>
+                                    {salesReps.map(rep => (
+                                        <option key={rep.id} value={rep.id}>{rep.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
