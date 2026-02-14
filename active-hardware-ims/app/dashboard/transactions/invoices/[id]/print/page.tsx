@@ -29,7 +29,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
   return (
     <html>
       <head>
-        <title>Delivery Order - {invoice.invoiceNumber}</title>
+        <title>Invoice - {invoice.invoiceNumber}</title>
         <style>{`
           @page {
             size: A4;
@@ -141,7 +141,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
       </head>
       <body>
         <button className="print-button no-print" onClick={() => window.print()}>
-          Print Delivery Order
+          Print Invoice
         </button>
 
         <DocumentHeader title="INVOICE" subtitle="Sales Transaction Record" />
@@ -166,9 +166,9 @@ export default async function PrintInvoicePage({ params }: PageProps) {
             )}
           </div>
           <div className="info-section">
-            <h3>Delivery Order Details</h3>
+            <h3>Invoice Details</h3>
             <div className="info-item">
-              <div className="info-label">Delivery Order Number</div>
+              <div className="info-label">Invoice Number</div>
               <div className="info-value">{invoice.invoiceNumber}</div>
             </div>
             <div className="info-item">

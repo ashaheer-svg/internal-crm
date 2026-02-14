@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import { formatDate } from '@/lib/utils'
 
 interface DocumentHeaderProps {
     title: string
@@ -40,7 +40,7 @@ export default function DocumentHeader({ title, subtitle, titleNextToLogo }: Doc
                         OFFICIAL DOCUMENT
                     </span>
                     <span className="text-[12px] text-gray-500 font-black mt-1">
-                        {new Date().toLocaleDateString()}
+                        {formatDate(new Date())}
                     </span>
                 </div>
                 {!titleNextToLogo && (
