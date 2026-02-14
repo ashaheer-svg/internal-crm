@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+// logger cannot be imported in middleware if it uses Node.js specifics not available in Edge
+// But my logger uses `console`, which is fine.
+// However, `process.env` might be an issue if not polyfilled? Next.js handles `process.env.NODE_ENV`.
+// Let's try. If it fails, I'll fallback to console.log locally.
+// Actually, `lib/logger.ts` is simple enough.
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
+    console.log(`[REQ] ${request.method} ${pathname}`) // Simple middleware logging for now to avoid Edge runtime issues with non-standard modules
+
 
     // Public paths that don't require authentication
     const publicPaths = ['/login', '/api/auth/login']

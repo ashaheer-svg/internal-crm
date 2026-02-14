@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireRole } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
     try {
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
             let successCount = 0
             let errorCount = 0
             const errors: any[] = []
+
+            logger.info(`Starting customer import batch of ${customers.length} items`, { userId: user.id })
 
             for (const item of customers) {
                 try {
@@ -121,9 +124,11 @@ export async function POST(request: Request) {
                 } catch (error: any) {
                     errorCount++
                     errors.push({ name: item.name, error: error.message })
+                    logger.error(`Failed to import customer ${item.name}`, error)
                 }
             }
 
+            logger.info(`Customer import batch completed`, { successCount, errorCount })
             return NextResponse.json({ success: true, successCount, errorCount, errors })
         }
 
@@ -316,13 +321,14 @@ export async function POST(request: Request) {
 
             } catch (err: any) {
                 results.errors.push(`Failed to process '${name}': ${err.message}`);
+                logger.error(`Failed to process CSV row for ${name}`, err)
             }
         }
 
         return NextResponse.json(results);
 
     } catch (error: any) {
-        console.error("Partner import error:", error);
+        logger.error("Partner import error", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

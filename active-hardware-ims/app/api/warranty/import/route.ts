@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireRole } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
 
-        const user = await requireRole(['ADMIN'])
+        const user = await requireRole(['ADMIN', 'MANAGER'])
         const contentType = request.headers.get('content-type') || ''
 
         // Handle JSON Batch Import (Chunked)
@@ -16,18 +17,22 @@ export async function POST(request: Request) {
             const { items } = body
 
             if (!Array.isArray(items)) {
+                logger.warn('Invalid data format for JSON batch import: Expected array of items.', { userId: user.id, contentType });
                 return NextResponse.json({ error: 'Invalid data format. Expected array of items.' }, { status: 400 })
             }
 
             // Fetch a default location for these items (required by schema)
             const defaultLocation = await prisma.location.findFirst();
             if (!defaultLocation) {
+                logger.error('System has no locations configured for JSON batch import. Please create a location first.', { userId: user.id });
                 return NextResponse.json({ error: 'System has no locations configured. Please create a location first.' }, { status: 500 });
             }
 
             let successCount = 0
             let errorCount = 0
             const errors: any[] = []
+
+            logger.info(`Starting warranty import batch (JSON) of ${items.length} items`, { userId: user.id });
 
             for (const item of items) {
                 try {
@@ -72,9 +77,11 @@ export async function POST(request: Request) {
                 } catch (error: any) {
                     errorCount++
                     errors.push({ serial: item.serialNumber, error: error.message })
+                    logger.error(`Failed to import warranty item (JSON) ${item.serialNumber || 'unknown'}`, { error: error.message, item, userId: user.id });
                 }
             }
 
+            logger.info(`Warranty import batch (JSON) completed. Success: ${successCount}, Errors: ${errorCount}`, { successCount, errorCount, userId: user.id });
             return NextResponse.json({ success: true, successCount, errorCount, errors })
         }
 
