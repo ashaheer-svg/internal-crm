@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, Package, User, FileText, Clock } from "lucide-react"
 import { notFound } from "next/navigation"
 import StatusUpdateForm from "./StatusUpdateForm"
+import { formatDate } from "@/lib/utils"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -171,7 +172,7 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                                             <p className="text-sm text-gray-500">Status: PENDING</p>
                                         </div>
                                         <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                                            {new Date(claim.createdAt).toLocaleDateString()}
+                                            {formatDate(claim.createdAt)}
                                         </div>
                                     </div>
                                 </div>

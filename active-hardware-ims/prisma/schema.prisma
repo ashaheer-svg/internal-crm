@@ -123,6 +123,7 @@ model Product {
   warrantyMonths Int   @default(0)
   lowResellerPrice Float @default(0)
   resellerPrice    Float @default(0)
+  accessCount      Int      @default(0)
   isActive         Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

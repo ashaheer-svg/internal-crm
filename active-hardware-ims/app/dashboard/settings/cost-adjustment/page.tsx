@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, Search, Save, Loader2, Filter, Upload, Calculator } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Currency } from "@/components/Currency"
+import { formatDate } from "@/lib/utils"
 
 type GRN = {
     id: string
@@ -277,7 +278,7 @@ export default function CostAdjustmentPage() {
                                     <option value="">Select a GRN receipt</option>
                                     {grns.map(grn => (
                                         <option key={grn.id} value={grn.id}>
-                                            {grn.grnNumber} - {grn.supplier} ({new Date(grn.createdAt).toLocaleDateString()})
+                                            {grn.grnNumber} - {grn.supplier} ({formatDate(grn.createdAt)})
                                         </option>
                                     ))}
                                 </select>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Search, Archive, RefreshCw, Trash2, Edit } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 type Product = {
     id: string
@@ -185,7 +186,7 @@ export default function ProductManagementPage() {
                                     <div>{product.category} / {product.model}</div>
                                 </td>
                                 <td className="px-3 py-4 text-sm text-gray-500">
-                                    {new Date(product.createdAt).toLocaleDateString()}
+                                    {formatDate(product.createdAt)}
                                 </td>
                                 <td className="px-3 py-4 text-sm">
                                     <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${product.isActive

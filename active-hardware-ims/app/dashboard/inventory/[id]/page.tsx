@@ -17,7 +17,14 @@ async function getProduct(id: string) {
         include: {
             inventory: {
                 include: {
-                    location: true
+                    location: true,
+                    deliveryOrderItem: {
+                        include: {
+                            deliveryOrder: {
+                                select: { customerName: true }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' }
             }

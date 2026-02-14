@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, FileText, Package, Receipt } from "lucide-react"
 import { Currency } from "@/components/Currency"
+import { formatDate } from "@/lib/utils"
 
 type PurchaseOrder = {
     id: string
@@ -175,7 +176,7 @@ export default function TransactionsPage() {
                                                         <Currency amount={po.totalAmount} />
                                                     </p>
                                                     <p className="ml-4 text-xs">
-                                                        {new Date(po.createdAt).toLocaleDateString()}
+                                                        {formatDate(po.createdAt)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -258,7 +259,7 @@ export default function TransactionsPage() {
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                                                     <p className="ml-4 text-xs">
-                                                        {new Date(order.createdAt).toLocaleDateString()}
+                                                        {formatDate(order.createdAt)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -326,7 +327,7 @@ export default function TransactionsPage() {
                                                         <Currency amount={inv.totalAmount} />
                                                     </p>
                                                     <p className="ml-4 text-xs">
-                                                        {new Date(inv.createdAt).toLocaleDateString()}
+                                                        {formatDate(inv.createdAt)}
                                                     </p>
                                                 </div>
                                             </div>

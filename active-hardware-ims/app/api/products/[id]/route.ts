@@ -11,6 +11,13 @@ export async function GET(request: Request, { params }: RouteParams) {
     try {
         await requireAuth()
         const { id } = await params
+
+        // Increment access count (fire and forget to not block response)
+        prisma.product.update({
+            where: { id },
+            data: { accessCount: { increment: 1 } }
+        }).catch(err => console.error('Failed to update access count:', err))
+
         const product = await prisma.product.findUnique({
             where: { id }
         })

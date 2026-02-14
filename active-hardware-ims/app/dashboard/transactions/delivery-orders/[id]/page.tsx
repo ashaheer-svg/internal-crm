@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2 } from "lucide-react"
 import { Currency } from "@/components/Currency"
+import { formatDate } from "@/lib/utils"
 
 // Types
 type InventoryItem = {
@@ -243,7 +244,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 {order.status}
                             </span>
                         </h1>
-                        <p className="text-sm text-gray-500">Created on {new Date(order.createdAt).toLocaleDateString()} for {order.customerName}</p>
+                        <p className="text-sm text-gray-500">Created on {formatDate(order.createdAt)} for {order.customerName}</p>
                     </div>
                 </div>
 

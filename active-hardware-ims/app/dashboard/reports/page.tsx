@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { FileText, Download, Printer, Calendar } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 type ReportType = 'inventory-valuation' | 'stock-movement' | 'sales' | 'purchase' | 'warranty' | 'location' | 'profitability'
 
@@ -188,7 +189,7 @@ export default function ReportsPage() {
                                 {reportTypes.find(r => r.id === selectedReport)?.name}
                             </h3>
                             <p className="text-sm text-gray-500">
-                                Generated on {new Date().toLocaleDateString()}
+                                Generated on {formatDate(new Date())}
                             </p>
                         </div>
                         <div className="flex gap-2 print:hidden">
@@ -253,7 +254,7 @@ export default function ReportsPage() {
                                                 {typeof value === 'object'
                                                     ? JSON.stringify(value)
                                                     : key.toLowerCase().includes('date')
-                                                        ? new Date(value as string).toLocaleDateString()
+                                                        ? formatDate(value as string)
                                                         : (key.toLowerCase().includes('amount') || key.toLowerCase().includes('value') || key.toLowerCase().includes('cost'))
                                                             ? `Rs. ${Number(value).toLocaleString()}`
                                                             : String(value)}

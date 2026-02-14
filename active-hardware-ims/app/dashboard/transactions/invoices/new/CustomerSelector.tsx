@@ -50,10 +50,12 @@ export default function CustomerSelector({ onSelect, selectedCustomer, type }: C
         try {
             const url = type ? `/api/customers?type=${type}` : "/api/customers"
             const res = await fetch(url)
+            if (!res.ok) throw new Error("Failed to fetch customers")
             const data = await res.json()
-            setCustomers(data)
+            setCustomers(Array.isArray(data.customers) ? data.customers : [])
         } catch (error) {
-            console.error(error)
+            console.error("Error fetching customers:", error)
+            setCustomers([])
         } finally {
             setLoading(false)
         }
@@ -65,10 +67,12 @@ export default function CustomerSelector({ onSelect, selectedCustomer, type }: C
             const baseUrl = `/api/customers/search?q=${encodeURIComponent(searchQuery)}`
             const url = type ? `${baseUrl}&type=${type}` : baseUrl
             const res = await fetch(url)
+            if (!res.ok) throw new Error("Search failed")
             const data = await res.json()
-            setCustomers(data)
+            setCustomers(Array.isArray(data) ? data : [])
         } catch (error) {
-            console.error(error)
+            console.error("Error searching customers:", error)
+            setCustomers([])
         } finally {
             setLoading(false)
         }

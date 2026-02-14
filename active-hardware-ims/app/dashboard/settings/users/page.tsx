@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Users, Plus, Edit, Trash2, Shield, LogOut } from "lucide-react"
 import UserFormModal from "./UserFormModal"
 import { logoutAllUsers } from "@/app/actions/auth-actions"
+import { formatDate } from "@/lib/utils"
 
 type User = {
     id: string
@@ -168,12 +169,12 @@ export default function UsersPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {user.lastLoginAt
-                                            ? new Date(user.lastLoginAt).toLocaleDateString()
+                                            ? formatDate(user.lastLoginAt)
                                             : 'Never'
                                         }
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(user.createdAt).toLocaleDateString()}
+                                        {formatDate(user.createdAt)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button

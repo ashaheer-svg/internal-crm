@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User } from "lucide-react"
 import Link from "next/link"
+import { formatDate } from "@/lib/utils"
 
 type WarrantyInfo = {
     item: {
@@ -73,11 +74,11 @@ export default function WarrantyLookupPage() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (diffDays < 0) {
-            return { status: 'EXPIRED', color: 'text-red-700', bg: 'bg-red-100', text: `Expired on ${expiry.toLocaleDateString()}` }
+            return { status: 'EXPIRED', color: 'text-red-700', bg: 'bg-red-100', text: `Expired on ${formatDate(expiry)}` }
         } else if (diffDays <= 30) {
-            return { status: 'EXPIRING_SOON', color: 'text-yellow-700', bg: 'bg-yellow-100', text: `Expires in ${diffDays} days (${expiry.toLocaleDateString()})` }
+            return { status: 'EXPIRING_SOON', color: 'text-yellow-700', bg: 'bg-yellow-100', text: `Expires in ${diffDays} days (${formatDate(expiry)})` }
         } else {
-            return { status: 'ACTIVE', color: 'text-green-700', bg: 'bg-green-100', text: `Valid until ${expiry.toLocaleDateString()}` }
+            return { status: 'ACTIVE', color: 'text-green-700', bg: 'bg-green-100', text: `Valid until ${formatDate(expiry)}` }
         }
     }
 
@@ -192,7 +193,7 @@ export default function WarrantyLookupPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <p className="text-xs text-gray-500">Date Sold</p>
-                                                <p className="font-medium text-gray-900">{new Date(result.saleParams.date).toLocaleDateString()}</p>
+                                                <p className="font-medium text-gray-900">{formatDate(result.saleParams.date)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-500">Order Number</p>
@@ -235,22 +236,25 @@ export default function WarrantyLookupPage() {
                             {result.history.length === 0 ? (
                                 <p className="text-sm text-gray-500 italic text-center py-4">No history logged.</p>
                             ) : (
-                                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
                                     {result.history.map((log) => (
-                                        <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                        <div key={log.id} className="relative flex items-center justify-between group is-active">
                                             {/* Icon */}
-                                            <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-500 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                            <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-500 text-slate-500 group-[.is-active]:text-white shadow shrink-0">
                                                 <Clock className="w-5 h-5" />
                                             </div>
 
                                             {/* Card */}
-                                            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded border border-slate-200 shadow">
+                                            <div className="w-[calc(100%-3rem)] ml-4 bg-white p-4 rounded border border-slate-200 shadow">
                                                 <div className="flex items-center justify-between space-x-2 mb-1">
                                                     <div className="font-bold text-slate-900 text-sm">{log.type}</div>
-                                                    <time className="font-caveat font-medium text-indigo-500 text-xs">{new Date(log.date).toLocaleDateString()}</time>
+                                                    <time className="font-caveat font-medium text-indigo-500 text-xs">{formatDate(log.date)}</time>
                                                 </div>
                                                 <div className="text-slate-500 text-xs">
                                                     {log.notes}
+                                                </div>
+                                                <div className="mt-1 text-xs text-gray-400">
+                                                    by {log.performedBy}
                                                 </div>
                                             </div>
                                         </div>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
+import { formatDate } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -184,7 +185,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
             </div>
             <div className="info-item">
               <div className="info-label">Date</div>
-              <div className="info-value">{new Date(invoice.createdAt).toLocaleDateString()}</div>
+              <div className="info-value">{formatDate(invoice.createdAt)}</div>
             </div>
             <div className="info-item">
               <div className="info-label">Status</div>

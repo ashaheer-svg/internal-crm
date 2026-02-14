@@ -6,6 +6,8 @@ import { Currency } from "@/components/Currency"
 import InventoryItemActions from "./InventoryItemActions"
 import LocationEditor from "./LocationEditor"
 
+import { formatDate } from "@/lib/utils"
+
 type InventoryItem = {
     id: string
     serialNumber: string
@@ -17,6 +19,11 @@ type InventoryItem = {
         id: string
         name: string
     }
+    deliveryOrderItem?: {
+        deliveryOrder?: {
+            customerName: string
+        } | null
+    } | null
 }
 
 type Location = {
@@ -40,7 +47,8 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
     const filteredInventory = useMemo(() => {
         return inventory.filter(item => {
             // 1. Search Filter
-            const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
+            const matchesSearch = item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.deliveryOrderItem?.deliveryOrder?.customerName || '').toLowerCase().includes(searchTerm.toLowerCase())
 
             // 2. Status Filter
             // If ALL, match everything. If UNSOLD, exclude SOLD and SHIPPED
@@ -134,7 +142,7 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by serial number..."
+                            placeholder="Search by serial number or customer..."
                             value={searchTerm}
                             onChange={(e) => handleSearch(e.target.value)}
                             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -151,8 +159,9 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty Expiry</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inv. Date</th>
                             <th scope="col" className="relative px-6 py-3">
                                 <span className="sr-only">Actions</span>
                             </th>
@@ -191,24 +200,23 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                     <Currency amount={item.unitCost || 0} />
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {item.deliveryOrderItem?.deliveryOrder?.customerName || '-'}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     {item.warrantyExpiry ? (
                                         <span className={`${new Date(item.warrantyExpiry) < new Date()
                                             ? 'text-red-600 font-semibold'
                                             : 'text-gray-900'
                                             }`}>
-                                            {new Date(item.warrantyExpiry).toLocaleDateString('en-GB', {
-                                                year: '2-digit',
-                                                month: '2-digit',
-                                                day: '2-digit'
-                                            }).replace(/\//g, '/')}
+                                            {formatDate(item.warrantyExpiry)}
                                         </span>
                                     ) : (
                                         <span className="text-gray-400">N/A</span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {new Date(item.createdAt).toLocaleDateString()}
+                                    {formatDate(item.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <InventoryItemActions
@@ -221,7 +229,7 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                         ))}
                         {currentItems.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="px-6 py-10 text-center text-gray-500 text-sm">
+                                <td colSpan={8} className="px-6 py-10 text-center text-gray-500 text-sm">
                                     {searchTerm ? 'No items found matching your search.' : 'No inventory items recorded. Add stock below.'}
                                 </td>
                             </tr>

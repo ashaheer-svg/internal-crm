@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, Edit, Package, CheckCircle, Clock } from "lucide-react"
 import { prisma } from "@/lib/db"
 import { Currency } from "@/components/Currency"
+import { formatDate } from "@/lib/utils"
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -45,7 +46,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                             Delivery Order {invoice.invoiceNumber}
                         </h1>
                         <p className="text-sm text-gray-500">
-                            Created {new Date(invoice.createdAt).toLocaleDateString()}
+                            Created {formatDate(invoice.createdAt)}
                         </p>
                     </div>
                 </div>

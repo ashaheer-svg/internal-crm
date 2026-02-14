@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Plus, Pencil, Trash2, Search, Tag } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { formatDate } from "@/lib/utils"
 
 interface Category {
     id: string
@@ -166,7 +167,7 @@ export default function CategoriesPage() {
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{category.description || "-"}</td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {new Date(category.createdAt).toLocaleDateString()}
+                                        {formatDate(category.createdAt)}
                                     </td>
                                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                         <button

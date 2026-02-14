@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
+import { formatDate } from "@/lib/utils"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -180,7 +181,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         </div>
                         <div className="info-row">
                             <span className="label">Date:</span>
-                            <span className="value">{new Date(order.createdAt).toLocaleDateString()}</span>
+                            <span className="value">{formatDate(order.createdAt)}</span>
                         </div>
                         <div className="info-row">
                             <span className="label">Status:</span>

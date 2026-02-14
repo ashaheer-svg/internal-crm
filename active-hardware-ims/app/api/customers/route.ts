@@ -17,8 +17,16 @@ export async function GET(request: Request) {
 
         // Filtering params
         const search = searchParams.get('search') || ''
+        const type = searchParams.get('type') // 'CUSTOMER', 'SUPPLIER', 'PARTNER' or 'ALL'
         const roles = searchParams.get('roles')?.split(',').filter(Boolean) || []
         const showInactive = searchParams.get('showInactive') === 'true'
+
+        // If type is provided, map it to roles
+        if (type && type !== 'ALL') {
+            if (type === 'CUSTOMER') roles.push('isCustomer')
+            if (type === 'SUPPLIER') roles.push('isSupplier')
+            if (type === 'PARTNER') roles.push('isPartner')
+        }
 
         const where: any = {}
 

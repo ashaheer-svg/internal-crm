@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, Printer, Package, Edit } from "lucide-react"
 import { notFound } from "next/navigation"
 import { Currency } from "@/components/Currency"
+import { formatDate } from "@/lib/utils"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -82,7 +83,7 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Created</p>
-                        <p className="mt-1 text-sm text-gray-900">{new Date(po.createdAt).toLocaleDateString()}</p>
+                        <p className="mt-1 text-sm text-gray-900">{formatDate(po.createdAt)}</p>
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Total Amount</p>

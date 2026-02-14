@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Shield, Search } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 type WarrantyClaim = {
     id: string
@@ -227,7 +228,7 @@ export default function WarrantyPage() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {new Date(claim.createdAt).toLocaleDateString()}
+                                    {formatDate(claim.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <Link href={`/dashboard/warranty/${claim.id}`} className="text-blue-600 hover:text-blue-900">

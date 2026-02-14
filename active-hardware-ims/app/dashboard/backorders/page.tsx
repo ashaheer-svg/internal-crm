@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Package, ExternalLink, AlertCircle } from "lucide-react"
 import BackorderAllocation from "./BackorderAllocation"
+import { formatDate } from "@/lib/utils"
 
 type BackorderItem = {
     id: string
@@ -213,7 +214,7 @@ export default function BackordersPage() {
                                                         {backorder.invoice.customerName}
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                        {new Date(backorder.invoice.createdAt).toLocaleDateString()}
+                                                        {formatDate(backorder.invoice.createdAt)}
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                                                         {backorder.quantityOrdered}
