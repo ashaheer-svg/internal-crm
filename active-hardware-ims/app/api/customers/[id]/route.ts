@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logUpdate, logDelete } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 
 // GET - Get single customer
 export async function GET(
@@ -28,7 +29,7 @@ export async function GET(
 
         return NextResponse.json(customer)
     } catch (error: any) {
-        console.error(error)
+        logger.error(`Failed to fetch customer ${id}`, error)
         return NextResponse.json(
             { error: error.message || 'Failed to fetch customer' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
@@ -105,7 +106,7 @@ export async function PATCH(
 
         return NextResponse.json(customer)
     } catch (error: any) {
-        console.error(error)
+        logger.error(`Failed to update customer ${id}`, error)
         return NextResponse.json(
             { error: error.message || 'Failed to update customer' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
@@ -160,7 +161,7 @@ export async function DELETE(
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
-        console.error(error)
+        logger.error(`Failed to delete customer ${id}`, error)
         return NextResponse.json(
             { error: error.message || 'Failed to delete customer' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
+import { logger } from '@/lib/logger'
 
 // GET - List all customers with pagination and filtering
 export async function GET(request: Request) {
@@ -65,10 +66,7 @@ export async function GET(request: Request) {
             totalPages: Math.ceil(totalCount / limit)
         })
     } catch (error: any) {
-        console.error(error)
-        const fs = require('fs');
-        fs.appendFileSync('debug_error.log', `${new Date().toISOString()} - Customer API Error: ${error.message}\n${error.stack}\n`);
-
+        logger.error("Customer API Error", error);
         return NextResponse.json(
             { error: error.message || 'Failed to fetch customers' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
