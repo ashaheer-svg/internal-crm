@@ -32,7 +32,8 @@ export default function NewWarrantyClaimPage() {
     const [searching, setSearching] = useState(false)
 
     useEffect(() => {
-        if (searchTerm.length >= 3) {
+        // Lower threshold to 2 characters for better UX
+        if (searchTerm.length >= 2) {
             searchInventory()
         } else {
             setInventoryItems([])
@@ -42,18 +43,43 @@ export default function NewWarrantyClaimPage() {
     async function searchInventory() {
         setSearching(true)
         try {
-            // Fetch inventory items that could have warranty claims (SOLD, DELIVERED, etc.)
-            const res = await fetch('/api/inventory?status=SOLD,DELIVERED,RMA')
+            // Build query parameters for server-side filtering
+            const params = new URLSearchParams({
+                status: 'SOLD,DELIVERED,RMA'
+            })
+
+            // Add search term if provided (searches both serial number and product name on server)
+            if (searchTerm.trim()) {
+                params.append('serialNumber', searchTerm.trim())
+            }
+
+            console.log('Searching warranty items:', params.toString())
+            const res = await fetch(`/api/inventory?${params.toString()}`)
+
+            if (!res.ok) {
+                throw new Error(`API returned ${res.status}: ${res.statusText}`)
+            }
+
             const data = await res.json()
+            console.log('API returned items:', data.length)
 
-            const filtered = data.filter((item: InventoryItem) =>
-                item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
-            )
+            // Additional client-side filter for product name (since API only searches serial number)
+            const filtered = searchTerm.trim()
+                ? data.filter((item: InventoryItem) =>
+                    item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                : data
 
+            console.log('Filtered items:', filtered.length)
             setInventoryItems(filtered)
+
+            if (filtered.length === 0 && searchTerm.trim()) {
+                console.warn('No items found matching:', searchTerm)
+            }
         } catch (error) {
             console.error('Failed to search inventory:', error)
+            alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
             setInventoryItems([])
         } finally {
             setSearching(false)
