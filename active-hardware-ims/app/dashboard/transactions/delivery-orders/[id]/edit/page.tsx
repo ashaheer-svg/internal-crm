@@ -28,6 +28,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
 
     const [invoiceValue, setInvoiceValue] = useState<string>("")
+    const [invoiceNumber, setInvoiceNumber] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
 
     // Items State
@@ -77,6 +78,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 setNotes(data.notes || "")
                 setDeliveryAddress(data.deliveryAddress || "")
                 setInvoiceValue(data.invoiceValue ? String(data.invoiceValue) : "")
+                setInvoiceNumber(data.invoiceNumber || "")
                 setAdditionalCosts(data.additionalCosts ? String(data.additionalCosts) : "")
 
                 // Fetch Addresses based on context
@@ -242,6 +244,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
 
                 deliveryAddress,
                 invoiceValue: Number(invoiceValue),
+                invoiceNumber,
                 additionalCosts: Number(additionalCosts),
                 notes,
                 items: items.map(i => ({
@@ -399,6 +402,16 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 </div>
                             </div>
                             <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Invoice Number</label>
+                                <input
+                                    type="text"
+                                    value={invoiceNumber}
+                                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="e.g. INV-1234"
+                                />
+                            </div>
+                            <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>
                                 <div className="relative mt-1 rounded-md shadow-sm">
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -429,8 +442,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                 type="button"
                                                 onClick={() => setDeliveryAddressSource("PARTNER")}
                                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "PARTNER"
-                                                        ? "bg-white shadow text-gray-900"
-                                                        : "text-gray-500 hover:text-gray-900"
+                                                    ? "bg-white shadow text-gray-900"
+                                                    : "text-gray-500 hover:text-gray-900"
                                                     }`}
                                             >
                                                 Partner Address
@@ -439,8 +452,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                 type="button"
                                                 onClick={() => setDeliveryAddressSource("END_CUSTOMER")}
                                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${deliveryAddressSource === "END_CUSTOMER"
-                                                        ? "bg-white shadow text-gray-900"
-                                                        : "text-gray-500 hover:text-gray-900"
+                                                    ? "bg-white shadow text-gray-900"
+                                                    : "text-gray-500 hover:text-gray-900"
                                                     }`}
                                             >
                                                 End Customer Address

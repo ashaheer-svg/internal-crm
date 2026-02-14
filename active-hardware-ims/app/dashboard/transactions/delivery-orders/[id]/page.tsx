@@ -42,6 +42,7 @@ type DeliveryOrder = {
     deliveryAddress: string | null
     status: string // DRAFT, CONFIRMED, COMPLETED, CANCELLED
     invoiceValue?: number
+    invoiceNumber?: string | null
     additionalCosts?: number
     notes: string | null
     createdAt: string

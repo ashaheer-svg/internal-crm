@@ -39,6 +39,7 @@ export default function NewDeliveryOrderPage() {
 
     const [notes, setNotes] = useState("")
     const [invoiceValue, setInvoiceValue] = useState<string>("")
+    const [invoiceNumber, setInvoiceNumber] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
 
     // Address Selection
@@ -258,6 +259,7 @@ export default function NewDeliveryOrderPage() {
                 saleType,
                 deliveryAddress,
                 invoiceValue: Number(invoiceValue),
+                invoiceNumber,
                 additionalCosts: Number(additionalCosts),
                 notes,
                 items
@@ -391,6 +393,16 @@ export default function NewDeliveryOrderPage() {
                                         placeholder="0.00"
                                     />
                                 </div>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Invoice Number</label>
+                                <input
+                                    type="text"
+                                    value={invoiceNumber}
+                                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="e.g. INV-1234"
+                                />
                             </div>
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>

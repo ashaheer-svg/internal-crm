@@ -160,7 +160,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     Print Packing Slip
                 </button>
 
-                <DocumentHeader title="PACKING SLIP" />
+                <DocumentHeader title="PACKING SLIP" titleNextToLogo={true} />
 
                 <div className="info-grid">
                     <div className="info-section">
@@ -181,6 +181,12 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                             <span className="label">Order Number:</span>
                             <span className="value">{order.orderNumber}</span>
                         </div>
+                        {order.invoiceNumber && (
+                            <div className="info-row">
+                                <span className="label">Invoice Number:</span>
+                                <span className="value">{order.invoiceNumber}</span>
+                            </div>
+                        )}
                         <div className="info-row">
                             <span className="label">Date:</span>
                             <span className="value">{formatDate(order.createdAt)}</span>

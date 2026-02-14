@@ -3,9 +3,10 @@ import Image from 'next/image'
 interface DocumentHeaderProps {
     title: string
     subtitle?: string
+    titleNextToLogo?: boolean
 }
 
-export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps) {
+export default function DocumentHeader({ title, subtitle, titleNextToLogo }: DocumentHeaderProps) {
     return (
         <div className="header flex justify-between items-center border-b-[3px] border-blue-600 pb-6 mb-10 h-32">
             <div className="flex items-center">
@@ -18,7 +19,14 @@ export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps)
                         priority
                     />
                 </div>
-                {subtitle && (
+                {titleNextToLogo && (
+                    <div className="ml-8 border-l-2 border-gray-200 pl-8 flex items-center h-20">
+                        <span className="text-4xl font-black tracking-tighter uppercase text-blue-600">
+                            {title}
+                        </span>
+                    </div>
+                )}
+                {subtitle && !titleNextToLogo && (
                     <div className="ml-8 border-l-2 border-gray-200 pl-8 flex flex-col justify-center">
                         <span className="text-blue-600 font-black tracking-[0.2em] text-[12px] uppercase">
                             {subtitle}
@@ -35,9 +43,11 @@ export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps)
                         {new Date().toLocaleDateString()}
                     </span>
                 </div>
-                <div className="px-8 py-3 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase shadow-sm">
-                    {title}
-                </div>
+                {!titleNextToLogo && (
+                    <div className="px-8 py-3 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase shadow-sm">
+                        {title}
+                    </div>
+                )}
             </div>
         </div>
     )
