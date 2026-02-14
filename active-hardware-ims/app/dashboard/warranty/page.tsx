@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Plus, Shield, Search } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
@@ -28,6 +29,7 @@ type WarrantyClaim = {
 }
 
 export default function WarrantyPage() {
+    const router = useRouter()
     const [claims, setClaims] = useState<WarrantyClaim[]>([])
     const [filteredClaims, setFilteredClaims] = useState<WarrantyClaim[]>([])
     const [loading, setLoading] = useState(true)
@@ -220,7 +222,11 @@ export default function WarrantyPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredClaims.map((claim) => (
-                            <tr key={claim.id} className="hover:bg-gray-50">
+                            <tr
+                                key={claim.id}
+                                className="hover:bg-gray-50 cursor-pointer"
+                                onClick={() => router.push(`/dashboard/warranty/${claim.id}`)}
+                            >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {claim.id.slice(0, 8)}...
                                 </td>
