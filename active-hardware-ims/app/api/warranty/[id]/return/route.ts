@@ -34,7 +34,7 @@ export async function POST(
         }
 
         // Check if replacement was provided
-        if (!claim.replacementItemId) {
+        if (!claim.replacementItemId && !claim.replacementExternalInfo) {
             return NextResponse.json(
                 { error: 'No replacement was provided for this claim' },
                 { status: 400 }
@@ -49,40 +49,43 @@ export async function POST(
             )
         }
 
-        // Get replacement item
-        const replacementItem = await prisma.inventoryItem.findUnique({
-            where: { id: claim.replacementItemId },
-            include: { product: true }
-        })
+        // Handle Tracked Replacement Return
+        if (claim.replacementItemId) {
+            // Get replacement item
+            const replacementItem = await prisma.inventoryItem.findUnique({
+                where: { id: claim.replacementItemId },
+                include: { product: true }
+            })
 
-        if (!replacementItem) {
-            return NextResponse.json({ error: 'Replacement item not found' }, { status: 404 })
+            if (!replacementItem) {
+                return NextResponse.json({ error: 'Replacement item not found' }, { status: 404 })
+            }
+
+            // Return replacement item to available status
+            await prisma.inventoryItem.update({
+                where: { id: claim.replacementItemId },
+                data: {
+                    status: 'AVAILABLE',
+                    warrantyExpiry: null // Clear warranty since it's back in stock
+                }
+            })
+
+            // Log replacement item status change
+            await logUpdate('INVENTORY', claim.replacementItemId, user.id, user.name,
+                {
+                    status: 'LOANED',
+                    warrantyExpiry: claim.inventoryItem.warrantyExpiry,
+                    serialNumber: replacementItem.serialNumber
+                },
+                {
+                    status: 'AVAILABLE',
+                    warrantyExpiry: null,
+                    reason: `Temporary replacement returned for claim ${claimId}`
+                }
+            )
         }
 
-        // Return replacement item to available status
-        await prisma.inventoryItem.update({
-            where: { id: claim.replacementItemId },
-            data: {
-                status: 'AVAILABLE',
-                warrantyExpiry: null // Clear warranty since it's back in stock
-            }
-        })
-
-        // Log replacement item status change
-        await logUpdate('INVENTORY', claim.replacementItemId, user.id, user.name,
-            {
-                status: 'LOANED',
-                warrantyExpiry: claim.inventoryItem.warrantyExpiry,
-                serialNumber: replacementItem.serialNumber
-            },
-            {
-                status: 'AVAILABLE',
-                warrantyExpiry: null,
-                reason: `Temporary replacement returned for claim ${claimId}`
-            }
-        )
-
-        // Update warranty claim
+        // Update warranty claim (common for both tracked and untracked)
         const updatedClaim = await prisma.warrantyClaim.update({
             where: { id: claimId },
             data: {
@@ -102,7 +105,7 @@ export async function POST(
             },
             {
                 replacementReturnedAt: new Date(),
-                notes
+                notes: notes || (claim.replacementExternalInfo ? `Untracked unit (${claim.replacementExternalInfo}) returned` : 'Replacement returned')
             }
         )
 

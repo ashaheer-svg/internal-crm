@@ -7,7 +7,7 @@ import { Package, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
 interface ReplacementDetailsProps {
     claimId: string
     replacementType: string
-    replacementItemDetails: {
+    replacementItemDetails?: {
         id: string
         serialNumber: string
         status: string
@@ -17,7 +17,8 @@ interface ReplacementDetailsProps {
             sku: string
             brand: string | null
         }
-    }
+    } | null
+    replacementExternalInfo?: string | null
     replacementProvidedAt: Date
     replacementReturnedAt: Date | null
 }
@@ -26,6 +27,7 @@ export default function ReplacementDetails({
     claimId,
     replacementType,
     replacementItemDetails,
+    replacementExternalInfo,
     replacementProvidedAt,
     replacementReturnedAt
 }: ReplacementDetailsProps) {
@@ -100,40 +102,58 @@ export default function ReplacementDetails({
 
             {/* Replacement Item Info */}
             <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-md">
-                    <Package className="w-5 h-5 text-gray-400 mt-0.5" />
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-500">Replacement Device</p>
-                        <p className="mt-1 text-base font-semibold text-gray-900">
-                            {replacementItemDetails.serialNumber}
-                        </p>
-                        <p className="mt-1 text-sm text-gray-600">
-                            {replacementItemDetails.product.name}
-                            {replacementItemDetails.product.brand && ` • ${replacementItemDetails.product.brand}`}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                            SKU: {replacementItemDetails.product.sku}
+                {replacementItemDetails ? (
+                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-md">
+                        <Package className="w-5 h-5 text-gray-400 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-500">Replacement Device (Tracked)</p>
+                            <p className="mt-1 text-base font-semibold text-gray-900">
+                                {replacementItemDetails.serialNumber}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-600">
+                                {replacementItemDetails.product.name}
+                                {replacementItemDetails.product.brand && ` • ${replacementItemDetails.product.brand}`}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500">
+                                SKU: {replacementItemDetails.product.sku}
+                            </p>
+                        </div>
+                    </div>
+                ) : replacementExternalInfo ? (
+                    <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-100 rounded-md">
+                        <Package className="w-5 h-5 text-yellow-500 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-yellow-800">Replacement Device (Untracked)</p>
+                            <p className="mt-1 text-base font-semibold text-yellow-900">
+                                {replacementExternalInfo}
+                            </p>
+                            <p className="mt-1 text-xs text-yellow-600 italic">
+                                This unit is not tracked in the central inventory.
+                            </p>
+                        </div>
+                    </div>
+                ) : null}
+
+
+                {/* Status (Only for tracked) */}
+                {replacementItemDetails && (
+                    <div>
+                        <p className="text-sm font-medium text-gray-500">Current Status</p>
+                        <p className="mt-1 text-sm text-gray-900">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${replacementItemDetails.status === 'WARRANTY_REPLACED'
+                                ? 'bg-purple-100 text-purple-800'
+                                : replacementItemDetails.status === 'LOANED'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                {replacementItemDetails.status}
+                            </span>
                         </p>
                     </div>
-                </div>
+                )}
 
-                {/* Status */}
-                <div>
-                    <p className="text-sm font-medium text-gray-500">Current Status</p>
-                    <p className="mt-1 text-sm text-gray-900">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${replacementItemDetails.status === 'WARRANTY_REPLACED'
-                            ? 'bg-purple-100 text-purple-800'
-                            : replacementItemDetails.status === 'LOANED'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                            {replacementItemDetails.status}
-                        </span>
-                    </p>
-                </div>
-
-                {/* Warranty */}
-                {replacementItemDetails.warrantyExpiry && (
+                {/* Warranty (Only for tracked) */}
+                {replacementItemDetails?.warrantyExpiry && (
                     <div className="flex items-start gap-2">
                         <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
                         <div>

@@ -186,6 +186,7 @@ model WarrantyClaim {
   replacementItemId      String?  // ID of replacement inventory item
   replacementProvidedAt  DateTime?
   replacementReturnedAt  DateTime? // For temporary replacements
+  replacementExternalInfo String?  // Details for untracked loaner units (Serial/Model)
   
   // Resolution
   resolution      String?  // Description of how claim was resolved

@@ -28,6 +28,8 @@ export default function ReplacementForm({ claimId, hasReplacement, replacementTy
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
     const [selectedType, setSelectedType] = useState<'TEMPORARY' | 'PERMANENT' | ''>('')
     const [notes, setNotes] = useState('')
+    const [isUntracked, setIsUntracked] = useState(false)
+    const [externalInfo, setExternalInfo] = useState('')
     const [loading, setLoading] = useState(false)
     const [searching, setSearching] = useState(false)
     const [error, setError] = useState('')
@@ -64,8 +66,18 @@ export default function ReplacementForm({ claimId, hasReplacement, replacementTy
     }
 
     async function handleProvideReplacement() {
-        if (!selectedItem || !selectedType) {
-            setError('Please select an inventory item and replacement type')
+        if (!selectedType) {
+            setError('Please select a replacement type')
+            return
+        }
+
+        if (!isUntracked && !selectedItem) {
+            setError('Please select an inventory item')
+            return
+        }
+
+        if (isUntracked && !externalInfo.trim()) {
+            setError('Please provide details for the untracked unit')
             return
         }
 
@@ -79,7 +91,8 @@ export default function ReplacementForm({ claimId, hasReplacement, replacementTy
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     replacementType: selectedType,
-                    replacementItemId: selectedItem.id,
+                    replacementItemId: isUntracked ? null : selectedItem?.id,
+                    replacementExternalInfo: isUntracked ? externalInfo : null,
                     notes
                 })
             })
@@ -161,28 +174,62 @@ export default function ReplacementForm({ claimId, hasReplacement, replacementTy
                 </div>
             </div>
 
-            {/* Inventory Search */}
+            {/* Untracked Toggle */}
             <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Search Replacement Item
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={isUntracked}
+                        onChange={(e) => {
+                            setIsUntracked(e.target.checked)
+                            if (e.target.checked) setSelectedItem(null)
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Untracked Unit (Manual Entry)</span>
                 </label>
-                <div className="relative">
+                <p className="mt-1 text-xs text-gray-500">
+                    Use this for used items or loaners not in inventory tracking.
+                </p>
+            </div>
+
+            {/* Inventory Search or Manual Entry */}
+            {!isUntracked ? (
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Search Replacement Item
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value)
+                                searchInventory()
+                            }}
+                            placeholder="Search by serial number..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <Search className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
+                    </div>
+                    {searching && (
+                        <p className="mt-2 text-sm text-gray-500">Searching...</p>
+                    )}
+                </div>
+            ) : (
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Unit Details (Model / Serial #)
+                    </label>
                     <input
                         type="text"
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value)
-                            searchInventory()
-                        }}
-                        placeholder="Search by serial number..."
+                        value={externalInfo}
+                        onChange={(e) => setExternalInfo(e.target.value)}
+                        placeholder="e.g. Dell Latitude 5420 (Used) - SN: 12345"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <Search className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                 </div>
-                {searching && (
-                    <p className="mt-2 text-sm text-gray-500">Searching...</p>
-                )}
-            </div>
+            )}
 
             {/* Search Results */}
             {inventoryItems.length > 0 && (
@@ -239,7 +286,7 @@ export default function ReplacementForm({ claimId, hasReplacement, replacementTy
             {/* Submit Button */}
             <button
                 onClick={handleProvideReplacement}
-                disabled={!selectedItem || !selectedType || loading}
+                disabled={(!selectedItem && !isUntracked) || !selectedType || (isUntracked && !externalInfo.trim()) || loading}
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
             >
                 {loading ? 'Providing Replacement...' : 'Provide Replacement'}

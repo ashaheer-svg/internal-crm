@@ -173,18 +173,19 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
             </div>
 
             {/* Replacement Management */}
-            {claim.replacementItemDetails && claim.replacementType ? (
+            {(claim.replacementItemDetails || claim.replacementExternalInfo) && claim.replacementType ? (
                 <ReplacementDetails
                     claimId={claim.id}
                     replacementType={claim.replacementType}
                     replacementItemDetails={claim.replacementItemDetails}
+                    replacementExternalInfo={claim.replacementExternalInfo}
                     replacementProvidedAt={claim.replacementProvidedAt!}
                     replacementReturnedAt={claim.replacementReturnedAt}
                 />
             ) : (
                 <ReplacementForm
                     claimId={claim.id}
-                    hasReplacement={!!claim.replacementItemId}
+                    hasReplacement={!!claim.replacementItemId || !!claim.replacementExternalInfo}
                     replacementType={claim.replacementType}
                 />
             )}
