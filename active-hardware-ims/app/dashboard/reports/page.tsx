@@ -106,49 +106,85 @@ export default function ReportsPage() {
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
-                    /* Hide sidebar, navigation, and input UI */
+                    /* Hide everything except the report results */
                     nav, 
                     aside, 
+                    header,
+                    footer,
+                    [role="navigation"],
+                    [role="complementary"],
                     .no-print,
                     .print\\:hidden,
-                    header,
-                    .flex.items-center.justify-between:first-childish, /* Dashboard header */
-                    .bg-white.shadow.sm\\:rounded-lg.p-6, /* Report Selection and Date Filters */
-                    div[class*="flex justify-center"] { /* Generate Button container */
+                    /* Target common sidebar/header containers from DashboardLayout */
+                    div.md\\:w-64,
+                    div.h-16.items-center,
+                    div.border-b.bg-white.px-6.shadow-sm {
                         display: none !important;
                     }
 
-                    /* Reset main layout for print */
-                    main, .flex.flex-col, .space-y-6 {
+                    /* Reset main layout for print - essential for h-screen layouts */
+                    html, body {
+                        height: auto !important;
+                        min-height: auto !important;
+                        overflow: visible !important;
+                        background: white !important;
+                        color: black !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+
+                    /* Important: Reset the h-screen flex container from DashboardLayout */
+                    div.flex.h-screen {
+                        display: block !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        background: white !important;
+                    }
+
+                    /* Reset the main content area */
+                    div.flex-1.flex-col.overflow-hidden {
+                        display: block !important;
+                        overflow: visible !important;
+                        height: auto !important;
+                        width: 100% !important;
+                    }
+
+                    main {
+                        display: block !important;
+                        overflow: visible !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        height: auto !important;
+                        width: 100% !important;
+                    }
+
+                    .space-y-6 {
                         margin: 0 !important;
                         padding: 0 !important;
                         display: block !important;
                     }
 
-                    /* Make report results full width */
+                    /* Make report results full width and remove shadows */
                     .bg-white.shadow.sm\\:rounded-lg.overflow-hidden {
                         box-shadow: none !important;
                         border: none !important;
                         width: 100% !important;
                         max-width: 100% !important;
-                    }
-
-                    body {
-                        background: white !important;
-                        color: black !important;
-                        font-size: 11pt !important;
-                        margin: 0;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: visible !important;
                     }
 
                     @page {
                         size: A4;
-                        margin: 1.5cm;
+                        margin: 2cm;
                     }
 
                     table {
                         width: 100% !important;
                         border-collapse: collapse !important;
                         page-break-inside: auto;
+                        margin-bottom: 20px;
                     }
 
                     tr {
@@ -160,15 +196,16 @@ export default function ReportsPage() {
                         display: table-header-group;
                     }
 
-                    tfoot {
-                        display: table-footer-group;
-                    }
-
                     th, td {
                         border: 1px solid #ddd !important;
                         padding: 8px !important;
-                        font-size: 9pt !important;
+                        font-size: 8pt !important;
                         white-space: normal !important;
+                    }
+
+                    /* Ensure text is black for readability and contrast */
+                    h1, h2, h3, h4, p, span, dt, dd, th, td {
+                        color: black !important;
                     }
 
                     .print\\:block {
