@@ -251,6 +251,48 @@ export default function DiagnosticPage() {
             <CheckSection title="Admin User" data={data?.checks?.adminUser} />
             {/* Tables */}
             <CheckSection title="Database Tables" data={data?.checks?.tables} />
+            {/* Schema Consistency */}
+            {data?.checks?.schemaConsistency && (
+                <div style={{
+                    marginBottom: '20px',
+                    padding: '15px',
+                    backgroundColor: data.checks.schemaConsistency.status === 'CONSISTENT' ? '#d4edda' : '#f8d7da',
+                    border: `2px solid ${data.checks.schemaConsistency.status === 'CONSISTENT' ? '#28a745' : '#dc3545'}`,
+                    borderRadius: '5px'
+                }}>
+                    <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {data.checks.schemaConsistency.status === 'CONSISTENT' ? '✅' : '❌'} Database Schema Consistency
+                    </h3>
+                    <div style={{ marginBottom: '10px' }}>
+                        <strong>Status:</strong> {data.checks.schemaConsistency.status}
+                    </div>
+                    <div style={{ marginBottom: '10px' }}>
+                        <strong>Message:</strong> {data.checks.schemaConsistency.message}
+                    </div>
+                    {data.checks.schemaConsistency.productTable && (
+                        <details style={{ marginTop: '10px' }}>
+                            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '5px' }}>
+                                Product Table Details
+                            </summary>
+                            <div style={{ paddingLeft: '15px', fontSize: '13px' }}>
+                                <div>✓ Has accessCount column: {data.checks.schemaConsistency.productTable.hasAccessCount ? 'Yes' : 'No'}</div>
+                                <div>✓ Total columns: {data.checks.schemaConsistency.productTable.totalColumns}</div>
+                                {data.checks.schemaConsistency.productTable.missingColumns && (
+                                    <div style={{ color: '#dc3545', marginTop: '5px' }}>
+                                        <strong>Missing columns:</strong> {data.checks.schemaConsistency.productTable.missingColumns.join(', ')}
+                                    </div>
+                                )}
+                                <details style={{ marginTop: '5px' }}>
+                                    <summary style={{ cursor: 'pointer' }}>View all columns</summary>
+                                    <pre style={{ fontSize: '12px', marginTop: '5px' }}>
+                                        {JSON.stringify(data.checks.schemaConsistency.productTable.columns, null, 2)}
+                                    </pre>
+                                </details>
+                            </div>
+                        </details>
+                    )}
+                </div>
+            )}
             {/* Prisma Schema */}
             <CheckSection title="Prisma Schema" data={data?.checks?.prismaSchema} />
             {/* Migrations */}

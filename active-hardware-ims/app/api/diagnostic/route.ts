@@ -155,6 +155,52 @@ export async function GET() {
                 }
             }
 
+            // 6b. Check database schema consistency
+            try {
+                // Check if Product table has accessCount column
+                const productTableInfo = await prisma.$queryRaw`
+                    PRAGMA table_info(Product);
+                ` as any[]
+
+                const columnNames = productTableInfo.map((col: any) => col.name)
+                const hasAccessCount = columnNames.includes('accessCount')
+
+                // Get all required columns from Prisma schema
+                const requiredColumns = [
+                    'id', 'sku', 'name', 'description', 'brand', 'category',
+                    'model', 'minStock', 'warrantyMonths', 'lowResellerPrice',
+                    'resellerPrice', 'accessCount', 'isActive', 'createdAt', 'updatedAt'
+                ]
+
+                const missingColumns = requiredColumns.filter(col => !columnNames.includes(col))
+                const schemaConsistent = missingColumns.length === 0
+
+                diagnostics.checks.schemaConsistency = {
+                    status: schemaConsistent ? 'CONSISTENT' : 'INCONSISTENT',
+                    productTable: {
+                        hasAccessCount,
+                        totalColumns: productTableInfo.length,
+                        columns: columnNames,
+                        missingColumns: missingColumns.length > 0 ? missingColumns : undefined
+                    },
+                    message: schemaConsistent
+                        ? 'Database schema matches Prisma schema'
+                        : `Missing columns: ${missingColumns.join(', ')}`
+                }
+
+                // Add to issues if schema is inconsistent
+                if (!schemaConsistent) {
+                    if (!diagnostics.overallStatus) {
+                        diagnostics.overallStatus = { healthy: false, issues: [] }
+                    }
+                }
+            } catch (error: any) {
+                diagnostics.checks.schemaConsistency = {
+                    status: 'ERROR',
+                    error: error.message
+                }
+            }
+
         } catch (error: any) {
             diagnostics.checks.databaseConnection = {
                 status: 'FAILED',
@@ -184,9 +230,10 @@ export async function GET() {
         const hasConnection = diagnostics.checks.databaseConnection?.status === 'SUCCESS'
         const hasAdminUser = diagnostics.checks.adminUser?.exists === true
         const hasEnv = diagnostics.checks.environment.hasEnvFile
+        const schemaConsistent = diagnostics.checks.schemaConsistency?.status === 'CONSISTENT'
 
         diagnostics.overallStatus = {
-            healthy: hasDatabase && hasConnection && hasAdminUser && hasEnv,
+            healthy: hasDatabase && hasConnection && hasAdminUser && hasEnv && schemaConsistent,
             issues: []
         }
 
@@ -194,6 +241,7 @@ export async function GET() {
         if (!hasDatabase) diagnostics.overallStatus.issues.push('Database file not found')
         if (!hasConnection) diagnostics.overallStatus.issues.push('Cannot connect to database')
         if (!hasAdminUser) diagnostics.overallStatus.issues.push('Admin user not found in database')
+        if (!schemaConsistent) diagnostics.overallStatus.issues.push('Database schema is inconsistent with Prisma schema')
 
         // 10. Recommendations
         diagnostics.recommendations = []
@@ -205,6 +253,9 @@ export async function GET() {
         }
         if (!hasAdminUser) {
             diagnostics.recommendations.push('Run: npx prisma db seed')
+        }
+        if (!schemaConsistent) {
+            diagnostics.recommendations.push('Run: npx prisma db push (to sync database schema with Prisma schema)')
         }
 
     } catch (error: any) {
