@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Printer } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate } from "@/lib/utils"
+import DocumentHeader from "@/components/DocumentHeader"
 
 type Product = {
   id: string
@@ -122,12 +123,8 @@ export default function PriceListPage() {
 
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           {/* Header for print */}
-          <div className="border-b-4 border-gray-800 p-6 print:block">
-            <div className="text-3xl font-bold text-gray-900">Active Hardware IMS</div>
-            <div className="text-xl font-semibold text-gray-600 mt-2">PRICE LIST</div>
-            <div className="text-sm text-gray-500 mt-1">
-              Generated on {formatDate(new Date())} at {new Date().toLocaleTimeString()}
-            </div>
+          <div className="hidden print:block border-b-0 p-0">
+            <DocumentHeader title="PRICE LIST" subtitle="Wholesale & Reseller Pricing" />
           </div>
 
           {/* Note */}

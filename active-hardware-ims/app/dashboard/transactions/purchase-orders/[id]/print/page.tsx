@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 
+import DocumentHeader from "@/components/DocumentHeader"
+
 interface PageProps {
   params: Promise<{ id: string }>
 }
@@ -41,21 +43,6 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
             padding: 40px;
             max-width: 800px;
             margin: 0 auto;
-          }
-          .header {
-            border-bottom: 3px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-          }
-          .company-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-          }
-          .po-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 10px;
           }
           .info-grid {
             display: grid;
@@ -119,10 +106,7 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
           Print Purchase Order
         </button>
 
-        <div className="header">
-          <div className="company-name">Active Hardware IMS</div>
-          <div className="po-title">PURCHASE ORDER</div>
-        </div>
+        <DocumentHeader title="PURCHASE ORDER" subtitle="Inventory Procurement" />
 
         <div className="info-grid">
           <div>

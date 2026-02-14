@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
+import DocumentHeader from "@/components/DocumentHeader"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -154,15 +155,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     Print Packing Slip
                 </button>
 
-                <div className="header">
-                    <div>
-                        <div className="company-name">Active Hardware IMS</div>
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                            Warehouse & Logistics Check
-                        </div>
-                    </div>
-                    <div className="document-title">PACKING SLIP</div>
-                </div>
+                <DocumentHeader title="PACKING SLIP" subtitle="Warehouse & Logistics Check" />
 
                 <div className="info-grid">
                     <div className="info-section">

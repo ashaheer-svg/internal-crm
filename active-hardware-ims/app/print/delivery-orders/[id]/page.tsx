@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import PrintButton from "@/components/PrintButton"
 
+import DocumentHeader from "@/components/DocumentHeader"
+
 interface PageProps {
     params: Promise<{ id: string }>
 }
@@ -65,24 +67,6 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             max-width: 800px;
             margin: 0 auto;
             color: #333;
-          }
-          .header {
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-          }
-          .company-name {
-            font-size: 24px;
-            font-weight: bold;
-          }
-          .document-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            text-transform: uppercase;
           }
           .info-grid {
             display: grid;
@@ -164,15 +148,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             <div className="print-container">
                 <PrintButton />
 
-                <div className="header">
-                    <div>
-                        <div className="company-name">Active Hardware IMS</div>
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                            Warehouse & Logistics Check
-                        </div>
-                    </div>
-                    <div className="document-title">PACKING SLIP</div>
-                </div>
+                <DocumentHeader title="PACKING SLIP" subtitle="Warehouse & Logistics Check" />
 
                 <div className="info-grid">
                     <div className="info-section">
