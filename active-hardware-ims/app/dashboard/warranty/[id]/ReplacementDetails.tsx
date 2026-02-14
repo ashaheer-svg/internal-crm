@@ -11,15 +11,15 @@ interface ReplacementDetailsProps {
         id: string
         serialNumber: string
         status: string
-        warrantyExpiry: string | null
+        warrantyExpiry: Date | null
         product: {
             name: string
             sku: string
             brand: string | null
         }
     }
-    replacementProvidedAt: string
-    replacementReturnedAt: string | null
+    replacementProvidedAt: Date
+    replacementReturnedAt: Date | null
 }
 
 export default function ReplacementDetails({
@@ -77,8 +77,8 @@ export default function ReplacementDetails({
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Replacement Details</h3>
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${replacementType === 'TEMPORARY'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-purple-100 text-purple-800'
                     }`}>
                     {replacementType}
                 </span>
@@ -122,10 +122,10 @@ export default function ReplacementDetails({
                     <p className="text-sm font-medium text-gray-500">Current Status</p>
                     <p className="mt-1 text-sm text-gray-900">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${replacementItemDetails.status === 'WARRANTY_REPLACED'
-                                ? 'bg-purple-100 text-purple-800'
-                                : replacementItemDetails.status === 'LOANED'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-100 text-purple-800'
+                            : replacementItemDetails.status === 'LOANED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
                             }`}>
                             {replacementItemDetails.status}
                         </span>
