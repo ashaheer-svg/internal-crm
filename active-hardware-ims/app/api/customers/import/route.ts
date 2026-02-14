@@ -42,12 +42,12 @@ export async function POST(request: Request) {
                                 phone: item.phone || dbCustomer.phone,
                                 address: item.address || dbCustomer.address,
                                 taxId: item.taxId || dbCustomer.taxId,
-                                salesRep: item.salesRep || dbCustomer.salesRep,
+                                salesRepLegacy: item.salesRep || (dbCustomer as any).salesRepLegacy,
                                 notes: item.notes || dbCustomer.notes,
                                 isPartner: item.roles?.isPartner ?? dbCustomer.isPartner,
                                 isSupplier: item.roles?.isSupplier ?? dbCustomer.isSupplier,
                                 isCustomer: item.roles?.isCustomer ?? dbCustomer.isCustomer
-                            }
+                            } as any
                         })
                     } else {
                         // Create new
@@ -58,13 +58,13 @@ export async function POST(request: Request) {
                                 phone: item.phone,
                                 address: item.address,
                                 taxId: item.taxId,
-                                salesRep: item.salesRep,
+                                salesRepLegacy: item.salesRep,
                                 notes: item.notes,
                                 isPartner: item.roles?.isPartner || false,
                                 isSupplier: item.roles?.isSupplier || false,
                                 isCustomer: item.roles?.isCustomer || true, // Default
                                 isActive: true
-                            }
+                            } as any
                         })
                     }
 

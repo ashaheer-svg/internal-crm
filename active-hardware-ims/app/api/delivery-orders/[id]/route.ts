@@ -16,7 +16,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
                     }
                 },
                 salesRep: true
-            }
+            } as any
         })
 
         if (!order) {
@@ -137,13 +137,29 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             // If completing (and was not completed), ensure stock is allocated/sold
             if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
                 await prisma.$transaction(async (tx) => {
-                    // Mark allocated items as SOLD
+                    // Mark allocated items as SOLD and log transactions
                     for (const item of order.items) {
                         if (item.reservedItems.length > 0) {
                             await tx.inventoryItem.updateMany({
                                 where: { deliveryOrderItemId: item.id },
                                 data: { status: 'SOLD' }
                             })
+
+                            // Create TransactionLog entries for each unit
+                            for (const reserved of item.reservedItems) {
+                                await tx.transactionLog.create({
+                                    data: {
+                                        type: 'ISSUE',
+                                        referenceType: 'DELIVERY_ORDER',
+                                        referenceId: order.id,
+                                        productId: item.productId,
+                                        serialNumber: reserved.serialNumber,
+                                        quantity: 1,
+                                        unitCost: item.unitPrice,
+                                        notes: `Sold via Delivery Order ${order.orderNumber} to ${order.customerName}`
+                                    }
+                                })
+                            }
                         }
                     }
                     await tx.deliveryOrder.update({

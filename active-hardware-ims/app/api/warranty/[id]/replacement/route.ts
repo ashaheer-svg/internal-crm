@@ -53,7 +53,7 @@ export async function POST(
         }
 
         // Check if replacement already provided
-        if (claim.replacementItemId || claim.replacementExternalInfo) {
+        if ((claim as any).replacementItemId || (claim as any).replacementExternalInfo) {
             return NextResponse.json(
                 { error: 'Replacement already provided for this claim' },
                 { status: 400 }
@@ -83,49 +83,69 @@ export async function POST(
             // Get original warranty expiry
             const originalWarrantyExpiry = claim.inventoryItem.warrantyExpiry
 
-            // Determine new status for replacement item
-            const newStatus = replacementType === 'PERMANENT' ? 'WARRANTY_REPLACED' : 'LOANED'
+            // Update replacement item, log transaction, and update warranty claim in a single transaction
+            const { updatedClaim, replacementItem: updatedReplacementItem } = await prisma.$transaction(async (tx) => {
+                // Determine new status for replacement item
+                const newStatus = replacementType === 'PERMANENT' ? 'WARRANTY_REPLACED' : 'LOANED'
 
-            // Update replacement item with warranty transfer
-            await prisma.inventoryItem.update({
-                where: { id: replacementItemId },
-                data: {
-                    status: newStatus,
-                    warrantyExpiry: originalWarrantyExpiry
-                }
+                // Update replacement item with warranty transfer
+                const repItem = await tx.inventoryItem.update({
+                    where: { id: replacementItemId },
+                    data: {
+                        status: newStatus,
+                        warrantyExpiry: originalWarrantyExpiry
+                    },
+                    include: { product: true }
+                })
+
+                // Create TransactionLog entry for the issue
+                await tx.transactionLog.create({
+                    data: {
+                        type: 'ISSUE',
+                        referenceType: 'WARRANTY',
+                        referenceId: claimId,
+                        productId: repItem.productId,
+                        serialNumber: repItem.serialNumber,
+                        quantity: 1,
+                        unitCost: repItem.unitCost,
+                        notes: `Warranty replacement (${replacementType}) for ${claim.inventoryItem.serialNumber}. Assigned to ${claim.customerName}.`
+                    }
+                })
+
+                // Update warranty claim
+                const uClaim = await tx.warrantyClaim.update({
+                    where: { id: claimId },
+                    data: {
+                        replacementType,
+                        replacementItemId,
+                        replacementProvidedAt: new Date(),
+                        status: 'IN_PROGRESS'
+                    } as any,
+                    include: {
+                        inventoryItem: {
+                            include: { product: true }
+                        }
+                    }
+                })
+
+                return { updatedClaim: uClaim, replacementItem: repItem }
             })
 
-            // Log replacement item status change
+            // Log replacement item status change for inventory auditing
             await logUpdate('INVENTORY', replacementItemId, user.id, user.name,
                 {
                     status: 'AVAILABLE',
                     warrantyExpiry: null,
-                    serialNumber: replacementItem.serialNumber
+                    serialNumber: updatedReplacementItem.serialNumber
                 },
                 {
-                    status: newStatus,
+                    status: updatedReplacementItem.status,
                     warrantyExpiry: originalWarrantyExpiry,
                     reason: `${replacementType} warranty replacement for ${claim.inventoryItem.serialNumber}`
                 }
             )
 
-            // Update warranty claim
-            const updatedClaim = await prisma.warrantyClaim.update({
-                where: { id: claimId },
-                data: {
-                    replacementType,
-                    replacementItemId,
-                    replacementProvidedAt: new Date(),
-                    status: 'IN_PROGRESS'
-                },
-                include: {
-                    inventoryItem: {
-                        include: { product: true }
-                    }
-                }
-            })
-
-            // Log warranty claim update
+            // Log warranty claim update for audit
             await logUpdate('WARRANTY', claimId, user.id, user.name,
                 {
                     replacementType: null,
@@ -135,8 +155,8 @@ export async function POST(
                 {
                     replacementType,
                     replacementItemId,
-                    replacementSerialNumber: replacementItem.serialNumber,
-                    replacementProductName: replacementItem.product.name,
+                    replacementSerialNumber: updatedReplacementItem.serialNumber,
+                    replacementProductName: updatedReplacementItem.product.name,
                     status: 'IN_PROGRESS',
                     notes
                 }
@@ -145,10 +165,10 @@ export async function POST(
             return NextResponse.json({
                 claim: updatedClaim,
                 replacementItem: {
-                    id: replacementItem.id,
-                    serialNumber: replacementItem.serialNumber,
-                    productName: replacementItem.product.name,
-                    status: newStatus,
+                    id: updatedReplacementItem.id,
+                    serialNumber: updatedReplacementItem.serialNumber,
+                    productName: (updatedReplacementItem as any).product.name,
+                    status: updatedReplacementItem.status,
                     warrantyExpiry: originalWarrantyExpiry
                 },
                 originalWarrantyExpiry,
@@ -166,7 +186,7 @@ export async function POST(
                     replacementExternalInfo,
                     replacementProvidedAt: new Date(),
                     status: 'IN_PROGRESS'
-                },
+                } as any,
                 include: {
                     inventoryItem: {
                         include: { product: true }

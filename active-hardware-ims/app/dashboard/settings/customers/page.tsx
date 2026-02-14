@@ -13,7 +13,9 @@ type Customer = {
     phone?: string
     address?: string
     taxId?: string
-    salesRep?: string
+    salesRepLegacy?: string
+    salesRep?: { name: string }
+    salesRepId?: string
     notes?: string
     type: string
     // Roles
@@ -265,6 +267,12 @@ export default function CustomersPage() {
                                                 {customer.contactName && <span>{customer.contactName}</span>}
                                                 {customer.email && <span>{customer.email}</span>}
                                                 {customer.phone && <span>{customer.phone}</span>}
+                                                {(customer.salesRep?.name || customer.salesRepLegacy) && (
+                                                    <span className="flex items-center gap-1 text-indigo-600">
+                                                        <span className="text-xs text-gray-400">Rep:</span>
+                                                        {customer.salesRep?.name || customer.salesRepLegacy}
+                                                    </span>
+                                                )}
                                                 {customer._count && customer._count.invoices > 0 && (
                                                     <span className="text-blue-600">
                                                         {customer._count.invoices} delivery order(s)

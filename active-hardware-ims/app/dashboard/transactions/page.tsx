@@ -249,11 +249,21 @@ export default function TransactionsPage() {
                                                 </div>
                                             </div>
                                             <div className="mt-2 sm:flex sm:justify-between">
-                                                <div className="sm:flex">
-                                                    <p className="flex items-center text-sm text-gray-500">
+                                                <div className="sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+                                                    <p className="flex items-center text-sm text-gray-900 font-medium">
                                                         {order.customerName}
                                                     </p>
-                                                    <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                                    {order.invoiceNumber && (
+                                                        <p className="flex items-center text-sm text-indigo-600 font-medium">
+                                                            Inv: {order.invoiceNumber}
+                                                        </p>
+                                                    )}
+                                                    {order.salesRep?.name && (
+                                                        <p className="flex items-center text-sm text-gray-500">
+                                                            Rep: <span className="ml-1 text-gray-700 font-medium">{order.salesRep.name}</span>
+                                                        </p>
+                                                    )}
+                                                    <p className="flex items-center text-sm text-gray-500">
                                                         {order._count?.items || 0} item(s)
                                                     </p>
                                                 </div>

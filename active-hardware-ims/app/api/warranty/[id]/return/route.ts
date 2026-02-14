@@ -26,7 +26,7 @@ export async function POST(
         }
 
         // Check if this is a temporary replacement
-        if (claim.replacementType !== 'TEMPORARY') {
+        if ((claim as any).replacementType !== 'TEMPORARY') {
             return NextResponse.json(
                 { error: 'Can only return temporary replacements' },
                 { status: 400 }
@@ -34,7 +34,7 @@ export async function POST(
         }
 
         // Check if replacement was provided
-        if (!claim.replacementItemId && !claim.replacementExternalInfo) {
+        if (!(claim as any).replacementItemId && !(claim as any).replacementExternalInfo) {
             return NextResponse.json(
                 { error: 'No replacement was provided for this claim' },
                 { status: 400 }
@@ -42,72 +42,80 @@ export async function POST(
         }
 
         // Check if already returned
-        if (claim.replacementReturnedAt) {
+        if ((claim as any).replacementReturnedAt) {
             return NextResponse.json(
                 { error: 'Replacement already returned' },
                 { status: 400 }
             )
         }
 
-        // Handle Tracked Replacement Return
-        if (claim.replacementItemId) {
-            // Get replacement item
-            const replacementItem = await prisma.inventoryItem.findUnique({
-                where: { id: claim.replacementItemId },
-                include: { product: true }
-            })
+        // Update replacement item, log transaction, and update warranty claim in a single transaction
+        const updatedClaim = await prisma.$transaction(async (tx) => {
+            if ((claim as any).replacementItemId) {
+                // Return replacement item to available status
+                const repItem = await tx.inventoryItem.update({
+                    where: { id: (claim as any).replacementItemId },
+                    data: {
+                        status: 'AVAILABLE',
+                        warrantyExpiry: null
+                    }
+                })
 
-            if (!replacementItem) {
-                return NextResponse.json({ error: 'Replacement item not found' }, { status: 404 })
+                // Create TransactionLog entry for the receipt
+                await tx.transactionLog.create({
+                    data: {
+                        type: 'RECEIPT',
+                        referenceType: 'WARRANTY',
+                        referenceId: claimId,
+                        productId: repItem.productId,
+                        serialNumber: repItem.serialNumber,
+                        quantity: 1,
+                        unitCost: repItem.unitCost,
+                        notes: `Returned temporary replacement for claim ${claimId}. Original unit: ${claim.inventoryItem.serialNumber}.`
+                    }
+                })
+
+                // Log replacement item status change for inventory auditing
+                await logUpdate('INVENTORY', (claim as any).replacementItemId, user.id, user.name,
+                    {
+                        status: 'LOANED',
+                        warrantyExpiry: claim.inventoryItem.warrantyExpiry,
+                        serialNumber: repItem.serialNumber
+                    },
+                    {
+                        status: 'AVAILABLE',
+                        warrantyExpiry: null,
+                        reason: `Temporary replacement returned for claim ${claimId}`
+                    }
+                )
             }
 
-            // Return replacement item to available status
-            await prisma.inventoryItem.update({
-                where: { id: claim.replacementItemId },
+            // Update warranty claim
+            const uClaim = await tx.warrantyClaim.update({
+                where: { id: claimId },
                 data: {
-                    status: 'AVAILABLE',
-                    warrantyExpiry: null // Clear warranty since it's back in stock
+                    replacementReturnedAt: new Date()
+                } as any,
+                include: {
+                    inventoryItem: {
+                        include: { product: true }
+                    }
                 }
             })
 
-            // Log replacement item status change
-            await logUpdate('INVENTORY', claim.replacementItemId, user.id, user.name,
+            // Log warranty claim update
+            await logUpdate('WARRANTY', claimId, user.id, user.name,
                 {
-                    status: 'LOANED',
-                    warrantyExpiry: claim.inventoryItem.warrantyExpiry,
-                    serialNumber: replacementItem.serialNumber
+                    replacementReturnedAt: null
                 },
                 {
-                    status: 'AVAILABLE',
-                    warrantyExpiry: null,
-                    reason: `Temporary replacement returned for claim ${claimId}`
+                    replacementReturnedAt: new Date(),
+                    notes: notes || ((claim as any).replacementExternalInfo ? `Untracked unit (${(claim as any).replacementExternalInfo}) returned` : 'Replacement returned')
                 }
             )
-        }
 
-        // Update warranty claim (common for both tracked and untracked)
-        const updatedClaim = await prisma.warrantyClaim.update({
-            where: { id: claimId },
-            data: {
-                replacementReturnedAt: new Date()
-            },
-            include: {
-                inventoryItem: {
-                    include: { product: true }
-                }
-            }
+            return uClaim
         })
-
-        // Log warranty claim update
-        await logUpdate('WARRANTY', claimId, user.id, user.name,
-            {
-                replacementReturnedAt: null
-            },
-            {
-                replacementReturnedAt: new Date(),
-                notes: notes || (claim.replacementExternalInfo ? `Untracked unit (${claim.replacementExternalInfo}) returned` : 'Replacement returned')
-            }
-        )
 
         return NextResponse.json({
             claim: updatedClaim,
