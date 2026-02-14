@@ -62,35 +62,35 @@ export default function BulkEntryModal({ onAdd, onClose, excludedItemIds }: Bulk
     }
 
     return (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center justify-between p-6 border-b">
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900">Bulk Serial Number Entry</h3>
+                        <h2 className="text-xl font-semibold text-gray-900">Bulk Serial Number Entry</h2>
                         <p className="text-sm text-gray-500 mt-1">
                             Enter multiple serial numbers (one per line, or separated by commas)
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-500"
+                        className="text-gray-400 hover:text-gray-600"
                     >
                         <X className="h-6 w-6" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="px-6 py-4 overflow-y-auto max-h-96">
+                <div className="p-6 overflow-y-auto max-h-96 flex-1">
                     {error && (
-                        <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
-                            <p className="text-sm text-red-700">{error}</p>
+                        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <p className="text-sm">{error}</p>
                         </div>
                     )}
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Serial Numbers
                             </label>
                             <textarea
@@ -98,7 +98,7 @@ export default function BulkEntryModal({ onAdd, onClose, excludedItemIds }: Bulk
                                 onChange={(e) => setSerialNumbers(e.target.value)}
                                 placeholder="SN001&#10;SN002&#10;SN003&#10;or: SN001, SN002, SN003"
                                 rows={8}
-                                className="w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm font-mono"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
                             />
                             <p className="text-xs text-gray-500 mt-1">
                                 Tip: You can paste from Excel or copy multiple lines
@@ -153,10 +153,10 @@ export default function BulkEntryModal({ onAdd, onClose, excludedItemIds }: Bulk
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-lg">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
                     >
                         {results ? "Close" : "Cancel"}
                     </button>
@@ -164,7 +164,7 @@ export default function BulkEntryModal({ onAdd, onClose, excludedItemIds }: Bulk
                         <button
                             onClick={handleProcess}
                             disabled={loading || !serialNumbers.trim()}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             {loading ? "Processing..." : "Process Serial Numbers"}
