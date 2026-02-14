@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatDateTime } from "@/lib/utils"
 
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
@@ -172,7 +172,7 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
 
         <div className="no-print" style={{ marginTop: '60px', paddingTop: '20px', borderTop: '1px solid #ddd', fontSize: '12px', color: '#666' }}>
           <p>This is a computer-generated document. No signature is required.</p>
-          <p>Generated on {new Date().toLocaleString()}</p>
+          <p>Generated on {formatDateTime(new Date())}</p>
         </div>
 
         <DocumentFooter />

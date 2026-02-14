@@ -12,6 +12,7 @@ import {
     Clock,
     FileText
 } from "lucide-react"
+import { formatDate, formatDateTime } from "@/lib/utils"
 
 type DashboardStats = {
     totalProducts: number
@@ -194,7 +195,7 @@ export default function DashboardPage() {
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">{activity.description}</p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            {new Date(activity.date).toLocaleString()}
+                                            {formatDateTime(activity.date)}
                                         </p>
                                     </div>
                                     {activity.amount && (

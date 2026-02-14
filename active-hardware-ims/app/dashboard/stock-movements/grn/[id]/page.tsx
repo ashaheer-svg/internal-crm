@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, Printer } from "lucide-react"
 import { notFound } from "next/navigation"
 import { Currency } from "@/components/Currency"
+import { formatDateTime } from "@/lib/utils"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -69,7 +70,7 @@ export default async function GRNDetailPage({ params }: PageProps) {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Created</p>
-                        <p className="mt-1 text-sm text-gray-900">{new Date(grn.createdAt).toLocaleString()}</p>
+                        <p className="mt-1 text-sm text-gray-900">{formatDateTime(grn.createdAt)}</p>
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Total Items</p>

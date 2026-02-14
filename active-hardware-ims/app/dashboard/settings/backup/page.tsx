@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Download, Upload, Database, AlertTriangle, CheckCircle, Info } from "lucide-react"
+import { formatDateTime } from "@/lib/utils"
 
 type BackupHistory = {
     id: string
@@ -209,7 +210,7 @@ export default function BackupPage() {
                                 <div key={backup.id} className="text-sm text-gray-600 flex items-center gap-2">
                                     <CheckCircle className="h-4 w-4 text-green-500" />
                                     <span>
-                                        {new Date(backup.createdAt).toLocaleString()} by {backup.userName}
+                                        {formatDateTime(backup.createdAt)} by {backup.userName}
                                         {backup.metadata?.filename && ` - ${backup.metadata.filename}`}
                                     </span>
                                 </div>

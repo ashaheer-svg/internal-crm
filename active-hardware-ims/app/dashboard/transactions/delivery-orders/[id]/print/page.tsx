@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatDateTime } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
 
@@ -179,12 +179,12 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         <h3>Order Details</h3>
                         <div className="info-row">
                             <span className="label">Order Number:</span>
-                            <span className="value">{order.orderNumber}</span>
+                            <span className="value">{(order as any).orderNumber}</span>
                         </div>
-                        {order.invoiceNumber && (
+                        {(order as any).invoiceNumber && (
                             <div className="info-row">
                                 <span className="label">Invoice Number:</span>
-                                <span className="value">{order.invoiceNumber}</span>
+                                <span className="value">{(order as any).invoiceNumber}</span>
                             </div>
                         )}
                         <div className="info-row">
@@ -250,7 +250,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                 </div>
 
                 <div className="no-print" style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
-                    Generated on {new Date().toLocaleString()}
+                    Generated on {formatDateTime(new Date())}
                 </div>
 
                 <DocumentFooter />

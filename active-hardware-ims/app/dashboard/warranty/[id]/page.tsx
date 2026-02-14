@@ -5,7 +5,7 @@ import { notFound } from "next/navigation"
 import StatusUpdateForm from "./StatusUpdateForm"
 import ReplacementForm from "./ReplacementForm"
 import ReplacementDetails from "./ReplacementDetails"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatDateTime } from "@/lib/utils"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -28,9 +28,9 @@ async function getWarrantyClaim(id: string) {
 
     // If there's a replacement, fetch its details
     let replacementItemDetails = null
-    if (claim.replacementItemId) {
+    if ((claim as any).replacementItemId) {
         replacementItemDetails = await prisma.inventoryItem.findUnique({
-            where: { id: claim.replacementItemId },
+            where: { id: (claim as any).replacementItemId },
             include: {
                 product: true,
                 location: true
@@ -103,11 +103,11 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <p className="text-sm font-medium text-gray-500">Created</p>
-                        <p className="mt-1 text-sm text-gray-900">{new Date(claim.createdAt).toLocaleString()}</p>
+                        <p className="mt-1 text-sm text-gray-900">{formatDateTime(claim.createdAt)}</p>
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                        <p className="mt-1 text-sm text-gray-900">{new Date(claim.updatedAt).toLocaleString()}</p>
+                        <p className="mt-1 text-sm text-gray-900">{formatDateTime(claim.updatedAt)}</p>
                     </div>
                 </div>
 
@@ -173,20 +173,20 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
             </div>
 
             {/* Replacement Management */}
-            {(claim.replacementItemDetails || claim.replacementExternalInfo) && claim.replacementType ? (
+            {((claim as any).replacementItemId || (claim as any).replacementExternalInfo) ? (
                 <ReplacementDetails
                     claimId={claim.id}
-                    replacementType={claim.replacementType}
+                    replacementType={(claim as any).replacementType}
                     replacementItemDetails={claim.replacementItemDetails}
-                    replacementExternalInfo={claim.replacementExternalInfo}
-                    replacementProvidedAt={claim.replacementProvidedAt!}
-                    replacementReturnedAt={claim.replacementReturnedAt}
+                    replacementExternalInfo={(claim as any).replacementExternalInfo}
+                    replacementProvidedAt={(claim as any).replacementProvidedAt}
+                    replacementReturnedAt={(claim as any).replacementReturnedAt}
                 />
             ) : (
                 <ReplacementForm
                     claimId={claim.id}
-                    hasReplacement={!!claim.replacementItemId || !!claim.replacementExternalInfo}
-                    replacementType={claim.replacementType}
+                    hasReplacement={false}
+                    replacementType={(claim as any).replacementType}
                 />
             )}
 

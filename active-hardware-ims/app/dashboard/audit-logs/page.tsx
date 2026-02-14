@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { FileText, Search, Download, Filter } from "lucide-react"
+import { formatDateTime } from "@/lib/utils"
 
 type AuditLog = {
     id: string
@@ -134,7 +135,7 @@ export default function AuditLogsPage() {
                             filteredLogs.map((log) => (
                                 <tr key={log.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {new Date(log.createdAt).toLocaleString()}
+                                        {formatDateTime(log.createdAt)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {log.userName}

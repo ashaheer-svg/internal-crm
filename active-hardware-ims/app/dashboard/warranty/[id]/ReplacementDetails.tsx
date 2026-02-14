@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Package, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
+import { formatDate, formatDateTime } from '@/lib/utils'
 
 interface ReplacementDetailsProps {
     claimId: string
@@ -159,7 +160,7 @@ export default function ReplacementDetails({
                         <div>
                             <p className="text-sm font-medium text-gray-500">Warranty Expiry (Transferred)</p>
                             <p className="mt-1 text-sm text-gray-900">
-                                {new Date(replacementItemDetails.warrantyExpiry).toLocaleDateString()}
+                                {formatDate(replacementItemDetails.warrantyExpiry)}
                             </p>
                         </div>
                     </div>
@@ -169,7 +170,7 @@ export default function ReplacementDetails({
                 <div>
                     <p className="text-sm font-medium text-gray-500">Provided On</p>
                     <p className="mt-1 text-sm text-gray-900">
-                        {new Date(replacementProvidedAt).toLocaleString()}
+                        {formatDateTime(replacementProvidedAt)}
                     </p>
                 </div>
 
@@ -178,7 +179,7 @@ export default function ReplacementDetails({
                     <div className="p-3 bg-green-50 border border-green-200 rounded-md">
                         <p className="text-sm font-medium text-green-900">Returned On</p>
                         <p className="mt-1 text-sm text-green-800">
-                            {new Date(replacementReturnedAt).toLocaleString()}
+                            {formatDateTime(replacementReturnedAt)}
                         </p>
                     </div>
                 )}
