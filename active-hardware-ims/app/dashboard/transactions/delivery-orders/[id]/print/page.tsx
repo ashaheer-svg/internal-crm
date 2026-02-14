@@ -160,10 +160,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     Print Packing Slip
                 </button>
 
-                <DocumentHeader
-                    title="PACKING SLIP"
-                    titleNextToLogo={true}
-                />
+                <DocumentHeader title="PACKING SLIP" />
 
                 <div className="info-grid">
                     <div className="info-section">
