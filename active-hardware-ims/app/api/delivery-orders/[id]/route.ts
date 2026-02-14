@@ -171,16 +171,16 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         notes,
                         customerId,
                         customerName,
-                        saleType: body.saleType,
-                        endCustomerId: body.endCustomerId,
-                        endCustomerName: body.endCustomerName,
+                        saleType: (body as any).saleType,
+                        endCustomerId: (body as any).endCustomerId,
+                        endCustomerName: (body as any).endCustomerName,
                         orderNumber,
                         deliveryAddress,
                         invoiceNumber: invoiceNumber || null,
                         salesRepId: salesRepId !== undefined ? salesRepId : undefined,
                         invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
                         additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
-                    }
+                    } as any
                 })
 
                 // Get existing items for diffing
@@ -305,13 +305,13 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 notes,
                 deliveryAddress,
                 invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : undefined,
-                saleType: body.saleType,
-                endCustomerId: body.endCustomerId,
-                endCustomerName: body.endCustomerName,
+                saleType: (body as any).saleType,
+                endCustomerId: (body as any).endCustomerId,
+                endCustomerName: (body as any).endCustomerName,
                 invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
                 salesRepId: salesRepId !== undefined ? salesRepId : undefined,
                 additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
-            }
+            } as any
         })
         return NextResponse.json(updated)
 

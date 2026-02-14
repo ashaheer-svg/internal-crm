@@ -23,9 +23,9 @@ export async function GET(request: Request) {
         })
 
         // Manual map to safe structure
-        const safeOrders = orders.map(order => ({
+        const safeOrders = orders.map((order: any) => ({
             ...order,
-            _count: { items: order.items.length }
+            _count: { items: order.items?.length || 0 }
         }))
 
         return NextResponse.json(safeOrders)

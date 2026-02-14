@@ -63,7 +63,7 @@ export async function GET(request: Request) {
                     _count: {
                         select: { invoices: true }
                     }
-                }
+                } as any
             }),
             prisma.customer.count({ where })
         ])
@@ -128,9 +128,10 @@ export async function POST(request: Request) {
             contactName: customer.contactName,
             email: customer.email,
             phone: customer.phone,
-            salesRepId: customer.salesRepId,
+            salesRepId: (customer as any).salesRepId,
+            salesRepLegacy: (customer as any).salesRepLegacy,
             roles: { isCustomer, isSupplier, isPartner }
-        })
+        } as any)
 
         return NextResponse.json(customer)
     } catch (error: any) {

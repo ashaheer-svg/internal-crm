@@ -87,7 +87,7 @@ export async function PATCH(
                 isSupplier: isSupplier !== undefined ? isSupplier : existingCustomer.isSupplier,
                 isPartner: isPartner !== undefined ? isPartner : existingCustomer.isPartner,
                 isActive: isActive !== undefined ? isActive : existingCustomer.isActive
-            }
+            } as any
         })
 
         // Log customer update
@@ -96,14 +96,16 @@ export async function PATCH(
                 name: existingCustomer.name,
                 contactName: existingCustomer.contactName,
                 email: existingCustomer.email,
-                salesRepId: existingCustomer.salesRepId
+                salesRepId: (existingCustomer as any).salesRepId,
+                salesRepLegacy: (existingCustomer as any).salesRepLegacy
             },
             {
                 name: customer.name,
                 contactName: customer.contactName,
                 email: customer.email,
-                salesRepId: customer.salesRepId
-            }
+                salesRepId: (customer as any).salesRepId,
+                salesRepLegacy: (customer as any).salesRepLegacy
+            } as any
         )
 
         return NextResponse.json(customer)
@@ -158,8 +160,9 @@ export async function DELETE(
             name: customer.name,
             contactName: customer.contactName,
             email: customer.email,
-            salesRep: customer.salesRep
-        })
+            salesRepId: (customer as any).salesRepId,
+            salesRepLegacy: (customer as any).salesRepLegacy
+        } as any)
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
