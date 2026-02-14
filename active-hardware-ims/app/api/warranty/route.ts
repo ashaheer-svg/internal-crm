@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/auth'
+import { logCreate, logUpdate } from '@/lib/audit'
 
 export async function GET(request: Request) {
     try {
@@ -30,6 +32,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const user = await requireAuth()
         const body = await request.json()
         const { inventoryItemId, customerName, description } = body
 
@@ -38,9 +41,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        // Check if inventory item exists
+        // Check if inventory item exists and get current status
         const inventoryItem = await prisma.inventoryItem.findUnique({
-            where: { id: inventoryItemId }
+            where: { id: inventoryItemId },
+            include: { product: true }
         })
 
         if (!inventoryItem) {
@@ -65,11 +69,28 @@ export async function POST(request: Request) {
             }
         })
 
-        // Optionally update inventory item status to RMA
+        // Log warranty claim creation
+        await logCreate('WARRANTY', claim.id, user.id, user.name, {
+            claimId: claim.id,
+            serialNumber: inventoryItem.serialNumber,
+            productName: inventoryItem.product.name,
+            customerName,
+            description,
+            status: 'PENDING'
+        })
+
+        // Update inventory item status to RMA and log the change
+        const previousStatus = inventoryItem.status
         await prisma.inventoryItem.update({
             where: { id: inventoryItemId },
             data: { status: 'RMA' }
         })
+
+        // Log inventory status change
+        await logUpdate('INVENTORY', inventoryItemId, user.id, user.name,
+            { status: previousStatus, serialNumber: inventoryItem.serialNumber },
+            { status: 'RMA', reason: 'Warranty claim created' }
+        )
 
         return NextResponse.json(claim)
     } catch (error) {
