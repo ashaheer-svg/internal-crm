@@ -39,6 +39,8 @@ export async function GET(request: Request) {
         }
 
         // 2. Find associated Transaction Logs
+        console.log("Found item:", item.id);
+
         // We look for logs that reference this serial number OR the specific item ID
         const logs = await prisma.transactionLog.findMany({
             where: {
@@ -60,7 +62,11 @@ export async function GET(request: Request) {
         }));
 
         // If it's a Delivery Order sale, ensure we have a "SOLD" event represented even if logs are missing (for older data)
-        const deliveryOrder = item.deliveryOrderItem?.deliveryOrder;
+        // Check if deliveryOrderItem is an array or object safely
+        const deliveryOrderItem = Array.isArray(item.deliveryOrderItem) ? item.deliveryOrderItem[0] : item.deliveryOrderItem;
+        const deliveryOrder = deliveryOrderItem?.deliveryOrder;
+
+        console.log("Delivery Order found:", deliveryOrder ? deliveryOrder.orderNumber : "None");
 
         const result = {
             item: {

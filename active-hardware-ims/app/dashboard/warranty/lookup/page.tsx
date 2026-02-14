@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User } from "lucide-react"
+import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User, Printer } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 
@@ -92,7 +92,7 @@ export default function WarrantyLookupPage() {
             </div>
 
             {/* Search Box */}
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-white shadow rounded-lg p-6 print:hidden">
                 <form onSubmit={handleSearch} className="flex gap-4">
                     <div className="relative flex-grow">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,9 +131,9 @@ export default function WarrantyLookupPage() {
 
             {/* Results */}
             {result && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:block print:space-y-6">
                     {/* Left Col: Product & Status */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-6 print:mb-6">
                         {/* Product Card */}
                         <div className="bg-white shadow rounded-lg overflow-hidden">
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -231,8 +231,15 @@ export default function WarrantyLookupPage() {
                                 <FileText className="h-5 w-5 text-gray-500" />
                                 History Log
                             </h3>
+                            <button
+                                onClick={() => window.print()}
+                                className="print:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                                title="Print Warranty Report"
+                            >
+                                <Printer className="w-5 h-5" />
+                            </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 max-h-[600px]">
+                        <div className="flex-1 overflow-y-auto p-6 max-h-[600px] print:max-h-none print:overflow-visible">
                             {result.history.length === 0 ? (
                                 <p className="text-sm text-gray-500 italic text-center py-4">No history logged.</p>
                             ) : (
