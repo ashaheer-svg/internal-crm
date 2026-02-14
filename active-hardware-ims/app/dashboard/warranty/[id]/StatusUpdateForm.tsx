@@ -13,10 +13,11 @@ export default function StatusUpdateForm({ claimId, currentStatus }: StatusUpdat
     const [loading, setLoading] = useState(false)
 
     const statusFlow = {
-        'PENDING': 'SENT_TO_VENDOR',
-        'SENT_TO_VENDOR': 'REPAIRED',
-        'REPAIRED': 'RETURNED',
-        'RETURNED': null
+        'PENDING': 'IN_PROGRESS',
+        'IN_PROGRESS': 'AWAITING_SUPPLIER',
+        'AWAITING_SUPPLIER': 'RESOLVED',
+        'RESOLVED': 'CLOSED',
+        'CLOSED': null
     }
 
     const nextStatus = statusFlow[currentStatus as keyof typeof statusFlow]
@@ -24,12 +25,14 @@ export default function StatusUpdateForm({ claimId, currentStatus }: StatusUpdat
     const getNextStatusLabel = (status: string | null) => {
         if (!status) return null
         switch (status) {
-            case 'SENT_TO_VENDOR':
-                return 'Send to Vendor'
-            case 'REPAIRED':
-                return 'Mark as Repaired'
-            case 'RETURNED':
-                return 'Mark as Returned'
+            case 'IN_PROGRESS':
+                return 'Start Working on Claim'
+            case 'AWAITING_SUPPLIER':
+                return 'Send to Supplier'
+            case 'RESOLVED':
+                return 'Mark as Resolved'
+            case 'CLOSED':
+                return 'Close Claim'
             default:
                 return status
         }
@@ -64,7 +67,7 @@ export default function StatusUpdateForm({ claimId, currentStatus }: StatusUpdat
         return (
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
                 <p className="text-sm text-green-800">
-                    ✅ This claim has been completed and returned to the customer.
+                    ✅ This claim has been closed.
                 </p>
             </div>
         )

@@ -150,7 +150,7 @@ model InventoryItem {
   product         Product  @relation(fields: [productId], references: [id])
   locationId      String
   location        Location @relation(fields: [locationId], references: [id])
-  status          String   // AVAILABLE, RESERVED, DEFECTIVE, SOLD, RMA
+  status          String   // AVAILABLE, RESERVED, DEFECTIVE, SOLD, RMA, WARRANTY_REPLACED, LOANED
   unitCost        Float    @default(0) // Cost per unit for average costing
   warrantyExpiry  DateTime?
   createdAt       DateTime @default(now())
@@ -179,7 +179,19 @@ model WarrantyClaim {
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
   customerName    String
   description     String
-  status          String   // PENDING, SENT_TO_VENDOR, REPAIRED, RETURNED
+  status          String   // PENDING, IN_PROGRESS, AWAITING_SUPPLIER, RESOLVED, CLOSED
+  
+  // Replacement tracking
+  replacementType        String?  // TEMPORARY, PERMANENT, NONE
+  replacementItemId      String?  // ID of replacement inventory item
+  replacementProvidedAt  DateTime?
+  replacementReturnedAt  DateTime? // For temporary replacements
+  
+  // Resolution
+  resolution      String?  // Description of how claim was resolved
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

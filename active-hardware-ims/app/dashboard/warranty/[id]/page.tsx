@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft, Package, User, FileText, Clock } from "lucide-react"
 import { notFound } from "next/navigation"
 import StatusUpdateForm from "./StatusUpdateForm"
+import ReplacementForm from "./ReplacementForm"
+import ReplacementDetails from "./ReplacementDetails"
 import { formatDate } from "@/lib/utils"
 
 interface PageProps {
@@ -10,7 +12,7 @@ interface PageProps {
 }
 
 async function getWarrantyClaim(id: string) {
-    return await prisma.warrantyClaim.findUnique({
+    const claim = await prisma.warrantyClaim.findUnique({
         where: { id },
         include: {
             inventoryItem: {
@@ -21,6 +23,22 @@ async function getWarrantyClaim(id: string) {
             }
         }
     })
+
+    if (!claim) return null
+
+    // If there's a replacement, fetch its details
+    let replacementItemDetails = null
+    if (claim.replacementItemId) {
+        replacementItemDetails = await prisma.inventoryItem.findUnique({
+            where: { id: claim.replacementItemId },
+            include: {
+                product: true,
+                location: true
+            }
+        })
+    }
+
+    return { ...claim, replacementItemDetails }
 }
 
 export default async function WarrantyClaimDetailPage({ params }: PageProps) {
@@ -35,11 +53,13 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
         switch (status) {
             case 'PENDING':
                 return 'bg-yellow-100 text-yellow-800'
-            case 'SENT_TO_VENDOR':
+            case 'IN_PROGRESS':
                 return 'bg-blue-100 text-blue-800'
-            case 'REPAIRED':
+            case 'AWAITING_SUPPLIER':
+                return 'bg-orange-100 text-orange-800'
+            case 'RESOLVED':
                 return 'bg-green-100 text-green-800'
-            case 'RETURNED':
+            case 'CLOSED':
                 return 'bg-gray-100 text-gray-800'
             default:
                 return 'bg-gray-100 text-gray-800'
@@ -48,8 +68,10 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case 'SENT_TO_VENDOR':
-                return 'Sent to Vendor'
+            case 'IN_PROGRESS':
+                return 'In Progress'
+            case 'AWAITING_SUPPLIER':
+                return 'Awaiting Supplier'
             default:
                 return status.charAt(0) + status.slice(1).toLowerCase()
         }
@@ -149,6 +171,23 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                 </div>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{claim.description}</p>
             </div>
+
+            {/* Replacement Management */}
+            {claim.replacementItemDetails && claim.replacementType ? (
+                <ReplacementDetails
+                    claimId={claim.id}
+                    replacementType={claim.replacementType}
+                    replacementItemDetails={claim.replacementItemDetails}
+                    replacementProvidedAt={claim.replacementProvidedAt!}
+                    replacementReturnedAt={claim.replacementReturnedAt}
+                />
+            ) : (
+                <ReplacementForm
+                    claimId={claim.id}
+                    hasReplacement={!!claim.replacementItemId}
+                    replacementType={claim.replacementType}
+                />
+            )}
 
             {/* Status Timeline */}
             <div className="bg-white shadow sm:rounded-lg p-6">

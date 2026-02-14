@@ -78,11 +78,13 @@ export default function WarrantyPage() {
         switch (status) {
             case 'PENDING':
                 return 'bg-yellow-100 text-yellow-800'
-            case 'SENT_TO_VENDOR':
+            case 'IN_PROGRESS':
                 return 'bg-blue-100 text-blue-800'
-            case 'REPAIRED':
+            case 'AWAITING_SUPPLIER':
+                return 'bg-orange-100 text-orange-800'
+            case 'RESOLVED':
                 return 'bg-green-100 text-green-800'
-            case 'RETURNED':
+            case 'CLOSED':
                 return 'bg-gray-100 text-gray-800'
             default:
                 return 'bg-gray-100 text-gray-800'
@@ -91,8 +93,10 @@ export default function WarrantyPage() {
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case 'SENT_TO_VENDOR':
-                return 'Sent to Vendor'
+            case 'IN_PROGRESS':
+                return 'In Progress'
+            case 'AWAITING_SUPPLIER':
+                return 'Awaiting Supplier'
             default:
                 return status.charAt(0) + status.slice(1).toLowerCase()
         }
@@ -101,9 +105,10 @@ export default function WarrantyPage() {
     const statusCounts = {
         all: claims.length,
         PENDING: claims.filter(c => c.status === 'PENDING').length,
-        SENT_TO_VENDOR: claims.filter(c => c.status === 'SENT_TO_VENDOR').length,
-        REPAIRED: claims.filter(c => c.status === 'REPAIRED').length,
-        RETURNED: claims.filter(c => c.status === 'RETURNED').length,
+        IN_PROGRESS: claims.filter(c => c.status === 'IN_PROGRESS').length,
+        AWAITING_SUPPLIER: claims.filter(c => c.status === 'AWAITING_SUPPLIER').length,
+        RESOLVED: claims.filter(c => c.status === 'RESOLVED').length,
+        CLOSED: claims.filter(c => c.status === 'CLOSED').length,
     }
 
     if (loading) {
@@ -171,22 +176,28 @@ export default function WarrantyPage() {
                         Pending ({statusCounts.PENDING})
                     </button>
                     <button
-                        onClick={() => setActiveTab('SENT_TO_VENDOR')}
-                        className={`${activeTab === 'SENT_TO_VENDOR' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                        onClick={() => setActiveTab('IN_PROGRESS')}
+                        className={`${activeTab === 'IN_PROGRESS' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Sent to Vendor ({statusCounts.SENT_TO_VENDOR})
+                        In Progress ({statusCounts.IN_PROGRESS})
                     </button>
                     <button
-                        onClick={() => setActiveTab('REPAIRED')}
-                        className={`${activeTab === 'REPAIRED' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                        onClick={() => setActiveTab('AWAITING_SUPPLIER')}
+                        className={`${activeTab === 'AWAITING_SUPPLIER' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Repaired ({statusCounts.REPAIRED})
+                        Awaiting Supplier ({statusCounts.AWAITING_SUPPLIER})
                     </button>
                     <button
-                        onClick={() => setActiveTab('RETURNED')}
-                        className={`${activeTab === 'RETURNED' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                        onClick={() => setActiveTab('RESOLVED')}
+                        className={`${activeTab === 'RESOLVED' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Returned ({statusCounts.RETURNED})
+                        Resolved ({statusCounts.RESOLVED})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('CLOSED')}
+                        className={`${activeTab === 'CLOSED' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                    >
+                        Closed ({statusCounts.CLOSED})
                     </button>
                 </nav>
             </div>
