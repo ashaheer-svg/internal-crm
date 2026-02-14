@@ -10,6 +10,7 @@ type Customer = {
     email?: string
     phone?: string
     address?: string
+    salesRepId?: string | null
 }
 
 type CustomerSelectorProps = {

@@ -59,6 +59,7 @@ export async function GET(request: Request) {
                 skip,
                 take: limit,
                 include: {
+                    salesRep: true,
                     _count: {
                         select: { invoices: true }
                     }
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { name, contactName, email, phone, address, taxId, salesRep, notes, isCustomer, isSupplier, isPartner } = body
+        const { name, contactName, email, phone, address, taxId, salesRepLegacy, notes, isCustomer, isSupplier, isPartner, salesRepId } = body
 
         if (!name) {
             return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
@@ -111,7 +112,8 @@ export async function POST(request: Request) {
                 phone,
                 address,
                 taxId,
-                salesRep,
+                salesRepLegacy,
+                salesRepId,
                 notes,
                 isCustomer: isCustomer || false,
                 isSupplier: isSupplier || false,
@@ -126,7 +128,7 @@ export async function POST(request: Request) {
             contactName: customer.contactName,
             email: customer.email,
             phone: customer.phone,
-            salesRep: customer.salesRep,
+            salesRepId: customer.salesRepId,
             roles: { isCustomer, isSupplier, isPartner }
         })
 

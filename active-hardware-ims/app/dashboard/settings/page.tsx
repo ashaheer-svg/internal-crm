@@ -53,8 +53,14 @@ const settingsLinks = [
     {
         name: "Categories",
         href: "/dashboard/settings/categories",
-        icon: FileText, // You might want to import a specific icon like 'Tag' or 'List'
+        icon: FileText,
         description: "Manage product categories"
+    },
+    {
+        name: "Sales Representatives",
+        href: "/dashboard/settings/sales-reps",
+        icon: Users,
+        description: "Manage sales representatives"
     },
     {
         name: "Cost Adjustment",

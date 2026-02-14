@@ -64,7 +64,7 @@ model Customer {
   phone       String?
   address     String?
   taxId       String?  // Tax/VAT ID
-  salesRep    String?  // Sales representative
+  salesRepLegacy String?  // Legacy Sales representative (string)
   notes       String?
   // Roles (Multi-select)
   isCustomer  Boolean  @default(false) // End Customer
@@ -74,11 +74,28 @@ model Customer {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  salesRepId  String?
+  salesRep    SalesRep? @relation(fields: [salesRepId], references: [id])
+
   invoices    Invoice[]
   deliveryOrders DeliveryOrder[]
   endCustomerDeliveryOrders DeliveryOrder[] @relation("EndCustomer")
   deliveryAddresses DeliveryAddress[]
   employees   PartnerEmployee[]
+}
+
+model SalesRep {
+  id          String   @id @default(uuid())
+  name        String
+  email       String?
+  phone       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customers      Customer[]
+  deliveryOrders DeliveryOrder[]
 }
 
 model PartnerEmployee {
@@ -366,6 +383,10 @@ model DeliveryOrder {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   isActive      Boolean  @default(true)
+
+  salesRepId    String?
+  salesRep      SalesRep? @relation(fields: [salesRepId], references: [id])
+
   items         DeliveryOrderItem[]
 }
 

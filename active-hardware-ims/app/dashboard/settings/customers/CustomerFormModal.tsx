@@ -17,7 +17,9 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
     const [phone, setPhone] = useState(customer?.phone || "")
     const [address, setAddress] = useState(customer?.address || "")
     const [taxId, setTaxId] = useState(customer?.taxId || "")
-    const [salesRep, setSalesRep] = useState(customer?.salesRep || "")
+    const [salesRepLegacy, setSalesRepLegacy] = useState(customer?.salesRepLegacy || "")
+    const [salesRepId, setSalesRepId] = useState(customer?.salesRepId || "")
+    const [salesReps, setSalesReps] = useState<any[]>([])
     const [notes, setNotes] = useState(customer?.notes || "")
 
     // Multi-role state
@@ -45,7 +47,20 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
         if (customer?.id) {
             fetchAddresses()
         }
+        fetchSalesReps()
     }, [customer])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch("/api/sales-reps")
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data.filter((r: any) => r.isActive))
+            }
+        } catch (e) {
+            console.error("Failed to fetch sales reps")
+        }
+    }
 
     async function fetchAddresses() {
         if (!customer?.id) return
@@ -151,7 +166,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name, contactName, email, phone, address, taxId, salesRep, notes,
+                    name, contactName, email, phone, address, taxId, salesRepLegacy, salesRepId, notes,
                     isCustomer, isSupplier, isPartner
                 })
             })
@@ -294,12 +309,16 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Sales Rep</label>
-                                    <input
-                                        type="text"
-                                        value={salesRep}
-                                        onChange={(e) => setSalesRep(e.target.value)}
+                                    <select
+                                        value={salesRepId}
+                                        onChange={(e) => setSalesRepId(e.target.value)}
                                         className={inputClass}
-                                    />
+                                    >
+                                        <option value="">Select Sales Rep</option>
+                                        {salesReps.map(rep => (
+                                            <option key={rep.id} value={rep.id}>{rep.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 

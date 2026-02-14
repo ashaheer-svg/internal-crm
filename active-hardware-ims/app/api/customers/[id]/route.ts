@@ -19,7 +19,8 @@ export async function GET(
                 invoices: {
                     orderBy: { createdAt: 'desc' },
                     take: 10
-                }
+                },
+                salesRep: true
             }
         })
 
@@ -46,7 +47,7 @@ export async function PATCH(
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { name, contactName, email, phone, address, taxId, salesRep, notes, isCustomer, isSupplier, isPartner, isActive } = body
+        const { name, contactName, email, phone, address, taxId, salesRepLegacy, notes, isCustomer, isSupplier, isPartner, isActive, salesRepId } = body
 
         // Get existing customer for audit log
         const existingCustomer = await prisma.customer.findUnique({
@@ -79,7 +80,8 @@ export async function PATCH(
                 phone,
                 address,
                 taxId,
-                salesRep,
+                salesRepLegacy,
+                salesRepId,
                 notes,
                 isCustomer: isCustomer !== undefined ? isCustomer : existingCustomer.isCustomer,
                 isSupplier: isSupplier !== undefined ? isSupplier : existingCustomer.isSupplier,
@@ -94,13 +96,13 @@ export async function PATCH(
                 name: existingCustomer.name,
                 contactName: existingCustomer.contactName,
                 email: existingCustomer.email,
-                salesRep: existingCustomer.salesRep
+                salesRepId: existingCustomer.salesRepId
             },
             {
                 name: customer.name,
                 contactName: customer.contactName,
                 email: customer.email,
-                salesRep: customer.salesRep
+                salesRepId: customer.salesRepId
             }
         )
 

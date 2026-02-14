@@ -14,7 +14,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
                         product: true,
                         reservedItems: true // Include reserved serials
                     }
-                }
+                },
+                salesRep: true
             }
         })
 
@@ -101,7 +102,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress, invoiceValue, additionalCosts, invoiceNumber } = body
+        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress, invoiceValue, additionalCosts, invoiceNumber, salesRepId } = body
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
@@ -176,6 +177,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         orderNumber,
                         deliveryAddress,
                         invoiceNumber: invoiceNumber || null,
+                        salesRepId: salesRepId !== undefined ? salesRepId : undefined,
                         invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
                         additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
                     }
@@ -307,6 +309,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 endCustomerId: body.endCustomerId,
                 endCustomerName: body.endCustomerName,
                 invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
+                salesRepId: salesRepId !== undefined ? salesRepId : undefined,
                 additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
             }
         })

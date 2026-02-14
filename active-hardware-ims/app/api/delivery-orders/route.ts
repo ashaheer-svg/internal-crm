@@ -17,7 +17,8 @@ export async function GET(request: Request) {
                 // _count: {
                 //    select: { items: true }
                 // }
-                items: true // Temporarily fetch items to get count in JS if needed
+                items: true,
+                salesRep: true
             }
         })
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     try {
         await requireAuth()
         const body = await request.json()
-        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber } = body
+        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId } = body
 
         if (!orderNumber || !customerName) {
             return NextResponse.json({ error: 'Order Number and Customer Name are required' }, { status: 400 })
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
                     deliveryAddress: body.deliveryAddress,
                     invoiceValue: Number(body.invoiceValue) || 0,
                     invoiceNumber: invoiceNumber || null,
+                    salesRepId: salesRepId || null,
                     additionalCosts: Number(body.additionalCosts) || 0,
                     notes,
                     status: 'DRAFT',
