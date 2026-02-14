@@ -42,7 +42,8 @@ export default function NewWarrantyClaimPage() {
     async function searchInventory() {
         setSearching(true)
         try {
-            const res = await fetch('/api/inventory/available')
+            // Fetch inventory items that could have warranty claims (SOLD, DELIVERED, etc.)
+            const res = await fetch('/api/inventory?status=SOLD,DELIVERED,RMA')
             const data = await res.json()
 
             const filtered = data.filter((item: InventoryItem) =>
@@ -53,6 +54,7 @@ export default function NewWarrantyClaimPage() {
             setInventoryItems(filtered)
         } catch (error) {
             console.error('Failed to search inventory:', error)
+            setInventoryItems([])
         } finally {
             setSearching(false)
         }
