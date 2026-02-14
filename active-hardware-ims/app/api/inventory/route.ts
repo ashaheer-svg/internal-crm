@@ -14,7 +14,11 @@ export async function GET(request: Request) {
         const where: any = {}
         if (productId) where.productId = productId
         if (locationId) where.locationId = locationId
-        if (status) where.status = status
+        if (status) {
+            // Handle comma-separated status values (e.g., "SOLD,DELIVERED,RMA")
+            const statuses = status.split(',').map(s => s.trim())
+            where.status = { in: statuses }
+        }
         if (serialNumber) where.serialNumber = { contains: serialNumber }
 
         const items = await prisma.inventoryItem.findMany({
