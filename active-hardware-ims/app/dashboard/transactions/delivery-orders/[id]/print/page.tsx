@@ -160,7 +160,10 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     Print Packing Slip
                 </button>
 
-                <DocumentHeader title="PACKING SLIP" subtitle="Warehouse & Logistics Check" />
+                <DocumentHeader
+                    title="PACKING SLIP"
+                    titleNextToLogo={true}
+                />
 
                 <div className="info-grid">
                     <div className="info-section">
@@ -168,7 +171,11 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>
                             {order.customerName}
                         </div>
-                        {/* Address would go here if we had it in the schema */}
+                        {order.deliveryAddress && (
+                            <div style={{ fontSize: '14px', color: '#444', whiteSpace: 'pre-wrap' }}>
+                                {order.deliveryAddress}
+                            </div>
+                        )}
                     </div>
 
                     <div className="info-section">

@@ -3,9 +3,10 @@ import Image from 'next/image'
 interface DocumentHeaderProps {
     title: string
     subtitle?: string
+    titleNextToLogo?: boolean
 }
 
-export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps) {
+export default function DocumentHeader({ title, subtitle, titleNextToLogo }: DocumentHeaderProps) {
     return (
         <div className="header flex justify-between items-center border-b-[3px] border-blue-600 pb-6 mb-10">
             <div className="flex items-center">
@@ -18,7 +19,14 @@ export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps)
                         priority
                     />
                 </div>
-                {subtitle && (
+                {titleNextToLogo && (
+                    <div className="ml-8 border-l-2 border-gray-200 pl-8 flex flex-col justify-center">
+                        <div className="px-4 py-1 bg-blue-600 text-white font-black text-2xl tracking-tighter uppercase">
+                            {title}
+                        </div>
+                    </div>
+                )}
+                {subtitle && !titleNextToLogo && (
                     <div className="ml-8 border-l-2 border-gray-200 pl-8 flex flex-col justify-center">
                         <span className="text-blue-600 font-black tracking-[0.2em] text-[12px] uppercase">
                             {subtitle}
@@ -27,9 +35,11 @@ export default function DocumentHeader({ title, subtitle }: DocumentHeaderProps)
                 )}
             </div>
             <div className="text-right flex flex-col items-end">
-                <div className="px-6 py-2 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase mb-2">
-                    {title}
-                </div>
+                {!titleNextToLogo && (
+                    <div className="px-6 py-2 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase mb-2">
+                        {title}
+                    </div>
+                )}
                 <div className="text-[10px] text-gray-400 font-bold tracking-widest">
                     OFFICIAL DOCUMENT <span className="mx-2 text-gray-300">|</span> {new Date().toLocaleDateString()}
                 </div>
