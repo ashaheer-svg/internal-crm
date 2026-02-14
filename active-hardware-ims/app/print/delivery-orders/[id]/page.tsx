@@ -19,7 +19,8 @@ async function getOrder(id: string) {
                     product: true,
                     reservedItems: true
                 }
-            }
+            },
+            salesRep: true
         }
     })
 }
@@ -183,6 +184,12 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                             <span className="label">Date:</span>
                             <span className="value">{new Date(order.createdAt).toLocaleDateString()}</span>
                         </div>
+                        {order.salesRep && (
+                            <div className="info-row">
+                                <span className="label">Sales Rep:</span>
+                                <span className="value">{order.salesRep.name}</span>
+                            </div>
+                        )}
                         <div className="info-row">
                             <span className="label">Status:</span>
                             <span className="value">{order.status}</span>

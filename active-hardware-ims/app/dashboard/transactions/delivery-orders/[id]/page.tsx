@@ -47,6 +47,11 @@ type DeliveryOrder = {
     notes: string | null
     createdAt: string
     isActive: boolean
+    salesRepId?: string | null
+    salesRep?: {
+        id: string
+        name: string
+    } | null
     items: DeliveryOrderItem[]
 }
 
@@ -385,6 +390,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Delivery Address</p>
                                     <p className="text-gray-600 whitespace-pre-wrap">{order.deliveryAddress}</p>
+                                </div>
+                            )}
+                            {order.salesRep && (
+                                <div className="pt-3 border-t">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Sales Representative</p>
+                                    <p className="text-gray-900 font-medium">{order.salesRep.name}</p>
                                 </div>
                             )}
                             {order.notes && (

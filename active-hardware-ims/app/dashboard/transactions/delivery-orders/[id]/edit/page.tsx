@@ -30,6 +30,8 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
     const [invoiceValue, setInvoiceValue] = useState<string>("")
     const [invoiceNumber, setInvoiceNumber] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
+    const [salesRepId, setSalesRepId] = useState<string>("")
+    const [salesReps, setSalesReps] = useState<any[]>([])
 
     // Items State
     const [items, setItems] = useState<any[]>([])
@@ -80,6 +82,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 setInvoiceValue(data.invoiceValue ? String(data.invoiceValue) : "")
                 setInvoiceNumber(data.invoiceNumber || "")
                 setAdditionalCosts(data.additionalCosts ? String(data.additionalCosts) : "")
+                setSalesRepId(data.salesRepId || "")
 
                 // Fetch Addresses based on context
                 // If Partner sale, check where address likely came from?
@@ -115,7 +118,20 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
             }
         }
         loadOrder()
+        fetchSalesReps()
     }, [id])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch("/api/sales-reps")
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data.filter((r: any) => r.isActive))
+            }
+        } catch (error) {
+            console.error("Failed to fetch sales reps")
+        }
+    }
 
     // --- Same Handlers as New Page ---
 
@@ -246,6 +262,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 invoiceValue: Number(invoiceValue),
                 invoiceNumber,
                 additionalCosts: Number(additionalCosts),
+                salesRepId: salesRepId || null,
                 notes,
                 items: items.map(i => ({
                     id: i.id, // Send ID if it exists
@@ -412,21 +429,26 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 />
                             </div>
                             <div className="sm:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>
-                                <div className="relative mt-1 rounded-md shadow-sm">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
-                                    </div>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={additionalCosts}
-                                        onChange={(e) => setAdditionalCosts(e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                                        placeholder="0.00"
-                                    />
-                                </div>
+                                <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                                <select
+                                    value={salesRepId}
+                                    onChange={(e) => setSalesRepId(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="">Select Sales Rep</option>
+                                    {salesReps.map(rep => (
+                                        <option key={rep.id} value={rep.id}>{rep.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Notes (Summary)</label>
+                                <textarea
+                                    className="w-full text-sm border rounded-md p-2 h-10 resize-none mt-1"
+                                    placeholder="Order notes..."
+                                    value={notes}
+                                    onChange={e => setNotes(e.target.value)}
+                                />
                             </div>
 
                             {/* Delivery Address Selection */}

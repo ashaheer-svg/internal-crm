@@ -41,6 +41,8 @@ export default function NewDeliveryOrderPage() {
     const [invoiceValue, setInvoiceValue] = useState<string>("")
     const [invoiceNumber, setInvoiceNumber] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<string>("")
+    const [salesRepId, setSalesRepId] = useState<string>("")
+    const [salesReps, setSalesReps] = useState<any[]>([])
 
     // Address Selection
     const [availableAddresses, setAvailableAddresses] = useState<any[]>([])
@@ -71,6 +73,22 @@ export default function NewDeliveryOrderPage() {
         setDeliveryAddress("")
     }
 
+    useEffect(() => {
+        fetchSalesReps()
+    }, [])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch("/api/sales-reps")
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data.filter((r: any) => r.isActive))
+            }
+        } catch (error) {
+            console.error("Failed to fetch sales reps")
+        }
+    }
+
     // Effect to update addresses when source changes or relevant customer changes
     useEffect(() => {
         if (saleType === "DIRECT") {
@@ -99,6 +117,11 @@ export default function NewDeliveryOrderPage() {
             // If Direct Sale, this is also the Ship To customer, so fetch addresses
             if (saleType === "DIRECT") {
                 fetchAddresses(customer.id)
+            }
+
+            // Auto-populate Sales Rep
+            if (customer.salesRepId) {
+                setSalesRepId(customer.salesRepId)
             }
         } else {
             setSelectedCustomer(null)
@@ -261,6 +284,7 @@ export default function NewDeliveryOrderPage() {
                 invoiceValue: Number(invoiceValue),
                 invoiceNumber,
                 additionalCosts: Number(additionalCosts),
+                salesRepId: salesRepId || null,
                 notes,
                 items
             }
@@ -421,10 +445,23 @@ export default function NewDeliveryOrderPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="sm:col-span-2">
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                                <select
+                                    value={salesRepId}
+                                    onChange={(e) => setSalesRepId(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="">Select Sales Rep</option>
+                                    {salesReps.map(rep => (
+                                        <option key={rep.id} value={rep.id}>{rep.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Notes</label>
                                 <textarea
-                                    rows={2}
+                                    rows={1}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
