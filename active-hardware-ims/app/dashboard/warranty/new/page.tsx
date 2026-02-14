@@ -61,10 +61,13 @@ export default function NewWarrantyClaimPage() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
-        if (!selectedItem || !selectedCustomer || !description) {
-            alert('Please fill in all fields')
+        if (!selectedItem || !description) {
+            alert('Please select an inventory item and provide a description')
             return
         }
+
+        // Use selected customer name if available, otherwise use a default
+        const customerNameToSubmit = selectedCustomer?.name || 'Walk-in Customer'
 
         setLoading(true)
 
@@ -74,7 +77,7 @@ export default function NewWarrantyClaimPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     inventoryItemId: selectedItem.id,
-                    customerName: selectedCustomer.name,
+                    customerName: customerNameToSubmit,
                     description
                 })
             })
@@ -225,7 +228,7 @@ export default function NewWarrantyClaimPage() {
                     </Link>
                     <button
                         type="submit"
-                        disabled={loading || !selectedItem || !selectedCustomer || !description}
+                        disabled={loading || !selectedItem || !description}
                         className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Creating...' : 'Create Warranty Claim'}
