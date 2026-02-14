@@ -5,6 +5,7 @@ import { Printer } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 
 type Product = {
   id: string
@@ -69,8 +70,12 @@ export default function PriceListPage() {
   return (
     <>
       <style jsx global>{`
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
         @media print {
-          body { margin: 0; }
+          body { margin: 0; -webkit-print-color-adjust: exact; }
           .no-print { display: none !important; }
           nav { display: none !important; }
           aside { display: none !important; }
@@ -209,6 +214,7 @@ export default function PriceListPage() {
               This is a computer-generated document. Prices are subject to change without notice.
             </p>
           </div>
+          <DocumentFooter />
         </div>
       </div>
     </>

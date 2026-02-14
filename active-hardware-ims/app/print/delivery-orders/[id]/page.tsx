@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import PrintButton from "@/components/PrintButton"
 
 import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -55,10 +56,13 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
     return (
         <div className="min-h-screen bg-white text-black p-8">
             <style>{`
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
           @media print {
-            body { margin: 0; padding: 0; background: white; }
+            body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
             .no-print { display: none !important; }
-            /* Hide web layout elements if they leak through (though usually they won't if outside dashboard layout) */
             nav, header, footer, aside, .sidebar { display: none !important; }
           }
           /* Custom Print Styles */
@@ -230,6 +234,8 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                 <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
                     Generated on {new Date().toLocaleString()}
                 </div>
+
+                <DocumentFooter />
             </div>
         </div>
     )

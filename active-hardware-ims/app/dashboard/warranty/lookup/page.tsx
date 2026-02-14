@@ -5,6 +5,7 @@ import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText,
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 
 type WarrantyInfo = {
     item: {
@@ -85,7 +86,17 @@ export default function WarrantyLookupPage() {
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
-            <div>
+            <style jsx global>{`
+                @page {
+                    size: A4;
+                    margin: 15mm;
+                }
+                @media print {
+                    body { -webkit-print-color-adjust: exact; }
+                    .no-print { display: none !important; }
+                }
+            `}</style>
+            <div className="no-print">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Warranty Lookup</h1>
                 <p className="mt-1 text-sm text-gray-500">
                     Check warranty status and transaction history by serial number.
@@ -276,6 +287,7 @@ export default function WarrantyLookupPage() {
                             </div>
                         </div>
                     </div>
+                    <DocumentFooter />
                 </div>
             )}
         </div>

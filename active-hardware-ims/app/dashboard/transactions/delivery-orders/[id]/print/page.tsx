@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -50,8 +51,12 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             <head>
                 <title>Packing Slip - {order.orderNumber}</title>
                 <style>{`
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
           @media print {
-            body { margin: 0; }
+            body { margin: 0; -webkit-print-color-adjust: exact; }
             .no-print { display: none; }
           }
           body {
@@ -234,9 +239,11 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
+                <div className="no-print" style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
                     Generated on {new Date().toLocaleString()}
                 </div>
+
+                <DocumentFooter />
 
             </body>
         </html>

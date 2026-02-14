@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 
 import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -34,8 +35,12 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
       <head>
         <title>Purchase Order - {po.poNumber}</title>
         <style>{`
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
           @media print {
-            body { margin: 0; }
+            body { margin: 0; -webkit-print-color-adjust: exact; }
             .no-print { display: none; }
           }
           body {
@@ -165,10 +170,12 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
           </tbody>
         </table>
 
-        <div style={{ marginTop: '60px', paddingTop: '20px', borderTop: '1px solid #ddd', fontSize: '12px', color: '#666' }}>
+        <div className="no-print" style={{ marginTop: '60px', paddingTop: '20px', borderTop: '1px solid #ddd', fontSize: '12px', color: '#666' }}>
           <p>This is a computer-generated document. No signature is required.</p>
           <p>Generated on {new Date().toLocaleString()}</p>
         </div>
+
+        <DocumentFooter />
 
         <script dangerouslySetInnerHTML={{
           __html: `
