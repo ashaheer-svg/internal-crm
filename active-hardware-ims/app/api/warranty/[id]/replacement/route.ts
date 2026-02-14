@@ -5,13 +5,13 @@ import { logUpdate } from '@/lib/audit'
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await requireAuth()
         const body = await request.json()
         const { replacementType, replacementItemId, notes } = body
-        const claimId = params.id
+        const { id: claimId } = await params
 
         // Validate required fields
         if (!replacementType || !replacementItemId) {

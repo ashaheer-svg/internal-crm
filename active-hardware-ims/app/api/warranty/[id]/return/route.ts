@@ -5,13 +5,13 @@ import { logUpdate } from '@/lib/audit'
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await requireAuth()
         const body = await request.json()
         const { notes } = body
-        const claimId = params.id
+        const { id: claimId } = await params
 
         // Get the warranty claim
         const claim = await prisma.warrantyClaim.findUnique({
