@@ -14,14 +14,23 @@ export async function GET(request: Request) {
             where,
             orderBy: { createdAt: 'desc' },
             include: {
-                _count: {
-                    select: { items: true }
-                }
+                // _count: {
+                //    select: { items: true }
+                // }
+                items: true // Temporarily fetch items to get count in JS if needed
             }
         })
-        return NextResponse.json(orders)
+
+        // Manual map to safe structure
+        const safeOrders = orders.map(order => ({
+            ...order,
+            _count: { items: order.items.length }
+        }))
+
+        return NextResponse.json(safeOrders)
     } catch (error: any) {
         console.error("Error fetching Delivery Orders:", error)
+        console.error("Error Stack:", error.stack)
         return NextResponse.json(
             { error: error.message || 'Failed to fetch delivery orders' },
             { status: 500 }
