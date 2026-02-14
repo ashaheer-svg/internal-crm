@@ -150,6 +150,7 @@ model Product {
   invoiceItems InvoiceItem[]
   backorderItems BackorderItem[]
   deliveryOrderItems DeliveryOrderItem[]
+  grnItems        GRNItem[]
 }
 
 model Location {
@@ -233,6 +234,7 @@ model GRNItem {
   grnId           String
   grn             GoodsReceiptNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
   productId       String
+  product         Product          @relation(fields: [productId], references: [id])
   serialNumbers   String
   quantity        Int
   unitCost        Float

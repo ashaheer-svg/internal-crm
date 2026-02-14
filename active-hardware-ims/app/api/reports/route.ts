@@ -116,7 +116,7 @@ async function generateStockMovementReport(dateFilter: any) {
                 include: {
                     product: true
                 }
-            } as any
+            }
         },
         orderBy: { createdAt: 'desc' }
     })
@@ -126,13 +126,9 @@ async function generateStockMovementReport(dateFilter: any) {
         include: {
             items: {
                 include: {
-                    inventoryItem: {
-                        include: {
-                            product: true
-                        }
-                    }
+                    product: true
                 }
-            } as any
+            }
         },
         orderBy: { createdAt: 'desc' }
     })
@@ -172,13 +168,9 @@ async function generateSalesReport(dateFilter: any) {
         include: {
             items: {
                 include: {
-                    inventoryItem: {
-                        include: {
-                            product: true
-                        }
-                    }
+                    product: true
                 }
-            } as any
+            }
         },
         orderBy: { createdAt: 'desc' }
     })
