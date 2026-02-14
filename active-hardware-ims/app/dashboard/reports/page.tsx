@@ -177,14 +177,14 @@ export default function ReportsPage() {
 
                     @page {
                         size: A4;
-                        margin: 2cm;
+                        margin: 1cm;
                     }
 
                     table {
                         width: 100% !important;
                         border-collapse: collapse !important;
                         page-break-inside: auto;
-                        margin-bottom: 20px;
+                        margin-bottom: 10px;
                     }
 
                     tr {
@@ -197,19 +197,15 @@ export default function ReportsPage() {
                     }
 
                     th, td {
-                        border: 1px solid #ddd !important;
-                        padding: 8px !important;
-                        font-size: 8pt !important;
+                        border: 1px solid #ccc !important;
+                        padding: 4px !important;
+                        font-size: 7.5pt !important;
                         white-space: normal !important;
                     }
 
                     /* Ensure text is black for readability and contrast */
                     h1, h2, h3, h4, p, span, dt, dd, th, td {
                         color: black !important;
-                    }
-
-                    .print\\:block {
-                        display: block !important;
                     }
                 }
             `}} />
@@ -296,26 +292,29 @@ export default function ReportsPage() {
                 {/* Report Results */}
                 {reportData && (
                     <div className="bg-white shadow sm:rounded-lg overflow-hidden print:shadow-none print:border-none">
-                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between print:flex-col print:items-start print:gap-2">
+                        <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between print:flex-row print:items-start print:justify-between print:px-0 print:py-1 print:border-b-2 print:border-black">
                             <div>
-                                <div className="hidden print:block mb-4">
-                                    <h1 className="text-3xl font-black text-blue-600 uppercase tracking-tighter">Active Solutions</h1>
-                                    <p className="text-xs text-gray-500 font-bold">32/2-2/1 Nandimithra Place, Colombo 6, Sri Lanka.</p>
+                                <div className="hidden print:block">
+                                    <h1 className="text-lg font-black text-blue-600 uppercase tracking-tighter leading-none">Active Solutions</h1>
+                                    <p className="text-[9px] text-gray-500 font-bold leading-tight">32/2-2/1 Nandimithra Place, Colombo 6.</p>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-tight">
+                                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-tight print:text-base print:mt-1">
                                     {reportTypes.find(r => r.id === selectedReport)?.name}
                                 </h3>
-                                <div className="flex flex-col gap-0.5 mt-1">
-                                    <p className="text-sm text-gray-600 font-medium">
-                                        Period: <span className="text-gray-900">{(startDate || endDate) ? `${startDate || 'Start'} to ${endDate || 'Present'}` : 'Full History'}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                        Report Type: {selectedReport}
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                        Generated on {formatDate(new Date())}
-                                    </p>
-                                </div>
+                                <p className="text-sm text-gray-600 font-medium print:text-[10px] print:mt-0">
+                                    Period: <span className="text-gray-900">{(startDate || endDate) ? `${startDate || 'Start'} to ${endDate || 'Present'}` : 'Full History'}</span>
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-end print:pt-1">
+                                <p className="text-xs text-gray-400 no-print">
+                                    Report Type: {selectedReport}
+                                </p>
+                                <p className="text-xs text-gray-400 no-print">
+                                    Generated on {formatDate(new Date())}
+                                </p>
+                                <p className="hidden print:block text-[9px] text-gray-400 font-medium">
+                                    Generated: {formatDate(new Date())}
+                                </p>
                             </div>
                             <div className="flex gap-2 print:hidden">
                                 <button
@@ -336,15 +335,15 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Summary */}
-                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">Summary</h4>
-                            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 print:bg-white print:px-0 print:py-2 print:border-b">
+                            <h4 className="text-sm font-medium text-gray-900 mb-2 print:text-xs print:mb-1">Summary</h4>
+                            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 print:grid-cols-4 print:gap-2">
                                 {Object.entries(reportData.summary).map(([key, value]) => (
                                     <div key={key}>
-                                        <dt className="text-xs text-gray-500 uppercase tracking-wider">
+                                        <dt className="text-xs text-gray-500 uppercase tracking-wider print:text-[10px]">
                                             {key.replace(/([A-Z])/g, ' $1').trim()}
                                         </dt>
-                                        <dd className="text-sm font-semibold text-gray-900 mt-1">
+                                        <dd className="text-sm font-semibold text-gray-900 mt-1 print:text-xs print:mt-0">
                                             {typeof value === 'object'
                                                 ? JSON.stringify(value)
                                                 : typeof value === 'number' && key.toLowerCase().includes('total') && !key.toLowerCase().includes('count')
