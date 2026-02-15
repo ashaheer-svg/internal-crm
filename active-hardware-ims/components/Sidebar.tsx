@@ -21,7 +21,6 @@ import {
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
     { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
-    { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft, roles: ['ADMIN', 'MANAGER', 'WAREHOUSE', 'VIEWER'] },
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
     { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
