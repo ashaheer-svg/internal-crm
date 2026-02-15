@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
         const where = status ? { status } : {}
 
-        const claims = await prisma.warrantyClaim.findMany({
+        const claims = await (prisma.warrantyClaim as any).findMany({
             where,
             include: {
                 inventoryItem: {

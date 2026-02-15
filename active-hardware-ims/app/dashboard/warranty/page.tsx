@@ -23,9 +23,9 @@ type WarrantyClaim = {
             model: string
         }
     }
-    location: {
-        name: string
-    }
+    replacementItemId?: string | null
+    replacementExternalInfo?: string | null
+    replacementType?: string | null
 }
 
 export default function WarrantyPage() {
@@ -237,7 +237,14 @@ export default function WarrantyPage() {
                                     {claim.inventoryItem.product.brand} {claim.inventoryItem.product.name} ({claim.inventoryItem.product.category})
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {claim.inventoryItem.serialNumber}
+                                    <div className="flex flex-col">
+                                        <span>{claim.inventoryItem.serialNumber}</span>
+                                        {(claim.replacementItemId || claim.replacementExternalInfo) && (
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter bg-blue-50 px-1 rounded inline-block w-fit mt-0.5">
+                                                REPLACED
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User, Printer } from "lucide-react"
+import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User, Printer, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
@@ -35,6 +35,21 @@ type WarrantyInfo = {
         notes: string
         performedBy: string
     }>
+    replacementInfo: {
+        replacedBy: {
+            serialNumber: string | null
+            externalInfo: string | null
+            date: string
+            type: string
+            claimId: string
+        } | null
+        replaces: {
+            serialNumber: string
+            date: string
+            type: string
+            claimId: string
+        } | null
+    } | null
 }
 
 export default function WarrantyLookupPage() {
