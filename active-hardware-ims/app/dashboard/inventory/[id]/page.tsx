@@ -9,6 +9,7 @@ import StockSummary from "./StockSummary"
 
 interface PageProps {
     params: Promise<{ id: string }>
+    searchParams: Promise<{ poId?: string }>
 }
 
 async function getProduct(id: string) {
@@ -36,8 +37,9 @@ async function getLocations() {
     return await prisma.location.findMany({ select: { id: true, name: true } })
 }
 
-export default async function ProductDetailsPage({ params }: PageProps) {
+export default async function ProductDetailsPage({ params, searchParams }: PageProps) {
     const { id } = await params
+    const { poId } = await searchParams
     const product = await getProduct(id)
     const locations = await getLocations()
 
@@ -79,7 +81,7 @@ export default async function ProductDetailsPage({ params }: PageProps) {
                 <div className="max-w-3xl">
                     <h3 className="text-lg font-medium text-gray-900 mb-1">Add Inventory (Inward)</h3>
                     <p className="text-sm text-gray-500 mb-6">Add single or multiple items with serial numbers</p>
-                    <AddInventoryForm productId={product.id} locations={locations} />
+                    <AddInventoryForm productId={product.id} locations={locations} poId={poId} />
                 </div>
             </div>
         </div>

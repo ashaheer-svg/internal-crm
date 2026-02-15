@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db"
 import Link from "next/link"
-import { ArrowLeft, Printer, Package, Edit } from "lucide-react"
+import { ArrowLeft, Printer, Package, Edit, Plus } from "lucide-react"
 import { notFound } from "next/navigation"
 import { Currency } from "@/components/Currency"
 import { formatDate } from "@/lib/utils"
@@ -113,6 +113,7 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -135,6 +136,17 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {item.receivedQty} / {item.quantity}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {po.status !== 'RECEIVED' && po.status !== 'CANCELLED' && item.receivedQty < item.quantity && (
+                                        <Link
+                                            href={`/dashboard/inventory/${item.productId}?poId=${po.id}`}
+                                            className="text-blue-600 hover:text-blue-900 flex items-center justify-end gap-1"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Receive Stock
+                                        </Link>
+                                    )}
                                 </td>
                             </tr>
                         ))}

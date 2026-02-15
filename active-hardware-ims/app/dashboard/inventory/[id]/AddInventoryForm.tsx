@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, RefreshCw, FileText } from "lucide-react"
+import { Plus, RefreshCw, FileText, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 type Props = {
     productId: string
     locations: { id: string, name: string }[]
+    poId?: string
 }
 
 type PurchaseOrder = {
@@ -21,7 +23,7 @@ type PurchaseOrder = {
     }[]
 }
 
-export default function AddInventoryForm({ productId, locations }: Props) {
+export default function AddInventoryForm({ productId, locations, poId }: Props) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [serialInput, setSerialInput] = useState("")
@@ -70,6 +72,19 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                 if (poRes.ok) {
                     const data = await poRes.json()
                     setPurchaseOrders(data)
+
+                    // Auto-select PO if poId is provided from searchParams
+                    if (poId) {
+                        const po = data.find((p: PurchaseOrder) => p.id === poId)
+                        if (po) {
+                            setSelectedPoId(poId)
+                            setSupplier(po.supplier)
+                            const item = po.items.find((i: any) => i.productId === productId)
+                            if (item) {
+                                setUnitCost(item.unitCost.toString())
+                            }
+                        }
+                    }
                 }
             } catch (e) {
                 console.error("Failed to load initial data", e)
@@ -78,7 +93,7 @@ export default function AddInventoryForm({ productId, locations }: Props) {
             }
         }
         loadData()
-    }, [productId])
+    }, [productId, poId])
 
     function handlePoSelect(poId: string) {
         setSelectedPoId(poId)
@@ -189,8 +204,19 @@ export default function AddInventoryForm({ productId, locations }: Props) {
                 </div>
             )}
             {success && (
-                <div className="bg-green-50 border-l-4 border-green-400 p-3">
-                    <p className="text-sm text-green-700">{success}</p>
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 space-y-3">
+                    <p className="text-sm text-green-700 font-medium">{success}</p>
+                    {poId && (
+                        <div>
+                            <Link
+                                href={`/dashboard/transactions/purchase-orders/${poId}`}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                            >
+                                <RefreshCw className="w-3 h-3 mr-1.5 rotate-180" />
+                                Back to Purchase Order
+                            </Link>
+                        </div>
+                    )}
                 </div>
             )}
 
