@@ -167,7 +167,7 @@ export default function TransactionsPage() {
                                                                 <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                                                                     {po.status === 'DRAFT' ?
                                                                         `Qty: ${item.quantity}` :
-                                                                        `${item.receivedQty} / ${item.quantity}`
+                                                                        `${item.receivedQty.toLocaleString()} / ${item.quantity.toLocaleString()}`
                                                                     }
                                                                 </span>
                                                             </div>
@@ -267,7 +267,7 @@ export default function TransactionsPage() {
                                                         </p>
                                                     )}
                                                     <p className="flex items-center text-sm text-gray-500">
-                                                        {order._count?.items || 0} item(s)
+                                                        {order._count?.items?.toLocaleString() || 0} item(s)
                                                     </p>
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
@@ -337,7 +337,7 @@ export default function TransactionsPage() {
                                                         </p>
                                                     )}
                                                     <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                                                        {inv.items.length} item(s)
+                                                        {inv.items.length.toLocaleString()} item(s)
                                                     </p>
                                                 </div>
                                                 <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">

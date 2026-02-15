@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { FileText, Download, Printer, Calendar } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { formatCurrency } from "@/lib/format"
 import DocumentFooter from "@/components/DocumentFooter"
 
 type ReportType = 'inventory-valuation' | 'stock-movement' | 'sales' | 'purchase' | 'warranty' | 'location' | 'profitability'
@@ -348,7 +349,7 @@ export default function ReportsPage() {
                                             {typeof value === 'object'
                                                 ? JSON.stringify(value)
                                                 : typeof value === 'number' && key.toLowerCase().includes('total') && !key.toLowerCase().includes('count')
-                                                    ? `Rs. ${value.toLocaleString()}`
+                                                    ? formatCurrency(value)
                                                     : value != null ? value.toLocaleString() : 'N/A'}
                                         </dd>
                                     </div>
@@ -380,9 +381,11 @@ export default function ReportsPage() {
                                                         ? JSON.stringify(value)
                                                         : key.toLowerCase().includes('date')
                                                             ? formatDate(value as string)
-                                                            : (key.toLowerCase().includes('amount') || key.toLowerCase().includes('value') || key.toLowerCase().includes('cost'))
-                                                                ? `Rs. ${Number(value).toLocaleString()}`
-                                                                : String(value)}
+                                                            : (key.toLowerCase().includes('amount') || key.toLowerCase().includes('value') || key.toLowerCase().includes('cost') || key.toLowerCase().includes('price') || key.toLowerCase().includes('revenue') || key.toLowerCase().includes('profit'))
+                                                                ? formatCurrency(Number(value))
+                                                                : typeof value === 'number'
+                                                                    ? value.toLocaleString()
+                                                                    : String(value)}
                                                 </td>
                                             ))}
                                         </tr>

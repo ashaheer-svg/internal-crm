@@ -83,7 +83,7 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <span className="text-gray-500">Total Units</span>
-                            <span className="font-bold text-xl text-blue-600">{activeInventory.length}</span>
+                            <span className="font-bold text-xl text-blue-600">{activeInventory.length.toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t">
                             <span className="text-gray-500">Avg. Cost</span>
@@ -120,7 +120,7 @@ export default function StockSummary({ productId, inventory }: StockSummaryProps
                                     <div key={loc.id} className="bg-gradient-to-br from-blue-50 to-gray-50 rounded-lg p-4 border border-blue-100">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm font-medium text-gray-700">{loc.name}</span>
-                                            <span className="text-lg font-bold text-blue-600">{loc.count}</span>
+                                            <span className="text-lg font-bold text-blue-600">{loc.count.toLocaleString()}</span>
                                         </div>
                                         <div className="space-y-1 mb-3">
                                             <div className="flex items-center justify-between text-xs">

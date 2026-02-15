@@ -189,7 +189,7 @@ export default function PriceListPage() {
                       <Currency amount={product.resellerPrice} className="text-blue-600" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-center font-medium">
-                      {product.inventory?.length || 0} units
+                      {(product.inventory?.length || 0).toLocaleString()} units
                     </td>
                   </tr>
                 ))}

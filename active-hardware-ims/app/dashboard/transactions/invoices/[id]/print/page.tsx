@@ -4,6 +4,7 @@ import { formatDate, formatDateTime } from "@/lib/utils"
 
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import { formatCurrency } from "@/lib/format"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -207,7 +208,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
               <tr key={item.id}>
                 <td>{item.productName}</td>
                 <td>{item.serialNumber}</td>
-                <td style={{ textAlign: 'right' }}>Rs. {item.unitPrice.toFixed(2)}</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</td>
               </tr>
             ))}
           </tbody>
@@ -216,7 +217,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
         <div className="total-section">
           <div className="total-row">
             <div className="total-label">TOTAL</div>
-            <div className="total-amount">Rs. {invoice.totalAmount.toFixed(2)}</div>
+            <div className="total-amount">{formatCurrency(invoice.totalAmount)}</div>
           </div>
         </div>
 
