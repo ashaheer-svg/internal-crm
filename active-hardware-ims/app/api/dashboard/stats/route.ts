@@ -22,6 +22,10 @@ export async function GET() {
         const rmaStock = await prisma.inventoryItem.count({
             where: { status: 'RMA' }
         })
+        const totalCustomers = await prisma.customer.count({
+            where: { isActive: true }
+        })
+        const totalDeliveryOrders = await prisma.deliveryOrder.count()
 
         // Calculate total stock value
         const inventoryItems = await prisma.inventoryItem.findMany({
@@ -76,6 +80,8 @@ export async function GET() {
             soldStock,
             rmaStock,
             totalStockValue,
+            totalCustomers,
+            totalDeliveryOrders,
             pendingWarrantyClaims,
             lowStockCount: lowStockProducts.length,
             lowStockProducts: lowStockProducts.map(p => ({
@@ -115,6 +121,8 @@ export async function GET() {
             soldStock: 0,
             rmaStock: 0,
             totalStockValue: 0,
+            totalCustomers: 0,
+            totalDeliveryOrders: 0,
             pendingWarrantyClaims: 0,
             lowStockCount: 0,
             lowStockProducts: [],

@@ -10,7 +10,9 @@ import {
     DollarSign,
     TrendingUp,
     Clock,
-    FileText
+    FileText,
+    Users,
+    Truck
 } from "lucide-react"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
@@ -21,6 +23,8 @@ type DashboardStats = {
     soldStock: number
     rmaStock: number
     totalStockValue: number
+    totalCustomers: number
+    totalDeliveryOrders: number
     pendingWarrantyClaims: number
     lowStockCount: number
     lowStockProducts: Array<{
@@ -130,6 +134,22 @@ export default function DashboardPage() {
             icon: FileText,
             color: 'text-indigo-600',
             bg: 'bg-indigo-100',
+            href: '/dashboard/transactions'
+        },
+        {
+            name: 'Total Customers',
+            value: stats.totalCustomers.toString(),
+            icon: Users,
+            color: 'text-pink-600',
+            bg: 'bg-pink-100',
+            href: '/dashboard/customers'
+        },
+        {
+            name: 'Delivery Orders',
+            value: stats.totalDeliveryOrders.toString(),
+            icon: Truck,
+            color: 'text-teal-600',
+            bg: 'bg-teal-100',
             href: '/dashboard/transactions'
         },
     ]
