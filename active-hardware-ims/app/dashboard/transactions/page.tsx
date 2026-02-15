@@ -29,10 +29,27 @@ type Invoice = {
     }
 }
 
+type TransactionLog = {
+    id: string
+    type: string
+    referenceType: string | null
+    referenceId: string | null
+    productId: string | null
+    serialNumber: string | null
+    quantity: number
+    fromLocation: string | null
+    toLocation: string | null
+    unitCost: number | null
+    performedBy: string | null
+    notes: string | null
+    createdAt: string
+}
+
 export default function TransactionsPage() {
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [deliveryOrders, setDeliveryOrders] = useState<any[]>([])
+    const [transactionLogs, setTransactionLogs] = useState<TransactionLog[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
 
@@ -42,6 +59,7 @@ export default function TransactionsPage() {
     useEffect(() => {
         fetchPurchaseOrders()
         fetchInvoices()
+        fetchTransactionLogs()
     }, [])
 
     // Fetch DOs whenever toggle changes or on mount
@@ -79,6 +97,18 @@ export default function TransactionsPage() {
             console.error(error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function fetchTransactionLogs() {
+        try {
+            const res = await fetch('/api/transaction-logs')
+            if (res.ok) {
+                const data = await res.json()
+                setTransactionLogs(data)
+            }
+        } catch (error) {
+            console.error('Failed to fetch transaction logs:', error)
         }
     }
 
@@ -401,10 +431,58 @@ export default function TransactionsPage() {
                             <li>Use these logs to verify shipment dates or trace historical inventory changes.</li>
                         </ul>
                     </div>
-                    <div className="bg-white shadow sm:rounded-lg p-6">
-                        <p className="text-sm text-gray-500 text-center py-8">
-                            Transaction log viewer coming soon. All stock movements are being logged automatically.
-                        </p>
+                    <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ref</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From/To</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">By</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {transactionLogs.map((log) => (
+                                    <tr key={log.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {formatDate(log.createdAt)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs font-medium">
+                                            <span className={`px-2 py-1 rounded-full ${log.type === 'RECEIPT' ? 'bg-green-100 text-green-800' :
+                                                    log.type === 'ISSUE' ? 'bg-blue-100 text-blue-800' :
+                                                        log.type === 'TRANSFER' ? 'bg-purple-100 text-purple-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {log.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {log.referenceType ? `${log.referenceType}: ${log.referenceId}` : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                                            {log.serialNumber || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {log.fromLocation && log.toLocation ? `${log.fromLocation} → ${log.toLocation}` :
+                                                log.fromLocation ? `From: ${log.fromLocation}` :
+                                                    log.toLocation ? `To: ${log.toLocation}` : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {log.performedBy || '-'}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {transactionLogs.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
+                                            No stock movements logged yet.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
