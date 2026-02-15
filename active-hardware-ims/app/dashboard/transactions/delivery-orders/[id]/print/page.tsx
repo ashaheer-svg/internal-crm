@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
@@ -8,8 +9,31 @@ interface PageProps {
     params: Promise<{ id: string }>
 }
 
-async function getOrder(id: string) {
-    return await prisma.deliveryOrder.findUnique({
+interface DeliveryOrderWithRelations {
+    id: string
+    orderNumber: string
+    invoiceNumber: string | null
+    customerName: string
+    deliveryAddress: string | null
+    status: string
+    notes: string | null
+    createdAt: Date
+    items: {
+        id: string
+        quantity: number
+        product: {
+            name: string
+            brand: string
+            model: string
+        }
+        reservedItems: {
+            serialNumber: string
+        }[]
+    }[]
+}
+
+async function getOrder(id: string): Promise<DeliveryOrderWithRelations | null> {
+    const order = await prisma.deliveryOrder.findUnique({
         where: { id },
         include: {
             items: {
@@ -20,6 +44,7 @@ async function getOrder(id: string) {
             }
         }
     })
+    return order as DeliveryOrderWithRelations | null
 }
 
 export default async function PrintDeliveryOrderPage({ params }: PageProps) {
@@ -179,12 +204,12 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         <h3>Order Details</h3>
                         <div className="info-row">
                             <span className="label">Order Number:</span>
-                            <span className="value">{(order as any).orderNumber}</span>
+                            <span className="value">{order.orderNumber}</span>
                         </div>
-                        {(order as any).invoiceNumber && (
+                        {order.invoiceNumber && (
                             <div className="info-row">
                                 <span className="label">Invoice Number:</span>
-                                <span className="value">{(order as any).invoiceNumber}</span>
+                                <span className="value">{order.invoiceNumber}</span>
                             </div>
                         )}
                         <div className="info-row">

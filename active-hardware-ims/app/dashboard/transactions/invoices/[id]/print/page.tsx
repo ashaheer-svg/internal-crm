@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
@@ -10,14 +11,35 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-async function getInvoice(id: string) {
+interface InvoiceWithRelations {
+  id: string
+  invoiceNumber: string
+  customerName: string
+  customerEmail: string | null
+  customerPhone: string | null
+  totalAmount: number
+  status: string
+  notes: string | null
+  createdAt: Date
+  salesRep?: {
+    name: string
+  } | null
+  items: {
+    id: string
+    productName: string
+    serialNumber: string | null
+    unitPrice: number
+  }[]
+}
+
+async function getInvoice(id: string): Promise<InvoiceWithRelations | null> {
   return await prisma.invoice.findUnique({
     where: { id },
     include: {
       items: true,
       salesRep: true
     }
-  })
+  }) as any
 }
 
 export default async function PrintInvoicePage({ params }: PageProps) {

@@ -60,7 +60,46 @@ export async function GET(request: Request) {
             orderBy: { createdAt: 'desc' }
         });
 
-        // 4. Combine and format all events
+        // 4. Find Replacement Context
+        const warrantyClaims = await (prisma.warrantyClaim as any).findMany({
+            where: {
+                OR: [
+                    { inventoryItemId: item.id },
+                    { replacementItemId: item.id }
+                ]
+            },
+            include: {
+                inventoryItem: { include: { product: true } },
+                replacementItem: { include: { product: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        }) as any[];
+
+        let replacementInfo = null;
+        if (warrantyClaims.length > 0) {
+            // Check if this item was replaced (it is the original item in a claim with a replacement)
+            const wasReplacedClaim = warrantyClaims.find(c => c.inventoryItemId === item.id && (c.replacementItemId || (c as any).replacementExternalInfo));
+            // Check if this item IS a replacement (it is the replacement item in a claim)
+            const isReplacementClaim = warrantyClaims.find(c => c.replacementItemId === item.id);
+
+            replacementInfo = {
+                replacedBy: wasReplacedClaim ? {
+                    serialNumber: wasReplacedClaim.replacementItem?.serialNumber || null,
+                    externalInfo: (wasReplacedClaim as any).replacementExternalInfo || null,
+                    date: wasReplacedClaim.replacementProvidedAt,
+                    type: wasReplacedClaim.replacementType,
+                    claimId: wasReplacedClaim.id
+                } : null,
+                replaces: isReplacementClaim ? {
+                    serialNumber: isReplacementClaim.inventoryItem.serialNumber,
+                    date: isReplacementClaim.replacementProvidedAt,
+                    type: isReplacementClaim.replacementType,
+                    claimId: isReplacementClaim.id
+                } : null
+            };
+        }
+
+        // 5. Combine and format all events
         const transactionHistory = transactionLogs.map(log => ({
             id: log.id,
             type: log.type,
@@ -140,7 +179,8 @@ export async function GET(request: Request) {
                     warrantyMonths: item.product.warrantyMonths
                 }
             },
-            history: allHistory
+            history: allHistory,
+            replacementInfo
         };
 
         return NextResponse.json(result);

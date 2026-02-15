@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
@@ -10,8 +11,28 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-async function getPurchaseOrder(id: string) {
-  return await prisma.purchaseOrder.findUnique({
+interface PurchaseOrderWithRelations {
+  id: string
+  poNumber: string
+  supplier: string
+  totalAmount: number
+  status: string
+  notes: string | null
+  createdAt: Date
+  items: {
+    id: string
+    quantity: number
+    unitCost: number
+    totalCost: number
+    product: {
+      name: string
+      sku: string
+    }
+  }[]
+}
+
+async function getPurchaseOrder(id: string): Promise<PurchaseOrderWithRelations | null> {
+  const po = await prisma.purchaseOrder.findUnique({
     where: { id },
     include: {
       items: {
@@ -21,6 +42,7 @@ async function getPurchaseOrder(id: string) {
       }
     }
   })
+  return po as any
 }
 
 export default async function PrintPurchaseOrderPage({ params }: PageProps) {
