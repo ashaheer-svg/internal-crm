@@ -85,7 +85,7 @@ export default function TransactionsPage() {
     return (
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Delivery Orders</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Transactions</h1>
             </div>
 
             {/* Tab Navigation */}
@@ -121,6 +121,15 @@ export default function TransactionsPage() {
             {/* Purchase Orders Tab */}
             {activeTab === 'po' && (
                 <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-blue-900 mb-2">How to Manage Purchase Orders</h3>
+                        <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                            <li>Click <strong>"New Purchase Order"</strong> to initiate a stock receipt from a supplier.</li>
+                            <li>Select a supplier and enter the expected items and their unit costs.</li>
+                            <li>Once items arrive, open the PO and mark them as <strong>"Received"</strong>.</li>
+                            <li>Scanning or manually entering serial numbers is required during receipt to update inventory.</li>
+                        </ul>
+                    </div>
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Purchase Orders (Stock Receipts)</h2>
                         <Link
@@ -200,6 +209,15 @@ export default function TransactionsPage() {
             {/* Delivery Orders Tab (New) */}
             {activeTab === 'do' && (
                 <div className="space-y-4">
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-indigo-900 mb-2">How to Manage Delivery Orders</h3>
+                        <ul className="text-sm text-indigo-700 space-y-1 list-disc list-inside">
+                            <li>Create a <strong>Delivery Order</strong> to reserve stock for a customer shipment.</li>
+                            <li>Items added to a Delivery Order are reserved and deducted from "Available" stock.</li>
+                            <li>You can link a Delivery Order to an existing Invoice or track it independently.</li>
+                            <li>Use the <strong>"Print Packing Slip"</strong> feature for physical shipments.</li>
+                        </ul>
+                    </div>
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Main)</h2>
                         <div className="flex items-center gap-3">
@@ -293,6 +311,15 @@ export default function TransactionsPage() {
             {/* Invoices Tab */}
             {activeTab === 'invoice' && (
                 <div className="space-y-4">
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-purple-900 mb-2">How to Manage Invoices</h3>
+                        <ul className="text-sm text-purple-700 space-y-1 list-disc list-inside">
+                            <li>Create an <strong>Invoice</strong> for finalized sales and financial record-keeping.</li>
+                            <li>Saving an invoice automatically marks the selected inventory items as <strong>SOLD</strong>.</li>
+                            <li>Professional invoices can be printed or emailed directly from the invoice details view.</li>
+                            <li>Track payment status (Draft, Issued, Paid, Cancelled) to manage receivables.</li>
+                        </ul>
+                    </div>
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-medium text-gray-900">Invoices (Financial Documents)</h2>
                         <Link
@@ -365,10 +392,20 @@ export default function TransactionsPage() {
 
             {/* Transaction Log Tab */}
             {activeTab === 'log' && (
-                <div className="bg-white shadow sm:rounded-lg p-6">
-                    <p className="text-sm text-gray-500 text-center py-8">
-                        Transaction log viewer coming soon. All stock movements are being logged automatically.
-                    </p>
+                <div className="space-y-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-yellow-900 mb-2">About Transaction Logs</h3>
+                        <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+                            <li>The system automatically records every stock movement (Inward, Outward, Transfer).</li>
+                            <li>This provides a complete audit trail for Every single serial number.</li>
+                            <li>Use these logs to verify shipment dates or trace historical inventory changes.</li>
+                        </ul>
+                    </div>
+                    <div className="bg-white shadow sm:rounded-lg p-6">
+                        <p className="text-sm text-gray-500 text-center py-8">
+                            Transaction log viewer coming soon. All stock movements are being logged automatically.
+                        </p>
+                    </div>
                 </div>
             )}
         </div>
