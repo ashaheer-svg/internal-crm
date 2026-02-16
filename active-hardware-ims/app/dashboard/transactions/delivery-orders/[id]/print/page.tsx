@@ -180,10 +180,13 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
           }
         `}</style>
             </head>
+import PrintButton from "@/components/PrintButton"
+
+// ... existing code ...
+
+            </head>
             <body>
-                <button className="print-button no-print" onClick={() => window.print()}>
-                    Print Packing Slip
-                </button>
+                <PrintButton autoPrint={true} label="Print Packing Slip" />
 
                 <DocumentHeader title="PACKING SLIP" titleNextToLogo={true} />
 
@@ -281,6 +284,6 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                 <DocumentFooter />
 
             </body>
-        </html>
+        </html >
     )
 }

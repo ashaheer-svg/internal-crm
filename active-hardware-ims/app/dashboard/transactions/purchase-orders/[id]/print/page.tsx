@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
 import DocumentHeader from "@/components/DocumentHeader"
+import PrintButton from "@/components/PrintButton"
 import DocumentFooter from "@/components/DocumentFooter"
 import { formatCurrency } from "@/lib/format"
 
@@ -130,9 +131,7 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
         `}</style>
       </head>
       <body>
-        <button className="print-button no-print" onClick={() => window.print()}>
-          Print Purchase Order
-        </button>
+        <PrintButton autoPrint={true} />
 
         <DocumentHeader title="PURCHASE ORDER" subtitle="Inventory Procurement" />
 

@@ -68,7 +68,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                 await fetchNextGrn()
 
                 // 2. Fetch POs for this product
-                const poRes = await fetch(`/api/purchase-orders?productId=${productId}&status=DRAFT,PARTIAL`)
+                const poRes = await fetch(`/api/purchase-orders?productId=${productId}&status=DRAFT,SUBMITTED,PARTIAL`)
                 if (poRes.ok) {
                     const data = await poRes.json()
                     setPurchaseOrders(data)

@@ -189,10 +189,10 @@ export async function POST(request: Request) {
                         let newStatus = po.status
                         if (allReceived) {
                             newStatus = 'RECEIVED'
-                        } else if (po.status === 'DRAFT') {
-                            newStatus = 'SUBMITTED'
                         } else if (po.items.some(i => i.receivedQty > 0)) {
                             newStatus = 'PARTIAL'
+                        } else if (po.status === 'DRAFT') {
+                            newStatus = 'SUBMITTED'
                         }
 
                         // Link GRN to PO if not already

@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/db"
-import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
 import { formatCurrency } from "@/lib/format"
+import PrintButton from "@/components/PrintButton"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -164,9 +164,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
         `}</style>
       </head>
       <body>
-        <button className="print-button no-print" onClick={() => window.print()}>
-          Print Invoice
-        </button>
+        <PrintButton autoPrint={true} />
 
         <DocumentHeader title="INVOICE" subtitle="Sales Transaction Record" />
 
@@ -251,12 +249,6 @@ export default async function PrintInvoicePage({ params }: PageProps) {
 
         <DocumentFooter />
 
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Auto-print on load (optional)
-            // window.onload = function() { window.print(); }
-          `
-        }} />
       </body>
     </html>
   )
