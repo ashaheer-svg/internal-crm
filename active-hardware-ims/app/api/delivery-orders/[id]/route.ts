@@ -180,11 +180,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                 isActive: true,
                                 customerId: order.customerId,
                                 deliveryAddress: order.deliveryAddress,
-                                salesRep: order.salesRepId ? { connect: { id: order.salesRepId } } : undefined,
+                                salesRepId: order.salesRepId,
                                 items: {
                                     create: backorderItems
                                 }
-                            }
+                            } as any
                         })
 
                         // Update Original Order Items
