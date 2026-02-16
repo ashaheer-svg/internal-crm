@@ -137,7 +137,7 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
       <div className="print-container">
         <PrintButton autoPrint={true} />
 
-        <DocumentHeader title="PURCHASE ORDER" subtitle="Inventory Procurement" />
+        <DocumentHeader title="PURCHASE ORDER" hideMeta={true} />
 
         <div className="info-grid">
           <div>

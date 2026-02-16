@@ -5,9 +5,10 @@ interface DocumentHeaderProps {
     title: string
     subtitle?: string
     titleNextToLogo?: boolean
+    hideMeta?: boolean
 }
 
-export default function DocumentHeader({ title, subtitle, titleNextToLogo }: DocumentHeaderProps) {
+export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideMeta }: DocumentHeaderProps) {
     return (
         <div className="header flex justify-between items-center border-b-[3px] border-blue-600 pb-6 mb-10 h-32">
             <div className="flex items-center">
@@ -36,14 +37,16 @@ export default function DocumentHeader({ title, subtitle, titleNextToLogo }: Doc
                 )}
             </div>
             <div className="flex items-center gap-6 text-right h-full">
-                <div className="flex flex-col items-end leading-none">
-                    <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
-                        OFFICIAL DOCUMENT
-                    </span>
-                    <span className="text-[12px] text-gray-500 font-black mt-1">
-                        {formatDate(new Date())}
-                    </span>
-                </div>
+                {!hideMeta && (
+                    <div className="flex flex-col items-end leading-none">
+                        <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
+                            OFFICIAL DOCUMENT
+                        </span>
+                        <span className="text-[12px] text-gray-500 font-black mt-1">
+                            {formatDate(new Date())}
+                        </span>
+                    </div>
+                )}
                 {!titleNextToLogo && (
                     <div className="px-8 py-3 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase shadow-sm">
                         {title}
