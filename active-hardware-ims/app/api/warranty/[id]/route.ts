@@ -51,7 +51,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     try {
         const { id } = await params
         const body = await request.json()
-        const { status, resolution, notes, customerName, description } = body
+        const { status, resolution, notes, customerName, description, inventoryItemId } = body
 
         // Get current claim for audit logging
         const currentClaim = await prisma.warrantyClaim.findUnique({
@@ -74,6 +74,31 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         if (resolution !== undefined) updateData.resolution = resolution
         if (customerName) updateData.customerName = customerName
         if (description) updateData.description = description
+
+        // Validate and update inventory item if provided
+        if (inventoryItemId && inventoryItemId !== currentClaim.inventoryItemId) {
+            const inventoryItem = await prisma.inventoryItem.findUnique({
+                where: { id: inventoryItemId }
+            })
+
+            if (!inventoryItem) {
+                return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 })
+            }
+
+            // 1. Revert old item status to SOLD
+            await prisma.inventoryItem.update({
+                where: { id: currentClaim.inventoryItemId },
+                data: { status: 'SOLD' }
+            })
+
+            // 2. Set new item status to RMA
+            await prisma.inventoryItem.update({
+                where: { id: inventoryItemId },
+                data: { status: 'RMA' }
+            })
+
+            updateData.inventoryItemId = inventoryItemId
+        }
 
         // If resolving, set resolved timestamp (requires auth for resolvedBy)
         if (status === 'RESOLVED' || status === 'CLOSED') {

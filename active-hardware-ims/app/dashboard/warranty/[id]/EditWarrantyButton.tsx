@@ -10,6 +10,15 @@ type EditWarrantyButtonProps = {
         customerName: string
         description: string
         status: string
+        inventoryItem: {
+            id: string
+            serialNumber: string
+            product: {
+                name: string
+                brand: string
+                model: string
+            }
+        }
     }
 }
 

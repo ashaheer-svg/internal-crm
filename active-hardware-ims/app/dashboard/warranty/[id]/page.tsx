@@ -92,7 +92,16 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                                 id: claim.id,
                                 customerName: claim.customerName,
                                 description: claim.description,
-                                status: claim.status
+                                status: claim.status,
+                                inventoryItem: {
+                                    id: claim.inventoryItem.id,
+                                    serialNumber: claim.inventoryItem.serialNumber,
+                                    product: {
+                                        name: claim.inventoryItem.product.name,
+                                        brand: claim.inventoryItem.product.brand,
+                                        model: claim.inventoryItem.product.model
+                                    }
+                                }
                             }} />
                         </div>
                         <p className="text-sm text-gray-500">Claim ID: {claim.id}</p>
