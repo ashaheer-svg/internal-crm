@@ -18,11 +18,11 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 print:h-auto print:overflow-visible">
             <div className="hidden md:flex md:w-64 md:flex-col print:hidden">
                 <Sidebar />
             </div>
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden print:overflow-visible print:h-auto print:block">
                 <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm print:hidden">
                     <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
                     <div className="flex items-center space-x-4">
@@ -32,7 +32,7 @@ export default async function DashboardLayout({
                         </div>
                     </div>
                 </header>
-                <main className="flex-1 overflow-auto p-6">
+                <main className="flex-1 overflow-auto p-6 print:overflow-visible print:h-auto print:p-0">
                     {children}
                 </main>
             </div>

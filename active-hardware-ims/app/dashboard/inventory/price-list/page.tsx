@@ -86,8 +86,10 @@ export default function PriceListPage() {
           aside { display: none !important; }
           header { display: none !important; }
           
-          /* Ensure table fits */
+          /* Ensure table fits and breaks correctly */
           table { width: 100% !important; }
+          thead { display: table-header-group; }
+          tr { break-inside: avoid; page-break-inside: avoid; }
           th, td { font-size: 10pt !important; }
         }
       `}</style>
@@ -136,7 +138,7 @@ export default function PriceListPage() {
           )}
         </div>
 
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden print:overflow-visible print:shadow-none">
           {/* Header for print */}
           <div className="hidden print:block border-b-0 p-0">
             <DocumentHeader title="PRICE LIST" subtitle="Wholesale & Reseller Pricing" />
@@ -150,7 +152,7 @@ export default function PriceListPage() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto print:overflow-visible">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-blue-600">
                 <tr>
