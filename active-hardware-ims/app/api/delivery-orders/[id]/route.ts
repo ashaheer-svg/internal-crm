@@ -137,8 +137,78 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             // If completing (and was not completed), ensure stock is allocated/sold
             if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
                 await prisma.$transaction(async (tx) => {
-                    // Mark allocated items as SOLD and log transactions
+                    const { createBackorder } = body
+
+                    // 1. Calculate Unfulfilled Items
+                    const backorderItems = []
+                    const itemsToRemove = []
+                    const itemsToUpdate = []
+
                     for (const item of order.items) {
+                        const reservedCount = item.reservedItems.length
+                        const missingQty = item.quantity - reservedCount
+
+                        if (missingQty > 0) {
+                            if (createBackorder) {
+                                // Add to new backorder
+                                backorderItems.push({
+                                    productId: item.productId,
+                                    quantity: missingQty,
+                                    unitPrice: item.unitPrice,
+                                    isBackorder: true
+                                })
+                            }
+
+                            if (reservedCount === 0) {
+                                // Remove completely from original if nothing shipped
+                                itemsToRemove.push(item.id)
+                            } else {
+                                // Reduce quantity to match shipped amount
+                                itemsToUpdate.push({ id: item.id, quantity: reservedCount })
+                            }
+                        }
+                    }
+
+                    // 2. Process Backorder (if requested and needed)
+                    if (createBackorder && backorderItems.length > 0) {
+                        // Create New DO
+                        await tx.deliveryOrder.create({
+                            data: {
+                                orderNumber: `${order.orderNumber}-BO`,
+                                customerName: order.customerName,
+                                status: 'DRAFT',
+                                isActive: true,
+                                customerId: order.customerId,
+                                deliveryAddress: order.deliveryAddress,
+                                salesRep: order.salesRepId ? { connect: { id: order.salesRepId } } : undefined,
+                                items: {
+                                    create: backorderItems
+                                }
+                            }
+                        })
+
+                        // Update Original Order Items
+                        if (itemsToRemove.length > 0) {
+                            await tx.deliveryOrderItem.deleteMany({
+                                where: { id: { in: itemsToRemove } }
+                            })
+                        }
+                        for (const update of itemsToUpdate) {
+                            await tx.deliveryOrderItem.update({
+                                where: { id: update.id },
+                                data: { quantity: update.quantity }
+                            })
+                        }
+                    }
+
+                    // 3. Mark allocated items as SOLD and log transactions
+                    // RE-FETCH items because we might have deleted/updated them above
+                    const finalItems = await tx.deliveryOrderItem.findMany({
+                        where: { deliveryOrderId: params.id },
+                        include: { reservedItems: true }
+                    })
+
+                    for (const item of finalItems) {
                         if (item.reservedItems.length > 0) {
                             await tx.inventoryItem.updateMany({
                                 where: { deliveryOrderItemId: item.id },
@@ -162,6 +232,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                             }
                         }
                     }
+
+                    // 4. Update Status
                     await tx.deliveryOrder.update({
                         where: { id: params.id },
                         data: { status: 'COMPLETED' }
