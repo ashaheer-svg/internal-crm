@@ -26,6 +26,7 @@ type BackorderItem = {
         customerId: string
         createdAt: Date
     }
+    type?: 'DELIVERY_ORDER' | 'INVOICE'
 }
 
 export default function BackordersPage() {
@@ -200,7 +201,10 @@ export default function BackordersPage() {
                                             {group.backorders.map((backorder: BackorderItem) => (
                                                 <tr key={backorder.id} className="hover:bg-gray-50">
                                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
-                                                        <Link href={`/dashboard/transactions/invoices/${backorder.invoice.id}`} className="hover:underline">
+                                                        <Link href={backorder.type === 'DELIVERY_ORDER'
+                                                            ? `/dashboard/transactions/delivery-orders/${backorder.invoice.id}`
+                                                            : `/dashboard/transactions/invoices/${backorder.invoice.id}`}
+                                                            className="hover:underline">
                                                             {backorder.invoice.invoiceNumber}
                                                         </Link>
                                                     </td>
@@ -229,13 +233,9 @@ export default function BackordersPage() {
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm space-x-2">
                                                         <Link
-                                                            href={`/dashboard/transactions/delivery-orders/new?backorderId=${backorder.id}&customerId=${backorder.invoice.customerId || ''}&customerName=${encodeURIComponent(backorder.invoice.customerName)}&productId=${backorder.productId}&qty=${backorder.quantityOrdered - backorder.quantityFulfilled}`}
-                                                            className="text-blue-600 hover:text-blue-900 font-medium"
-                                                        >
-                                                            Allocate
-                                                        </Link>
-                                                        <Link
-                                                            href={`/dashboard/transactions/invoices/${backorder.invoice.id}`}
+                                                            href={backorder.type === 'DELIVERY_ORDER'
+                                                                ? `/dashboard/transactions/delivery-orders/${backorder.invoice.id}`
+                                                                : `/dashboard/transactions/invoices/${backorder.invoice.id}`}
                                                             className="text-gray-600 hover:text-gray-900 inline-flex items-center"
                                                         >
                                                             View
