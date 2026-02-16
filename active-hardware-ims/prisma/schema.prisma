@@ -404,6 +404,7 @@ model DeliveryOrderItem {
   quantity        Int      // Target quantity
   unitPrice       Float
   isBackorder     Boolean  @default(false)
+  quantityFulfilled Int      @default(0) // Track partial fulfillment
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

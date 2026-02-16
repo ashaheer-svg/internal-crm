@@ -69,6 +69,17 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                     }
                 })
             }
+
+            // Update quantityFulfilled on the order item
+            // We need to count total reserved items after this operation
+            const totalReserved = (currentIds.length - idsToRemove.length) + idsToAdd.length
+
+            await tx.deliveryOrderItem.update({
+                where: { id: itemId },
+                data: {
+                    quantityFulfilled: totalReserved
+                } as any
+            })
         })
 
         return NextResponse.json({ success: true })

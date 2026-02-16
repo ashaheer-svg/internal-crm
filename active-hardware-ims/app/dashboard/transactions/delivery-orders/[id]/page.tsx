@@ -334,15 +334,16 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                         {isFullyAllocated ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                                                         Allocated: {allocatedCount} / {item.quantity}
                                                     </span>
-                                                    {isDraft && !isFullyAllocated && (
+                                                    {/* Allow allocation for Draft AND Confirmed (Partial) orders */}
+                                                    {(order.status === 'DRAFT' || order.status === 'CONFIRMED') && !isFullyAllocated && (
                                                         <button
                                                             onClick={() => handleOpenAllocate(item)}
                                                             className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
                                                         >
-                                                            Allocate Now
+                                                            Alloc / Fulfill
                                                         </button>
                                                     )}
-                                                    {isDraft && isFullyAllocated && (
+                                                    {(order.status === 'DRAFT' || order.status === 'CONFIRMED') && isFullyAllocated && (
                                                         <button
                                                             onClick={() => handleOpenAllocate(item)}
                                                             className="text-xs text-gray-500 hover:text-gray-700 underline"

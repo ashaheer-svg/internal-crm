@@ -51,24 +51,30 @@ export async function GET(request: Request) {
                 }
             })
 
-            doBackorders = doItems.map(item => ({
-                id: item.id,
-                productId: item.productId,
-                quantityOrdered: item.quantity,
-                quantityFulfilled: item.reservedItems.length,
-                status: item.reservedItems.length >= item.quantity ? 'FULFILLED' : 'PENDING',
-                createdAt: item.createdAt,
-                product: item.product,
-                invoice: { // Map DO details to "invoice" shape for UI compatibility
-                    id: item.deliveryOrder.id, // Link to DO details instead
-                    invoiceNumber: item.deliveryOrder.orderNumber,
-                    customerName: item.deliveryOrder.customerName,
-                    customerId: item.deliveryOrder.customerId, // Add customerId
-                    createdAt: item.deliveryOrder.createdAt
-                },
-                // Add a flag to distinguish type if needed, but UI uses invoice object
-                type: 'DELIVERY_ORDER'
-            }))
+            doBackorders = doItems.map((item: any) => {
+                // Use the explicit quantityFulfilled field if available (after migration), 
+                // fallback to reserved items count (backward compatibility/safety)
+                const fulfilled = item.quantityFulfilled ?? item.reservedItems.length
+
+                return {
+                    id: item.id,
+                    productId: item.productId,
+                    quantityOrdered: item.quantity,
+                    quantityFulfilled: fulfilled,
+                    status: fulfilled >= item.quantity ? 'FULFILLED' : 'PARTIAL',
+                    createdAt: item.createdAt,
+                    product: item.product,
+                    invoice: { // Map DO details to "invoice" shape for UI compatibility
+                        id: item.deliveryOrder.id, // Link to DO details instead
+                        invoiceNumber: item.deliveryOrder.orderNumber,
+                        customerName: item.deliveryOrder.customerName,
+                        customerId: item.deliveryOrder.customerId, // Add customerId
+                        createdAt: item.deliveryOrder.createdAt
+                    },
+                    // Add a flag to distinguish type if needed, but UI uses invoice object
+                    type: 'DELIVERY_ORDER'
+                }
+            })
         }
 
         // Combine and sort
