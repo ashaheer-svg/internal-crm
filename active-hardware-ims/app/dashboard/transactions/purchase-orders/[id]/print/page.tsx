@@ -77,11 +77,18 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
           }
           .print-container {
             font-family: Arial, sans-serif;
-            padding: 40px;
-            max-width: 800px;
+            width: 100%;
+            max-width: 800px; /* Keep constraint for screen view */
             margin: 0 auto;
-            min-height: 100vh;
             background: white;
+            padding: 40px; /* Default for screen */
+          }
+          @media print {
+            .print-container {
+              max-width: none;
+              padding: 0;
+              width: 100%;
+            }
           }
           .info-grid {
             display: grid;
