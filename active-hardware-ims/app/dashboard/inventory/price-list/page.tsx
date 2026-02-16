@@ -70,15 +70,25 @@ export default function PriceListPage() {
   return (
     <>
       <style jsx global>{`
-        @page {
-          size: A4;
-          margin: 15mm;
-        }
         @media print {
-          body { margin: 0; -webkit-print-color-adjust: exact; }
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
           .no-print { display: none !important; }
           nav { display: none !important; }
           aside { display: none !important; }
+          header { display: none !important; }
+          
+          /* Ensure table fits */
+          table { width: 100% !important; }
+          th, td { font-size: 10pt !important; }
         }
       `}</style>
 

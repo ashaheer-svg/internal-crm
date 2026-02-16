@@ -19,11 +19,11 @@ export default async function DashboardLayout({
 
     return (
         <div className="flex h-screen bg-gray-100">
-            <div className="hidden md:flex md:w-64 md:flex-col">
+            <div className="hidden md:flex md:w-64 md:flex-col print:hidden">
                 <Sidebar />
             </div>
             <div className="flex flex-1 flex-col overflow-hidden">
-                <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm">
+                <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm print:hidden">
                     <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
                     <div className="flex items-center space-x-4">
                         {/* User profile or other header items could go here */}
