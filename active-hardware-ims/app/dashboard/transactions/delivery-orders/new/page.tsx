@@ -210,7 +210,7 @@ export default function NewDeliveryOrderPage() {
             } else {
                 const item = data[0]
                 const newItem: DeliveryOrderItem = {
-                    productId: item.product.id,
+                    productId: item.productId,
                     productName: `${item.product.brand} ${item.product.name} (S/N: ${item.serialNumber})`,
                     quantity: 1,
                     unitPrice: item.product.resellerPrice || 0,

@@ -48,7 +48,7 @@ export async function GET(request: Request) {
             },
             include: {
                 product: {
-                    select: { name: true, brand: true, model: true }
+                    select: { name: true, brand: true, model: true, resellerPrice: true }
                 },
                 location: {
                     select: { name: true }
