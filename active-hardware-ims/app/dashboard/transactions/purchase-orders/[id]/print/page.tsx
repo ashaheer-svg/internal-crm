@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db"
-import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
@@ -7,6 +6,7 @@ import DocumentHeader from "@/components/DocumentHeader"
 import PrintButton from "@/components/PrintButton"
 import DocumentFooter from "@/components/DocumentFooter"
 import { formatCurrency } from "@/lib/format"
+import { Metadata } from "next"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -46,6 +46,14 @@ async function getPurchaseOrder(id: string): Promise<PurchaseOrderWithRelations 
   return po as any
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const po = await getPurchaseOrder(id)
+  return {
+    title: po ? `Purchase Order - ${po.poNumber}` : 'Purchase Order',
+  }
+}
+
 export default async function PrintPurchaseOrderPage({ params }: PageProps) {
   const { id } = await params
   const po = await getPurchaseOrder(id)
@@ -55,23 +63,25 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
   }
 
   return (
-    <html>
-      <head>
-        <title>Purchase Order - {po.poNumber}</title>
-        <style>{`
+    <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <style>{`
           @page {
             size: A4;
             margin: 15mm;
           }
           @media print {
             body { margin: 0; -webkit-print-color-adjust: exact; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            /* Hide any other elements if they leak through */
+            nav, aside, header, .sidebar { display: none !important; }
           }
-          body {
+          .print-container {
             font-family: Arial, sans-serif;
             padding: 40px;
             max-width: 800px;
             margin: 0 auto;
+            min-height: 100vh;
+            background: white;
           }
           .info-grid {
             display: grid;
@@ -115,22 +125,9 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
             font-weight: bold;
             background-color: #f9fafb;
           }
-          .print-button {
-            padding: 10px 20px;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-bottom: 20px;
-          }
-          .print-button:hover {
-            background-color: #2563eb;
-          }
         `}</style>
-      </head>
-      <body>
+
+      <div className="print-container">
         <PrintButton autoPrint={true} />
 
         <DocumentHeader title="PURCHASE ORDER" subtitle="Inventory Procurement" />
@@ -198,14 +195,7 @@ export default async function PrintPurchaseOrderPage({ params }: PageProps) {
         </div>
 
         <DocumentFooter />
-
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Auto-print on load (optional)
-            // window.onload = function() { window.print(); }
-          `
-        }} />
-      </body>
-    </html>
+      </div>
+    </div>
   )
 }

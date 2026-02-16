@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle, X } from "lucide-react"
+import { CheckCircle, X, Search } from "lucide-react"
+import BulkSerialEntryModal from "@/components/BulkSerialEntryModal"
+
 
 type BackorderAllocationProps = {
     backorderId: string
@@ -31,8 +33,10 @@ export default function BackorderAllocation({
     const router = useRouter()
     const [availableStock, setAvailableStock] = useState<InventoryItem[]>([])
     const [selectedItemId, setSelectedItemId] = useState<string>("")
+    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const [isBulkEntryOpen, setIsBulkEntryOpen] = useState(false)
 
     useState(() => {
         fetchAvailableStock()
@@ -59,10 +63,14 @@ export default function BackorderAllocation({
         setError("")
 
         try {
+            const payload = selectedItemIds.length > 0
+                ? { inventoryItemIds: selectedItemIds }
+                : { inventoryItemId: selectedItemId }
+
             const res = await fetch(`/api/backorders/${backorderId}/allocate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ inventoryItemId: selectedItemId }),
+                body: JSON.stringify(payload),
             })
 
             if (!res.ok) {
@@ -122,8 +130,8 @@ export default function BackorderAllocation({
                                         type="button"
                                         onClick={() => setSelectedItemId(item.id)}
                                         className={`w-full text-left p-4 border-2 rounded-lg transition-all ${selectedItemId === item.id
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -147,21 +155,45 @@ export default function BackorderAllocation({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleAllocate}
-                        disabled={loading || !selectedItemId}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        {loading ? "Allocating..." : "Allocate Stock"}
-                    </button>
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-between gap-3">
+                    <div>
+                        <button
+                            onClick={() => setIsBulkEntryOpen(true)}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+                        >
+                            <Search className="w-4 h-4" />
+                            Bulk Paste Serials
+                        </button>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleAllocate}
+                            disabled={loading || (!selectedItemId && selectedItemIds.length === 0)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {loading ? "Allocating..." : "Allocate Stock"}
+                        </button>
+                    </div>
                 </div>
+
+                <BulkSerialEntryModal
+                    isOpen={isBulkEntryOpen}
+                    onClose={() => setIsBulkEntryOpen(false)}
+                    onAdd={(items) => {
+                        // Just set the selected IDs from the verified items
+                        const ids = items.map(i => i.id)
+                        setSelectedItemIds(ids)
+                        // Clear single selection to avoid confusion
+                        setSelectedItemId("")
+                    }}
+                    title={`Bulk Allocate to ${productName}`}
+                />
             </div>
         </div>
     )

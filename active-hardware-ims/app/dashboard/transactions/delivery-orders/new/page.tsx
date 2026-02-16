@@ -7,7 +7,7 @@ import { ArrowLeft, Trash2, Save, Package, ScanLine, Search } from "lucide-react
 import { Currency } from "@/components/Currency"
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
-import BulkEntryModal from "@/app/dashboard/transactions/invoices/new/BulkEntryModal"
+import BulkSerialEntryModal from "@/components/BulkSerialEntryModal"
 
 type DeliveryOrderItem = {
     productId: string
@@ -55,6 +55,9 @@ export default function NewDeliveryOrderPage() {
     // Serial Entry State
     const [serialInput, setSerialInput] = useState("")
     const [findingSerial, setFindingSerial] = useState(false)
+
+    // Bulk Entry State
+    const [isBulkEntryOpen, setIsBulkEntryOpen] = useState(false)
 
     // Clear state when switching sale types? Maybe not strictly necessary but cleaner
     function handleSaleTypeChange(type: "DIRECT" | "PARTNER") {
@@ -226,6 +229,17 @@ export default function NewDeliveryOrderPage() {
         }
     }
 
+    function handleBulkAdd(newItems: any[]) {
+        const itemsToAdd: DeliveryOrderItem[] = newItems.map(item => ({
+            productId: item.product.id,
+            productName: `${item.product.brand} ${item.product.name} (S/N: ${item.serialNumber})`,
+            quantity: 1,
+            unitPrice: item.product.resellerPrice || 0,
+            isBackorder: false,
+        }))
+        setItems(prev => [...prev, ...itemsToAdd])
+    }
+
     function removeItem(index: number) {
         setItems(items.filter((_, i) => i !== index))
     }
@@ -392,14 +406,6 @@ export default function NewDeliveryOrderPage() {
                                     />
                                 </div>
                             )}
-
-                            {/* Only show name input if manual overwrite needed, or maybe just remove manual string input? */}
-                            {/* The original code had a manual 'customerName' input. We should probably keep it hidden or auto-filled.
-                                Let's keep it visible but readonly if selected? Or just rely on selector?
-                                The original code synced 'customerName' from selector. 
-                                Let's auto-fill it but allow edit if they really want? 
-                                Actually, 'customerName' state IS used for submission. 
-                            */}
 
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
@@ -608,7 +614,16 @@ export default function NewDeliveryOrderPage() {
                                         <ScanLine className="w-4 h-4" />
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-500">Directly adds valid item to order</p>
+                                <div className="mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsBulkEntryOpen(true)}
+                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                                    >
+                                        + Bulk Add via Serial List
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Directly adds valid item to order</p>
                             </div>
                         </div>
                     </div>
@@ -700,7 +715,14 @@ export default function NewDeliveryOrderPage() {
                         </div>
                     </div>
                 </div>
-            </form >
-        </div >
+            </form>
+
+            <BulkSerialEntryModal
+                isOpen={isBulkEntryOpen}
+                onClose={() => setIsBulkEntryOpen(false)}
+                onAdd={handleBulkAdd}
+                title="Bulk Add Items to Order"
+            />
+        </div>
     )
 }

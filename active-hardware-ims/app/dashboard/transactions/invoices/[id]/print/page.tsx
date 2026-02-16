@@ -6,6 +6,7 @@ import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
 import { formatCurrency } from "@/lib/format"
 import PrintButton from "@/components/PrintButton"
+import { Metadata } from "next"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -42,6 +43,14 @@ async function getInvoice(id: string): Promise<InvoiceWithRelations | null> {
   }) as any
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+  const invoice = await getInvoice(id)
+  return {
+    title: invoice ? `Invoice - ${invoice.invoiceNumber}` : 'Invoice',
+  }
+}
+
 export default async function PrintInvoicePage({ params }: PageProps) {
   const { id } = await params
   const invoice = await getInvoice(id)
@@ -51,23 +60,24 @@ export default async function PrintInvoicePage({ params }: PageProps) {
   }
 
   return (
-    <html>
-      <head>
-        <title>Invoice - {invoice.invoiceNumber}</title>
-        <style>{`
+    <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <style>{`
           @page {
             size: A4;
             margin: 15mm;
           }
           @media print {
             body { margin: 0; -webkit-print-color-adjust: exact; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            nav, aside, header, .sidebar { display: none !important; }
           }
-          body {
+          .print-container {
             font-family: Arial, sans-serif;
             padding: 40px;
             max-width: 800px;
             margin: 0 auto;
+            min-height: 100vh;
+            background: white;
           }
           .info-grid {
             display: grid;
@@ -162,8 +172,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
             text-align: center;
           }
         `}</style>
-      </head>
-      <body>
+      <div className="print-container">
         <PrintButton autoPrint={true} />
 
         <DocumentHeader title="INVOICE" subtitle="Sales Transaction Record" />
@@ -248,8 +257,7 @@ export default async function PrintInvoicePage({ params }: PageProps) {
         </div>
 
         <DocumentFooter />
-
-      </body>
-    </html>
+      </div>
+    </div>
   )
 }

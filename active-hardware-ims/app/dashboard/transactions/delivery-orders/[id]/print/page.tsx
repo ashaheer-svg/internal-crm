@@ -4,6 +4,7 @@ import { formatDate, formatDateTime } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
 import PrintButton from "@/components/PrintButton"
+import { Metadata } from "next"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -47,6 +48,14 @@ async function getOrder(id: string): Promise<DeliveryOrderWithRelations | null> 
     return order as DeliveryOrderWithRelations | null
 }
 
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { id } = await params
+    const order = await getOrder(id)
+    return {
+        title: order ? `Packing Slip - ${order.orderNumber}` : 'Packing Slip',
+    }
+}
+
 export default async function PrintDeliveryOrderPage({ params }: PageProps) {
     let order
     try {
@@ -68,27 +77,25 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
         notFound()
     }
 
-    // Calculate totals for summary (though prices are usually hidden on packing slips, 
-    // sometimes they are needed. We will HIDE prices for now as it is a packing slip).
-
     return (
-        <html>
-            <head>
-                <title>Packing Slip - {order.orderNumber}</title>
-                <style>{`
+        <div className="fixed inset-0 z-50 bg-white overflow-auto">
+            <style>{`
           @page {
             size: A4;
             margin: 15mm;
           }
           @media print {
             body { margin: 0; -webkit-print-color-adjust: exact; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            nav, aside, header, .sidebar { display: none !important; }
           }
-          body {
+          .print-container {
             font-family: Arial, sans-serif;
             padding: 40px;
             max-width: 800px;
             margin: 0 auto;
+            min-height: 100vh;
+            background: white;
             color: #333;
           }
           .header {
@@ -98,7 +105,6 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            header-align: center;
           }
           .company-name {
             font-size: 24px;
@@ -180,8 +186,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             margin-bottom: 20px;
           }
         `}</style>
-            </head>
-            <body>
+            <div className="print-container">
                 <PrintButton autoPrint={true} label="Print Packing Slip" />
 
                 <DocumentHeader title="PACKING SLIP" titleNextToLogo={true} />
@@ -279,7 +284,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
 
                 <DocumentFooter />
 
-            </body>
-        </html>
+            </div>
+        </div>
     )
 }
