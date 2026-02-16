@@ -87,21 +87,27 @@ export default function SequencesPage() {
             )}
 
             <div className="bg-white shadow sm:rounded-lg divide-y divide-gray-200">
-                {["PO", "GRN"].map(type => {
+                {["PO", "GRN", "DO"].map(type => {
                     const seq = sequences.find(s => s.id === type)
                     const nextNum = seq?.nextNumber || 1
+
+                    let label = "Purchase Order"
+                    if (type === "GRN") label = "Goods Receipt Note"
+                    if (type === "DO") label = "Delivery Order"
+
+                    const defaultPrefix = type === 'PO' ? 'PO-' : (type === 'GRN' ? 'GRN-' : 'DO-')
 
                     return (
                         <div key={type} className="p-6">
                             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                                {type === "PO" ? "Purchase Order" : "Goods Receipt Note"} Sequence
+                                {label} Sequence
                             </h3>
                             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                 <div className="sm:col-span-3">
                                     <label className="block text-sm font-medium text-gray-700">Next Number</label>
                                     <div className="mt-1 flex rounded-md shadow-sm">
                                         <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                                            {seq?.prefix || (type === 'PO' ? 'PO-' : 'GRN-')}{new Date().getFullYear().toString().slice(-2)}{(new Date().getMonth() + 1).toString().padStart(2, '0')}-
+                                            {seq?.prefix || defaultPrefix}{new Date().getFullYear().toString().slice(-2)}{(new Date().getMonth() + 1).toString().padStart(2, '0')}-
                                         </span>
                                         <input
                                             type="number"

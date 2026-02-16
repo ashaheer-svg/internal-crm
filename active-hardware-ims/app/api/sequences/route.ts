@@ -16,9 +16,9 @@ export async function POST(request: Request) {
     try {
         await requireAuth()
         const body = await request.json()
-        const { type, consume = false } = body // type: "PO" or "GRN"
+        const { type, consume = false } = body // type: "PO", "GRN", "DO"
 
-        if (!type || !["PO", "GRN"].includes(type)) {
+        if (!type || !["PO", "GRN", "DO"].includes(type)) {
             return NextResponse.json({ error: 'Invalid sequence type' }, { status: 400 })
         }
 
@@ -33,10 +33,14 @@ export async function POST(request: Request) {
         })
 
         if (!sequence) {
+            let prefix = 'PO-'
+            if (type === 'GRN') prefix = 'GRN-'
+            if (type === 'DO') prefix = 'DO-'
+
             sequence = await prisma.sequence.create({
                 data: {
                     id: type,
-                    prefix: type === 'PO' ? 'PO-' : 'GRN-',
+                    prefix,
                     nextNumber: 1,
                     lastYearMonth: currentYearMonth
                 }
@@ -87,12 +91,16 @@ export async function PUT(request: Request) {
         const month = (now.getMonth() + 1).toString().padStart(2, '0')
         const currentYearMonth = `${year}${month}`
 
+        let prefix = 'PO-'
+        if (id === 'GRN') prefix = 'GRN-'
+        if (id === 'DO') prefix = 'DO-'
+
         const sequence = await prisma.sequence.upsert({
             where: { id },
             update: { nextNumber: Number(nextNumber) },
             create: {
                 id,
-                prefix: id === 'PO' ? 'PO-' : 'GRN-',
+                prefix,
                 nextNumber: Number(nextNumber),
                 lastYearMonth: currentYearMonth
             }

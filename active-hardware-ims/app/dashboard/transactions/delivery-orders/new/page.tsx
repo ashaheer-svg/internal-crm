@@ -26,7 +26,27 @@ export default function NewDeliveryOrderPage() {
     // Backorder linking
     const [backorderId, setBackorderId] = useState<string | null>(null)
 
-    const [orderNumber, setOrderNumber] = useState("DO-" + new Date().toISOString().slice(2, 7).replace(/-/g, "") + Math.floor(Math.random() * 1000))
+    const [orderNumber, setOrderNumber] = useState("")
+
+    useEffect(() => {
+        fetchNextOrderNumber()
+    }, [])
+
+    async function fetchNextOrderNumber() {
+        try {
+            const res = await fetch("/api/sequences", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "DO" })
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setOrderNumber(data.number)
+            }
+        } catch (error) {
+            console.error("Failed to fetch DO sequence", error)
+        }
+    }
 
     // Sale Type State
     const [saleType, setSaleType] = useState<"DIRECT" | "PARTNER">("DIRECT")
