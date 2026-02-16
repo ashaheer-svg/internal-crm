@@ -156,10 +156,10 @@ export default function PriceListPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-blue-600">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[15%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     SKU
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[35%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[40%]">
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
@@ -168,13 +168,13 @@ export default function PriceListPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[12%]">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     Low Reseller
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[12%]">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     Reseller
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider w-[11%]">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider w-[10%]">
                     Stock
                   </th>
                 </tr>
