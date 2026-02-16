@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db"
-import { Prisma } from "@prisma/client"
 import { notFound } from "next/navigation"
 import { formatDate, formatDateTime } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import PrintButton from "@/components/PrintButton"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -98,6 +98,7 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            header-align: center;
           }
           .company-name {
             font-size: 24px;
@@ -179,11 +180,6 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
             margin-bottom: 20px;
           }
         `}</style>
-            </head>
-import PrintButton from "@/components/PrintButton"
-
-// ... existing code ...
-
             </head>
             <body>
                 <PrintButton autoPrint={true} label="Print Packing Slip" />
@@ -284,6 +280,6 @@ import PrintButton from "@/components/PrintButton"
                 <DocumentFooter />
 
             </body>
-        </html >
+        </html>
     )
 }
