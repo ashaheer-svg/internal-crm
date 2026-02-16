@@ -331,6 +331,8 @@ model BackorderItem {
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  
+  deliveryOrderItems DeliveryOrderItem[]
 }
 
 model TransactionLog {
@@ -410,6 +412,10 @@ model DeliveryOrderItem {
 
   // Reservation link
   reservedItems   InventoryItem[]
+
+  // Backorder link (to track original backorder source)
+  backorderItemId String?
+  backorderItem   BackorderItem? @relation(fields: [backorderItemId], references: [id])
 }
 
 

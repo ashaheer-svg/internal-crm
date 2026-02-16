@@ -157,6 +157,23 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                     unitPrice: item.unitPrice,
                                     isBackorder: true
                                 })
+                            } else {
+                                // Logic to REVERT existing backorder fulfillment if this item was linked
+                                // We need to check if this item has a backorderItemId
+                                const dbItem = await tx.deliveryOrderItem.findUnique({
+                                    where: { id: item.id }
+                                })
+
+                                if ((dbItem as any)?.backorderItemId) {
+                                    // Revert the unfulfilled amount
+                                    await tx.backorderItem.update({
+                                        where: { id: (dbItem as any).backorderItemId },
+                                        data: {
+                                            quantityFulfilled: { decrement: missingQty },
+                                            status: 'PARTIAL' // Force back to partial/pending
+                                        }
+                                    })
+                                }
                             }
 
                             if (reservedCount === 0) {

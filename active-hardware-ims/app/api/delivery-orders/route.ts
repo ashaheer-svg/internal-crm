@@ -118,9 +118,15 @@ export async function POST(request: Request) {
                 if (backorderItem) {
                     // Find the matching item in the new DO
                     // We assume the backorder product is present in the items list
-                    const doItem = items.find((i: any) => i.productId === backorderItem.productId)
+                    const doItem = newOrder.items.find((i: any) => i.productId === backorderItem.productId)
 
                     if (doItem) {
+                        // LINK THE ITEMS
+                        await tx.deliveryOrderItem.update({
+                            where: { id: doItem.id },
+                            data: { backorderItemId: backorderId } as any
+                        })
+
                         const quantityAllocated = Math.max(1, Math.floor(Number(doItem.quantity) || 1))
                         const newFulfilled = backorderItem.quantityFulfilled + quantityAllocated
                         const newStatus = newFulfilled >= backorderItem.quantityOrdered ? 'FULFILLED' : 'PARTIAL'
