@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save, Package, ScanLine, Search } from "lucide-react"
 import { Currency } from "@/components/Currency"
@@ -19,8 +19,12 @@ type DeliveryOrderItem = {
 
 export default function NewDeliveryOrderPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+
+    // Backorder linking
+    const [backorderId, setBackorderId] = useState<string | null>(null)
 
     const [orderNumber, setOrderNumber] = useState("DO-" + new Date().toISOString().slice(2, 7).replace(/-/g, "") + Math.floor(Math.random() * 1000))
 
@@ -78,7 +82,43 @@ export default function NewDeliveryOrderPage() {
 
     useEffect(() => {
         fetchSalesReps()
-    }, [])
+
+        // Check for backorder params
+        const boId = searchParams.get('backorderId')
+        const custId = searchParams.get('customerId')
+        const custName = searchParams.get('customerName')
+        const prodId = searchParams.get('productId')
+        const qty = searchParams.get('qty')
+
+        if (boId && custId && prodId && qty) {
+            setBackorderId(boId)
+            // Pre-load customer if ID available
+            // We need to fetch customer details to populate selectedCustomer object properly for the selector
+            fetch(`/api/customers/${custId}`)
+                .then(res => res.json())
+                .then(customer => {
+                    handleCustomerSelect(customer)
+                })
+                .catch(err => console.error("Failed to load customer", err))
+
+            // Pre-load product
+            fetch(`/api/products/${prodId}`)
+                .then(res => res.json())
+                .then(product => {
+                    const newItem: DeliveryOrderItem = {
+                        productId: product.id,
+                        productName: `${product.brand} ${product.name}`,
+                        quantity: Number(qty),
+                        unitPrice: product.resellerPrice || 0,
+                        isBackorder: true
+                    }
+                    setItems([newItem])
+                })
+                .catch(err => console.error("Failed to load product", err))
+
+            setNotes(`Allocation for Backorder`)
+        }
+    }, [searchParams])
 
     async function fetchSalesReps() {
         try {
@@ -300,6 +340,7 @@ export default function NewDeliveryOrderPage() {
                 additionalCosts: Number(additionalCosts),
                 salesRepId: salesRepId || null,
                 notes,
+                backorderId, // Include backorder ID
                 items
             }
 

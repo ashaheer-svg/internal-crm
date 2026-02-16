@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Package, ExternalLink, AlertCircle } from "lucide-react"
-import BackorderAllocation from "./BackorderAllocation"
 import { formatDate } from "@/lib/utils"
 
 type BackorderItem = {
@@ -24,6 +23,7 @@ type BackorderItem = {
         id: string
         invoiceNumber: string
         customerName: string
+        customerId: string
         createdAt: Date
     }
 }
@@ -31,7 +31,6 @@ type BackorderItem = {
 export default function BackordersPage() {
     const [backorders, setBackorders] = useState<BackorderItem[]>([])
     const [loading, setLoading] = useState(true)
-    const [selectedBackorder, setSelectedBackorder] = useState<BackorderItem | null>(null)
 
     useEffect(() => {
         fetchBackorders()
@@ -55,11 +54,6 @@ export default function BackordersPage() {
         } finally {
             setLoading(false)
         }
-    }
-
-    function handleAllocationSuccess() {
-        setSelectedBackorder(null)
-        fetchBackorders() // Refresh the list
     }
 
     // Group by product
@@ -234,12 +228,12 @@ export default function BackordersPage() {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm space-x-2">
-                                                        <button
-                                                            onClick={() => setSelectedBackorder(backorder)}
+                                                        <Link
+                                                            href={`/dashboard/transactions/delivery-orders/new?backorderId=${backorder.id}&customerId=${backorder.invoice.customerId || ''}&customerName=${encodeURIComponent(backorder.invoice.customerName)}&productId=${backorder.productId}&qty=${backorder.quantityOrdered - backorder.quantityFulfilled}`}
                                                             className="text-blue-600 hover:text-blue-900 font-medium"
                                                         >
                                                             Allocate
-                                                        </button>
+                                                        </Link>
                                                         <Link
                                                             href={`/dashboard/transactions/invoices/${backorder.invoice.id}`}
                                                             className="text-gray-600 hover:text-gray-900 inline-flex items-center"
@@ -259,16 +253,7 @@ export default function BackordersPage() {
                 </div>
             )}
 
-            {/* Allocation Modal */}
-            {selectedBackorder && (
-                <BackorderAllocation
-                    backorderId={selectedBackorder.id}
-                    productName={`${selectedBackorder.product.brand} ${selectedBackorder.product.name} (${selectedBackorder.product.category})`}
-                    quantityPending={selectedBackorder.quantityOrdered - selectedBackorder.quantityFulfilled}
-                    onSuccess={handleAllocationSuccess}
-                    onCancel={() => setSelectedBackorder(null)}
-                />
-            )}
+// Removed unused code
         </div>
     )
 }

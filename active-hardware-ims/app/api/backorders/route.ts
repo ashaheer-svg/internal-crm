@@ -22,6 +22,7 @@ export async function GET(request: Request) {
                     select: {
                         invoiceNumber: true,
                         customerName: true,
+                        customerId: true, // Add customerId
                         createdAt: true
                     }
                 },
@@ -62,6 +63,7 @@ export async function GET(request: Request) {
                     id: item.deliveryOrder.id, // Link to DO details instead
                     invoiceNumber: item.deliveryOrder.orderNumber,
                     customerName: item.deliveryOrder.customerName,
+                    customerId: item.deliveryOrder.customerId, // Add customerId
                     createdAt: item.deliveryOrder.createdAt
                 },
                 // Add a flag to distinguish type if needed, but UI uses invoice object

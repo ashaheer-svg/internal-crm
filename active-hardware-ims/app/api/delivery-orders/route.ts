@@ -107,6 +107,35 @@ export async function POST(request: Request) {
                 }
             })
 
+            // Handle Backorder Fulfillment if linked
+            // We expect body.backorderId to be present
+            const backorderId = body.backorderId
+            if (backorderId) {
+                const backorderItem = await tx.backorderItem.findUnique({
+                    where: { id: backorderId }
+                })
+
+                if (backorderItem) {
+                    // Find the matching item in the new DO
+                    // We assume the backorder product is present in the items list
+                    const doItem = items.find((i: any) => i.productId === backorderItem.productId)
+
+                    if (doItem) {
+                        const quantityAllocated = Math.max(1, Math.floor(Number(doItem.quantity) || 1))
+                        const newFulfilled = backorderItem.quantityFulfilled + quantityAllocated
+                        const newStatus = newFulfilled >= backorderItem.quantityOrdered ? 'FULFILLED' : 'PARTIAL'
+
+                        await tx.backorderItem.update({
+                            where: { id: backorderId },
+                            data: {
+                                quantityFulfilled: newFulfilled,
+                                status: newStatus
+                            }
+                        })
+                    }
+                }
+            }
+
             return newOrder
         })
 
