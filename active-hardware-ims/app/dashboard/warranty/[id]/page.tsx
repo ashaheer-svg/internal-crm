@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import StatusUpdateForm from "./StatusUpdateForm"
 import ReplacementForm from "./ReplacementForm"
 import ReplacementDetails from "./ReplacementDetails"
+import EditWarrantyButton from "./EditWarrantyButton"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
 interface PageProps {
@@ -85,7 +86,15 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Warranty Claim</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Warranty Claim</h1>
+                            <EditWarrantyButton claim={{
+                                id: claim.id,
+                                customerName: claim.customerName,
+                                description: claim.description,
+                                status: claim.status
+                            }} />
+                        </div>
                         <p className="text-sm text-gray-500">Claim ID: {claim.id}</p>
                     </div>
                 </div>

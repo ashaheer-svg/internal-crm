@@ -51,7 +51,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     try {
         const { id } = await params
         const body = await request.json()
-        const { status, resolution, notes } = body
+        const { status, resolution, notes, customerName, description } = body
 
         // Get current claim for audit logging
         const currentClaim = await prisma.warrantyClaim.findUnique({
@@ -72,6 +72,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         const updateData: any = {}
         if (status) updateData.status = status
         if (resolution !== undefined) updateData.resolution = resolution
+        if (customerName) updateData.customerName = customerName
+        if (description) updateData.description = description
 
         // If resolving, set resolved timestamp (requires auth for resolvedBy)
         if (status === 'RESOLVED' || status === 'CLOSED') {
