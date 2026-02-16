@@ -34,9 +34,24 @@ export default function NewPurchaseOrderPage() {
     const [notes, setNotes] = useState("")
     const [items, setItems] = useState<POItem[]>([])
 
+    const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([])
+
     useEffect(() => {
         fetchNextPoNumber()
+        fetchSuppliers()
     }, [])
+
+    async function fetchSuppliers() {
+        try {
+            const res = await fetch("/api/customers?type=SUPPLIER&limit=100")
+            if (res.ok) {
+                const data = await res.json()
+                setSuppliers(data.customers || [])
+            }
+        } catch (error) {
+            console.error("Failed to fetch suppliers", error)
+        }
+    }
 
     async function fetchNextPoNumber() {
         try {
@@ -175,13 +190,19 @@ export default function NewPurchaseOrderPage() {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Supplier *</label>
-                            <input
-                                type="text"
+                            <select
                                 required
                                 value={supplier}
                                 onChange={(e) => setSupplier(e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            />
+                            >
+                                <option value="">Select a supplier</option>
+                                {suppliers.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
