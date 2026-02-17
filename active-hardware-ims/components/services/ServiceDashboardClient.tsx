@@ -55,68 +55,59 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                 </div>
             </div>
 
-        </tbody>
-                        </table >
-                    </div >
-                )
-}
-            </div >
-
-    {/* Active Contracts - Full Width */ }
-    < div className = "bg-white shadow rounded-lg p-6" >
-        <div className="flex items-center mb-4">
-            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-            <h2 className="text-lg font-medium text-gray-900">Active Contracts</h2>
-        </div>
-{
-    active.length === 0 ? (
-        <p className="text-gray-500 text-sm">No active contracts.</p>
-    ) : (
-    <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-                <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-                {active.map(contract => (
-                    <tr key={contract.id}>
-                        <td className="px-3 py-2 text-sm text-gray-900 font-medium">{contract.customer.name}</td>
-                        <td className="px-3 py-2 text-sm text-gray-500">
-                            {contract.product.name}
-                            <div className="text-xs text-gray-400">{contract.product.sku}</div>
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-500">
-                            {contract.partner?.name || '-'}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-500">
-                            {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-500">
-                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Indefinite'}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-500">
-                            <Link
-                                href={`/dashboard/services/contracts/${contract.id}/edit`}
-                                className="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50"
-                            >
-                                Edit
-                            </Link>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)
-}
-            </div >
+            {/* Active Contracts - Full Width */}
+            <div className="bg-white shadow rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <h2 className="text-lg font-medium text-gray-900">Active Contracts</h2>
+                </div>
+                {active.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No active contracts.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {active.map(contract => (
+                                    <tr key={contract.id}>
+                                        <td className="px-3 py-2 text-sm text-gray-900 font-medium">{contract.customer.name}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">
+                                            {contract.product.name}
+                                            <div className="text-xs text-gray-400">{contract.product.sku}</div>
+                                        </td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">
+                                            {contract.partner?.name || '-'}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">
+                                            {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">
+                                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Indefinite'}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">
+                                            <Link
+                                                href={`/dashboard/services/contracts/${contract.id}/edit`}
+                                                className="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50"
+                                            >
+                                                Edit
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Rental Assets moved here (or keep below if full width is preferred) */}
