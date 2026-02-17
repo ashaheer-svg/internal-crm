@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 interface ContractData {
@@ -104,6 +104,23 @@ export default function EditServiceContractPage() {
         } catch (err: any) {
             setError(err.message)
             setSaving(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this contract? This action will unlink all assets.")) return
+
+        try {
+            const res = await fetch(`/api/services/contracts/${id}`, {
+                method: 'DELETE'
+            })
+
+            if (!res.ok) throw new Error("Failed to delete contract")
+
+            router.push("/dashboard/services")
+            router.refresh()
+        } catch (err: any) {
+            alert(err.message)
         }
     }
 
@@ -235,23 +252,159 @@ export default function EditServiceContractPage() {
                     </div>
                 </div>
 
-                <div className="pt-5 flex justify-end">
-                    <Link
-                        href="/dashboard/services"
-                        className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        Cancel
-                    </Link>
+                <div className="pt-5 flex justify-between">
                     <button
-                        type="submit"
-                        disabled={saving}
-                        className="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                        type="button"
+                        onClick={handleDelete}
+                        className="inline-flex justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
-                        <Save className="w-4 h-4 mr-2" />
-                        {saving ? "Saving..." : "Update Contract"}
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Contract
                     </button>
+                    <div className="flex">
+                        <Link
+                            href="/dashboard/services"
+                            className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            Cancel
+                        </Link>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                        >
+                            <Save className="w-4 h-4 mr-2" />
+                            {saving ? "Saving..." : "Update Contract"}
+                        </button>
+                    </div>
                 </div>
             </form>
+
+            <LinkedAssetsSection contractId={id} />
+        </div>
+    )
+}
+
+
+function LinkedAssetsSection({ contractId }: { contractId: string }) {
+    const [linkedAssets, setLinkedAssets] = useState<any[]>([])
+    const [availableAssets, setAvailableAssets] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [isAssigning, setIsAssigning] = useState(false)
+    const [selectedAssetId, setSelectedAssetId] = useState("")
+
+    useEffect(() => {
+        loadAssets()
+    }, [contractId])
+
+    const loadAssets = async () => {
+        try {
+            const [linkedRes, allRes] = await Promise.all([
+                fetch(`/api/services/contracts/${contractId}/assets`),
+                fetch(`/api/rentals`) // This returns all, we filter client side for simplicity or add query param later
+            ])
+
+            const linked = await linkedRes.json()
+            const all = await allRes.json()
+
+            setLinkedAssets(linked)
+            // Filter only available assets
+            setAvailableAssets(all.filter((a: any) => a.status === 'AVAILABLE'))
+        } catch (e) {
+            console.error("Failed to load assets", e)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleAssign = async () => {
+        if (!selectedAssetId) return
+        setIsAssigning(true)
+        try {
+            const res = await fetch(`/api/services/contracts/${contractId}/assets`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assetId: selectedAssetId })
+            })
+            if (!res.ok) throw new Error("Failed to assign")
+
+            setSelectedAssetId("")
+            loadAssets()
+        } catch (e) {
+            alert("Failed to assign asset")
+        } finally {
+            setIsAssigning(false)
+        }
+    }
+
+    const handleReturn = async (assetId: string) => {
+        if (!confirm("Return this asset?")) return
+        try {
+            const res = await fetch(`/api/services/contracts/${contractId}/assets?assetId=${assetId}`, {
+                method: 'DELETE'
+            })
+            if (!res.ok) throw new Error("Failed to return")
+            loadAssets()
+        } catch (e) {
+            alert("Failed to return asset")
+        }
+    }
+
+    return (
+        <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">Linked Rental Assets</h3>
+            </div>
+
+            {/* Asset List */}
+            <div className="space-y-2">
+                {linkedAssets.length === 0 ? (
+                    <p className="text-sm text-gray-500">No assets linked to this contract.</p>
+                ) : (
+                    <ul className="divide-y divide-gray-200 border rounded-md">
+                        {linkedAssets.map(asset => (
+                            <li key={asset.id} className="p-3 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-900">{asset.name}</p>
+                                    <p className="text-xs text-gray-500">SN: {asset.serialNumber}</p>
+                                </div>
+                                <button
+                                    onClick={() => handleReturn(asset.id)}
+                                    className="text-red-600 hover:text-red-900 text-xs font-medium border border-red-200 rounded px-2 py-1"
+                                >
+                                    Return
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+
+            {/* Assign New */}
+            <div className="pt-4 border-t border-gray-100">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assign Asset</label>
+                <div className="flex gap-2">
+                    <select
+                        value={selectedAssetId}
+                        onChange={(e) => setSelectedAssetId(e.target.value)}
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    >
+                        <option value="">Select an available asset...</option>
+                        {availableAssets.map(asset => (
+                            <option key={asset.id} value={asset.id}>
+                                {asset.name} ({asset.serialNumber})
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={handleAssign}
+                        disabled={!selectedAssetId || isAssigning}
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                    >
+                        Assign
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

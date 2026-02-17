@@ -147,7 +147,8 @@ export async function getExpiringContracts(daysThreshold: number = 30) {
 export async function getActiveContracts() {
     return db.serviceContract.findMany({
         where: {
-            status: ContractStatus.ACTIVE
+            status: ContractStatus.ACTIVE,
+            isDeleted: false
         },
         include: {
             customer: true,
@@ -162,6 +163,9 @@ export async function getActiveContracts() {
 
 export async function getAllRentals() {
     return db.rentalAsset.findMany({
+        where: {
+            isDeleted: false
+        },
         include: {
             product: true,
             currentContract: {
@@ -241,47 +245,79 @@ export async function rentOutAsset(contractId: string, rentalAssetId: string) {
     });
 
     if (!asset) throw new Error("Asset not found");
+    if (asset.isDeleted) throw new Error("Asset has been deleted");
     if (asset.status !== RentalStatus.AVAILABLE) throw new Error("Asset is not available");
 
     // Transaction to link both
     return db.$transaction(async (tx) => {
-        // Link contract to asset
-        await tx.serviceContract.update({
-            where: { id: contractId },
-            data: { rentedAssetId: rentalAssetId }
-        });
-
-        // Update asset status
+        // Link asset to contract (1:N, so we update the Asset side)
         await tx.rentalAsset.update({
             where: { id: rentalAssetId },
-            data: { status: RentalStatus.RENTED }
+            data: {
+                status: RentalStatus.RENTED,
+                currentContractId: contractId
+            }
         });
     });
 }
 
 export async function returnAsset(rentalAssetId: string) {
     const asset = await db.rentalAsset.findUnique({
-        where: { id: rentalAssetId },
-        include: { currentContract: true }
+        where: { id: rentalAssetId }
     });
 
     if (!asset) throw new Error("Asset not found");
 
-    // If it was linked to a contract, we might want to unlink it in the contract too?
-    // The relation is 1:1 optional. `currentContract` on RentalAsset is the inverse of `rentedAsset` on ServiceContract.
-    // So if we set `rentedAssetId` on ServiceContract to null, it breaks the link.
-
     return db.$transaction(async (tx) => {
-        if (asset.currentContract) {
-            await tx.serviceContract.update({
-                where: { id: asset.currentContract.id },
-                data: { rentedAssetId: null }
+        await tx.rentalAsset.update({
+            where: { id: rentalAssetId },
+            data: {
+                status: RentalStatus.AVAILABLE,
+                currentContractId: null
+            }
+        });
+    });
+}
+
+// Soft Delete Helpers
+export async function softDeleteContract(contractId: string) {
+    return db.$transaction(async (tx) => {
+        // 1. Find all assets linked to this contract
+        const linkedAssets = await tx.rentalAsset.findMany({
+            where: { currentContractId: contractId }
+        });
+
+        // 2. Return all assets
+        for (const asset of linkedAssets) {
+            await tx.rentalAsset.update({
+                where: { id: asset.id },
+                data: {
+                    status: RentalStatus.AVAILABLE,
+                    currentContractId: null
+                }
             });
         }
 
-        await tx.rentalAsset.update({
-            where: { id: rentalAssetId },
-            data: { status: RentalStatus.AVAILABLE }
+        // 3. Mark contract as deleted
+        await tx.serviceContract.update({
+            where: { id: contractId },
+            data: { isDeleted: true, status: ContractStatus.CANCELLED }
         });
+    });
+}
+
+export async function softDeleteAsset(assetId: string) {
+    // Check if currently rented
+    const asset = await db.rentalAsset.findUnique({
+        where: { id: assetId }
+    });
+
+    if (asset && asset.status === RentalStatus.RENTED) {
+        throw new Error("Cannot delete an asset that is currently rented. Return it first.");
+    }
+
+    return db.rentalAsset.update({
+        where: { id: assetId },
+        data: { isDeleted: true }
     });
 }

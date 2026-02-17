@@ -493,10 +493,11 @@ model ServiceContract {
   salesRepId      String?
   salesRep        SalesRep? @relation(fields: [salesRepId], references: [id])
 
-  // Rental specific
-  rentedAssetId   String?  @unique
-  rentedAsset     RentalAsset? @relation("ActiveRental", fields: [rentedAssetId], references: [id])
+  // Rental specific - CHANGED to 1:N (Removing rentedAssetId here)
+  rentalAssets    RentalAsset[] @relation("ActiveRental")
   
+  isDeleted       Boolean  @default(false)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -514,7 +515,10 @@ model RentalAsset {
   status          String   @default("AVAILABLE") // RentalStatus (AVAILABLE, RENTED, MAINTENANCE, RETIRED)
   
   // Current Active Rental Link (Inverse relation defined in ServiceContract)
-  currentContract ServiceContract? @relation("ActiveRental")
+  currentContractId String?
+  currentContract   ServiceContract? @relation("ActiveRental", fields: [currentContractId], references: [id])
+
+  isDeleted       Boolean  @default(false)
   
   notes           String?
   

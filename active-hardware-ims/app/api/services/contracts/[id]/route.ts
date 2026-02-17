@@ -95,3 +95,23 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         )
     }
 }
+
+export async function DELETE(request: Request, { params }: RouteParams) {
+    try {
+        await requireAuth()
+        const { id } = await params
+
+        // Use soft delete helper which handles asset unlinking
+        const { softDeleteContract } = await import("@/lib/service-manager")
+        await softDeleteContract(id)
+
+        return NextResponse.json({ success: true })
+
+    } catch (error: any) {
+        console.error("Contract deletion failed:", error)
+        return NextResponse.json(
+            { error: error.message || 'Failed to delete contract' },
+            { status: 500 }
+        )
+    }
+}
