@@ -19,7 +19,8 @@ export async function GET(request: Request, { params }: RouteParams) {
                 customer: true,
                 product: true,
                 partner: true,
-                salesRep: true
+                salesRep: true,
+                rentalAssets: true // Include linked rental assets
             }
         })
 
