@@ -13,6 +13,8 @@ export type AuditEntityType =
     | 'WARRANTY'
     | 'BACKORDER'
     | 'BACKUP'
+    | 'SERVICE_CONTRACT'
+    | 'RENTAL'
 
 interface AuditLogParams {
     action: AuditAction

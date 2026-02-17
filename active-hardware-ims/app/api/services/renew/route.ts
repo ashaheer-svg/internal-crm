@@ -15,8 +15,8 @@ export async function POST(request: Request) {
         }
 
         const newContract = await renewContract(contractId, {
-            forceDurationValue: durationValue,
-            forceDurationUnit: durationUnit
+            newDurationValue: durationValue,
+            newDurationUnit: durationUnit
         })
 
         await logUpdate('SERVICE_CONTRACT', contractId, user.id, user.name,
