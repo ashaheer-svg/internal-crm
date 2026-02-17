@@ -209,7 +209,7 @@ export default function NewServiceAgreementPage() {
                         <label className="block text-sm font-medium text-gray-700">Contract Value</label>
                         <div className="mt-1 relative rounded-md shadow-sm">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span className="text-gray-500 sm:text-sm">$</span>
+                                <span className="text-gray-500 sm:text-sm">Rs.</span>
                             </div>
                             <input
                                 type="number"
@@ -217,7 +217,7 @@ export default function NewServiceAgreementPage() {
                                 step="0.01"
                                 value={contractValue}
                                 onChange={(e) => setContractValue(Number(e.target.value))}
-                                className="block w-full pl-7 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full pl-10 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                             />
                         </div>
                     </div>
