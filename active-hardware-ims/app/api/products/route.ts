@@ -30,6 +30,7 @@ export async function GET(request: Request) {
                 { createdAt: 'desc' }
             ],
             include: {
+                serviceDefinition: true,
                 _count: {
                     select: {
                         inventory: {

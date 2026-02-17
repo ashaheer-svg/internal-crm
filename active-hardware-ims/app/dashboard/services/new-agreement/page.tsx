@@ -46,9 +46,19 @@ export default function NewServiceAgreementPage() {
 
     useEffect(() => {
         // Fetch Customers
-        fetch("/api/customers?type=all")
+        fetch("/api/customers?type=ALL")
             .then(res => res.json())
-            .then(data => setCustomers(data))
+            .then(data => {
+                // API returns { customers: [], totalCount, ... }
+                if (data.customers && Array.isArray(data.customers)) {
+                    setCustomers(data.customers)
+                } else if (Array.isArray(data)) {
+                    setCustomers(data)
+                } else {
+                    console.error("Unexpected customer data format", data)
+                    setCustomers([])
+                }
+            })
             .catch(err => console.error("Failed to fetch customers", err))
 
         // Fetch Service Products
