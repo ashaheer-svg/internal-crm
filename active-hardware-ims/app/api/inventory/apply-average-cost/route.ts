@@ -11,15 +11,21 @@ export async function POST(request: Request) {
         }
 
         // Get all inventory items for this product at this location
+        // EXCLUDING sold, warranty replaced, and RMA items from calculation
+        const excludedStatuses = ['SOLD', 'WARRANTY_REPLACED', 'RMA']
+
         const items = await prisma.inventoryItem.findMany({
             where: {
                 productId,
-                locationId
+                locationId,
+                status: {
+                    notIn: excludedStatuses
+                }
             }
         })
 
         if (items.length === 0) {
-            return NextResponse.json({ error: 'No items found' }, { status: 404 })
+            return NextResponse.json({ error: 'No active items found for calculation' }, { status: 404 })
         }
 
         // Calculate average cost
@@ -27,10 +33,14 @@ export async function POST(request: Request) {
         const averageCost = totalCost / items.length
 
         // Update all items with the average cost
+        // ONLY update the active items (excluding sold/warranty/RMA)
         await prisma.inventoryItem.updateMany({
             where: {
                 productId,
-                locationId
+                locationId,
+                status: {
+                    notIn: excludedStatuses
+                }
             },
             data: {
                 unitCost: averageCost
