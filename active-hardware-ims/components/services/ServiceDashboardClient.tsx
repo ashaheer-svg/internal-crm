@@ -1,10 +1,7 @@
-"use client"
-
-import { useState } from "react"
-import Link from "next/link"
-import { AlertCircle, CheckCircle, Package } from "lucide-react"
-import ServiceRenewalModal from "./ServiceRenewalModal"
 import { useRouter } from "next/navigation"
+import { Calendar, AlertTriangle, CheckCircle, Clock, Plus } from "lucide-react"
+import Link from "next/link"
+import ServiceRenewalModal from "./ServiceRenewalModal"
 
 interface ServiceDashboardClientProps {
     expiring: any[]
@@ -44,9 +41,15 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Service Management</h1>
-                <Link href="/dashboard/services/catalog" className="text-sm text-blue-600 hover:text-blue-800">
-                    Service Catalog
-                </Link>
+                <div className="flex gap-2">
+                    <Link href="/dashboard/services/new-agreement" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Agreement
+                    </Link>
+                    <Link href="/dashboard/services/catalog" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Service Catalog
+                    </Link>
+                </div>
             </div>
 
             {/* Upcoming Renewals */}

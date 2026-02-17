@@ -84,6 +84,7 @@ model Customer {
   endCustomerDeliveryOrders DeliveryOrder[] @relation("EndCustomer")
   deliveryAddresses DeliveryAddress[]
   employees   PartnerEmployee[]
+  partnerContracts ServiceContract[] @relation("PartnerLink")
 }
 
 model SalesRep {
@@ -480,6 +481,14 @@ model ServiceContract {
   licenseKey      String?
   description     String?
   
+  // Agreement Details
+  contractNumber  String?  @unique
+  contractValue   Float    @default(0)
+  invoiceReference String?
+  
+  partnerId       String?
+  partner         Customer? @relation("PartnerLink", fields: [partnerId], references: [id])
+
   // Rental specific
   rentedAssetId   String?  @unique
   rentedAsset     RentalAsset? @relation("ActiveRental", fields: [rentedAssetId], references: [id])

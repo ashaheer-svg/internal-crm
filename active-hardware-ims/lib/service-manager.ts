@@ -79,6 +79,11 @@ export async function activateServiceContract(data: {
     customDurationUnit?: string;
     description?: string;
     licenseKey?: string;
+    // New Fields
+    contractNumber?: string;
+    partnerId?: string;
+    contractValue?: number;
+    invoiceReference?: string;
 }) {
     // Fetch definition to get defaults
     const def = await db.serviceDefinition.findUnique({
@@ -104,7 +109,12 @@ export async function activateServiceContract(data: {
             durationValue,
             durationUnit,
             description: data.description,
-            licenseKey: data.licenseKey
+            licenseKey: data.licenseKey,
+            // New Agreement Fields
+            contractNumber: data.contractNumber,
+            partnerId: data.partnerId,
+            contractValue: data.contractValue || 0,
+            invoiceReference: data.invoiceReference
         }
     });
 }
