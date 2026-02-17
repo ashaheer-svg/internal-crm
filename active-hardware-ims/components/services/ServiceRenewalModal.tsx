@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog" // Assuming these exist, or I'll use simple div if not
+
 import { X } from "lucide-react"
 
 interface ServiceRenewalModalProps {
