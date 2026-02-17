@@ -153,28 +153,28 @@ export default function PriceListPage() {
 
           {/* Table */}
           <div className="overflow-x-auto print:overflow-visible">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-blue-600">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[5%]">
+                  <th className="px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[8%]" style={{ width: '8%' }}>
                     SKU
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[45%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[42%]" style={{ width: '42%' }}>
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
                     Brand
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
                     Category
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
                     Low Reseller
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
                     Reseller
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
                     Stock
                   </th>
                 </tr>
@@ -182,16 +182,16 @@ export default function PriceListPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 overflow-hidden text-ellipsis">
                       {product.sku}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-700 break-words">
                       {product.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 overflow-hidden text-ellipsis">
                       {product.brand}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 overflow-hidden text-ellipsis">
                       {product.category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
