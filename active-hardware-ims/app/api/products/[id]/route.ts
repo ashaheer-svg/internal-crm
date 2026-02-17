@@ -19,7 +19,8 @@ export async function GET(request: Request, { params }: RouteParams) {
         }).catch(err => console.error('Failed to update access count:', err))
 
         const product = await prisma.product.findUnique({
-            where: { id }
+            where: { id },
+            include: { serviceDefinition: true }
         })
 
         if (!product) {
@@ -57,11 +58,27 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 category,
                 model,
                 description,
-                minStock: Number(minStock) || 0,
-                warrantyMonths: Number(warrantyMonths) || 0,
-                lowResellerPrice: Number(lowResellerPrice) || 0,
                 resellerPrice: Number(resellerPrice) || 0,
-                isActive: isActive !== undefined ? isActive : undefined
+                isActive: isActive !== undefined ? isActive : undefined,
+                // Handle Service Definition
+                serviceDefinition: body.isService ? {
+                    upsert: {
+                        create: {
+                            type: body.serviceType || 'ONE_TIME',
+                            durationValue: Number(body.durationValue) || 1,
+                            durationUnit: body.durationUnit || 'YEAR',
+                            isMetered: body.isMetered || false,
+                            billingCycle: body.billingCycle
+                        },
+                        update: {
+                            type: body.serviceType || 'ONE_TIME',
+                            durationValue: Number(body.durationValue) || 1,
+                            durationUnit: body.durationUnit || 'YEAR',
+                            isMetered: body.isMetered || false,
+                            billingCycle: body.billingCycle
+                        }
+                    }
+                } : undefined
             }
         })
 

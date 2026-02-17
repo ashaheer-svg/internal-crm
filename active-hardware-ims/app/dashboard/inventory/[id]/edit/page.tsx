@@ -40,6 +40,14 @@ export default function EditProductPage({ params }: PageProps) {
         warrantyMonths: 0
     })
 
+    // Service State
+    const [isService, setIsService] = useState(false)
+    const [serviceType, setServiceType] = useState("ONE_TIME")
+    const [durationValue, setDurationValue] = useState(1)
+    const [durationUnit, setDurationUnit] = useState("YEAR")
+    const [billingCycle, setBillingCycle] = useState("")
+    const [isMetered, setIsMetered] = useState(false)
+
     useEffect(() => {
         // Fetch categories
         fetch("/api/categories")
@@ -59,6 +67,16 @@ export default function EditProductPage({ params }: PageProps) {
             if (!res.ok) throw new Error("Failed to load product")
             const data = await res.json()
             setFormData(data)
+
+            // Populate Service Data
+            if (data.serviceDefinition) {
+                setIsService(true)
+                setServiceType(data.serviceDefinition.type)
+                setDurationValue(data.serviceDefinition.durationValue)
+                setDurationUnit(data.serviceDefinition.durationUnit)
+                setBillingCycle(data.serviceDefinition.billingCycle || "")
+                setIsMetered(data.serviceDefinition.isMetered)
+            }
         } catch (e) {
             setError(e instanceof Error ? e.message : "Failed to load product")
         } finally {
@@ -75,7 +93,15 @@ export default function EditProductPage({ params }: PageProps) {
             const res = await fetch(`/api/products/${productId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    isService,
+                    serviceType,
+                    durationValue,
+                    durationUnit,
+                    billingCycle,
+                    isMetered
+                }),
             })
 
             if (!res.ok) {
@@ -257,6 +283,72 @@ export default function EditProductPage({ params }: PageProps) {
                             />
                         </div>
                         <p className="mt-1 text-xs text-gray-500">Number of months warranty is valid from purchase date</p>
+                    </div>
+
+                    {/* Service Configuration Section */}
+                    <div className="sm:col-span-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">Service Configuration</h3>
+                                <p className="text-xs text-gray-500">Enable this if the product is a service (e.g. License, Subscription)</p>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="isService"
+                                    name="isService"
+                                    type="checkbox"
+                                    checked={isService}
+                                    onChange={(e) => setIsService(e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="isService" className="ml-2 block text-sm text-gray-900">
+                                    Is Service Product?
+                                </label>
+                            </div>
+                        </div>
+
+                        {isService && (
+                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 border-t border-gray-200 pt-4">
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="serviceType" className="block text-sm font-medium text-gray-700">Service Type</label>
+                                    <select
+                                        id="serviceType"
+                                        value={serviceType}
+                                        onChange={(e) => setServiceType(e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    >
+                                        <option value="ONE_TIME">One Time</option>
+                                        <option value="SUBSCRIPTION">Subscription</option>
+                                        <option value="CONTRACT">Contract (AMC)</option>
+                                        <option value="RENTAL">Rental</option>
+                                        <option value="LICENSE">License</option>
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700">Default Duration</label>
+                                    <div className="mt-1 flex rounded-md shadow-sm">
+                                        <input
+                                            type="number"
+                                            value={durationValue}
+                                            onChange={(e) => setDurationValue(Number(e.target.value))}
+                                            min={1}
+                                            className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        />
+                                        <select
+                                            value={durationUnit}
+                                            onChange={(e) => setDurationUnit(e.target.value)}
+                                            className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm border-l"
+                                        >
+                                            <option value="DAY">Days</option>
+                                            <option value="WEEK">Weeks</option>
+                                            <option value="MONTH">Months</option>
+                                            <option value="YEAR">Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

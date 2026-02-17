@@ -80,6 +80,7 @@ model Customer {
 
   invoices    Invoice[]
   deliveryOrders DeliveryOrder[]
+  serviceContracts ServiceContract[] // Added for Service Products
   endCustomerDeliveryOrders DeliveryOrder[] @relation("EndCustomer")
   deliveryAddresses DeliveryAddress[]
   employees   PartnerEmployee[]
@@ -151,6 +152,11 @@ model Product {
   backorderItems BackorderItem[]
   deliveryOrderItems DeliveryOrderItem[]
   grnItems        GRNItem[]
+  
+  // Service Product Extensions
+  serviceDefinition ServiceDefinition?
+  serviceContracts  ServiceContract[]
+  rentalAssets      RentalAsset[]
 }
 
 model Location {
@@ -313,6 +319,9 @@ model InvoiceItem {
   
   createdAt       DateTime @default(now())
   backorderItem   BackorderItem?
+  
+  // Service Link
+  serviceContract ServiceContract?
 }
 
 model BackorderItem {
@@ -416,6 +425,88 @@ model DeliveryOrderItem {
   // Backorder link (to track original backorder source)
   backorderItemId String?
   backorderItem   BackorderItem? @relation(fields: [backorderItemId], references: [id])
+}
+
+// Enums removed for SQLite compatibility. Using String types.
+
+model ServiceDefinition {
+  id          String   @id @default(uuid())
+  
+  // Link to existing Product table (Read-Only access to Product)
+  productId   String   @unique 
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  type        String   // ServiceType (ONE_TIME, SUBSCRIPTION, CONTRACT, RENTAL, LICENSE)
+  
+  // Service-specific fields
+  durationValue   Int      @default(1)
+  durationUnit    String   @default("YEAR") // DurationUnit (DAY, WEEK, MONTH, YEAR)
+  
+  isMetered       Boolean      @default(false)
+  billingCycle    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ServiceContract {
+  id              String   @id @default(uuid())
+  
+  // Links
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  
+  // Traceability
+  invoiceItemId   String?  @unique
+  invoiceItem     InvoiceItem? @relation(fields: [invoiceItemId], references: [id])
+  
+  // Contract Details
+  startDate       DateTime?
+  endDate         DateTime?
+  status          String   @default("PENDING") // ContractStatus (PENDING, ACTIVE, EXPIRED, CANCELLED, COMPLETED)
+  
+  // Renewal Linking (Chain of contracts)
+  previousContractId String? @unique
+  previousContract   ServiceContract? @relation("RenewalHistory", fields: [previousContractId], references: [id])
+  nextContract       ServiceContract? @relation("RenewalHistory")
+
+  // Explicit Duration for this specific contract instance
+  durationValue   Int      @default(1)
+  durationUnit    String   @default("YEAR") // DurationUnit
+
+  // Specific Handling
+  licenseKey      String?
+  description     String?
+  
+  // Rental specific
+  rentedAssetId   String?  @unique
+  rentedAsset     RentalAsset? @relation("ActiveRental", fields: [rentedAssetId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RentalAsset {
+  id              String   @id @default(uuid())
+  
+  name            String
+  serialNumber    String   @unique
+  
+  // Optional link to Product purely for description/specs reference
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id])
+  
+  status          String   @default("AVAILABLE") // RentalStatus (AVAILABLE, RENTED, MAINTENANCE, RETIRED)
+  
+  // Current Active Rental Link (Inverse relation defined in ServiceContract)
+  currentContract ServiceContract? @relation("ActiveRental")
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 

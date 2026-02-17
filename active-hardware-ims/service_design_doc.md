@@ -136,3 +136,154 @@ A new top-level section `Services` with subsections:
 4.  **Fulfillment Logic**:
     -   Auto-create `ServiceContract` records when an Invoice is PAID/CONFIRMED.
 5.  **Service Dashboard**: Build the view to manage active contracts.
+
+## 6. Alternative Implementation (Non-Invasive Strategy)
+
+This section outlines an implementation strategy that **avoids modifying existing database tables** (e.g., `Product`, `InventoryItem`), ensuring backward compatibility and minimizing migration risks. New tables are permitted, and writing to Log tables is allowed.
+
+### 6.1 Data Model Extensions
+
+Instead of adding fields to the `Product` table, we will use a **sidecar/extension table** pattern.
+
+#### A. New Model: `ServiceDefinition`
+This table stores service-specific metadata and links strictly 1:1 with a `Product`. If a product has a corresponding `ServiceDefinition`, it is considered a Service.
+
+```prisma
+// New Enum (Allowed)
+enum ServiceType {
+  ONE_TIME
+  SUBSCRIPTION
+  CONTRACT
+  RENTAL
+  LICENSE
+}
+
+enum DurationUnit {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+// New Table (Allowed)
+model ServiceDefinition {
+  id          String   @id @default(uuid())
+  
+  // Link to existing Product table (Read-Only access to Product)
+  productId   String   @unique 
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  type        ServiceType
+  
+  // Service-specific fields
+  durationValue   Int      @default(1) // e.g. 1
+  durationUnit    DurationUnit @default(YEAR) // e.g. YEAR
+  
+  isMetered       Boolean      @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
+
+#### B. New Model: `ServiceContract`
+Same as the original design, but links to `Product` (and checks `ServiceDefinition` for logic).
+
+```prisma
+model ServiceContract {
+  id              String   @id @default(uuid())
+  // ... (Same fields as Section 1.B)
+  
+  // Relation to Product remains valid as we can read Product
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+
+  // Renewal Linking (Chain of contracts)
+  previousContractId String? @unique
+  previousContract   ServiceContract? @relation("RenewalHistory", fields: [previousContractId], references: [id])
+  nextContract       ServiceContract? @relation("RenewalHistory")
+
+  // Explicit Duration for this specific contract instance
+  durationValue   Int      @default(1)
+  durationUnit    DurationUnit @default(YEAR)
+
+  // Rental specific
+  rentedAssetId   String?  @unique
+  rentedAsset     RentalAsset? @relation("ActiveRental")
+
+  // ... other fields
+}
+```
+
+#### C. Handling Rentals (New: Separate Rental Inventory)
+Since rental assets are distinct from sales inventory, we will create a dedicated `RentalAsset` table.
+
+```prisma
+enum RentalStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  RETIRED
+}
+
+model RentalAsset {
+  id              String   @id @default(uuid())
+  
+  name            String   // e.g. "Macbook Pro 16 - Asset #001"
+  serialNumber    String   @unique
+  
+  // Optional link to Product purely for description/specs reference
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id])
+  
+  status          RentalStatus @default(AVAILABLE)
+  
+  // Current Active Rental Link
+  currentContractId String? @unique
+  currentContract   ServiceContract? @relation("ActiveRental", fields: [currentContractId], references: [id])
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+```
+*Logic*: 
+-   **Rent Out**: Assign `RentalAsset` to `ServiceContract`. Set `RentalAsset.status = RENTED`.
+-   **Return**: Clear `currentContractId` from `RentalAsset`. Set `status = AVAILABLE` (or `MAINTENANCE`).
+
+### 6.2 Logic & Workflow Adjustments
+
+#### A. Product Identification
+-   **Is it a Service?**: Check if `db.serviceDefinition.findUnique({ where: { productId } })` returns a record.
+-   **Catalog UI**: Merge `Product` data with `ServiceDefinition` data when displaying.
+
+#### B. Logging
+-   All service lifecycle events (Provisioning, Renewal, Cancellation) should be logged.
+-   **Allowed**: Writing to existing `AuditLog` or `TransactionLog` tables.
+-   *Example*: When a service is activated, insert a record into `TransactionLog` with `type: 'SERVICE_ACTIVATION'`.
+
+#### C. Inventory Constraints
+-   Since we cannot add `RENTED` to the `status` enum in `InventoryItem`:
+### 6.3 Service Tracking & Expiration Logic
+
+#### A. Calculating Expiration
+-   **`endDate` Calculation**: When a contract is created (or activated), `endDate` is automatically calculated based on `startDate` + (`durationValue` * `durationUnit`).
+-   *Example*: 1 Year starting Jan 1, 2024 -> End Date: Jan 1, 2025.
+-   *Example*: 2 Weeks starting Feb 1, 2024 -> End Date: Feb 15, 2024.
+
+#### B. Expiration Alerts
+-   **Query**: A scheduled job or dashboard query filters `ServiceContract` where:
+    -   `status` is `ACTIVE`
+    -   `endDate` is <= (`Today` + `AlertThreshold` (e.g., 30 days))
+-   **Dashboard Widget**: "Upcoming Renewals" list sorted by `endDate` ASC.
+-   **Email Notification**: Optional automated email to Sales Rep or Customer when within threshold.
+
+#### C. Renewal Workflow
+-   **Action**: User clicks "Renew" on an expiring contract.
+-   **Result**:
+    1.  New `ServiceContract` created.
+    2.  `previousContractId` set to the old contract's ID.
+    3.  `startDate` set to old contract's `endDate` + 1 day (or continuous).
+    4.  Old contract remains `ACTIVE` until it expires, then moves to `COMPLETED` or `EXPIRED`.
+    5.  New contract starts as `PENDING` until specific start date or payment.

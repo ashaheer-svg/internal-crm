@@ -1,0 +1,182 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { AlertCircle, CheckCircle, Package } from "lucide-react"
+import ServiceRenewalModal from "./ServiceRenewalModal"
+import { useRouter } from "next/navigation"
+
+interface ServiceDashboardClientProps {
+    expiring: any[]
+    active: any[]
+    rentals: any[]
+}
+
+export default function ServiceDashboardClient({ expiring, active, rentals }: ServiceDashboardClientProps) {
+    const router = useRouter()
+    const [selectedContract, setSelectedContract] = useState<any>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    const handleRenewClick = (contract: any) => {
+        setSelectedContract(contract)
+        setIsModalOpen(true)
+    }
+
+    const onRenewSubmit = async (contractId: string, durationValue: number, durationUnit: string) => {
+        try {
+            const res = await fetch('/api/services/renew', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contractId, durationValue, durationUnit })
+            })
+
+            if (!res.ok) throw new Error("Failed to renew")
+
+            router.refresh()
+            setIsModalOpen(false)
+        } catch (error) {
+            console.error(error)
+            throw error
+        }
+    }
+
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-900">Service Management</h1>
+                <Link href="/dashboard/inventory" className="text-sm text-blue-600 hover:text-blue-800">
+                    Manage Products
+                </Link>
+            </div>
+
+            {/* Upcoming Renewals */}
+            <div className="bg-white shadow rounded-lg p-6 border-l-4 border-yellow-400">
+                <div className="flex items-center mb-4">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
+                    <h2 className="text-lg font-medium text-gray-900">Upcoming Renewals (Next 30 Days)</h2>
+                </div>
+                {expiring.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No contracts expiring soon.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {expiring.map(contract => (
+                                    <tr key={contract.id}>
+                                        <td className="px-3 py-2 text-sm text-gray-900">{contract.customer.name}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">{contract.product.name}</td>
+                                        <td className="px-3 py-2 text-sm text-red-600 font-medium">
+                                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm">
+                                            <button
+                                                onClick={() => handleRenewClick(contract)}
+                                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                            >
+                                                Renew
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Active Contracts */}
+                <div className="bg-white shadow rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                        <h2 className="text-lg font-medium text-gray-900">Active Contracts</h2>
+                    </div>
+                    {active.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No active contracts.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {active.map(contract => (
+                                        <tr key={contract.id}>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{contract.customer.name}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-500">{contract.product.name}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-500">
+                                                {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Indefinite'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Rental Assets */}
+                <div className="bg-white shadow rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                        <Package className="w-5 h-5 text-purple-600 mr-2" />
+                        <h2 className="text-lg font-medium text-gray-900">Rental Assets</h2>
+                    </div>
+                    {rentals.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No rental assets found.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Asset</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Current User</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {rentals.map(asset => (
+                                        <tr key={asset.id}>
+                                            <td className="px-3 py-2 text-sm text-gray-900">
+                                                {asset.name}
+                                                <div className="text-xs text-gray-400">{asset.serialNumber}</div>
+                                            </td>
+                                            <td className="px-3 py-2 text-sm">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${asset.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
+                                                        asset.status === 'RENTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {asset.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-sm text-gray-500">
+                                                {asset.currentContract?.customer?.name || '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <ServiceRenewalModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                contract={selectedContract}
+                onRenew={onRenewSubmit}
+            />
+        </div>
+    )
+}
