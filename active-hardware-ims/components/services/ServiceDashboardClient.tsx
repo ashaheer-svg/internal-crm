@@ -60,6 +60,10 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                         <Plus className="w-4 h-4 mr-2" />
                         New Agreement
                     </Link>
+                    <Link href="/dashboard/services/rentals" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <Package className="w-4 h-4 mr-2" />
+                        Rental Assets
+                    </Link>
                     <Link href="/dashboard/services/catalog" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Service Catalog
                     </Link>
