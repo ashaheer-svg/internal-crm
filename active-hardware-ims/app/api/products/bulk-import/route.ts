@@ -58,6 +58,26 @@ export async function POST(request: Request) {
             const errors: any[] = []
 
             for (const item of products) {
+                // Auto-create category if provided
+                if (item.category && typeof item.category === 'string' && item.category.trim() !== '') {
+                    const categoryName = item.category.trim()
+                    // Fire and forget upsert? Or await? Await to ensure safety.
+                    // Doing it inside loop might be slow for massive imports, but safe.
+                    // Better: dedupe first. But for JSON batch which might be small, loop is okay.
+                    // Actually, let's allow the individual upsert to fail silently if needed, or just await it.
+                    try {
+                        await prisma.category.upsert({
+                            where: { name: categoryName },
+                            update: {},
+                            create: { name: categoryName }
+                        })
+                    } catch (e) {
+                        // Ignore race conditions or other category errors, don't block product creation?
+                        // Ideally we want it to exist.
+                        console.error(`Failed to auto-create category ${categoryName}`, e)
+                    }
+                }
+
                 try {
                     await prisma.product.create({
                         data: {
@@ -136,6 +156,28 @@ export async function POST(request: Request) {
             select: { sku: true }
         })
         const existingSKUs = new Set(existingProducts.map(p => p.sku))
+
+        // Auto-create Categories from CSV
+        if (!isPreview) {
+            const categories = new Set<string>()
+            rows.forEach(row => {
+                if (row.category && row.category.trim()) {
+                    categories.add(row.category.trim())
+                }
+            })
+
+            for (const categoryName of Array.from(categories)) {
+                try {
+                    await prisma.category.upsert({
+                        where: { name: categoryName },
+                        update: {},
+                        create: { name: categoryName }
+                    })
+                } catch (e) {
+                    console.error(`Failed to auto-create category ${categoryName}`, e)
+                }
+            }
+        }
 
         // Process each row
         for (const row of rows) {
