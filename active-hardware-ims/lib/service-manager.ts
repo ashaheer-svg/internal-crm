@@ -174,7 +174,7 @@ export async function renewContract(oldContractId: string, options?: {
     });
 
     if (!oldContract) throw new Error("Contract not found");
-    if (oldContract.nextContractId) throw new Error("Contract already renewed"); // Wait, nextContract is a relation, we need to check if there is one linked
+
 
     // Check if already renewed via reverse lookup or if I added a field? 
     // Schema: nextContract ServiceContract? @relation("RenewalHistory")

@@ -347,6 +347,37 @@ export default function EditProductPage({ params }: PageProps) {
                                         </select>
                                     </div>
                                 </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="billingCycle" className="block text-sm font-medium text-gray-700">Billing Cycle</label>
+                                    <select
+                                        id="billingCycle"
+                                        value={billingCycle}
+                                        onChange={(e) => setBillingCycle(e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    >
+                                        <option value="">None / Manual</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-3 flex items-end pb-2">
+                                    <div className="flex items-center">
+                                        <input
+                                            id="isMetered"
+                                            name="isMetered"
+                                            type="checkbox"
+                                            checked={isMetered}
+                                            onChange={(e) => setIsMetered(e.target.checked)}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="isMetered" className="ml-2 block text-sm text-gray-900">
+                                            Is Metered Service?
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -44,7 +44,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         const { sku, name, brand, category, model, description, minStock, warrantyMonths, lowResellerPrice, resellerPrice, isActive } = body
 
         // Get existing for audit
-        const existing = await prisma.product.findUnique({ where: { id } })
+        const existing = await prisma.product.findUnique({
+            where: { id },
+            include: { serviceDefinition: true }
+        })
         if (!existing) {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 })
         }
@@ -78,7 +81,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                             billingCycle: body.billingCycle
                         }
                     }
-                } : undefined
+                } : (existing.serviceDefinition ? { delete: true } : undefined)
             }
         })
 
