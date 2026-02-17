@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, AlertCircle, Package } from "lucide-react"
+import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, AlertCircle, Package, Printer } from "lucide-react"
 import Link from "next/link"
 import ServiceRenewalModal from "./ServiceRenewalModal"
 
@@ -41,6 +41,26 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
         }
     }
 
+    const handleCompleteContract = async (contractId: string) => {
+        if (!confirm("Are you sure you want to mark this contract as COMPLETED?")) return
+
+        try {
+            const res = await fetch(`/api/services/contracts/${contractId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'COMPLETED' })
+            })
+
+            if (!res.ok) throw new Error("Failed to update status")
+
+            router.refresh()
+        } catch (error) {
+            console.error("Failed to complete contract", error)
+            alert("Failed to mark as completed")
+        }
+    }
+
+    // Filter expiring contracts based on days
     // Filter expiring contracts based on days
     const filteredExpiring = expiring.filter(contract => {
         if (!contract.endDate) return false;
@@ -169,12 +189,28 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                                             {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Indefinite'}
                                         </td>
                                         <td className="px-3 py-2 text-sm text-gray-500">
-                                            <Link
-                                                href={`/dashboard/services/contracts/${contract.id}/edit`}
-                                                className="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50"
-                                            >
-                                                Edit
-                                            </Link>
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/dashboard/services/contracts/${contract.id}/edit`}
+                                                    className="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <Link
+                                                    href={`/dashboard/services/contracts/${contract.id}/print`}
+                                                    className="text-gray-600 hover:text-gray-900 font-medium text-xs border border-gray-200 px-2 py-1 rounded hover:bg-gray-50"
+                                                    target="_blank"
+                                                >
+                                                    <Printer className="w-3 h-3" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleCompleteContract(contract.id)}
+                                                    className="text-green-600 hover:text-green-900 font-medium text-xs border border-green-200 px-2 py-1 rounded hover:bg-green-50"
+                                                    title="Mark as Completed"
+                                                >
+                                                    <CheckCircle className="w-3 h-3" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
