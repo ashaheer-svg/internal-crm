@@ -84,6 +84,7 @@ export async function activateServiceContract(data: {
     partnerId?: string;
     contractValue?: number;
     invoiceReference?: string;
+    salesRepId?: string;
 }) {
     // Fetch definition to get defaults
     const def = await db.serviceDefinition.findUnique({
@@ -114,7 +115,8 @@ export async function activateServiceContract(data: {
             contractNumber: data.contractNumber,
             partnerId: data.partnerId,
             contractValue: data.contractValue || 0,
-            invoiceReference: data.invoiceReference
+            invoiceReference: data.invoiceReference,
+            salesRepId: data.salesRepId
         }
     });
 }

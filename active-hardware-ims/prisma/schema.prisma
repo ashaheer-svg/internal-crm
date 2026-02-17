@@ -97,6 +97,7 @@ model SalesRep {
   updatedAt   DateTime @updatedAt
 
   customers      Customer[]
+  serviceContracts ServiceContract[]
   deliveryOrders DeliveryOrder[]
   invoices       Invoice[]
 }
@@ -488,6 +489,9 @@ model ServiceContract {
   
   partnerId       String?
   partner         Customer? @relation("PartnerLink", fields: [partnerId], references: [id])
+  
+  salesRepId      String?
+  salesRep        SalesRep? @relation(fields: [salesRepId], references: [id])
 
   // Rental specific
   rentedAssetId   String?  @unique

@@ -21,6 +21,11 @@ type ServiceProduct = {
     }
 }
 
+type SalesRep = {
+    id: string
+    name: string
+}
+
 export default function NewServiceAgreementPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
@@ -29,10 +34,12 @@ export default function NewServiceAgreementPage() {
     // Data Sources
     const [customers, setCustomers] = useState<Customer[]>([])
     const [products, setProducts] = useState<ServiceProduct[]>([])
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([])
 
     // Form State
     const [customerId, setCustomerId] = useState("")
     const [partnerId, setPartnerId] = useState("")
+    const [salesRepId, setSalesRepId] = useState("")
     const [productId, setProductId] = useState("")
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
     const [contractNumber, setContractNumber] = useState("")
@@ -66,6 +73,12 @@ export default function NewServiceAgreementPage() {
             .then(res => res.json())
             .then(data => setProducts(data))
             .catch(err => console.error("Failed to fetch services", err))
+
+        // Fetch Sales Reps
+        fetch("/api/sales-reps")
+            .then(res => res.json())
+            .then(data => setSalesReps(data))
+            .catch(err => console.error("Failed to fetch sales reps", err))
     }, [])
 
     // Update duration defaults when product selected
@@ -95,6 +108,7 @@ export default function NewServiceAgreementPage() {
                     description,
                     contractNumber,
                     partnerId: partnerId || undefined,
+                    salesRepId: salesRepId || undefined,
                     contractValue,
                     invoiceReference
                 })
@@ -147,6 +161,21 @@ export default function NewServiceAgreementPage() {
                             <option value="">Select a Customer</option>
                             {customers.map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Sales Rep Selection */}
+                    <div className="sm:col-span-1">
+                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                        <select
+                            value={salesRepId}
+                            onChange={(e) => setSalesRepId(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        >
+                            <option value="">Select a Sales Rep</option>
+                            {salesReps.map(rep => (
+                                <option key={rep.id} value={rep.id}>{rep.name}</option>
                             ))}
                         </select>
                     </div>
