@@ -3,7 +3,7 @@ import { getActiveContracts, getAllRentals, getExpiringContracts } from "@/lib/s
 import ServiceDashboardClient from "@/components/services/ServiceDashboardClient"
 
 export default async function ServicesDashboard() {
-    const expiring = await getExpiringContracts(30)
+    const expiring = await getExpiringContracts(60)
     const active = await getActiveContracts()
     const rentals = await getAllRentals()
 

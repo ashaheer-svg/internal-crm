@@ -16,6 +16,7 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
     const router = useRouter()
     const [selectedContract, setSelectedContract] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [daysFilter, setDaysFilter] = useState<30 | 60>(30)
 
     const handleRenewClick = (contract: any) => {
         setSelectedContract(contract)
@@ -40,6 +41,16 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
         }
     }
 
+    // Filter expiring contracts based on days
+    const filteredExpiring = expiring.filter(contract => {
+        if (!contract.endDate) return false;
+        const endDate = new Date(contract.endDate);
+        const today = new Date();
+        const diffTime = endDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= daysFilter && diffDays >= 0; // Ensure upcoming
+    });
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -53,6 +64,66 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                         Service Catalog
                     </Link>
                 </div>
+            </div>
+
+
+            {/* Upcoming Renewals */}
+            <div className="bg-white shadow rounded-lg p-6 border-l-4 border-yellow-400">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                        <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+                        <h2 className="text-lg font-medium text-gray-900">Upcoming Renewals</h2>
+                    </div>
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                        <button
+                            onClick={() => setDaysFilter(30)}
+                            className={`px-3 py-1 text-xs font-medium rounded-md ${daysFilter === 30 ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            30 Days
+                        </button>
+                        <button
+                            onClick={() => setDaysFilter(60)}
+                            className={`px-3 py-1 text-xs font-medium rounded-md ${daysFilter === 60 ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            60 Days
+                        </button>
+                    </div>
+                </div>
+                {filteredExpiring.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No contracts expiring in the next {daysFilter} days.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {filteredExpiring.map(contract => (
+                                    <tr key={contract.id}>
+                                        <td className="px-3 py-2 text-sm text-gray-900">{contract.customer.name}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-500">{contract.product.name}</td>
+                                        <td className="px-3 py-2 text-sm text-red-600 font-medium">
+                                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-3 py-2 text-sm">
+                                            <button
+                                                onClick={() => handleRenewClick(contract)}
+                                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                            >
+                                                Renew
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Active Contracts - Full Width */}
