@@ -44,8 +44,8 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Service Management</h1>
-                <Link href="/dashboard/inventory" className="text-sm text-blue-600 hover:text-blue-800">
-                    Manage Products
+                <Link href="/dashboard/services/catalog" className="text-sm text-blue-600 hover:text-blue-800">
+                    Service Catalog
                 </Link>
             </div>
 
@@ -154,7 +154,7 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                                             </td>
                                             <td className="px-3 py-2 text-sm">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${asset.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                                                        asset.status === 'RENTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                    asset.status === 'RENTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {asset.status}
                                                 </span>

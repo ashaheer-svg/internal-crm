@@ -10,9 +10,17 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const includeInactive = searchParams.get('includeInactive') === 'true'
 
+        const type = searchParams.get('type') || 'product' // product, service, or all
+
         const where: any = {}
         if (!includeInactive) {
             where.isActive = true
+        }
+
+        if (type === 'product') {
+            where.serviceDefinition = null
+        } else if (type === 'service') {
+            where.serviceDefinition = { isNot: null }
         }
 
         const products = await prisma.product.findMany({
@@ -70,7 +78,17 @@ export async function POST(request: Request) {
                 model: model || '',
                 description,
                 minStock: Number(minStock) || 0,
-                warrantyMonths: Number(warrantyMonths) || 0
+                warrantyMonths: Number(warrantyMonths) || 0,
+                // Handle Service Definition
+                serviceDefinition: body.isService ? {
+                    create: {
+                        type: body.serviceType || 'ONE_TIME',
+                        durationValue: Number(body.durationValue) || 1,
+                        durationUnit: body.durationUnit || 'YEAR',
+                        isMetered: body.isMetered || false,
+                        billingCycle: body.billingCycle
+                    }
+                } : undefined
             }
         })
 
