@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
 
-export default function EditServicePackagePage({ params }: { params: { id: string } }) {
+export default function EditServicePackagePage() {
     const router = useRouter()
+    const params = useParams()
+    const id = params.id as string
+
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState("")
@@ -27,9 +30,11 @@ export default function EditServicePackagePage({ params }: { params: { id: strin
     const [isActive, setIsActive] = useState(true)
 
     useEffect(() => {
+        if (!id) return;
+
         Promise.all([
             fetch("/api/categories").then(res => res.json()),
-            fetch(`/api/products/${params.id}`).then(res => res.json())
+            fetch(`/api/products/${id}`).then(res => res.json())
         ]).then(([categoriesData, productData]) => {
             setCategories(categoriesData)
 
@@ -53,10 +58,10 @@ export default function EditServicePackagePage({ params }: { params: { id: strin
             setLoading(false)
         }).catch(err => {
             console.error("Failed to fetch data", err)
-            setError("Failed to load service package details")
+            setError(err.message || "Failed to load service package details")
             setLoading(false)
         })
-    }, [params.id])
+    }, [id])
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault()
