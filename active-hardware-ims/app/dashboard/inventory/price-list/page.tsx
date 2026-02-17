@@ -156,10 +156,10 @@ export default function PriceListPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-blue-600">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[5%]">
                     SKU
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[40%]">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[45%]">
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]">
