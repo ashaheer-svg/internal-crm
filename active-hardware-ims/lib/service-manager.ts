@@ -151,7 +151,8 @@ export async function getActiveContracts() {
         },
         include: {
             customer: true,
-            product: true
+            product: true,
+            partner: true
         },
         orderBy: {
             createdAt: 'desc'
