@@ -147,7 +147,7 @@ export default function ListView() {
                                         {project.title}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {project.customer.name}
+                                        {project.customer?.name || 'Unknown'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                         {new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)}
@@ -155,15 +155,15 @@ export default function ListView() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
                                             className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800"
-                                            style={{ backgroundColor: project.stage.color ? `${project.stage.color}20` : '#f3f4f6', color: project.stage.color || '#1f2937' }}
+                                            style={{ backgroundColor: project.stage?.color ? `${project.stage.color}20` : '#f3f4f6', color: project.stage?.color || '#1f2937' }}
                                         >
-                                            {project.stage.name}
+                                            {project.stage?.name || 'Unknown'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${project.status === 'WON' ? 'bg-green-100 text-green-800' :
-                                                project.status === 'LOST' ? 'bg-red-100 text-red-800' :
-                                                    'bg-blue-100 text-blue-800'
+                                            project.status === 'LOST' ? 'bg-red-100 text-red-800' :
+                                                'bg-blue-100 text-blue-800'
                                             }`}>
                                             {project.status}
                                         </span>

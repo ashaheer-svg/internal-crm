@@ -151,7 +151,7 @@ export default function KanbanPage() {
         return (
             <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50 h-full">
                 <div className="flex h-full space-x-6">
-                    {pipeline.stages.map((stage) => (
+                    {pipeline.stages?.map((stage) => (
                         <div
                             key={stage.id}
                             className="w-80 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg max-h-full"
@@ -177,7 +177,7 @@ export default function KanbanPage() {
                                         onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
                                     >
                                         <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
-                                        <p className="text-sm text-gray-500 mt-1 truncate">{project.customer.name}</p>
+                                        <p className="text-sm text-gray-500 mt-1 truncate">{project.customer?.name || 'Unknown Customer'}</p>
                                         <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                                             <span className="font-semibold text-gray-700">
                                                 {new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)}
