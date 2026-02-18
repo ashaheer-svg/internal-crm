@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react'
+import { formatCurrency } from '@/lib/format'
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
 
@@ -314,7 +315,7 @@ export default function NewQuotePage({ params }: { params: Promise<{ id: string 
                                                 </div>
                                             </td>
                                             <td className="py-3 px-2 align-top text-right font-medium text-gray-900 pt-4">
-                                                {item.total.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                                {formatCurrency(item.total)}
                                             </td>
                                             <td className="py-3 pl-2 align-top text-right pt-4">
                                                 <button
@@ -334,15 +335,15 @@ export default function NewQuotePage({ params }: { params: Promise<{ id: string 
                                 <div className="w-64 space-y-2">
                                     <div className="flex justify-between text-sm text-gray-600">
                                         <span>Subtotal</span>
-                                        <span>{subtotal.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                                        <span>{formatCurrency(subtotal)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-gray-600">
                                         <span>Tax (18%)</span>
-                                        <span>{tax.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                                        <span>{formatCurrency(tax)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2">
                                         <span>Total</span>
-                                        <span>{total.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                                        <span>{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                             </div>

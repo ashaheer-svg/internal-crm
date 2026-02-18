@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 interface Quote {
     id: string
@@ -101,10 +102,10 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                             </td>
                             <td className="py-4 px-4 text-right text-gray-900">{item.quantity}</td>
                             <td className="py-4 px-4 text-right text-gray-900">
-                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(item.unitPrice)}
+                                {formatCurrency(item.unitPrice)}
                             </td>
                             <td className="py-4 px-4 text-right font-medium text-gray-900">
-                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(item.totalPrice)}
+                                {formatCurrency(item.totalPrice)}
                             </td>
                         </tr>
                     ))}
@@ -116,15 +117,15 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                 <div className="w-64 space-y-2">
                     <div className="flex justify-between text-sm text-gray-600">
                         <span>Subtotal</span>
-                        <span>{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(subtotal)}</span>
+                        <span>{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-600">
                         <span>Tax (18%)</span>
-                        <span>{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(tax)}</span>
+                        <span>{formatCurrency(tax)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold text-gray-900 border-t-2 border-gray-900 pt-2 text-blue-900">
                         <span>Total (INR)</span>
-                        <span>{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(quote.totalAmount)}</span>
+                        <span>{formatCurrency(quote.totalAmount)}</span>
                     </div>
                 </div>
             </div>

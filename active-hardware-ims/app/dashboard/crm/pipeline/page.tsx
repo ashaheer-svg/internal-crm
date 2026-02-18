@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, LayoutTemplate, List } from 'lucide-react' // LayoutTemplate as Kanban icon
 import ListView from './ListView'
+import { formatCurrency } from '@/lib/format'
 
 // Types
 interface PipelineData {
@@ -180,10 +181,7 @@ export default function KanbanPage() {
                                         <p className="text-sm text-gray-500 mt-1 truncate">{project.customer?.name || 'Unknown Customer'}</p>
                                         <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                                             <span className="font-semibold text-gray-700">
-                                                {project.currency === 'Rs.'
-                                                    ? `Rs. ${project.expectedValue.toLocaleString('en-IN')}`
-                                                    : new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)
-                                                }
+                                                {formatCurrency(project.expectedValue, project.currency)}
                                             </span>
                                             <span className={`px-1.5 py-0.5 rounded ${project.status === 'WON' ? 'bg-green-100 text-green-700' :
                                                 project.status === 'LOST' ? 'bg-red-100 text-red-700' :

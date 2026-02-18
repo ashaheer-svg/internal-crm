@@ -12,6 +12,7 @@ import {
     User,
     Plus
 } from 'lucide-react'
+import { formatCurrency } from '@/lib/format'
 import CRMActivityFeed from '@/components/crm/CRMActivityFeed'
 import CRMTaskSection from '@/components/crm/CRMTaskSection'
 import CRMTeamSection from '@/components/crm/CRMTeamSection'
@@ -111,10 +112,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                             <span className="flex items-center text-sm">
                                 <DollarSign className="w-4 h-4 mr-1" />
-                                {project.currency === 'Rs.'
-                                    ? `Rs. ${Number(project.expectedValue).toLocaleString('en-IN')}`
-                                    : new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)
-                                }
+                                {formatCurrency(project.expectedValue, project.currency)}
                             </span>
                             <span className="flex items-center text-sm">
                                 <Calendar className="w-4 h-4 mr-1" />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { formatCurrency } from '@/lib/format'
 
 interface Project {
     id: string
@@ -150,10 +151,7 @@ export default function ListView() {
                                         {project.customer?.name || 'Unknown'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                        {project.currency === 'Rs.'
-                                            ? `Rs. ${project.expectedValue.toLocaleString('en-IN')}`
-                                            : new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)
-                                        }
+                                        {formatCurrency(project.expectedValue, project.currency)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span

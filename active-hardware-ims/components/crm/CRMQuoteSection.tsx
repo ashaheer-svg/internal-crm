@@ -3,6 +3,7 @@
 import { Plus, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
+import { formatCurrency } from '@/lib/format'
 
 interface Quote {
     id: string
@@ -46,16 +47,16 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                     <div className="flex items-center gap-3">
                                         <span className="font-medium text-gray-900">{quote.quoteNumber}</span>
                                         <span className={`text-xs px-2 py-0.5 rounded ${quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-700' :
-                                                quote.status === 'SENT' ? 'bg-blue-100 text-blue-700' :
-                                                    quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
-                                                        'bg-red-100 text-red-700'
+                                            quote.status === 'SENT' ? 'bg-blue-100 text-blue-700' :
+                                                quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                                                    'bg-red-100 text-red-700'
                                             }`}>
                                             {quote.status}
                                         </span>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">
                                         Created {formatDistanceToNow(new Date(quote.createdAt))} ago •
-                                        Amount: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(quote.totalAmount)}
+                                        Amount: {formatCurrency(quote.totalAmount)}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">

@@ -34,10 +34,11 @@ export async function POST(request: Request) {
 
         // 4. Calculate Totals
         let subTotal = 0
-        const quoteItems = items.map((item: any) => {
+        const quoteItems = items.map((item: any, index: number) => {
             const lineTotal = item.quantity * item.unitPrice
             subTotal += lineTotal
             return {
+                order: index,
                 productId: item.productId || null,
                 description: item.description,
                 quantity: item.quantity,
