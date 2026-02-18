@@ -321,3 +321,29 @@ export async function softDeleteAsset(assetId: string) {
         data: { isDeleted: true }
     });
 }
+
+export async function completeContract(contractId: string) {
+    return db.$transaction(async (tx) => {
+        // 1. Find all assets linked to this contract
+        const linkedAssets = await tx.rentalAsset.findMany({
+            where: { currentContractId: contractId }
+        });
+
+        // 2. Return all assets
+        for (const asset of linkedAssets) {
+            await tx.rentalAsset.update({
+                where: { id: asset.id },
+                data: {
+                    status: RentalStatus.AVAILABLE,
+                    currentContractId: null
+                }
+            });
+        }
+
+        // 3. Mark contract as completed
+        await tx.serviceContract.update({
+            where: { id: contractId },
+            data: { status: ContractStatus.COMPLETED }
+        });
+    });
+}

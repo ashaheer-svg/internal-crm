@@ -63,19 +63,51 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
         }
 
-        const updatedContract = await prisma.serviceContract.update({
-            where: { id },
-            data: {
-                contractNumber,
-                partnerId: partnerId || null,
-                salesRepId: salesRepId || null,
-                contractValue: contractValue !== undefined ? Number(contractValue) : undefined,
-                invoiceReference,
-                description,
-                endDate: endDate ? new Date(endDate) : undefined,
-                status: status || undefined // Update status if provided
-            }
-        })
+        let updatedContract;
+
+        if (status === 'COMPLETED') {
+            const { completeContract } = await import("@/lib/service-manager");
+            // completeContract handles status update and asset return
+            // We first update other fields if any, then complete it.
+            // Or simpler: just call completeContract if that's the main intent. 
+            // But the user might be updating other fields too. 
+
+            // First update standard fields if any changes
+            await prisma.serviceContract.update({
+                where: { id },
+                data: {
+                    contractNumber,
+                    partnerId: partnerId || null,
+                    salesRepId: salesRepId || null,
+                    contractValue: contractValue !== undefined ? Number(contractValue) : undefined,
+                    invoiceReference,
+                    description,
+                    endDate: endDate ? new Date(endDate) : undefined,
+                    // Don't set status here yet
+                }
+            });
+
+            // Then complete it (which sets status and returns assets)
+            await completeContract(id);
+
+            // Fetch updated for return
+            updatedContract = await prisma.serviceContract.findUnique({ where: { id } });
+
+        } else {
+            updatedContract = await prisma.serviceContract.update({
+                where: { id },
+                data: {
+                    contractNumber,
+                    partnerId: partnerId || null,
+                    salesRepId: salesRepId || null,
+                    contractValue: contractValue !== undefined ? Number(contractValue) : undefined,
+                    invoiceReference,
+                    description,
+                    endDate: endDate ? new Date(endDate) : undefined,
+                    status: status || undefined
+                }
+            })
+        }
 
         await logUpdate('SERVICE_CONTRACT', id, user.id, user.name,
             {
