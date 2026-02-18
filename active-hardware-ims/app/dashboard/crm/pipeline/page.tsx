@@ -7,6 +7,8 @@ import ListView from './ListView'
 import { formatCurrency } from '@/lib/format'
 import CreateCustomerButton from '@/components/CreateCustomerButton'
 
+import DashboardTasks from '@/components/crm/DashboardTasks'
+
 // Types
 interface PipelineData {
     id: string
@@ -246,11 +248,7 @@ export default function KanbanPage() {
                 </div>
             </div>
 
-            import DashboardTasks from '@/components/crm/DashboardTasks'
 
-            // ... imports
-
-            // ... inside KanbanPage component
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
