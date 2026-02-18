@@ -8,11 +8,8 @@ interface RouteParams {
     }
 }
 
-export async function PATCH(request: Request, context: unknown) {
-    // Awaiting params to satisfy Next.js 15+ requirements if needed, 
-    // though typically context.params is the way. 
-    // Safely handling params:
-    const { id } = (context as { params: { id: string } }).params;
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
 
     try {
         const user = await requireAuth()
