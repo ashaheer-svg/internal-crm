@@ -33,18 +33,23 @@ export async function POST(request: Request) {
         const version = existingQuotesCount + 1
 
         // 4. Calculate Totals
-        let totalAmount = 0
+        let subTotal = 0
         const quoteItems = items.map((item: any) => {
             const lineTotal = item.quantity * item.unitPrice
-            totalAmount += lineTotal
+            subTotal += lineTotal
             return {
                 productId: item.productId || null,
                 description: item.description,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
-                totalPrice: lineTotal
+                total: lineTotal // Changed from totalPrice to match schema if needed, checking schema... schema says 'total'
             }
         })
+
+        // Simple Tax Logic (Can be enhanced later)
+        const taxRate = 0.18 // Example 18% GST
+        const taxAmount = subTotal * taxRate
+        const totalAmount = subTotal + taxAmount
 
         // 5. Create Quote
         const quote = await prisma.cRMQuote.create({
@@ -53,6 +58,8 @@ export async function POST(request: Request) {
                 projectId,
                 version,
                 status: 'DRAFT',
+                subTotal,
+                taxAmount,
                 totalAmount,
                 validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
                 terms: terms || 'Standard Terms Apply',
