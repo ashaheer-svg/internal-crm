@@ -95,6 +95,7 @@ model Customer {
   
   // CRM Relations
   crmProjects      CRMProject[]
+  partnerProjects  CRMProject[] @relation("ProjectPartner")
   quotedBillTo     CRMQuote[] @relation("QuoteBillTo")
   quotedShipTo     CRMQuote[] @relation("QuoteShipTo")
 }
@@ -112,6 +113,7 @@ model SalesRep {
   serviceContracts ServiceContract[]
   deliveryOrders DeliveryOrder[]
   invoices       Invoice[]
+  crmProjects    CRMProject[]
 }
 
 model PartnerEmployee {
@@ -591,6 +593,12 @@ model CRMProject {
   // External Links (Read-Only)
   customerId  String
   customer    Customer    @relation(fields: [customerId], references: [id])
+
+  partnerId   String?
+  partner     Customer?   @relation("ProjectPartner", fields: [partnerId], references: [id])
+
+  salesRepId  String?
+  salesRep    SalesRep?   @relation(fields: [salesRepId], references: [id])
 
   // Project Components
   members     ProjectMember[]

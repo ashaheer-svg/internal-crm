@@ -11,6 +11,7 @@ export async function GET(request: Request) {
         const search = searchParams.get('search') || ''
         const stageId = searchParams.get('stageId')
         const status = searchParams.get('status')
+        const salesRepId = searchParams.get('salesRepId')
 
         const skip = (page - 1) * limit
 
@@ -22,18 +23,22 @@ export async function GET(request: Request) {
             where.OR = [
                 { title: { contains: search } },
                 { projectCode: { contains: search } },
-                { customer: { name: { contains: search } } }
+                { customer: { name: { contains: search } } },
+                { salesRep: { name: { contains: search } } }
             ]
         }
 
         if (stageId && stageId !== 'ALL') where.stageId = stageId
         if (status && status !== 'ALL') where.status = status
+        if (salesRepId && salesRepId !== 'ALL') where.salesRepId = salesRepId
 
         const [projects, total] = await prisma.$transaction([
             prisma.cRMProject.findMany({
                 where,
                 include: {
                     customer: true,
+                    partner: true,
+                    salesRep: true,
                     stage: true,
                     members: {
                         include: { user: true }
@@ -64,7 +69,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { title, customerId, expectedValue, currency, description, pipelineId } = body
+        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId } = body
 
         if (!title || !customerId || !pipelineId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -91,6 +96,8 @@ export async function POST(request: Request) {
                 projectCode,
                 title,
                 customerId,
+                partnerId: partnerId || null,
+                salesRepId: salesRepId || null,
                 pipelineId,
                 stageId: firstStage.id,
                 expectedValue: Number(expectedValue) || 0,

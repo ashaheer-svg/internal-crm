@@ -17,6 +17,7 @@ import CRMActivityFeed from '@/components/crm/CRMActivityFeed'
 import CRMTaskSection from '@/components/crm/CRMTaskSection'
 import CRMTeamSection from '@/components/crm/CRMTeamSection'
 import CRMQuoteSection from '@/components/crm/CRMQuoteSection'
+import LogActivityModal from '@/components/crm/LogActivityModal'
 
 // Types
 interface ProjectData {
@@ -32,6 +33,8 @@ interface ProjectData {
     targetDate: string
 
     customer: { id: string, name: string }
+    partner?: { id: string, name: string }
+    salesRep?: { id: string, name: string }
     stage: { id: string, name: string, color: string }
     pipeline: { stages: { id: string, name: string }[] }
 
@@ -47,6 +50,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const [project, setProject] = useState<ProjectData | null>(null)
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('overview')
+    const [showActivityModal, setShowActivityModal] = useState(false)
 
     useEffect(() => {
         fetchProject()
@@ -94,6 +98,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
+            <LogActivityModal
+                isOpen={showActivityModal}
+                onClose={() => setShowActivityModal(false)}
+                projectId={project.id}
+                onSuccess={fetchProject}
+            />
+
             {/* Header / Cockpit Top */}
             <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
                 <div className="flex justify-between items-start">
@@ -110,6 +121,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 <User className="w-4 h-4 mr-1" />
                                 {project.customer.name}
                             </span>
+                            {project.partner && (
+                                <span className="flex items-center text-sm px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100">
+                                    <Users className="w-4 h-4 mr-1" />
+                                    Partner: {project.partner.name}
+                                </span>
+                            )}
+                            {project.salesRep && (
+                                <span className="flex items-center text-sm px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                                    <User className="w-4 h-4 mr-1" />
+                                    Rep: {project.salesRep.name}
+                                </span>
+                            )}
                             <span className="flex items-center text-sm">
                                 <DollarSign className="w-4 h-4 mr-1" />
                                 {formatCurrency(project.expectedValue, project.currency)}
@@ -247,7 +270,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         <div className="max-w-3xl">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Activity Timeline</h2>
-                                <button className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                <button
+                                    onClick={() => setShowActivityModal(true)}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                >
                                     Log Activity
                                 </button>
                             </div>

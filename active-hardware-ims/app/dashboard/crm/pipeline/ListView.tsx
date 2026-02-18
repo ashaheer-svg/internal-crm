@@ -13,6 +13,7 @@ interface Project {
     currency: string
     status: string
     customer: { name: string }
+    salesRep: { name: string } | null
     stage: { name: string; color: string }
     updatedAt: string
 }
@@ -24,6 +25,11 @@ interface Meta {
     totalPages: number
 }
 
+interface SalesRep {
+    id: string
+    name: string
+}
+
 export default function ListView() {
     const router = useRouter()
     const [projects, setProjects] = useState<Project[]>([])
@@ -33,6 +39,9 @@ export default function ListView() {
     // Filters
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('ALL')
+    const [salesRepId, setSalesRepId] = useState('ALL')
+
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([])
 
     // Debounce Search
     const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -43,8 +52,16 @@ export default function ListView() {
     }, [search])
 
     useEffect(() => {
+        // Fetch Sales Reps for filter
+        fetch('/api/sales-reps')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setSalesReps(Array.isArray(data) ? data : []))
+            .catch(() => setSalesReps([]))
+    }, [])
+
+    useEffect(() => {
         fetchProjects(1)
-    }, [debouncedSearch, status])
+    }, [debouncedSearch, status, salesRepId])
 
     async function fetchProjects(page: number) {
         setLoading(true)
@@ -53,7 +70,8 @@ export default function ListView() {
                 page: page.toString(),
                 limit: '10',
                 search: debouncedSearch,
-                status: status
+                status: status,
+                salesRepId: salesRepId
             })
 
             const res = await fetch(`/api/crm/projects?${params}`)
@@ -79,29 +97,45 @@ export default function ListView() {
         <div className="bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full">
             {/* Toolbar */}
             <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50 rounded-t-lg">
-                <div className="relative w-full sm:w-96">
+                <div className="relative w-full sm:w-80">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                         type="text"
-                        placeholder="Search projects, customers, codes..."
+                        placeholder="Search projects, customers, reps..."
                         className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-500" />
-                    <select
-                        className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                    >
-                        <option value="ALL">All Status</option>
-                        <option value="OPEN">Open</option>
-                        <option value="WON">Won</option>
-                        <option value="LOST">Lost</option>
-                    </select>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500 hidden sm:inline">Rep:</span>
+                        <select
+                            className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            value={salesRepId}
+                            onChange={(e) => setSalesRepId(e.target.value)}
+                        >
+                            <option value="ALL">All Reps</option>
+                            {salesReps.map(rep => (
+                                <option key={rep.id} value={rep.id}>{rep.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-gray-500" />
+                        <select
+                            className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                        >
+                            <option value="ALL">All Status</option>
+                            <option value="OPEN">Open</option>
+                            <option value="WON">Won</option>
+                            <option value="LOST">Lost</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -113,6 +147,7 @@ export default function ListView() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Code</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Rep</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -123,14 +158,14 @@ export default function ListView() {
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => (
                                 <tr key={i}>
-                                    <td colSpan={7} className="px-6 py-4 whitespace-nowrap">
+                                    <td colSpan={8} className="px-6 py-4 whitespace-nowrap">
                                         <div className="h-4 bg-gray-100 rounded w-full animate-pulse"></div>
                                     </td>
                                 </tr>
                             ))
                         ) : projects.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                                     No projects found matching your criteria.
                                 </td>
                             </tr>
@@ -149,6 +184,9 @@ export default function ListView() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {project.customer?.name || 'Unknown'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {project.salesRep?.name || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                         {formatCurrency(project.expectedValue, project.currency)}

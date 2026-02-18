@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation'
 interface Customer {
     id: string
     name: string
+    isPartner: boolean
+    salesRepId?: string // To auto-select
+}
+
+interface SalesRep {
+    id: string
+    name: string
 }
 
 interface Pipeline {
@@ -17,11 +24,15 @@ export default function NewProjectPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [customers, setCustomers] = useState<Customer[]>([])
+    const [partners, setPartners] = useState<Customer[]>([])
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([])
     const [pipelines, setPipelines] = useState<Pipeline[]>([])
 
     const [formData, setFormData] = useState({
         title: '',
         customerId: '',
+        partnerId: '',
+        salesRepId: '',
         pipelineId: '',
         expectedValue: '',
         currency: 'Rs.',
@@ -29,22 +40,37 @@ export default function NewProjectPage() {
     })
 
     useEffect(() => {
-        // Fetch Customers and Pipelines
+        // Fetch Customers, Sales Reps and Pipelines
         Promise.all([
             fetch('/api/customers?limit=100').then(res => {
                 if (!res.ok) throw new Error('Failed to fetch customers')
                 return res.json()
             }),
+            fetch('/api/sales-reps').then(res => { // Assuming this endpoint exists or similar
+                if (!res.ok) {
+                    // Fallback if dedicated endpoint missing, might need to extract from customers or similar
+                    // For now assume it might fail if not created yet
+                    return []
+                }
+                return res.json()
+            }).catch(() => []),
             fetch('/api/crm/pipeline').then(res => {
                 if (!res.ok) throw new Error('Failed to fetch pipeline')
                 return res.json()
             })
-        ]).then(([customersData, pipelineData]) => {
+        ]).then(([customersData, salesRepsData, pipelineData]) => {
             // customersData is { customers: [], totalCount: ... }
+            let allCustomers: Customer[] = []
             if (customersData && customersData.customers) {
-                setCustomers(customersData.customers)
+                allCustomers = customersData.customers
             } else if (Array.isArray(customersData)) {
-                setCustomers(customersData)
+                allCustomers = customersData
+            }
+            setCustomers(allCustomers)
+            setPartners(allCustomers.filter(c => c.isPartner))
+
+            if (Array.isArray(salesRepsData)) {
+                setSalesReps(salesRepsData)
             }
 
             // If fetch('/api/crm/pipeline') returns a single object (default pipeline)
@@ -54,9 +80,18 @@ export default function NewProjectPage() {
             }
         }).catch(err => {
             console.error(err)
-            // alert('Failed to load initial data') // Optional: don't annoy user if it's just a blip
         })
     }, [])
+
+    // Auto-select sales rep when partner changes
+    const handlePartnerChange = (partnerId: string) => {
+        const partner = partners.find(p => p.id === partnerId)
+        setFormData(prev => ({
+            ...prev,
+            partnerId,
+            salesRepId: partner?.salesRepId || prev.salesRepId
+        }))
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -71,9 +106,7 @@ export default function NewProjectPage() {
 
             if (res.ok) {
                 const project = await res.json()
-                router.push(`/dashboard/crm/projects/${project.id}`) // Redirect to project detail (Phase 2)
-                // For now, redirect back to pipeline if detail page doesn't exist
-                // router.push('/dashboard/crm/pipeline')
+                router.push(`/dashboard/crm/projects/${project.id}`)
             } else {
                 alert('Failed to create project')
             }
@@ -103,7 +136,7 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Customer</label>
+                    <label className="block text-sm font-medium text-gray-700">Customer (End Client)</label>
                     <select
                         required
                         className="mt-1 block w-full rounded-md border border-gray-300 p-2"
@@ -115,6 +148,35 @@ export default function NewProjectPage() {
                             <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                     </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Partner (Reseller)</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                            value={formData.partnerId}
+                            onChange={e => handlePartnerChange(e.target.value)}
+                        >
+                            <option value="">None (Direct)</option>
+                            {partners.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                            value={formData.salesRepId}
+                            onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
+                        >
+                            <option value="">Select Rep</option>
+                            {salesReps.map(rep => (
+                                <option key={rep.id} value={rep.id}>{rep.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

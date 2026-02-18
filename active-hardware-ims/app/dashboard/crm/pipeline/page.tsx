@@ -155,7 +155,7 @@ export default function KanbanPage() {
                     {pipeline.stages?.map((stage) => (
                         <div
                             key={stage.id}
-                            className="w-64 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg max-h-full"
+                            className="w-56 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg max-h-full"
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, stage.id)}
                         >
