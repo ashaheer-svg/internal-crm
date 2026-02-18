@@ -8,11 +8,11 @@ export async function POST() {
 
         // 1. Core Metadata: Categories
         const categories = [
-            { name: 'Servers', type: 'HARDWARE', prefix: 'SRV' },
-            { name: 'Networking', type: 'HARDWARE', prefix: 'NET' },
-            { name: 'Laptops', type: 'HARDWARE', prefix: 'LAP' },
-            { name: 'Components', type: 'COMPONENT', prefix: 'CMP' },
-            { name: 'Software', type: 'LICENSE', prefix: 'SW' },
+            { name: 'Servers' },
+            { name: 'Networking' },
+            { name: 'Laptops' },
+            { name: 'Components' },
+            { name: 'Software' },
         ]
 
         for (const cat of categories) {
@@ -52,68 +52,60 @@ export async function POST() {
         }
 
         // 4. Products
-        const srvCat = await prisma.category.findUnique({ where: { name: 'Servers' } })
-        const lapCat = await prisma.category.findUnique({ where: { name: 'Laptops' } })
-        const compCat = await prisma.category.findUnique({ where: { name: 'Components' } })
-
-        // Helper to get Category ID safely
-        const getCatId = (name: string) => categories.find(c => c.name === name) ? undefined : undefined // placeholder logic, actual DB fetch above
-
-        if (srvCat && lapCat && compCat) {
-            const products = [
-                {
-                    name: 'Dell PowerEdge R740',
-                    sku: 'DEL-R740-001',
-                    categoryId: srvCat.id,
-                    description: '2U Rack Server, Intel Xeon Gold',
-                    brand: 'Dell',
-                    model: 'PowerEdge R740',
-                    price: 250000,
-                    cost: 200000,
-                    minStockLevel: 5
-                },
-                {
-                    name: 'HP EliteBook 840 G8',
-                    sku: 'HP-840G8-001',
-                    categoryId: lapCat.id,
-                    description: 'Business Laptop, i7, 16GB RAM',
-                    brand: 'HP',
-                    model: 'EliteBook 840 G8',
-                    price: 85000,
-                    cost: 70000,
-                    minStockLevel: 10
-                },
-                {
-                    name: 'Samsung 32GB DDR4 Server RAM',
-                    sku: 'MEM-DDR4-32G',
-                    categoryId: compCat.id,
-                    description: 'ECC Registered Memory',
-                    brand: 'Samsung',
-                    model: 'DDR4 32GB',
-                    price: 12000,
-                    cost: 8000,
-                    minStockLevel: 20
-                },
-                {
-                    name: '1TB NVMe SSD',
-                    sku: 'STR-NVME-1TB',
-                    categoryId: compCat.id,
-                    description: 'High performance storage',
-                    brand: 'Samsung',
-                    model: '980 Pro',
-                    price: 15000,
-                    cost: 10000,
-                    minStockLevel: 15
-                }
-            ]
-
-            for (const prod of products) {
-                await prisma.product.upsert({
-                    where: { sku: prod.sku },
-                    update: {},
-                    create: prod
-                })
+        // Product schema uses 'category' string, not relation.
+        const products = [
+            {
+                name: 'Dell PowerEdge R740',
+                sku: 'DEL-R740-001',
+                category: 'Servers',
+                description: '2U Rack Server, Intel Xeon Gold',
+                brand: 'Dell',
+                model: 'PowerEdge R740',
+                price: 250000,
+                cost: 200000,
+                minStockLevel: 5
+            },
+            {
+                name: 'HP EliteBook 840 G8',
+                sku: 'HP-840G8-001',
+                category: 'Laptops',
+                description: 'Business Laptop, i7, 16GB RAM',
+                brand: 'HP',
+                model: 'EliteBook 840 G8',
+                price: 85000,
+                cost: 70000,
+                minStockLevel: 10
+            },
+            {
+                name: 'Samsung 32GB DDR4 Server RAM',
+                sku: 'MEM-DDR4-32G',
+                category: 'Components',
+                description: 'ECC Registered Memory',
+                brand: 'Samsung',
+                model: 'DDR4 32GB',
+                price: 12000,
+                cost: 8000,
+                minStockLevel: 20
+            },
+            {
+                name: '1TB NVMe SSD',
+                sku: 'STR-NVME-1TB',
+                category: 'Components',
+                description: 'High performance storage',
+                brand: 'Samsung',
+                model: '980 Pro',
+                price: 15000,
+                cost: 10000,
+                minStockLevel: 15
             }
+        ]
+
+        for (const prod of products) {
+            await prisma.product.upsert({
+                where: { sku: prod.sku },
+                update: {},
+                create: prod
+            })
         }
         console.log('Products seeded')
 
