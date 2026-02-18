@@ -37,6 +37,8 @@ export default function KanbanPage() {
     // Drag and Drop State
     const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null)
 
+    const [error, setError] = useState<string | null>(null)
+
     useEffect(() => {
         if (viewMode === 'BOARD') {
             fetchPipeline()
@@ -47,14 +49,19 @@ export default function KanbanPage() {
 
     async function fetchPipeline() {
         setLoading(true)
+        setError(null)
         try {
             const res = await fetch('/api/crm/pipeline')
+            const data = await res.json()
+
             if (res.ok) {
-                const data = await res.json()
                 setPipeline(data)
+            } else {
+                setError(data.error || 'Failed to load pipeline')
             }
         } catch (error) {
             console.error('Failed to load pipeline:', error)
+            setError('Network error. More details in console.')
         } finally {
             setLoading(false)
         }
@@ -131,6 +138,14 @@ export default function KanbanPage() {
     // Render Board View
     const renderBoard = () => {
         if (loading) return <div className="p-8">Loading CRM...</div>
+        if (error) return (
+            <div className="p-8 text-center">
+                <div className="bg-red-50 text-red-700 p-4 rounded-md inline-block">
+                    <h3 className="font-bold">Error Loading CRM</h3>
+                    <p>{error}</p>
+                </div>
+            </div>
+        )
         if (!pipeline) return <div className="p-8">No pipeline found. Please seed the CRM.</div>
 
         return (

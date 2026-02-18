@@ -74,6 +74,15 @@ export async function GET() {
         return NextResponse.json(pipeline)
     } catch (error: any) {
         console.error('CRM Pipeline API Error:', error)
+
+        // Check for Prisma "Table does not exist" error (P2021)
+        if (error.code === 'P2021') {
+            return NextResponse.json(
+                { error: 'Database table not found. Please run `npx prisma db push` on the server.' },
+                { status: 503 } // Service Unavailable
+            )
+        }
+
         return NextResponse.json(
             { error: error.message || 'Failed to fetch pipeline', stack: error.stack },
             { status: 500 }
