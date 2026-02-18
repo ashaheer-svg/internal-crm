@@ -95,6 +95,8 @@ model Customer {
   
   // CRM Relations
   crmProjects      CRMProject[]
+  quotedBillTo     CRMQuote[] @relation("QuoteBillTo")
+  quotedShipTo     CRMQuote[] @relation("QuoteShipTo")
 }
 
 model SalesRep {
@@ -677,6 +679,15 @@ model CRMQuote {
 
   createdById String
   createdBy   User        @relation(fields: [createdById], references: [id])
+
+  // Sale Type handling (Direct vs Partner)
+  saleType    String      @default("DIRECT") // DIRECT, PARTNER
+  
+  billToId    String?
+  billTo      Customer?   @relation("QuoteBillTo", fields: [billToId], references: [id])
+  
+  shipToId    String?
+  shipTo      Customer?   @relation("QuoteShipTo", fields: [shipToId], references: [id])
 }
 
 model CRMQuoteItem {

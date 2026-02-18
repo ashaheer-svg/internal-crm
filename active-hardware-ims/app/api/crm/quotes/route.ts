@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { projectId, validUntil, items, terms } = body
+        const { projectId, validUntil, items, terms, saleType, billToId, shipToId } = body
 
         if (!projectId) {
             return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
                 description: item.description,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
-                total: lineTotal // Changed from totalPrice to match schema if needed, checking schema... schema says 'total'
+                total: lineTotal
             }
         })
 
@@ -58,6 +58,9 @@ export async function POST(request: Request) {
                 projectId,
                 version,
                 status: 'DRAFT',
+                saleType: saleType || 'DIRECT',
+                billToId: billToId || null,
+                shipToId: shipToId || null,
                 subTotal,
                 taxAmount,
                 totalAmount,
