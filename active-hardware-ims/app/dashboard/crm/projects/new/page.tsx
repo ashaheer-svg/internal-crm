@@ -31,16 +31,31 @@ export default function NewProjectPage() {
     useEffect(() => {
         // Fetch Customers and Pipelines
         Promise.all([
-            fetch('/api/customers').then(res => res.json()),
-            fetch('/api/crm/pipeline').then(res => res.json()) // Reusing pipeline endpoint to get default
+            fetch('/api/customers?limit=100').then(res => {
+                if (!res.ok) throw new Error('Failed to fetch customers')
+                return res.json()
+            }),
+            fetch('/api/crm/pipeline').then(res => {
+                if (!res.ok) throw new Error('Failed to fetch pipeline')
+                return res.json()
+            })
         ]).then(([customersData, pipelineData]) => {
-            setCustomers(customersData)
+            // customersData is { customers: [], totalCount: ... }
+            if (customersData && customersData.customers) {
+                setCustomers(customersData.customers)
+            } else if (Array.isArray(customersData)) {
+                setCustomers(customersData)
+            }
+
             // If fetch('/api/crm/pipeline') returns a single object (default pipeline)
             if (pipelineData && pipelineData.id) {
                 setPipelines([pipelineData])
                 setFormData(prev => ({ ...prev, pipelineId: pipelineData.id }))
             }
-        }).catch(err => console.error(err))
+        }).catch(err => {
+            console.error(err)
+            // alert('Failed to load initial data') // Optional: don't annoy user if it's just a blip
+        })
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
