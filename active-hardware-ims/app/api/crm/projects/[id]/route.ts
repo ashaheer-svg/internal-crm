@@ -8,8 +8,8 @@ interface RouteParams {
     }
 }
 
-export async function GET(request: Request, context: unknown) {
-    const { id } = (context as { params: { id: string } }).params;
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         await requireAuth()
 
@@ -56,8 +56,8 @@ export async function GET(request: Request, context: unknown) {
     }
 }
 
-export async function PATCH(request: Request, context: unknown) {
-    const { id } = (context as { params: { id: string } }).params;
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         await requireAuth()
         const body = await request.json()

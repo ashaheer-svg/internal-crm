@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 
-export async function GET(request: Request, context: unknown) {
-    const { id } = (context as { params: { id: string } }).params;
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+    const { id } = await context.params;
     try {
         await requireAuth()
 
