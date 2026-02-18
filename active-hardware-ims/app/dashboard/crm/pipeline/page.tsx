@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, LayoutTemplate, List } from 'lucide-react' // LayoutTemplate as Kanban icon
 import ListView from './ListView'
 import { formatCurrency } from '@/lib/format'
+import CreateCustomerButton from '@/components/CreateCustomerButton'
 
 // Types
 interface PipelineData {
@@ -229,7 +230,7 @@ export default function KanbanPage() {
                         </button>
                     </div>
                 </div>
-                import CreateCustomerButton from '@/components/CreateCustomerButton'
+
 
                 // ...
 
