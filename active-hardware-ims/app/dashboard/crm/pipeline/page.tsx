@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, LayoutTemplate, List } from 'lucide-react' // LayoutTemplate as Kanban icon
+import ListView from './ListView'
 
 // Types
 interface PipelineData {
@@ -30,16 +31,22 @@ interface Project {
 export default function KanbanPage() {
     const [pipeline, setPipeline] = useState<PipelineData | null>(null)
     const [loading, setLoading] = useState(true)
+    const [viewMode, setViewMode] = useState<'BOARD' | 'LIST'>('BOARD') // View Toggle State
     const router = useRouter()
 
     // Drag and Drop State
     const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchPipeline()
-    }, [])
+        if (viewMode === 'BOARD') {
+            fetchPipeline()
+        } else {
+            setLoading(false) // ListView fetches its own data
+        }
+    }, [viewMode])
 
     async function fetchPipeline() {
+        setLoading(true)
         try {
             const res = await fetch('/api/crm/pipeline')
             if (res.ok) {
@@ -121,26 +128,13 @@ export default function KanbanPage() {
         }
     }
 
-    if (loading) return <div className="p-8">Loading CRM...</div>
+    // Render Board View
+    const renderBoard = () => {
+        if (loading) return <div className="p-8">Loading CRM...</div>
+        if (!pipeline) return <div className="p-8">No pipeline found. Please seed the CRM.</div>
 
-    if (!pipeline) return <div className="p-8">No pipeline found. Please seed the CRM.</div>
-
-    return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
-                <h1 className="text-2xl font-bold">{pipeline.name}</h1>
-                <button
-                    onClick={() => router.push('/dashboard/crm/projects/new')}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Project
-                </button>
-            </div>
-
-            {/* Kanban Board */}
-            <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
+        return (
+            <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50 h-full">
                 <div className="flex h-full space-x-6">
                     {pipeline.stages.map((stage) => (
                         <div
@@ -174,8 +168,8 @@ export default function KanbanPage() {
                                                 {new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)}
                                             </span>
                                             <span className={`px-1.5 py-0.5 rounded ${project.status === 'WON' ? 'bg-green-100 text-green-700' :
-                                                    project.status === 'LOST' ? 'bg-red-100 text-red-700' :
-                                                        'bg-gray-100'
+                                                project.status === 'LOST' ? 'bg-red-100 text-red-700' :
+                                                    'bg-gray-100'
                                                 }`}>
                                                 {project.status || 'OPEN'}
                                             </span>
@@ -192,6 +186,48 @@ export default function KanbanPage() {
                     ))}
                 </div>
             </div>
+        )
+    }
+
+    return (
+        <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold">{pipeline ? pipeline.name : 'CRM Pipeline'}</h1>
+                    {/* View Toggle */}
+                    <div className="flex bg-gray-100 p-1 rounded-md">
+                        <button
+                            onClick={() => setViewMode('BOARD')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'BOARD' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            title="Board View"
+                        >
+                            <LayoutTemplate className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('LIST')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'LIST' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            title="List View"
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+                <button
+                    onClick={() => router.push('/dashboard/crm/projects/new')}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Project
+                </button>
+            </div>
+
+            {/* Main Content */}
+            {viewMode === 'BOARD' ? renderBoard() : (
+                <div className="flex-1 p-6 overflow-hidden">
+                    <ListView />
+                </div>
+            )}
         </div>
     )
 }

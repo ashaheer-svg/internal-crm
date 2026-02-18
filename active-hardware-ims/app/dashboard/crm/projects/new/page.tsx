@@ -24,7 +24,7 @@ export default function NewProjectPage() {
         customerId: '',
         pipelineId: '',
         expectedValue: '',
-        currency: 'INR',
+        currency: 'Rs.',
         description: ''
     })
 
@@ -134,7 +134,7 @@ export default function NewProjectPage() {
                             value={formData.currency}
                             onChange={e => setFormData({ ...formData, currency: e.target.value })}
                         >
-                            <option value="INR">INR</option>
+                            <option value="Rs.">Rs.</option>
                             <option value="USD">USD</option>
                             <option value="EUR">EUR</option>
                         </select>

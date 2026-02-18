@@ -2,6 +2,64 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 
+export async function GET(request: Request) {
+    try {
+        await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const page = Number(searchParams.get('page')) || 1
+        const limit = Number(searchParams.get('limit')) || 10
+        const search = searchParams.get('search') || ''
+        const stageId = searchParams.get('stageId')
+        const status = searchParams.get('status')
+
+        const skip = (page - 1) * limit
+
+        const where: any = {
+            isDeleted: false
+        }
+
+        if (search) {
+            where.OR = [
+                { title: { contains: search } },
+                { projectCode: { contains: search } },
+                { customer: { name: { contains: search } } }
+            ]
+        }
+
+        if (stageId && stageId !== 'ALL') where.stageId = stageId
+        if (status && status !== 'ALL') where.status = status
+
+        const [projects, total] = await prisma.$transaction([
+            prisma.cRMProject.findMany({
+                where,
+                include: {
+                    customer: true,
+                    stage: true,
+                    members: {
+                        include: { user: true }
+                    }
+                },
+                skip,
+                take: limit,
+                orderBy: { updatedAt: 'desc' }
+            }),
+            prisma.cRMProject.count({ where })
+        ])
+
+        return NextResponse.json({
+            projects,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        })
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const user = await requireAuth()
@@ -36,7 +94,7 @@ export async function POST(request: Request) {
                 pipelineId,
                 stageId: firstStage.id,
                 expectedValue: Number(expectedValue) || 0,
-                currency: currency || 'INR',
+                currency: currency || 'Rs.',
                 description,
                 status: 'OPEN',
                 members: {
