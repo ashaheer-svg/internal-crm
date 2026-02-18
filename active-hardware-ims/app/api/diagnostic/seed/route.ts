@@ -179,18 +179,38 @@ export async function POST() {
 
         // 7. Services & Rentals
         // Create Service Definition
-        const laptopRentalService = await prisma.serviceDefinition.create({
-            data: {
+        // Create Service Product first
+        const rentalServiceProduct = await prisma.product.upsert({
+            where: { sku: 'SVC-RENT-LAP' },
+            update: {},
+            create: {
                 name: 'Standard Laptop Rental',
+                sku: 'SVC-RENT-LAP',
                 description: 'Monthly rental of business laptop',
-                category: 'RENTAL', // Assuming category is valid, but schema said type. Let's check schema again. 
-                // Schema: type String. 
-                type: 'RENTAL',
-                defaultPrice: 3000,
-                durationValue: 1,
-                durationUnit: 'MONTHS'
+                brand: 'ActiveHealth',
+                model: 'Service',
+                category: 'SERVICE',
+                resellerPrice: 3000
             }
         })
+
+        // Create Service Definition linked to Product
+        // check if exists first because one-to-one
+        const existingDef = await prisma.serviceDefinition.findUnique({ where: { productId: rentalServiceProduct.id } })
+
+        let laptopRentalService
+        if (!existingDef) {
+            laptopRentalService = await prisma.serviceDefinition.create({
+                data: {
+                    productId: rentalServiceProduct.id,
+                    type: 'RENTAL',
+                    durationValue: 1,
+                    durationUnit: 'MONTHS'
+                }
+            })
+        } else {
+            laptopRentalService = existingDef
+        }
 
         // Create Rental Assets
         const rentalAssets = []
@@ -198,10 +218,9 @@ export async function POST() {
             rentalAssets.push({
                 name: `Rental Laptop #${i}`,
                 serialNumber: `RNT-LAP-${1000 + i}`,
-                // model: 'Lenovo ThinkPad', // Removed, not in schema
                 status: 'AVAILABLE',
-                // purchaseDate: new Date(), // Removed
-                // cost: 60000 // Removed
+                // Link these assets to the product we just created for better data consistency
+                productId: rentalServiceProduct.id
             })
         }
 
