@@ -16,7 +16,9 @@ import {
     ArrowRightLeft,
     Users,
     FileText,
-    Calendar
+    Calendar,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react"
 
 const navigation = [
@@ -43,10 +45,21 @@ export function Sidebar() {
     const router = useRouter()
     const [user, setUser] = useState<User | null>(null)
     const [loggingOut, setLoggingOut] = useState(false)
+    const [collapsed, setCollapsed] = useState(false)
 
     useEffect(() => {
         fetchUser()
+        const savedState = localStorage.getItem('sidebar-collapsed')
+        if (savedState) {
+            setCollapsed(JSON.parse(savedState))
+        }
     }, [])
+
+    const toggleSidebar = () => {
+        const newState = !collapsed
+        setCollapsed(newState)
+        localStorage.setItem('sidebar-collapsed', JSON.stringify(newState))
+    }
 
     async function fetchUser() {
         try {
@@ -78,11 +91,39 @@ export function Sidebar() {
     )
 
     return (
-        <div className="flex h-full flex-col bg-gray-900 text-white w-64">
-            <div className="flex h-16 items-center px-6 font-bold text-xl tracking-tight border-b border-gray-800">
-                <ScanBarcode className="mr-2 h-6 w-6 text-blue-500" />
-                ActiveIMS
+        <div className={cn(
+            "flex h-full flex-col bg-gray-900 text-white transition-all duration-300",
+            collapsed ? "w-20" : "w-64"
+        )}>
+            <div className={cn(
+                "flex h-16 items-center px-6 font-bold text-xl tracking-tight border-b border-gray-800",
+                collapsed ? "justify-center px-0" : "justify-between"
+            )}>
+                {!collapsed && (
+                    <div className="flex items-center">
+                        <ScanBarcode className="mr-2 h-6 w-6 text-blue-500" />
+                        ActiveIMS
+                    </div>
+                )}
+                {collapsed && <ScanBarcode className="h-8 w-8 text-blue-500" />}
+
+                {!collapsed && (
+                    <button onClick={toggleSidebar} className="text-gray-400 hover:text-white">
+                        <ChevronLeft className="h-5 w-5" />
+                    </button>
+                )}
             </div>
+
+            {/* Collapse Toggle (Visible only when collapsed) */}
+            {collapsed && (
+                <div className="flex justify-center py-2 border-b border-gray-800">
+                    <button onClick={toggleSidebar} className="text-gray-400 hover:text-white p-2">
+                        <ChevronRight className="h-5 w-5" />
+                    </button>
+                </div>
+            )}
+
+
             <div className="flex-1 overflow-y-auto py-4">
                 <nav className="space-y-1 px-3">
                     {filteredNavigation.map((item) => {
@@ -95,16 +136,19 @@ export function Sidebar() {
                                     "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                                     isActive
                                         ? "bg-gray-800 text-white"
-                                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                                        : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                    collapsed && "justify-center px-2"
                                 )}
+                                title={collapsed ? item.name : undefined}
                             >
                                 <item.icon
                                     className={cn(
-                                        "mr-3 h-5 w-5 flex-shrink-0",
-                                        isActive ? "text-blue-500" : "text-gray-400 group-hover:text-white"
+                                        "h-5 w-5 flex-shrink-0",
+                                        isActive ? "text-blue-500" : "text-gray-400 group-hover:text-white",
+                                        !collapsed && "mr-3"
                                     )}
                                 />
-                                {item.name}
+                                {!collapsed && item.name}
                             </Link>
                         )
                     })}
@@ -113,7 +157,7 @@ export function Sidebar() {
 
             {/* User Info & Logout */}
             <div className="border-t border-gray-800">
-                {user && (
+                {user && !collapsed && (
                     <div className="px-4 py-3 border-b border-gray-800">
                         <p className="text-sm font-medium text-white truncate">{user.name}</p>
                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
@@ -124,10 +168,17 @@ export function Sidebar() {
                     <button
                         onClick={handleLogout}
                         disabled={loggingOut}
-                        className="group flex w-full items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
+                        className={cn(
+                            "group flex w-full items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md hover:bg-gray-800 disabled:opacity-50",
+                            collapsed && "justify-center"
+                        )}
+                        title={collapsed ? "Sign Out" : undefined}
                     >
-                        <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-white" />
-                        {loggingOut ? 'Signing Out...' : 'Sign Out'}
+                        <LogOut className={cn(
+                            "h-5 w-5 text-gray-400 group-hover:text-white",
+                            !collapsed && "mr-3"
+                        )} />
+                        {!collapsed && (loggingOut ? 'Signing Out...' : 'Sign Out')}
                     </button>
                 </div>
             </div>
