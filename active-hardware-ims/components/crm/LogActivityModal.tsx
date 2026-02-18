@@ -16,7 +16,8 @@ export default function LogActivityModal({ isOpen, onClose, projectId, onSuccess
         type: 'CALL',
         subject: '',
         content: '',
-        outcome: ''
+        outcome: '',
+        followUpDate: ''
     })
 
     if (!isOpen) return null
@@ -35,7 +36,7 @@ export default function LogActivityModal({ isOpen, onClose, projectId, onSuccess
             if (res.ok) {
                 onSuccess()
                 onClose()
-                setFormData({ type: 'CALL', subject: '', content: '', outcome: '' })
+                setFormData({ type: 'CALL', subject: '', content: '', outcome: '', followUpDate: '' })
             } else {
                 alert('Failed to log activity')
             }
@@ -118,6 +119,17 @@ export default function LogActivityModal({ isOpen, onClose, projectId, onSuccess
                             onChange={(e) => setFormData({ ...formData, outcome: e.target.value })}
                             placeholder="e.g. Schedule follow-up"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Follow Up Task (Optional)</label>
+                        <input
+                            type="datetime-local"
+                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                            value={formData.followUpDate}
+                            onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Selecting a date will create a task for you.</p>
                     </div>
 
                     <div className="flex justify-end pt-2">

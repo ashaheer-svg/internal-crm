@@ -10,24 +10,43 @@ export async function POST(
         const user = await requireAuth()
         const { id } = await params // Await params
         const body = await request.json()
-        const { type, subject, content, outcome } = body
+        const { type, subject, content, outcome, followUpDate } = body
 
         if (!subject || !type) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const activity = await prisma.cRMActivity.create({
-            data: {
-                projectId: id,
-                type,
-                subject,
-                content,
-                outcome,
-                createdById: user.id
-            },
-            include: {
-                createdBy: true
+        const [activity] = await prisma.$transaction(async (tx) => {
+            const newActivity = await tx.cRMActivity.create({
+                data: {
+                    projectId: id,
+                    type,
+                    subject,
+                    content,
+                    outcome,
+                    createdById: user.id
+                },
+                include: {
+                    createdBy: true
+                }
+            })
+
+            if (followUpDate) {
+                await tx.projectTask.create({
+                    data: {
+                        title: `Follow up: ${subject}`,
+                        description: `Follow up task created from activity log.\n\nOriginal Activity: ${content}\nOutcome: ${outcome || 'N/A'}`,
+                        status: 'TODO',
+                        priority: 'MEDIUM',
+                        dueDate: new Date(followUpDate),
+                        projectId: id,
+                        assignedToId: user.id,
+                        createdById: user.id
+                    }
+                })
             }
+
+            return [newActivity]
         })
 
         return NextResponse.json(activity)

@@ -246,12 +246,21 @@ export default function KanbanPage() {
                 </div>
             </div>
 
+            import DashboardTasks from '@/components/crm/DashboardTasks'
+
+            // ... imports
+
+            // ... inside KanbanPage component
+
             {/* Main Content */}
-            {viewMode === 'BOARD' ? renderBoard() : (
-                <div className="flex-1 p-6 overflow-hidden">
-                    <ListView />
-                </div>
-            )}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <DashboardTasks />
+                {viewMode === 'BOARD' ? renderBoard() : (
+                    <div className="flex-1 p-6 overflow-hidden">
+                        <ListView />
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
