@@ -12,20 +12,15 @@ export async function GET(request: Request, { params }: RouteParams) {
         await requireAuth()
         const { id } = await params
 
+        if (!product) {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+        }
+
         // Increment access count (fire and forget to not block response)
         prisma.product.update({
             where: { id },
             data: { accessCount: { increment: 1 } }
         }).catch(err => console.error('Failed to update access count:', err))
-
-        const product = await prisma.product.findUnique({
-            where: { id },
-            include: { serviceDefinition: true }
-        })
-
-        if (!product) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 })
-        }
 
         return NextResponse.json(product)
     } catch (error: any) {
