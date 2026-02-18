@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Save, Trash2 } from "lucide-react"
+import { Save, Trash2 } from "lucide-react"
 import Link from "next/link"
+import BackButton from '@/components/BackButton'
 
 interface ContractData {
     id: string
@@ -130,9 +131,7 @@ export default function EditServiceContractPage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/services" className="p-2 hover:bg-gray-200 rounded-full">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </Link>
+                <BackButton className="p-2 hover:bg-gray-200 rounded-full" label="" />
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Service Contract</h1>
                     <p className="text-sm text-gray-500">

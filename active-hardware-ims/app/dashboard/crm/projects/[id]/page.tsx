@@ -18,6 +18,7 @@ import CRMTaskSection from '@/components/crm/CRMTaskSection'
 import CRMTeamSection from '@/components/crm/CRMTeamSection'
 import CRMQuoteSection from '@/components/crm/CRMQuoteSection'
 import LogActivityModal from '@/components/crm/LogActivityModal'
+import BackButton from '@/components/BackButton'
 
 // Types
 interface ProjectData {
@@ -109,6 +110,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
                 <div className="flex justify-between items-start">
                     <div>
+                        <div className="mb-4">
+                            <BackButton />
+                        </div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-medium text-gray-500">{project.projectCode}</span>
                             <span className={`px-2 py-0.5 rounded text-xs font-semibold ${project.status === 'WON' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'}`}>

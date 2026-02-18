@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import BackButton from '@/components/BackButton'
 
 interface Customer {
     id: string
@@ -46,10 +47,8 @@ export default function NewProjectPage() {
                 if (!res.ok) throw new Error('Failed to fetch customers')
                 return res.json()
             }),
-            fetch('/api/sales-reps').then(res => { // Assuming this endpoint exists or similar
+            fetch('/api/sales-reps').then(res => {
                 if (!res.ok) {
-                    // Fallback if dedicated endpoint missing, might need to extract from customers or similar
-                    // For now assume it might fail if not created yet
                     return []
                 }
                 return res.json()
@@ -59,7 +58,6 @@ export default function NewProjectPage() {
                 return res.json()
             })
         ]).then(([customersData, salesRepsData, pipelineData]) => {
-            // customersData is { customers: [], totalCount: ... }
             let allCustomers: Customer[] = []
             if (customersData && customersData.customers) {
                 allCustomers = customersData.customers
@@ -73,7 +71,6 @@ export default function NewProjectPage() {
                 setSalesReps(salesRepsData)
             }
 
-            // If fetch('/api/crm/pipeline') returns a single object (default pipeline)
             if (pipelineData && pipelineData.id) {
                 setPipelines([pipelineData])
                 setFormData(prev => ({ ...prev, pipelineId: pipelineData.id }))
@@ -83,7 +80,6 @@ export default function NewProjectPage() {
         })
     }, [])
 
-    // Auto-select sales rep when partner changes
     const handlePartnerChange = (partnerId: string) => {
         const partner = partners.find(p => p.id === partnerId)
         setFormData(prev => ({
@@ -120,6 +116,9 @@ export default function NewProjectPage() {
 
     return (
         <div className="max-w-2xl mx-auto py-8 px-4">
+            <div className="mb-4">
+                <BackButton />
+            </div>
             <h1 className="text-2xl font-bold mb-6">Create New Sales Project</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
