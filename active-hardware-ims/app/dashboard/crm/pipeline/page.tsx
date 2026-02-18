@@ -229,13 +229,20 @@ export default function KanbanPage() {
                         </button>
                     </div>
                 </div>
-                <button
-                    onClick={() => router.push('/dashboard/crm/projects/new')}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Project
-                </button>
+                import CreateCustomerButton from '@/components/CreateCustomerButton'
+
+                // ...
+
+                <div className="flex items-center gap-2">
+                    <CreateCustomerButton />
+                    <button
+                        onClick={() => router.push('/dashboard/crm/projects/new')}
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Project
+                    </button>
+                </div>
             </div>
 
             {/* Main Content */}
