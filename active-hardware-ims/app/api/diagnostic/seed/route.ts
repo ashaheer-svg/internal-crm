@@ -61,9 +61,9 @@ export async function POST() {
                 description: '2U Rack Server, Intel Xeon Gold',
                 brand: 'Dell',
                 model: 'PowerEdge R740',
-                price: 250000,
-                cost: 200000,
-                minStockLevel: 5
+                resellerPrice: 250000,
+                lowResellerPrice: 200000,
+                minStock: 5
             },
             {
                 name: 'HP EliteBook 840 G8',
@@ -72,9 +72,9 @@ export async function POST() {
                 description: 'Business Laptop, i7, 16GB RAM',
                 brand: 'HP',
                 model: 'EliteBook 840 G8',
-                price: 85000,
-                cost: 70000,
-                minStockLevel: 10
+                resellerPrice: 85000,
+                lowResellerPrice: 70000,
+                minStock: 10
             },
             {
                 name: 'Samsung 32GB DDR4 Server RAM',
@@ -83,9 +83,9 @@ export async function POST() {
                 description: 'ECC Registered Memory',
                 brand: 'Samsung',
                 model: 'DDR4 32GB',
-                price: 12000,
-                cost: 8000,
-                minStockLevel: 20
+                resellerPrice: 12000,
+                lowResellerPrice: 8000,
+                minStock: 20
             },
             {
                 name: '1TB NVMe SSD',
@@ -94,9 +94,9 @@ export async function POST() {
                 description: 'High performance storage',
                 brand: 'Samsung',
                 model: '980 Pro',
-                price: 15000,
-                cost: 10000,
-                minStockLevel: 15
+                resellerPrice: 15000,
+                lowResellerPrice: 10000,
+                minStock: 15
             }
         ]
 
