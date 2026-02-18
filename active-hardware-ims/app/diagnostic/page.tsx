@@ -366,7 +366,7 @@ function DbToolsSection() {
     const [output, setOutput] = useState<string>('')
     const [activeAction, setActiveAction] = useState<string>('')
 
-    async function handleAction(action: 'reset' | 'check' | 'fix' | 'restore-admin') {
+    async function handleAction(action: 'reset' | 'check' | 'fix' | 'restore-admin' | 'seed') {
         if (action === 'reset') {
             const confirmed = confirm("⚠️ DANGER: This will delete ALL data and reset the database to factory defaults.\\n\\nAre you absolutely sure?")
             if (!confirmed) return
@@ -376,17 +376,26 @@ function DbToolsSection() {
         if (action === 'restore-admin') {
             if (!confirm("This will reset the 'admin@activehardware.com' user's password to 'Admin@123'. Existing data will be preserved.")) return
         }
+        if (action === 'seed') {
+            if (!confirm("Populate database with demo data? This creates Sample Products, Customers, Rentals, and CRM Projects. Existing data may be duplicated if not empty.")) return
+        }
 
         setStatus('loading')
         setActiveAction(action)
         setOutput(`Running ${action}...`)
 
         try {
-            const res = await fetch('/api/diagnostic/db-tools', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
-            })
+            let res
+            if (action === 'seed') {
+                res = await fetch('/api/diagnostic/seed', { method: 'POST' })
+            } else {
+                res = await fetch('/api/diagnostic/db-tools', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                })
+            }
+
             const data = await res.json()
 
             setStatus(res.ok ? 'success' : 'error')
@@ -473,6 +482,23 @@ function DbToolsSection() {
                     }}
                 >
                     <CheckCircle size={16} /> Restore Admin (Keep Data)
+                </button>
+                <button
+                    onClick={() => handleAction('seed')}
+                    disabled={activeAction !== ''}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '10px 20px',
+                        backgroundColor: '#6610f2',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: activeAction ? 0.6 : 1
+                    }}
+                >
+                    <Database size={16} /> Seed Demo Data
                 </button>
             </div>
 
