@@ -16,11 +16,10 @@ export async function POST() {
         ]
 
         for (const cat of categories) {
-            await prisma.category.upsert({
-                where: { name: cat.name },
-                update: {},
-                create: cat
-            })
+            const existing = await prisma.category.findFirst({ where: { name: cat.name } })
+            if (!existing) {
+                await prisma.category.create({ data: cat })
+            }
         }
         console.log('Categories seeded')
 
@@ -32,11 +31,10 @@ export async function POST() {
         ]
 
         for (const loc of locations) {
-            await prisma.location.upsert({
-                where: { name: loc.name },
-                update: {},
-                create: loc
-            })
+            const existing = await prisma.location.findFirst({ where: { name: loc.name } })
+            if (!existing) {
+                await prisma.location.create({ data: loc })
+            }
         }
         console.log('Locations seeded')
 
@@ -48,8 +46,7 @@ export async function POST() {
                 data: {
                     name: salesRepName,
                     email: 'john.doe@activehardware.com',
-                    phone: '555-0123',
-                    quota: 500000,
+                    phone: '555-0123'
                 }
             })
         }
@@ -69,6 +66,8 @@ export async function POST() {
                     sku: 'DEL-R740-001',
                     categoryId: srvCat.id,
                     description: '2U Rack Server, Intel Xeon Gold',
+                    brand: 'Dell',
+                    model: 'PowerEdge R740',
                     price: 250000,
                     cost: 200000,
                     minStockLevel: 5
@@ -78,6 +77,8 @@ export async function POST() {
                     sku: 'HP-840G8-001',
                     categoryId: lapCat.id,
                     description: 'Business Laptop, i7, 16GB RAM',
+                    brand: 'HP',
+                    model: 'EliteBook 840 G8',
                     price: 85000,
                     cost: 70000,
                     minStockLevel: 10
@@ -87,6 +88,8 @@ export async function POST() {
                     sku: 'MEM-DDR4-32G',
                     categoryId: compCat.id,
                     description: 'ECC Registered Memory',
+                    brand: 'Samsung',
+                    model: 'DDR4 32GB',
                     price: 12000,
                     cost: 8000,
                     minStockLevel: 20
@@ -96,6 +99,8 @@ export async function POST() {
                     sku: 'STR-NVME-1TB',
                     categoryId: compCat.id,
                     description: 'High performance storage',
+                    brand: 'Samsung',
+                    model: '980 Pro',
                     price: 15000,
                     cost: 10000,
                     minStockLevel: 15
@@ -135,27 +140,40 @@ export async function POST() {
         const ram = await prisma.product.findUnique({ where: { sku: 'MEM-DDR4-32G' } })
 
         if (mainWarehouse && dellServer && ram) {
-            // Add Inventory Items
-            // Server (Asset Tracked often, but for now simple Quantity or Serialized)
-            // Let's create some 'Standard' inventory first
-            await prisma.inventoryItem.create({
-                data: {
-                    productId: dellServer.id,
-                    locationId: mainWarehouse.id,
-                    quantity: 5,
-                    status: 'AVAILABLE',
-                    type: 'STANDARD'
+            // Add Inventory Items (Individual Serialized Items)
+            // Create 3 Servers
+            for (let i = 1; i <= 3; i++) {
+                const serial = `SRV-TAG-${100 + i}`
+                const exists = await prisma.inventoryItem.findUnique({ where: { serialNumber: serial } })
+                if (!exists) {
+                    await prisma.inventoryItem.create({
+                        data: {
+                            productId: dellServer.id,
+                            locationId: mainWarehouse.id,
+                            serialNumber: serial,
+                            status: 'AVAILABLE',
+                            unitCost: 200000
+                        }
+                    })
                 }
-            })
-            await prisma.inventoryItem.create({
-                data: {
-                    productId: ram.id,
-                    locationId: mainWarehouse.id,
-                    quantity: 50,
-                    status: 'AVAILABLE',
-                    type: 'STANDARD'
+            }
+
+            // Create 10 RAM sticks
+            for (let i = 1; i <= 10; i++) {
+                const serial = `RAM-TAG-${100 + i}`
+                const exists = await prisma.inventoryItem.findUnique({ where: { serialNumber: serial } })
+                if (!exists) {
+                    await prisma.inventoryItem.create({
+                        data: {
+                            productId: ram.id,
+                            locationId: mainWarehouse.id,
+                            serialNumber: serial,
+                            status: 'AVAILABLE',
+                            unitCost: 8000
+                        }
+                    })
                 }
-            })
+            }
         }
         console.log('Inventory seeded')
 
@@ -165,7 +183,9 @@ export async function POST() {
             data: {
                 name: 'Standard Laptop Rental',
                 description: 'Monthly rental of business laptop',
-                category: 'RENTAL',
+                category: 'RENTAL', // Assuming category is valid, but schema said type. Let's check schema again. 
+                // Schema: type String. 
+                type: 'RENTAL',
                 defaultPrice: 3000,
                 durationValue: 1,
                 durationUnit: 'MONTHS'
@@ -178,10 +198,10 @@ export async function POST() {
             rentalAssets.push({
                 name: `Rental Laptop #${i}`,
                 serialNumber: `RNT-LAP-${1000 + i}`,
-                model: 'Lenovo ThinkPad',
+                // model: 'Lenovo ThinkPad', // Removed, not in schema
                 status: 'AVAILABLE',
-                purchaseDate: new Date(),
-                cost: 60000
+                // purchaseDate: new Date(), // Removed
+                // cost: 60000 // Removed
             })
         }
 
