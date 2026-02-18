@@ -150,7 +150,10 @@ export default function ListView() {
                                         {project.customer?.name || 'Unknown'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)}
+                                        {project.currency === 'Rs.'
+                                            ? `Rs. ${project.expectedValue.toLocaleString('en-IN')}`
+                                            : new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)
+                                        }
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span

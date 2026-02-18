@@ -111,7 +111,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                             <span className="flex items-center text-sm">
                                 <DollarSign className="w-4 h-4 mr-1" />
-                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)}
+                                {project.currency === 'Rs.'
+                                    ? `Rs. ${Number(project.expectedValue).toLocaleString('en-IN')}`
+                                    : new Intl.NumberFormat('en-IN', { style: 'currency', currency: project.currency }).format(project.expectedValue)
+                                }
                             </span>
                             <span className="flex items-center text-sm">
                                 <Calendar className="w-4 h-4 mr-1" />
