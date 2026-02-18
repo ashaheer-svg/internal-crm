@@ -24,6 +24,12 @@ model User {
   reservations  Reservation[]
   auditLogs     AuditLog[]
   sessions      Session[]
+  
+  // CRM Relations
+  projectMemberships ProjectMember[]
+  assignedTasks      ProjectTask[] @relation("TaskAssignee")
+  createdTasks       ProjectTask[] @relation("TaskCreator")
+  crmActivities      CRMActivity[]
 }
 
 model Session {
@@ -85,6 +91,9 @@ model Customer {
   deliveryAddresses DeliveryAddress[]
   employees   PartnerEmployee[]
   partnerContracts ServiceContract[] @relation("PartnerLink")
+  
+  // CRM Relations
+  crmProjects      CRMProject[]
 }
 
 model SalesRep {
@@ -159,6 +168,9 @@ model Product {
   serviceDefinition ServiceDefinition?
   serviceContracts  ServiceContract[]
   rentalAssets      RentalAsset[]
+  
+  // CRM Relations
+  quoteItems        CRMQuoteItem[]
 }
 
 model Location {
@@ -527,3 +539,156 @@ model RentalAsset {
 }
 
 
+// ------------------------------------------
+// CRM & Project Management System
+// ------------------------------------------
+
+model CRMPipeline {
+  id          String      @id @default(uuid())
+  name        String
+  isDefault   Boolean     @default(false)
+  stages      CRMStage[]
+  projects    CRMProject[]
+}
+
+model CRMStage {
+  id          String      @id @default(uuid())
+  name        String
+  order       Int
+  color       String?
+  pipelineId  String
+  pipeline    CRMPipeline @relation(fields: [pipelineId], references: [id])
+  projects    CRMProject[]
+}
+
+model CRMProject {
+  id          String      @id @default(uuid())
+  projectCode String      @unique
+  title       String
+  description String?
+
+  // Financials
+  status      String      // OPEN, WON, LOST, ON_HOLD
+  probability Int         @default(0)
+  expectedValue Float     @default(0)
+  currency    String      @default("INR")
+
+  // Dates
+  startDate   DateTime    @default(now())
+  targetDate  DateTime?
+  closedAt    DateTime?
+
+  // Relations
+  stageId     String
+  stage       CRMStage    @relation(fields: [stageId], references: [id])
+
+  pipelineId  String
+  pipeline    CRMPipeline @relation(fields: [pipelineId], references: [id])
+
+  // External Links (Read-Only)
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+
+  // Project Components
+  members     ProjectMember[]
+  tasks       ProjectTask[]
+  activities  CRMActivity[]
+  quotes      CRMQuote[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  isDeleted   Boolean     @default(false)
+}
+
+model ProjectMember {
+  id          String      @id @default(uuid())
+  projectId   String
+  project     CRMProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  role        String      // OWNER, MEMBER, VIEWER
+
+  joinedAt    DateTime    @default(now())
+  @@unique([projectId, userId])
+}
+
+model ProjectTask {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      String      // TODO, IN_PROGRESS, REVIEW, DONE
+  priority    String      // LOW, MEDIUM, HIGH, URGENT
+
+  dueDate     DateTime?
+
+  projectId   String
+  project     CRMProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo   User?      @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  createdById  String
+  createdBy    User       @relation("TaskCreator", fields: [createdById], references: [id])
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model CRMActivity {
+  id          String      @id @default(uuid())
+  type        String      // CALL, MEETING, EMAIL, NOTE, SYSTEM
+  subject     String
+  content     String?
+  outcome     String?
+
+  projectId   String
+  project     CRMProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+
+  createdAt   DateTime    @default(now())
+}
+
+model CRMQuote {
+  id          String      @id @default(uuid())
+  quoteNumber String      @unique
+  version     Int         @default(1)
+  status      String      // DRAFT, PENDING_APPROVAL, APPROVED, SENT, ACCEPTED, REJECTED
+
+  validUntil  DateTime?
+  terms       String?
+
+  subTotal    Float
+  taxAmount   Float
+  discount    Float       @default(0)
+  totalAmount Float
+
+  projectId   String
+  project     CRMProject  @relation(fields: [projectId], references: [id])
+
+  items       CRMQuoteItem[]
+
+  templateId  String?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model CRMQuoteItem {
+  id          String      @id @default(uuid())
+  quoteId     String
+  quote       CRMQuote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  order       Int
+
+  productId   String?
+  product     Product?    @relation(fields: [productId], references: [id])
+
+  description String
+  quantity    Int
+  unitPrice   Float
+  discount    Float       @default(0)
+  taxRate     Float       @default(0)
+  total       Float
+}
