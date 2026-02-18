@@ -3,10 +3,14 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 
 export async function GET() {
+    console.log('GET /api/crm/pipeline started')
     try {
+        console.log('Calling requireAuth...')
         await requireAuth()
+        console.log('Auth successful')
 
         // Fetch default pipeline with stages and projects
+        console.log('Fetching pipeline...')
         const pipeline = await prisma.cRMPipeline.findFirst({
             where: { isDefault: true },
             include: {
@@ -26,6 +30,7 @@ export async function GET() {
                 }
             }
         })
+        console.log('Pipeline fetch result:', pipeline ? 'Found' : 'Not Found')
 
         if (!pipeline) {
             // Auto-seed default pipeline if none exists
@@ -62,13 +67,15 @@ export async function GET() {
                     }
                 }
             })
+            console.log('Pipeline seeded')
             return NextResponse.json(newPipeline)
         }
 
         return NextResponse.json(pipeline)
     } catch (error: any) {
+        console.error('CRM Pipeline API Error:', error)
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch pipeline' },
+            { error: error.message || 'Failed to fetch pipeline', stack: error.stack },
             { status: 500 }
         )
     }
