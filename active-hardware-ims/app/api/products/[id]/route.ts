@@ -12,6 +12,11 @@ export async function GET(request: Request, { params }: RouteParams) {
         await requireAuth()
         const { id } = await params
 
+        const product = await prisma.product.findUnique({
+            where: { id },
+            include: { serviceDefinition: true }
+        })
+
         if (!product) {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 })
         }
