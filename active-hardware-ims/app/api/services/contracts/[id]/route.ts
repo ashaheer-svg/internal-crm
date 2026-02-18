@@ -109,16 +109,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             })
         }
 
-        await logUpdate('SERVICE_CONTRACT', id, user.id, user.name,
-            {
-                contractNumber: existingContract.contractNumber,
-                contractValue: existingContract.contractValue
-            },
-            {
-                contractNumber: updatedContract.contractNumber,
-                contractValue: updatedContract.contractValue
-            }
-        )
+        if (updatedContract) {
+            await logUpdate('SERVICE_CONTRACT', id, user.id, user.name,
+                {
+                    contractNumber: existingContract.contractNumber,
+                    contractValue: existingContract.contractValue
+                },
+                {
+                    contractNumber: updatedContract.contractNumber,
+                    contractValue: updatedContract.contractValue
+                }
+            )
+        }
 
         return NextResponse.json(updatedContract)
 
