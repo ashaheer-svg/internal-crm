@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         const endOfRange = new Date(today.getFullYear(), today.getMonth() + 4, 0) // End of 3 months from now
 
         // 1. Fetch Sales Reps
-        let salesReps = []
+        let salesReps: { id: string; name: string }[] = []
         if (user.role === 'SALES') {
             const me = await prisma.salesRep.findFirst({ where: { email: user.email } })
             if (me) salesReps = [me]
