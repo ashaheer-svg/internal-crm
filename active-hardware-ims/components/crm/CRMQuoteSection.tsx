@@ -45,7 +45,12 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                             <li key={quote.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
                                 <div>
                                     <div className="flex items-center gap-3">
-                                        <span className="font-medium text-gray-900">{quote.quoteNumber}</span>
+                                        <button
+                                            onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}`)}
+                                            className="font-medium text-blue-600 hover:underline"
+                                        >
+                                            {quote.quoteNumber}
+                                        </button>
                                         <span className={`text-xs px-2 py-0.5 rounded ${quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-700' :
                                             quote.status === 'SENT' ? 'bg-blue-100 text-blue-700' :
                                                 quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :

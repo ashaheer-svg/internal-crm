@@ -1,9 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { Users, Building2, FileText, Shield, ScrollText, Database, Upload } from "lucide-react"
+import { Users, Building2, FileText, Shield, ScrollText, Database, Upload, Receipt } from "lucide-react"
 
 const settingsLinks = [
+    {
+        name: "Quote Configuration",
+        href: "/dashboard/settings/quotes",
+        icon: Receipt,
+        description: "Configure tax tables and quote settings"
+    },
     {
         name: "User Management",
         href: "/dashboard/settings/users",

@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { projectId, validUntil, items, terms, saleType, billToId, shipToId } = body
+        const { projectId, validUntil, items, terms, saleType, billToId, shipToId, taxDetails } = body
 
         if (!projectId) {
             return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
@@ -35,21 +35,34 @@ export async function POST(request: Request) {
         // 4. Calculate Totals
         let subTotal = 0
         const quoteItems = items.map((item: any, index: number) => {
-            const lineTotal = item.quantity * item.unitPrice
+            const lineTotal = Number(item.quantity) * Number(item.unitPrice)
             subTotal += lineTotal
             return {
                 order: index,
                 productId: item.productId || null,
                 description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
+                quantity: Number(item.quantity),
+                unitPrice: Number(item.unitPrice),
                 total: lineTotal
             }
         })
 
-        // Simple Tax Logic (Can be enhanced later)
-        const taxRate = 0.18 // Example 18% GST
-        const taxAmount = subTotal * taxRate
+        // Tax Logic
+        let taxAmount = 0
+        let storedTaxDetails = null
+
+        if (taxDetails) {
+            try {
+                const parsedTaxes = JSON.parse(taxDetails)
+                if (Array.isArray(parsedTaxes)) {
+                    taxAmount = parsedTaxes.reduce((sum: number, tax: any) => sum + (Number(tax.amount) || 0), 0)
+                    storedTaxDetails = taxDetails
+                }
+            } catch (e) {
+                console.error('Failed to parse tax details', e)
+            }
+        }
+
         const totalAmount = subTotal + taxAmount
 
         // 5. Create Quote
@@ -64,6 +77,7 @@ export async function POST(request: Request) {
                 shipToId: shipToId || null,
                 subTotal,
                 taxAmount,
+                taxDetails: storedTaxDetails,
                 totalAmount,
                 validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
                 terms: terms || 'Standard Terms Apply',
