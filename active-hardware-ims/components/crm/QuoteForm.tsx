@@ -283,33 +283,33 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
                 {/* Add Items Section */}
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-gray-900">Add Items</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Select Product</label>
-                            <ProductSelector
-                                onProductSelect={handleProductSelect}
-                                excludeProductIds={[]}
-                            />
-                            <p className="text-xs text-gray-500">Search DB for products to add</p>
-                        </div>
-                        <div className="flex items-end pb-1 gap-2">
-                            <button
-                                onClick={addCustomItem}
-                                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center bg-blue-50 px-3 py-2 rounded-md"
-                            >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Custom Item
-                            </button>
-                            <button
-                                onClick={addChargeItem}
-                                className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center bg-orange-50 px-3 py-2 rounded-md"
-                            >
-                                <Plus className="w-4 h-4 mr-1" />
-                                Add Charge
-                            </button>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Add Items</h3>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Select Product</label>
+                        <div className="flex flex-col md:flex-row gap-3 items-start">
+                            <div className="flex-1 w-full">
+                                <ProductSelector
+                                    onProductSelect={handleProductSelect}
+                                    excludeProductIds={[]}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Search DB for products to add</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                                <button
+                                    onClick={addCustomItem}
+                                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center bg-blue-50 px-3 py-2 rounded-md h-[40px] border border-blue-100"
+                                >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Custom Item
+                                </button>
+                                <button
+                                    onClick={addChargeItem}
+                                    className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center bg-orange-50 px-3 py-2 rounded-md h-[40px] border border-orange-100"
+                                >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Add Charge
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
