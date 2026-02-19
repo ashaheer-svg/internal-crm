@@ -17,6 +17,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             where: { id },
             include: {
                 customer: true,
+                partner: true,
+                salesRep: true,
                 stage: true,
                 pipeline: {
                     include: {

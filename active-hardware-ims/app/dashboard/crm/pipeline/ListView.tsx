@@ -150,9 +150,8 @@ export default function ListView() {
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Partner</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Customer</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[75px]">Rep</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -192,7 +191,7 @@ export default function ListView() {
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500 truncate max-w-[100px]" title={project.salesRep?.name}>
                                         {project.salesRep?.name || '-'}
                                     </td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium text-right">
                                         {formatCurrency(project.expectedValue, project.currency)}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap">
