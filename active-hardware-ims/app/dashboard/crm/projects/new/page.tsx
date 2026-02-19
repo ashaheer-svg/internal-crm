@@ -30,6 +30,7 @@ export default function NewProjectPage() {
     const [pipelines, setPipelines] = useState<Pipeline[]>([])
 
     const [formData, setFormData] = useState({
+        projectCode: '',
         title: '',
         customerId: '',
         partnerId: '',
@@ -42,7 +43,7 @@ export default function NewProjectPage() {
     })
 
     useEffect(() => {
-        // Fetch Customers, Sales Reps and Pipelines
+        // Fetch Customers, Sales Reps, Pipelines AND Sequence
         Promise.all([
             fetch('/api/customers?limit=100').then(res => {
                 if (!res.ok) throw new Error('Failed to fetch customers')
@@ -57,8 +58,13 @@ export default function NewProjectPage() {
             fetch('/api/crm/pipeline').then(res => {
                 if (!res.ok) throw new Error('Failed to fetch pipeline')
                 return res.json()
-            })
-        ]).then(([customersData, salesRepsData, pipelineData]) => {
+            }),
+            fetch('/api/sequences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'PROJ', consume: false })
+            }).then(res => res.json())
+        ]).then(([customersData, salesRepsData, pipelineData, sequenceData]) => {
             let allCustomers: Customer[] = []
             if (customersData && customersData.customers) {
                 allCustomers = customersData.customers
@@ -75,6 +81,10 @@ export default function NewProjectPage() {
             if (pipelineData && pipelineData.id) {
                 setPipelines([pipelineData])
                 setFormData(prev => ({ ...prev, pipelineId: pipelineData.id }))
+            }
+
+            if (sequenceData && sequenceData.number) {
+                setFormData(prev => ({ ...prev, projectCode: sequenceData.number }))
             }
         }).catch(err => {
             console.error(err)
@@ -123,6 +133,19 @@ export default function NewProjectPage() {
             <h1 className="text-2xl font-bold mb-6">Create New Sales Project</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Project Code (Auto-generated)</label>
+                    <input
+                        type="text"
+                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-gray-50"
+                        value={formData.projectCode}
+                        onChange={e => setFormData({ ...formData, projectCode: e.target.value })}
+                        placeholder="PROJ-XXXX-XXXX"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">You can edit this code if needed.</p>
+                </div>
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Project Title</label>
                     <input

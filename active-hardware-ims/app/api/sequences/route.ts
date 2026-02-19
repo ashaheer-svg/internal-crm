@@ -16,9 +16,9 @@ export async function POST(request: Request) {
     try {
         await requireAuth()
         const body = await request.json()
-        const { type, consume = false } = body // type: "PO", "GRN", "DO"
+        const { type, consume = false } = body // type: "PO", "GRN", "DO", "PROJ"
 
-        if (!type || !["PO", "GRN", "DO"].includes(type)) {
+        if (!type || !["PO", "GRN", "DO", "PROJ"].includes(type)) {
             return NextResponse.json({ error: 'Invalid sequence type' }, { status: 400 })
         }
 
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
             let prefix = 'PO-'
             if (type === 'GRN') prefix = 'GRN-'
             if (type === 'DO') prefix = 'DO-'
+            if (type === 'PROJ') prefix = 'PROJ-'
 
             sequence = await prisma.sequence.create({
                 data: {
@@ -94,6 +95,7 @@ export async function PUT(request: Request) {
         let prefix = 'PO-'
         if (id === 'GRN') prefix = 'GRN-'
         if (id === 'DO') prefix = 'DO-'
+        if (id === 'PROJ') prefix = 'PROJ-'
 
         const sequence = await prisma.sequence.upsert({
             where: { id },

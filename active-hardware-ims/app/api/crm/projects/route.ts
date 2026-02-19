@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId, expectedCloseDate } = body
+        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId, expectedCloseDate, projectCode } = body
 
         if (!title || !customerId || !pipelineId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -85,15 +85,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Pipeline has no stages' }, { status: 400 })
         }
 
-        // Generate a project code (Simple auto-increment simulated or random for now)
-        // In production, use a Sequence table.
-        const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-        const projectCode = `PRJ-${dateStr}-${random}`
+        let finalProjectCode = projectCode
+
+        if (!finalProjectCode) {
+            // Fallback if not provided (though UI should provide it)
+            const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+            finalProjectCode = `PRJ-${dateStr}-${random}`
+        }
+
+        // Ensure uniqueness check if needed, but Prisma will throw if duplicate
 
         const project = await prisma.cRMProject.create({
             data: {
-                projectCode,
+                projectCode: finalProjectCode,
                 title,
                 customerId,
                 partnerId: partnerId || null,
@@ -114,13 +119,47 @@ export async function POST(request: Request) {
             }
         })
 
+        // Increment Sequence if successful and it matches PROJ pattern
+        if (finalProjectCode.startsWith('PROJ-')) {
+            // We blindly increment because we assume the user used the fetching logic
+            // Ideally we check if the code matches the current sequence, but simplifying:
+            // Just hit the consume endpoint or logic. 
+            // Better: Re-use the Sequence API logic internally or call it? 
+            // We can just update directly since we are on server.
+
+            const currentYearMonth = finalProjectCode.split('-')[1] // e.g. 2402
+            const numberPart = parseInt(finalProjectCode.split('-')[2]) // e.g. 0001
+
+            if (currentYearMonth && !isNaN(numberPart)) {
+                await prisma.sequence.upsert({
+                    where: { id: 'PROJ' },
+                    create: { id: 'PROJ', prefix: 'PROJ-', nextNumber: numberPart + 1, lastYearMonth: currentYearMonth },
+                    update: { nextNumber: numberPart + 1, lastYearMonth: currentYearMonth }
+                })
+            }
+        }
+
         return NextResponse.json(project)
 
     } catch (error: any) {
+        if (error.code === 'P2002') {
+            return NextResponse.json({ error: 'Project Code already exists. Please refresh to get a new code.' }, { status: 400 })
+        }
         console.error('Failed to create project:', error)
         return NextResponse.json(
             { error: error.message || 'Failed to create project' },
             { status: 500 }
         )
     }
+}
+
+return NextResponse.json(project)
+
+    } catch (error: any) {
+    console.error('Failed to create project:', error)
+    return NextResponse.json(
+        { error: error.message || 'Failed to create project' },
+        { status: 500 }
+    )
+}
 }
