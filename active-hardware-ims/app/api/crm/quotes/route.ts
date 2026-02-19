@@ -35,14 +35,22 @@ export async function POST(request: Request) {
         // 4. Calculate Totals
         let subTotal = 0
         const quoteItems = items.map((item: any, index: number) => {
-            const lineTotal = Number(item.quantity) * Number(item.unitPrice)
+            const quantity = Number(item.quantity)
+            const unitPrice = Number(item.unitPrice)
+            const discount = Number(item.discount || 0)
+
+            const rawTotal = quantity * unitPrice
+            const discountAmount = (rawTotal * (discount / 100))
+            const lineTotal = rawTotal - discountAmount
+
             subTotal += lineTotal
             return {
                 order: index,
                 productId: item.productId || null,
                 description: item.description,
-                quantity: Number(item.quantity),
-                unitPrice: Number(item.unitPrice),
+                quantity,
+                unitPrice,
+                discount,
                 total: lineTotal
             }
         })

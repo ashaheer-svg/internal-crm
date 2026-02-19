@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, FileText } from 'lucide-react'
+import { Plus, FileText, Edit, Copy, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
@@ -64,14 +64,59 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                         Amount: {formatCurrency(quote.totalAmount)}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}/edit`)}
+                                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                        title="Edit Quote"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm('Duplicate this quote?')) return
+                                            try {
+                                                const res = await fetch(`/api/crm/quotes/${quote.id}/duplicate`, { method: 'POST' })
+                                                if (res.ok) {
+                                                    router.refresh()
+                                                }
+                                            } catch (e) {
+                                                console.error(e)
+                                                alert('Failed to duplicate')
+                                            }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                                        title="Duplicate Quote"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
                                     <button
                                         onClick={() => window.open(`/dashboard/crm/quotes/${quote.id}/print`, '_blank')}
-                                        className="p-2 text-gray-400 hover:text-gray-600"
+                                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                                         title="Print Quote"
                                     >
                                         <FileText className="w-4 h-4" />
                                     </button>
+                                    {quote.status !== 'ACCEPTED' && (
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm('Mark as Accepted?')) return
+                                                try {
+                                                    const res = await fetch(`/api/crm/quotes/${quote.id}/confirm`, { method: 'POST' })
+                                                    if (res.ok) {
+                                                        router.refresh()
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e)
+                                                    alert('Failed to confirm')
+                                                }
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                                            title="Approve Quote"
+                                        >
+                                            <CheckCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </li>
                         ))}
