@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         } else {
             // Admin/Manager views all
             salesReps = await prisma.salesRep.findMany({
-                where: { isDeleted: false },
+                where: { isActive: true },
                 orderBy: { name: 'asc' }
             })
         }
