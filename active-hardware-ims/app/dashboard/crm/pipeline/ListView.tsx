@@ -94,7 +94,7 @@ export default function ListView() {
     }
 
     return (
-        <div className="bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full">
+        <div className="bg-white rounded-lg shadow border border-gray-200 flex flex-col">
             {/* Toolbar */}
             <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50 rounded-t-lg">
                 <div className="relative w-full sm:w-80">
@@ -140,7 +140,7 @@ export default function ListView() {
             </div>
 
             {/* Table */}
-            <div className="flex-1 overflow-auto">
+            <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0 bg-gray-50 z-10">
                         <tr>
