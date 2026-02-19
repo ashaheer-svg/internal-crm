@@ -24,7 +24,14 @@ export async function GET(
                 isActive: true,
                 lastLoginAt: true,
                 createdAt: true,
-                updatedAt: true
+                updatedAt: true,
+                salesRepId: true,
+                salesRep: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
             }
         })
 
@@ -53,7 +60,7 @@ export async function PATCH(
     try {
         const { id } = await params
         const currentUser = await requireRole(['ADMIN'])
-        const { name, email, role, isActive, password } = await request.json()
+        const { name, email, role, isActive, password, salesRepId } = await request.json()
 
         // Get current user data
         const existingUser = await prisma.user.findUnique({
@@ -98,6 +105,9 @@ export async function PATCH(
             updateData.password = await hashPassword(password)
             updateData.mustChangePassword = true
         }
+        if (salesRepId !== undefined) {
+            updateData.salesRepId = salesRepId
+        }
 
         // Update user
         const user = await prisma.user.update({
@@ -109,7 +119,8 @@ export async function PATCH(
                 email: true,
                 role: true,
                 isActive: true,
-                updatedAt: true
+                updatedAt: true,
+                salesRepId: true
             }
         })
 
@@ -118,12 +129,14 @@ export async function PATCH(
             name: existingUser.name,
             email: existingUser.email,
             role: existingUser.role,
-            isActive: existingUser.isActive
+            isActive: existingUser.isActive,
+            salesRepId: existingUser.salesRepId
         }, {
             name: user.name,
             email: user.email,
             role: user.role,
-            isActive: user.isActive
+            isActive: user.isActive,
+            salesRepId: user.salesRepId
         })
 
         return NextResponse.json({ user })

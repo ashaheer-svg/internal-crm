@@ -18,7 +18,14 @@ export async function GET() {
                 isActive: true,
                 lastLoginAt: true,
                 createdAt: true,
-                updatedAt: true
+                updatedAt: true,
+                salesRepId: true,
+                salesRep: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         })
@@ -37,7 +44,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const currentUser = await requireRole(['ADMIN'])
-        const { name, email, password, role } = await request.json()
+        const { name, email, password, role, salesRepId } = await request.json()
 
         // Validation
         if (!name || !email || !password || !role) {
@@ -80,7 +87,8 @@ export async function POST(request: Request) {
                 role,
                 isActive: true,
                 mustChangePassword: true,
-                createdBy: currentUser.id
+                createdBy: currentUser.id,
+                salesRepId: salesRepId || null
             },
             select: {
                 id: true,
@@ -88,7 +96,8 @@ export async function POST(request: Request) {
                 email: true,
                 role: true,
                 isActive: true,
-                createdAt: true
+                createdAt: true,
+                salesRepId: true
             }
         })
 
@@ -96,7 +105,8 @@ export async function POST(request: Request) {
         await logCreate('USER', user.id, currentUser.id, currentUser.name, {
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            salesRepId: user.salesRepId
         })
 
         return NextResponse.json({ user })

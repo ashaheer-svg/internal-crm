@@ -9,6 +9,12 @@ type User = {
     email: string
     role: string
     isActive: boolean
+    salesRepId?: string | null
+}
+
+type SalesRep = {
+    id: string
+    name: string
 }
 
 type Props = {
@@ -23,12 +29,26 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
         email: user?.email || '',
         role: user?.role || 'VIEWER',
         isActive: user?.isActive ?? true,
-        password: ''
+        password: '',
+        salesRepId: user?.salesRepId || ''
     })
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
     const isEditing = !!user
+
+    useEffect(() => {
+        // Fetch Sales Reps for the dropdown
+        fetch('/api/sales-reps')
+            .then(res => res.json())
+            .then(data => {
+                if (data.salesReps) {
+                    setSalesReps(data.salesReps)
+                }
+            })
+            .catch(err => console.error('Failed to fetch sales reps:', err))
+    }, [])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -43,7 +63,8 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                 name: formData.name,
                 email: formData.email,
                 role: formData.role,
-                isActive: formData.isActive
+                isActive: formData.isActive,
+                salesRepId: formData.salesRepId || null
             }
 
             // Only include password if provided
@@ -124,22 +145,42 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Role *
-                        </label>
-                        <select
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            required
-                        >
-                            <option value="VIEWER">Viewer</option>
-                            <option value="SALES">Sales</option>
-                            <option value="WAREHOUSE">Warehouse</option>
-                            <option value="MANAGER">Manager</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Role *
+                            </label>
+                            <select
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                                required
+                            >
+                                <option value="VIEWER">Viewer</option>
+                                <option value="SALES">Sales</option>
+                                <option value="WAREHOUSE">Warehouse</option>
+                                <option value="MANAGER">Manager</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Link to Sales Rep
+                            </label>
+                            <select
+                                value={formData.salesRepId}
+                                onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                            >
+                                <option value="">None</option>
+                                {salesReps.map(rep => (
+                                    <option key={rep.id} value={rep.id}>
+                                        {rep.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div>
@@ -160,21 +201,21 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                     </div>
 
                     {isEditing && (
-                        <div className="flex items-center">
+                        <div className="flex items-center pt-2">
                             <input
                                 type="checkbox"
                                 id="isActive"
                                 checked={formData.isActive}
                                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
-                                Active
+                                Active Account
                             </label>
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-4 border-t mt-6">
                         <button
                             type="button"
                             onClick={onClose}
@@ -187,7 +228,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
+                            {loading ? 'Saving...' : (isEditing ? 'Update User' : 'Create User')}
                         </button>
                     </div>
                 </form>

@@ -3,6 +3,21 @@ import { prisma } from '@/lib/db'
 import { verifyPassword, createSession, setSessionCookie } from '@/lib/auth'
 import { logLogin } from '@/lib/audit'
 
+// Simple in-memory rate limiter for login
+const MAX_ATTEMPTS = 5
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+const loginAttempts = new Map<string, { count: number, lockedUntil: number | null }>()
+
+// Helper to clean up old entries periodically to prevent memory leaks in long-running processes
+setInterval(() => {
+    const now = Date.now()
+    for (const [key, data] of Array.from(loginAttempts.entries())) {
+        if (data.lockedUntil && data.lockedUntil < now) {
+            loginAttempts.delete(key)
+        }
+    }
+}, 60 * 60 * 1000)
+
 export async function POST(request: Request) {
     try {
         const { email, password } = await request.json()
@@ -14,12 +29,32 @@ export async function POST(request: Request) {
             )
         }
 
+        const normalizedEmail = email.toLowerCase()
+
+        // Rate limit check
+        const attemptData = loginAttempts.get(normalizedEmail)
+        if (attemptData) {
+            if (attemptData.lockedUntil && attemptData.lockedUntil > Date.now()) {
+                const remainingMinutes = Math.ceil((attemptData.lockedUntil - Date.now()) / 60000)
+                return NextResponse.json(
+                    { error: `Too many login attempts. Please try again in ${remainingMinutes} minutes.` },
+                    { status: 429 }
+                )
+            }
+
+            // If lock expired, reset
+            if (attemptData.lockedUntil && attemptData.lockedUntil <= Date.now()) {
+                loginAttempts.delete(normalizedEmail)
+            }
+        }
+
         // Find user by email
         const user = await prisma.user.findUnique({
-            where: { email: email.toLowerCase() }
+            where: { email: normalizedEmail }
         })
 
         if (!user) {
+            recordFailedAttempt(normalizedEmail)
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
@@ -37,11 +72,15 @@ export async function POST(request: Request) {
         // Verify password
         const isValid = await verifyPassword(password, user.password)
         if (!isValid) {
+            recordFailedAttempt(normalizedEmail)
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
             )
         }
+
+        // Successful login, clear attempts
+        loginAttempts.delete(normalizedEmail)
 
         // Create session
         const token = await createSession(user.id)
@@ -73,4 +112,15 @@ export async function POST(request: Request) {
             { status: 500 }
         )
     }
+}
+
+function recordFailedAttempt(email: string) {
+    const current = loginAttempts.get(email) || { count: 0, lockedUntil: null }
+    current.count += 1
+
+    if (current.count >= MAX_ATTEMPTS) {
+        current.lockedUntil = Date.now() + LOCKOUT_DURATION_MS
+    }
+
+    loginAttempts.set(email, current)
 }

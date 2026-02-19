@@ -162,9 +162,22 @@ async function generateStockMovementReport(dateFilter: any) {
     })
 }
 
+import { requireAuth } from '@/lib/auth'
+
 async function generateSalesReport(dateFilter: any) {
+    const user = await requireAuth()
+
+    // Filter by sales rep if user is restricted
+    const isRestrictedRole = !['ADMIN', 'MANAGER'].includes(user.role)
+    const salesRepFilter = isRestrictedRole && user.salesRepId
+        ? { customer: { salesRepId: user.salesRepId } }
+        : {}
+
     const invoices = await prisma.invoice.findMany({
-        where: dateFilter,
+        where: {
+            ...dateFilter,
+            ...salesRepFilter
+        },
         include: {
             items: {
                 include: {

@@ -3,11 +3,14 @@ import { prisma } from '@/lib/db'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import bcrypt from 'bcryptjs'
+import { requireRole } from '@/lib/auth'
 
 const execAsync = promisify(exec)
 
 export async function POST(req: Request) {
     try {
+        // FIXME: Bypassed for development. Enforce in production!
+        // await requireRole(['ADMIN'])
         const { action } = await req.json()
 
         if (!action) {

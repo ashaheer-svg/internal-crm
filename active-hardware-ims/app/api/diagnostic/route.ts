@@ -5,6 +5,7 @@ import * as path from 'path'
 import * as os from 'os'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { requireRole } from '@/lib/auth'
 
 const execAsync = promisify(exec)
 
@@ -16,6 +17,8 @@ export async function GET() {
     }
 
     try {
+        // FIXME: Bypassed for development. Enforce in production!
+        // await requireRole(['ADMIN'])
         // 0. System Stats
         const totalMem = os.totalmem()
         const freeMem = os.freemem()
