@@ -144,21 +144,21 @@ export default function ListView() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0 bg-gray-50 z-10">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Code</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Rep</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Code</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">Title</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Customer</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[100px]">Rep</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {loading ? (
                             Array.from({ length: 5 }).map((_, i) => (
                                 <tr key={i}>
-                                    <td colSpan={8} className="px-6 py-4 whitespace-nowrap">
+                                    <td colSpan={8} className="px-3 py-2 whitespace-nowrap">
                                         <div className="h-4 bg-gray-100 rounded w-full animate-pulse"></div>
                                     </td>
                                 </tr>
@@ -176,38 +176,38 @@ export default function ListView() {
                                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                                     onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900">
                                         {project.projectCode}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 truncate max-w-xs" title={project.title}>
                                         {project.title}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500 truncate max-w-[150px]" title={project.customer?.name}>
                                         {project.customer?.name || 'Unknown'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500 truncate max-w-[100px]" title={project.salesRep?.name}>
                                         {project.salesRep?.name || '-'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 font-medium">
                                         {formatCurrency(project.expectedValue, project.currency)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-3 py-2 whitespace-nowrap">
                                         <span
-                                            className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800"
+                                            className="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full bg-gray-100 text-gray-800"
                                             style={{ backgroundColor: project.stage?.color ? `${project.stage.color}20` : '#f3f4f6', color: project.stage?.color || '#1f2937' }}
                                         >
                                             {project.stage?.name || 'Unknown'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${project.status === 'WON' ? 'bg-green-100 text-green-800' :
+                                    <td className="px-3 py-2 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full ${project.status === 'WON' ? 'bg-green-100 text-green-800' :
                                             project.status === 'LOST' ? 'bg-red-100 text-red-800' :
                                                 'bg-blue-100 text-blue-800'
                                             }`}>
                                             {project.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                                         {new Date(project.updatedAt).toLocaleDateString()}
                                     </td>
                                 </tr>
