@@ -36,6 +36,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const user = await requireAuth() // Need user for logging
         const body = await request.json()
         const { poNumber, supplier, items, notes } = body
 
@@ -107,6 +108,14 @@ export async function POST(request: Request) {
                     }
                 }
             }
+        })
+
+        // Audit Log
+        const { logCreate } = await import('@/lib/audit')
+        await logCreate('PURCHASE_ORDER', purchaseOrder.id, user.id, user.name, {
+            poNumber: purchaseOrder.poNumber,
+            supplier: purchaseOrder.supplier,
+            totalAmount: purchaseOrder.totalAmount
         })
 
         return NextResponse.json(purchaseOrder)

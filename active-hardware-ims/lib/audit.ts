@@ -15,6 +15,12 @@ export type AuditEntityType =
     | 'BACKUP'
     | 'SERVICE_CONTRACT'
     | 'RENTAL'
+    | 'CRM_PROJECT'
+    | 'CRM_QUOTE'
+    | 'DELIVERY_ORDER'
+    | 'PURCHASE_ORDER'
+    | 'CRM_TASK'
+    | 'CRM_PIPELINE'
 
 interface AuditLogParams {
     action: AuditAction

@@ -122,11 +122,7 @@ export async function POST(request: Request) {
         // Increment Sequence if successful and it matches PROJ pattern
         if (finalProjectCode.startsWith('PROJ-')) {
             // We blindly increment because we assume the user used the fetching logic
-            // Ideally we check if the code matches the current sequence, but simplifying:
-            // Just hit the consume endpoint or logic. 
-            // Better: Re-use the Sequence API logic internally or call it? 
-            // We can just update directly since we are on server.
-
+            // Ideal check: if the code matches the current sequence pattern
             const currentYearMonth = finalProjectCode.split('-')[1] // e.g. 2402
             const numberPart = parseInt(finalProjectCode.split('-')[2]) // e.g. 0001
 
@@ -138,6 +134,16 @@ export async function POST(request: Request) {
                 })
             }
         }
+
+        // Audit Log
+        const { logCreate } = await import('@/lib/audit') // Dynamic import to avoid circular dep if any
+        await logCreate('CRM_PROJECT', project.id, user.id, user.name, {
+            projectCode: project.projectCode,
+            title: project.title,
+            customerId: project.customerId,
+            pipelineId: project.pipelineId,
+            expectedValue: project.expectedValue
+        })
 
         return NextResponse.json(project)
 

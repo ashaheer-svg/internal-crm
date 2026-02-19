@@ -99,6 +99,15 @@ export async function POST(request: Request) {
             }
         })
 
+        // Audit Log
+        const { logCreate } = await import('@/lib/audit')
+        await logCreate('CRM_QUOTE', quote.id, user.id, user.name, {
+            quoteNumber: quote.quoteNumber,
+            projectId: quote.projectId,
+            totalAmount: quote.totalAmount,
+            version: quote.version
+        })
+
         return NextResponse.json(quote)
 
     } catch (error: any) {
