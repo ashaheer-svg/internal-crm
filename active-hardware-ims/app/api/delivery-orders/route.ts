@@ -145,38 +145,24 @@ export async function POST(request: Request) {
             return newOrder
         })
 
-        return newOrder
-    })
+        // Audit Log
+        const { logCreate } = await import('@/lib/audit')
+        await logCreate('DELIVERY_ORDER', order.id, user.id, user.name, {
+            orderNumber: order.orderNumber,
+            customerName: order.customerName,
+            invoiceValue: order.invoiceValue
+        })
 
-    // Audit Log
-    const { logCreate } = await import('@/lib/audit')
-    // User info is available in requireAuth scope but we need to pass it or fetch it again?
-    // requireAuth returns the user, so we should allow 'POST' to capture it.
-    // Wait, I need to check if 'const user' is defined in POST.
-    // It is NOT defined in the previous read. 'await requireAuth()' was called but result not assigned.
-    // I need to fix that first or in this same edit.
-
-    // Let's assume I fix the assignment in the same block or I can't access 'user'.
-    // Actually, looking at the file content I read:
-    // line 44: await requireAuth() -> result is NOT assigned.
-    // So I must assign it: const user = await requireAuth()
-
-    // I will do that in a separate edit or try to catch it here if I include line 44.
-    // Let's look at the range. Line 148 is far from 44.
-    // I will split this into two edits or just use a follow-up.
-    // Actually, I can't log without user ID.
-    // I'll update line 44 first, then add logging.
-
-    return NextResponse.json(order)
-} catch (error: any) {
-    console.error("Error creating Delivery Order:", error)
-    if (error.code === 'P2002') {
-        return NextResponse.json({ error: 'Delivery Order Number must be unique' }, { status: 400 })
-    }
-    return NextResponse.json(
-        { error: error.message || 'Failed to create delivery order' },
-        { status: 500 }
-    )
-}
+        return NextResponse.json(order)
+    } catch (error: any) {
+        console.error("Error creating Delivery Order:", error)
+        if (error.code === 'P2002') {
+            return NextResponse.json({ error: 'Delivery Order Number must be unique' }, { status: 400 })
+        }
+        return NextResponse.json(
+            { error: error.message || 'Failed to create delivery order' },
+            { status: 500 }
+        )
     }
 }
+
