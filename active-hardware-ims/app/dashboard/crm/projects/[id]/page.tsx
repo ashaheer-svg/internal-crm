@@ -18,6 +18,7 @@ import CRMTaskSection from '@/components/crm/CRMTaskSection'
 import CRMTeamSection from '@/components/crm/CRMTeamSection'
 import CRMQuoteSection from '@/components/crm/CRMQuoteSection'
 import LogActivityModal from '@/components/crm/LogActivityModal'
+import EditProjectModal from '@/components/crm/EditProjectModal'
 import BackButton from '@/components/BackButton'
 
 // Types
@@ -32,6 +33,7 @@ interface ProjectData {
     probability: number
     startDate: string
     targetDate: string
+    expectedCloseDate?: string
 
     customer: { id: string, name: string }
     partner?: { id: string, name: string }
@@ -52,6 +54,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('overview')
     const [showActivityModal, setShowActivityModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
 
     useEffect(() => {
         fetchProject()
@@ -106,6 +109,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 onSuccess={fetchProject}
             />
 
+            <EditProjectModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                project={project}
+                onSuccess={fetchProject}
+            />
+
             {/* Header / Cockpit Top */}
             <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
                 <div className="flex justify-between items-start">
@@ -145,11 +155,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 <Calendar className="w-4 h-4 mr-1" />
                                 Target: {project.targetDate ? new Date(project.targetDate).toLocaleDateString() : 'N/A'}
                             </span>
+                            {project.expectedCloseDate && (
+                                <span className="flex items-center text-sm text-blue-600 font-medium">
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    Close: {new Date(project.expectedCloseDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
+                                </span>
+                            )}
                         </div>
                     </div>
 
                     <div className="flex gap-3">
-                        <button className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <button
+                            onClick={() => setShowEditModal(true)}
+                            className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
                             Edit Project
                         </button>
                         <button

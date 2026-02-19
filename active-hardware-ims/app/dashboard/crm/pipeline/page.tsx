@@ -171,7 +171,7 @@ export default function KanbanPage() {
                             </div>
 
                             {/* Projects List */}
-                            <div className="p-3 space-y-3">
+                            <div className="p-3 space-y-3 max-h-[1000px] overflow-y-auto custom-scrollbar">
                                 {stage.projects.map((project) => (
                                     <div
                                         key={project.id}

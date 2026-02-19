@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId } = body
+        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId, expectedCloseDate } = body
 
         if (!title || !customerId || !pipelineId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -102,6 +102,7 @@ export async function POST(request: Request) {
                 stageId: firstStage.id,
                 expectedValue: Number(expectedValue) || 0,
                 currency: currency || 'Rs.',
+                expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null,
                 description,
                 status: 'OPEN',
                 members: {

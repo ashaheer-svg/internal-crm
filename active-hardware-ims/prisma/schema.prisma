@@ -581,6 +581,7 @@ model CRMProject {
   // Dates
   startDate   DateTime    @default(now())
   targetDate  DateTime?
+  expectedCloseDate DateTime? // For Sales Forecasting (YY-MM)
   closedAt    DateTime?
 
   // Relations

@@ -37,6 +37,7 @@ export default function NewProjectPage() {
         pipelineId: '',
         expectedValue: '',
         currency: 'Rs.',
+        expectedCloseDate: '',
         description: ''
     })
 
@@ -200,6 +201,17 @@ export default function NewProjectPage() {
                             <option value="EUR">EUR</option>
                         </select>
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Expected Closing Timeframe</label>
+                    <input
+                        type="month"
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                        value={formData.expectedCloseDate ? formData.expectedCloseDate.substring(0, 7) : ''}
+                        onChange={e => setFormData({ ...formData, expectedCloseDate: e.target.value ? `${e.target.value}-01` : '' })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">When do you expect to close this deal?</p>
                 </div>
 
                 <div>
