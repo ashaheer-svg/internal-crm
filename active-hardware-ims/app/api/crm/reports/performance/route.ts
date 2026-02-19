@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         // Total Range: Start of (Current - 6 months) to End of (Current + 3 months)
 
         const today = new Date()
-        const startOfRange = new Date(today.getFullYear(), today.getMonth() - 6, 1) // 6 months ago
+        const startOfRange = new Date(today.getFullYear(), today.getMonth() - 3, 1) // 3 months ago
         const endOfRange = new Date(today.getFullYear(), today.getMonth() + 4, 0) // End of 3 months from now
 
         // 1. Fetch Sales Reps
@@ -74,8 +74,8 @@ export async function GET(request: Request) {
         const months: string[] = []
 
         // Generate Month Keys for Columns
-        // -6 to +3
-        for (let i = -6; i <= 3; i++) {
+        // -3 to +3
+        for (let i = -3; i <= 3; i++) {
             const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
             const monthName = d.toLocaleString('default', { month: 'short' })
             const yearStr = d.getFullYear().toString().substr(2)

@@ -153,11 +153,11 @@ function PerformanceTable() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+                            <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 w-32">
                                 Sales Rep
                             </th>
                             {data.months.map((month: string) => (
-                                <th key={month} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                                <th key={month} className="px-2 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
                                     {month}
                                 </th>
                             ))}
@@ -166,7 +166,7 @@ function PerformanceTable() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {data.data.map((rep: any) => (
                             <tr key={rep.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10 border-r">
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900 sticky left-0 bg-white z-10 border-r w-32 truncate" title={rep.name}>
                                     {rep.name}
                                 </td>
                                 {data.months.map((month: string) => {
@@ -175,15 +175,15 @@ function PerformanceTable() {
                                     const hasExp = cell.expected > 0
 
                                     return (
-                                        <td key={month} className="px-6 py-4 whitespace-nowrap text-sm text-center border-r last:border-r-0">
+                                        <td key={month} className="px-2 py-2 whitespace-nowrap text-xs text-center border-r last:border-r-0">
                                             {hasWon && (
                                                 <div className="text-green-600 font-medium">
-                                                    {formatCurrency(cell.won)} <span className="text-xs text-green-500 ml-1">(Won)</span>
+                                                    {formatCurrency(cell.won)}
                                                 </div>
                                             )}
                                             {hasExp && (
                                                 <div className="text-blue-600 font-medium">
-                                                    {formatCurrency(cell.expected)} <span className="text-xs text-blue-500 ml-1">(Exp)</span>
+                                                    {formatCurrency(cell.expected)}
                                                 </div>
                                             )}
                                             {!hasWon && !hasExp && <span className="text-gray-300">-</span>}
@@ -194,7 +194,7 @@ function PerformanceTable() {
                         ))}
                         {data.data.length === 0 && (
                             <tr>
-                                <td colSpan={data.months.length + 1} className="px-6 py-4 text-center text-sm text-gray-500">
+                                <td colSpan={data.months.length + 1} className="px-6 py-4 text-center text-xs text-gray-500">
                                     No data available
                                 </td>
                             </tr>
