@@ -273,7 +273,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                             <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
                             <input
                                 type="date"
-                                className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border h-[40px]"
+                                className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border h-[40px] text-gray-900"
                                 value={validUntil}
                                 onChange={(e) => setValidUntil(e.target.value)}
                             />
@@ -339,7 +339,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                         <tr key={item.id} className="group">
                                             <td className="py-3 px-2 align-top">
                                                 <textarea
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                                     rows={2}
                                                     value={item.description}
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -349,7 +349,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                             <td className="py-3 px-2 align-top">
                                                 <input
                                                     type="number"
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                                     min="1"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
@@ -362,7 +362,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     </div>
                                                     <input
                                                         type="number"
-                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border text-right focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border text-right focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                                         min="0"
                                                         step="0.01"
                                                         value={item.unitPrice}
@@ -373,7 +373,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                             <td className="py-3 px-2 align-top">
                                                 <input
                                                     type="number"
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                                     min="0"
                                                     max="100"
                                                     value={item.discount || 0}
@@ -452,7 +452,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                     <label className="block text-lg font-medium text-gray-900 mb-4">Terms & Conditions</label>
                     <textarea
-                        className="w-full border-gray-300 rounded-md text-sm font-mono bg-gray-50 p-2 border"
+                        className="w-full border-gray-300 rounded-md text-sm font-mono bg-gray-50 p-2 border text-gray-900"
                         rows={6}
                         value={terms}
                         onChange={(e) => setTerms(e.target.value)}

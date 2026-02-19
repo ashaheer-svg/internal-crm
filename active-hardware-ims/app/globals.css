@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Fix for inputs being unreadable in dark mode or specific system themes */
+input, textarea, select {
+  color: #111827; /* text-gray-900 */
+  background-color: #ffffff;
+}
