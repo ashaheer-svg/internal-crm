@@ -13,6 +13,7 @@ interface Project {
     currency: string
     status: string
     customer: { name: string }
+    partner: { name: string } | null
     salesRep: { name: string } | null
     stage: { name: string; color: string }
     updatedAt: string
@@ -148,7 +149,7 @@ export default function ListView() {
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">Title</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Partner</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Customer</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[100px]">Rep</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[75px]">Rep</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
@@ -200,14 +201,6 @@ export default function ListView() {
                                             style={{ backgroundColor: project.stage?.color ? `${project.stage.color}20` : '#f3f4f6', color: project.stage?.color || '#1f2937' }}
                                         >
                                             {project.stage?.name || 'Unknown'}
-                                        </span>
-                                    </td>
-                                    <td className="px-3 py-2 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full ${project.status === 'WON' ? 'bg-green-100 text-green-800' :
-                                            project.status === 'LOST' ? 'bg-red-100 text-red-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
-                                            {project.status}
                                         </span>
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
