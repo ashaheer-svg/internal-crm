@@ -30,8 +30,6 @@ const navigation = [
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
     { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Reports", href: "/dashboard/crm/reports", icon: BarChart3, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
     { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
 ]
 
