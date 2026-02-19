@@ -43,7 +43,9 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
         fetch('/api/sales-reps')
             .then(res => res.json())
             .then(data => {
-                if (data.salesReps) {
+                if (Array.isArray(data)) {
+                    setSalesReps(data)
+                } else if (data && data.salesReps) {
                     setSalesReps(data.salesReps)
                 }
             })
