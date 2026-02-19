@@ -153,7 +153,7 @@ export default function KanbanPage() {
         if (!pipeline) return <div className="p-8">No pipeline found. Please seed the CRM.</div>
 
         return (
-            <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50 min-h-0">
+            <div className="flex-1 overflow-x-auto p-6 bg-gray-50">
                 <div className="flex h-full space-x-6">
                     {pipeline.stages?.map((stage) => (
                         <div
