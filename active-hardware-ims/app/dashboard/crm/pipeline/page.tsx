@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, LayoutTemplate, List } from 'lucide-react' // LayoutTemplate as Kanban icon
+import { Plus, LayoutTemplate, List, BarChart3 } from 'lucide-react' // LayoutTemplate as Kanban icon
 import ListView from './ListView'
 import { formatCurrency } from '@/lib/format'
 import CreateCustomerButton from '@/components/CreateCustomerButton'
@@ -237,6 +237,14 @@ export default function KanbanPage() {
                 // ...
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.push('/dashboard/crm/reports')}
+                        className="flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 shadow-sm"
+                        title="Reports"
+                    >
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Reports
+                    </button>
                     <CreateCustomerButton />
                     <button
                         onClick={() => router.push('/dashboard/crm/projects/new')}
