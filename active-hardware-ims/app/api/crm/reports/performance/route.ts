@@ -24,11 +24,23 @@ export async function GET(request: Request) {
             if (me) salesReps = [me]
             // If not found in SalesRep table, might fallback to empty or user Logic, but assuming standard flow
         } else {
-            // Admin/Manager views all
-            salesReps = await prisma.salesRep.findMany({
-                where: { isActive: true },
-                orderBy: { name: 'asc' }
-            })
+            // Admin/Manager views all or filtered
+            const filterRepId = searchParams.get('salesRepId')
+
+            if (filterRepId && filterRepId !== 'ALL') {
+                salesReps = await prisma.salesRep.findMany({
+                    where: {
+                        id: filterRepId,
+                        isActive: true
+                    },
+                    orderBy: { name: 'asc' }
+                })
+            } else {
+                salesReps = await prisma.salesRep.findMany({
+                    where: { isActive: true },
+                    orderBy: { name: 'asc' }
+                })
+            }
         }
 
         // 2. Fetch Deals (Won & Expected)

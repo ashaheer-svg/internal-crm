@@ -122,7 +122,7 @@ export default function CRMReportsPage() {
                     </div>
 
                     {/* Performance Table */}
-                    <PerformanceTable />
+                    <PerformanceTable selectedRep={selectedRep} />
                 </>
             )}
         </div>
@@ -130,17 +130,18 @@ export default function CRMReportsPage() {
 }
 
 
-function PerformanceTable() {
+function PerformanceTable({ selectedRep }: { selectedRep: string }) {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetch('/api/crm/reports/performance')
+        setLoading(true)
+        fetch(`/api/crm/reports/performance?salesRepId=${selectedRep}`)
             .then(res => res.json())
             .then(setData)
             .catch(console.error)
             .finally(() => setLoading(false))
-    }, [])
+    }, [selectedRep])
 
     if (loading) return <div className="text-center py-8">Loading Table...</div>
     if (!data) return null
