@@ -153,13 +153,4 @@ export async function POST(request: Request) {
     }
 }
 
-return NextResponse.json(project)
 
-    } catch (error: any) {
-    console.error('Failed to create project:', error)
-    return NextResponse.json(
-        { error: error.message || 'Failed to create project' },
-        { status: 500 }
-    )
-}
-}
