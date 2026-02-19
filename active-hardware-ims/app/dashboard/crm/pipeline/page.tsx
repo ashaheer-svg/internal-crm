@@ -154,11 +154,11 @@ export default function KanbanPage() {
 
         return (
             <div className="flex-1 overflow-x-auto p-6 bg-gray-50">
-                <div className="flex h-full space-x-6">
+                <div className="flex space-x-6">
                     {pipeline.stages?.map((stage) => (
                         <div
                             key={stage.id}
-                            className="w-56 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg max-h-full"
+                            className="w-56 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg"
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, stage.id)}
                         >
@@ -171,7 +171,7 @@ export default function KanbanPage() {
                             </div>
 
                             {/* Projects List */}
-                            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                            <div className="p-3 space-y-3">
                                 {stage.projects.map((project) => (
                                     <div
                                         key={project.id}
@@ -209,7 +209,7 @@ export default function KanbanPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-7rem)] flex flex-col">
+        <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
                 <div className="flex items-center gap-4">
@@ -251,10 +251,10 @@ export default function KanbanPage() {
 
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            <div className="flex-1 flex flex-col">
                 <DashboardTasks />
                 {viewMode === 'BOARD' ? renderBoard() : (
-                    <div className="flex-1 p-6 overflow-hidden min-h-0">
+                    <div className="flex-1 p-6">
                         <ListView />
                     </div>
                 )}
