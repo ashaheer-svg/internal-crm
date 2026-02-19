@@ -326,10 +326,10 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                             <table className="w-full">
                                 <thead>
                                     <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b">
-                                        <th className="pb-2 w-1/3">Description</th>
-                                        <th className="pb-2 w-20">Qty</th>
-                                        <th className="pb-2 w-32">Unit Price</th>
-                                        <th className="pb-2 w-20">Disc %</th>
+                                        <th className="pb-2 pl-2 w-5/12">Description</th>
+                                        <th className="pb-2 w-20 text-center">Qty</th>
+                                        <th className="pb-2 w-32 text-right">Unit Price</th>
+                                        <th className="pb-2 w-20 text-center">Disc %</th>
                                         <th className="pb-2 w-32 text-right">Total</th>
                                         <th className="pb-2 w-10"></th>
                                     </tr>
@@ -339,7 +339,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                         <tr key={item.id} className="group">
                                             <td className="py-3 px-2 align-top">
                                                 <textarea
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border focus:ring-blue-500 focus:border-blue-500"
                                                     rows={2}
                                                     value={item.description}
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -349,7 +349,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                             <td className="py-3 px-2 align-top">
                                                 <input
                                                     type="number"
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500"
                                                     min="1"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
@@ -362,7 +362,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     </div>
                                                     <input
                                                         type="number"
-                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border"
+                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border text-right focus:ring-blue-500 focus:border-blue-500"
                                                         min="0"
                                                         step="0.01"
                                                         value={item.unitPrice}
@@ -373,7 +373,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                             <td className="py-3 px-2 align-top">
                                                 <input
                                                     type="number"
-                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border"
+                                                    className="w-full border-gray-300 rounded-md text-sm p-2 border text-center focus:ring-blue-500 focus:border-blue-500"
                                                     min="0"
                                                     max="100"
                                                     value={item.discount || 0}
@@ -398,19 +398,23 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
                             {/* Totals */}
                             <div className="border-t border-gray-100 pt-4 flex justify-end">
-                                <div className="w-64 space-y-2">
+                                <div className="w-72 space-y-2">
                                     <div className="flex justify-between text-sm text-gray-600">
-                                        <span>Subtotal</span>
+                                        <span className="font-medium">Subtotal</span>
                                         <span>{formatCurrency(subtotal)}</span>
                                     </div>
 
                                     {/* Tax Selection */}
-                                    <div className="border-t border-b border-gray-100 py-2 my-2">
-                                        <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Applicable Taxes</p>
-                                        {availableTaxes.length === 0 && <p className="text-xs text-gray-400">No taxes configured</p>}
+                                    <div className="border-t border-b border-gray-100 py-3 my-2 space-y-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase">Applicable Taxes</p>
+                                        </div>
+
+                                        {availableTaxes.length === 0 && <p className="text-xs text-gray-400 italic">No taxes configured</p>}
+
                                         {availableTaxes.map(tax => (
-                                            <div key={tax.id} className="flex items-center justify-between py-1">
-                                                <label className="flex items-center text-sm text-gray-600 cursor-pointer">
+                                            <div key={tax.id} className="flex items-center justify-between py-1 group hover:bg-gray-50 rounded px-1 -mx-1">
+                                                <label className="flex items-center text-sm text-gray-600 cursor-pointer select-none flex-1">
                                                     <input
                                                         type="checkbox"
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
@@ -423,9 +427,9 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                             }
                                                         }}
                                                     />
-                                                    {tax.name} ({tax.rate}%)
+                                                    {tax.name} <span className="text-gray-400 ml-1">({tax.rate}%)</span>
                                                 </label>
-                                                <span className="text-sm text-gray-500">
+                                                <span className="text-sm font-medium text-gray-700">
                                                     {selectedTaxIds.includes(tax.id)
                                                         ? formatCurrency(subtotal * (tax.rate / 100))
                                                         : '-'}
@@ -434,9 +438,9 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                         ))}
                                     </div>
 
-                                    <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2">
+                                    <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-3">
                                         <span>Total</span>
-                                        <span>{formatCurrency(total)}</span>
+                                        <span className="text-blue-600">{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                             </div>

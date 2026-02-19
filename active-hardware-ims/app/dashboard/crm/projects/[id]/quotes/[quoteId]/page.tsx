@@ -113,8 +113,8 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="flex items-center gap-3">
                                 <h1 className="text-2xl font-bold text-gray-900">{quote.quoteNumber}</h1>
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                                        quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' :
-                                            'bg-blue-100 text-blue-800'
+                                    quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' :
+                                        'bg-blue-100 text-blue-800'
                                     }`}>
                                     {quote.status}
                                 </span>
@@ -242,7 +242,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
 
                                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-300 pt-2 mt-2">
                                     <span>Total</span>
-                                    <span>{formatCurrency(quote.totalAmount)}</span>
+                                    <span className="text-blue-600">{formatCurrency(quote.totalAmount)}</span>
                                 </div>
                             </div>
                         </div>

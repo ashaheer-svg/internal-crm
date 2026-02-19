@@ -143,7 +143,7 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                     ))}
 
                     <div className="flex justify-between text-xl font-bold text-gray-900 border-t-2 border-gray-900 pt-2 mt-2">
-                        <span>Total (INR)</span>
+                        <span>Total</span>
                         <span className="text-blue-900">{formatCurrency(quote.totalAmount)}</span>
                     </div>
                 </div>
