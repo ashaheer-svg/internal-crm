@@ -203,3 +203,5 @@ function PerformanceTable() {
                 </table>
             </div>
         </div>
+    )
+}
