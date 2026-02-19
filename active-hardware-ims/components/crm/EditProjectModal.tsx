@@ -12,14 +12,23 @@ interface EditProjectModalProps {
 
 export default function EditProjectModal({ isOpen, onClose, project, onSuccess }: EditProjectModalProps) {
     const [loading, setLoading] = useState(false)
+    const [salesReps, setSalesReps] = useState<any[]>([])
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         expectedValue: '',
         currency: 'Rs.',
         expectedCloseDate: '',
-        targetDate: ''
+        targetDate: '',
+        salesRepId: ''
     })
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchSalesReps()
+        }
+    }, [isOpen])
 
     useEffect(() => {
         if (project) {
@@ -29,10 +38,23 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
                 expectedValue: project.expectedValue || '',
                 currency: project.currency || 'Rs.',
                 expectedCloseDate: project.expectedCloseDate ? project.expectedCloseDate.substring(0, 10) : '',
-                targetDate: project.targetDate ? project.targetDate.substring(0, 10) : ''
+                targetDate: project.targetDate ? project.targetDate.substring(0, 10) : '',
+                salesRepId: project.salesRepId || ''
             })
         }
     }, [project, isOpen])
+
+    async function fetchSalesReps() {
+        try {
+            const res = await fetch('/api/sales-reps')
+            if (res.ok) {
+                const data = await res.json()
+                setSalesReps(data)
+            }
+        } catch (error) {
+            console.error('Failed to fetch sales reps')
+        }
+    }
 
     if (!isOpen) return null
 
@@ -67,7 +89,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h2 className="text-lg font-semibold">Edit Project</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -85,6 +107,20 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                        <select
+                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                            value={formData.salesRepId}
+                            onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
+                        >
+                            <option value="">Select Rep</option>
+                            {salesReps.map(rep => (
+                                <option key={rep.id} value={rep.id}>{rep.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

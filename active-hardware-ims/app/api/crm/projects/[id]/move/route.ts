@@ -39,11 +39,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
             return NextResponse.json({ error: 'Target stage not found' }, { status: 404 })
         }
 
-        // Update the project stage
+        // Determine status based on stage name
+        let status = 'OPEN'
+        let closedAt = null
+
+        if (newStage.name.toUpperCase() === 'WON') {
+            status = 'WON'
+            closedAt = new Date()
+        } else if (newStage.name.toUpperCase() === 'LOST') {
+            status = 'LOST'
+            closedAt = new Date()
+        }
+
+        // Update the project stage and status
         const updatedProject = await prisma.cRMProject.update({
             where: { id },
             data: {
-                stageId
+                stageId,
+                status,
+                closedAt: status !== 'OPEN' ? closedAt : null // Clear closedAt if moved back to open
             }
         })
 
