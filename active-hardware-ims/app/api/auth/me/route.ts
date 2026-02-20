@@ -12,7 +12,13 @@ export async function GET() {
         // Return user info without password
         const { password: _, ...userWithoutPassword } = user
 
-        return NextResponse.json({ user: userWithoutPassword })
+        // Safely flatten the role to prevent React object-as-child crashes on the frontend
+        const safeUser = {
+            ...userWithoutPassword,
+            role: userWithoutPassword.role?.name || userWithoutPassword.legacyRole || 'UNKNOWN'
+        }
+
+        return NextResponse.json({ user: safeUser })
     } catch (error) {
         console.error('Get current user error:', error)
         return NextResponse.json({ user: null }, { status: 401 })

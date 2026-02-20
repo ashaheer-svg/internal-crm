@@ -33,11 +33,16 @@ export async function GET() {
             orderBy: { createdAt: 'desc' }
         })
 
-        // Map relation role name to top-level `role` property for frontend compatibility
-        const mappedUsers = users.map(u => ({
-            ...u,
-            role: u.role?.name || u.legacyRole || 'UNKNOWN'
-        }))
+        // Safely map relational role name to top-level `role` property and extract the `roleId`
+        const mappedUsers = users.map(u => {
+            const { role, ...rest } = u;
+            const r = role as any; // Typecast for local TS
+            return {
+                ...rest,
+                roleId: r?.id || null,
+                role: r?.name || u.legacyRole || 'UNKNOWN'
+            }
+        })
 
         return NextResponse.json({ users: mappedUsers })
     } catch (error: any) {
