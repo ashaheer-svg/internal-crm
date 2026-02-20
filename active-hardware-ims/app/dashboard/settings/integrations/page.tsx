@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Save, MessageSquare } from "lucide-react"
-import { toast } from "sonner"
 import BackButton from "@/components/BackButton"
 
 export default function IntegrationsSettingsPage() {
@@ -24,7 +23,7 @@ export default function IntegrationsSettingsPage() {
                     WHATSAPP_ENABLED: data.WHATSAPP_ENABLED === "true"
                 })
             } catch (error: any) {
-                toast.error(error.message)
+                alert(error.message)
             } finally {
                 setIsLoading(false)
             }
@@ -47,9 +46,9 @@ export default function IntegrationsSettingsPage() {
                 throw new Error(data.error || "Failed to save settings")
             }
 
-            toast.success("Settings saved successfully")
+            alert("Settings saved successfully")
         } catch (error: any) {
-            toast.error(error.message)
+            alert(error.message)
         } finally {
             setIsSaving(false)
         }
