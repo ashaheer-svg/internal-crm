@@ -1,4 +1,4 @@
-// lib/whatsapp.ts
+import { prisma } from '@/lib/db'
 
 /**
  * Sends a WhatsApp template message using the Meta Official Cloud API.
@@ -8,6 +8,22 @@
  * @param components The dynamic variables to inject into the template (optional)
  */
 export async function sendWhatsAppTemplate(to: string, templateName: string, components: any[] = []) {
+    // 1. Check if the feature is explicitly enabled in Settings
+    try {
+        // @ts-ignore
+        const setting = await prisma.systemSetting.findUnique({
+            where: { key: 'WHATSAPP_ENABLED' }
+        });
+
+        if (!setting || setting.value !== 'true') {
+            console.log('WhatsApp notifications are disabled by user configuration. Skipping.');
+            return { success: false, reason: 'DISABLED' };
+        }
+    } catch (err) {
+        console.error('Failed to check WhatsApp configuration:', err);
+        return { success: false, reason: 'DB_ERROR' };
+    }
+
     const token = process.env.WHATSAPP_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 

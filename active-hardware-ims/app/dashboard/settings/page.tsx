@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Users, Building2, FileText, Shield, ScrollText, Database, Upload, Receipt } from "lucide-react"
+import { Users, Building2, FileText, Shield, ScrollText, Database, Upload, Receipt, MessageSquare } from "lucide-react"
 
 const settingsLinks = [
     {
@@ -94,7 +94,13 @@ const settingsLinks = [
         description: "Import legacy warranty data from CSV",
         adminOnly: true
     },
-
+    {
+        name: "Integrations",
+        href: "/dashboard/settings/integrations",
+        icon: MessageSquare,
+        description: "Manage WhatsApp & Third-Party Alerts",
+        adminOnly: true
+    }
 ]
 
 export default function SettingsPage() {

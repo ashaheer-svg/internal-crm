@@ -730,3 +730,15 @@ model TaxConfiguration {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ------------------------------------------
+// Generic Settings
+// ------------------------------------------
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String // JSON or string value
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
