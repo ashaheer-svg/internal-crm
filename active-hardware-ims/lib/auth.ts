@@ -60,6 +60,12 @@ export async function getSession(token: string) {
         user.permissions = []
     }
 
+    // Safety fallback: ensure ADMIN always has global manage even if DB records are out of sync
+    const currentRoleName = user.role?.name || user.legacyRole
+    if (currentRoleName === 'ADMIN' && !user.permissions.includes('all:manage')) {
+        user.permissions.push('all:manage')
+    }
+
     return session
 }
 
