@@ -53,7 +53,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
             .catch(err => console.error('Failed to fetch sales reps:', err))
 
         // Fetch dynamic roles
-        fetch('/api/settings/roles')
+        fetch('/api/settings/roles', { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 if (data.roles) {
