@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Plus, Trash2, Check, X, AlertCircle } from "lucide-react"
-import BackButton from "@/components/BackButton"
+import { Shield, Plus, Check, X, AlertCircle } from "lucide-react"
 
-export default function RolesSettingsPage() {
+export default function RolesTab() {
     const [isLoading, setIsLoading] = useState(true)
     const [roles, setRoles] = useState<any[]>([])
     const [permissions, setPermissions] = useState<any[]>([])
@@ -76,20 +75,19 @@ export default function RolesSettingsPage() {
     const resources = Array.from(new Set(permissions.map(p => p.resource))).sort()
     const actions = ['create', 'read', 'update', 'delete', 'manage']
 
-    if (isLoading) return <div className="p-4">Loading Role Matrix...</div>
+    if (isLoading) return <div className="p-8 text-center text-gray-500">Loading Role Matrix...</div>
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <BackButton />
-                    <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">Roles & Permissions</h1>
-                    <p className="text-gray-500">Manage user access rights across the platform.</p>
+                    <h2 className="text-lg font-medium text-gray-900">Access Matrix</h2>
+                    <p className="text-sm text-gray-500">Manage user access rights across the platform via role assignments.</p>
                 </div>
                 {!isCreating && (
                     <button
                         onClick={() => setIsCreating(true)}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Create Custom Role
@@ -98,9 +96,9 @@ export default function RolesSettingsPage() {
             </div>
 
             {error && (
-                <div className="rounded-md bg-red-50 p-4">
+                <div className="rounded-md bg-red-50 p-4 border border-red-200">
                     <div className="flex">
-                        <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                        <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
                         <div className="ml-3">
                             <h3 className="text-sm font-medium text-red-800">Error loading page</h3>
                             <div className="mt-2 text-sm text-red-700"><p>{error}</p></div>
@@ -110,32 +108,39 @@ export default function RolesSettingsPage() {
             )}
 
             {isCreating && (
-                <form onSubmit={handleCreateRole} className="flex gap-4 p-4 border rounded-md bg-white">
-                    <input
-                        required
-                        value={newRoleName}
-                        onChange={e => setNewRoleName(e.target.value)}
-                        placeholder="e.g. WAREHOUSE_LEAD"
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    />
-                    <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-500">Save Role</button>
-                    <button type="button" onClick={() => setIsCreating(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-300">Cancel</button>
+                <form onSubmit={handleCreateRole} className="flex gap-4 p-5 border rounded-lg bg-gray-50 shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
+                        <input
+                            required
+                            value={newRoleName}
+                            onChange={e => setNewRoleName(e.target.value.toUpperCase())}
+                            placeholder="e.g. WAREHOUSE_LEAD"
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                        />
+                    </div>
+                    <div className="flex items-end gap-2">
+                        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700 shadow-sm">Save Role</button>
+                        <button type="button" onClick={() => setIsCreating(false)} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-50 shadow-sm">Cancel</button>
+                    </div>
                 </form>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm mt-8">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r">
+                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide sticky left-0 bg-gray-50 z-10 border-r border-b">
                                 Resource / Action
                             </th>
                             {roles.map(role => (
-                                <th key={role.id} scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border-l">
-                                    <div className="flex flex-col items-center gap-1">
+                                <th key={role.id} scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border-l border-b bg-gray-50">
+                                    <div className="flex flex-col items-center gap-1.5">
                                         <Shield className={`h-5 w-5 ${role.name === 'ADMIN' ? 'text-red-500' : 'text-blue-500'}`} />
-                                        {role.name}
-                                        <span className="text-[10px] text-gray-400 font-normal">({role._count?.users || 0} users)</span>
+                                        <span>{role.name}</span>
+                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                                            {role._count?.users || 0} users
+                                        </span>
                                     </div>
                                 </th>
                             ))}
@@ -143,12 +148,12 @@ export default function RolesSettingsPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {resources.map(resource => (
-                            <tr key={resource as string} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 sticky left-0 bg-white border-r capitalize">
+                            <tr key={resource as string} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 sticky left-0 bg-white/95 backdrop-blur border-r capitalize">
                                     {(resource as string).replace('_', ' ')}
                                 </td>
                                 {roles.map(role => (
-                                    <td key={`${resource}-${role.id}`} className="px-6 py-4 whitespace-nowrap text-sm text-center border-l bg-gray-50/30">
+                                    <td key={`${resource}-${role.id}`} className="px-6 py-4 whitespace-nowrap text-sm text-center border-l bg-gray-50/20">
                                         <div className="flex flex-col gap-2">
                                             {actions.map(action => {
                                                 const permission = permissions.find(p => p.resource === resource && p.action === action)
@@ -158,15 +163,15 @@ export default function RolesSettingsPage() {
                                                 const isAdmin = role.name === 'ADMIN'
 
                                                 return (
-                                                    <div key={action} className="flex items-center justify-between px-2 py-1 rounded bg-white border border-gray-100 shadow-sm">
-                                                        <span className="text-xs text-gray-500 uppercase w-16 text-left">{action}</span>
+                                                    <div key={action} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+                                                        <span className="text-xs font-medium text-gray-500 uppercase w-16 text-left">{action}</span>
                                                         <button
                                                             disabled={isAdmin}
                                                             onClick={() => handleTogglePermission(role.id, permission.id, hasPermission)}
-                                                            className={`p-1 rounded-full ${hasPermission ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'} ${isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'}`}
+                                                            className={`p-1 rounded-full border ${hasPermission ? 'bg-green-50/50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'} ${isAdmin ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-110 active:scale-95 transition-all'}`}
                                                             title={isAdmin ? "Admins have implicit access" : "Click to toggle"}
                                                         >
-                                                            {hasPermission ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                                            {hasPermission ? <Check className="h-4 w-4" strokeWidth={3} /> : <X className="h-4 w-4" strokeWidth={3} />}
                                                         </button>
                                                     </div>
                                                 )
