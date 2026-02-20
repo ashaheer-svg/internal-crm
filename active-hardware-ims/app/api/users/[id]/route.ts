@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
-import { hashPassword } from '@/lib/auth'
+import { requirePermission, hashPassword } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logUpdate, logDelete } from '@/lib/audit'
 import { use } from 'react'
@@ -12,7 +11,8 @@ export async function GET(
 ) {
     try {
         const { id } = await params
-        await requireRole(['ADMIN'])
+        // Only require 'users:read' for fetching the user details
+        await requirePermission('users:read')
 
         const user = await prisma.user.findUnique({
             where: { id },
@@ -59,12 +59,13 @@ export async function PATCH(
 ) {
     try {
         const { id } = await params
-        const currentUser = await requireRole(['ADMIN'])
-        const { name, email, role, isActive, password, salesRepId } = await request.json()
+        const currentUser = await requirePermission('users:update')
+        const { name, email, roleId, isActive, password, salesRepId } = await request.json()
 
         // Get current user data
         const existingUser = await prisma.user.findUnique({
-            where: { id }
+            where: { id },
+            include: { role: true }
         })
 
         if (!existingUser) {
@@ -74,8 +75,8 @@ export async function PATCH(
             )
         }
 
-        // Prevent admin from changing their own role
-        if (id === currentUser.id && role && role !== currentUser.role) {
+        // Prevent admin from changing their own role maliciously
+        if (id === currentUser.id && roleId && roleId !== existingUser.roleId) {
             return NextResponse.json(
                 { error: 'Cannot change your own role' },
                 { status: 400 }
@@ -99,7 +100,7 @@ export async function PATCH(
         const updateData: any = {}
         if (name) updateData.name = name
         if (email) updateData.email = email.toLowerCase()
-        if (role) updateData.role = role
+        if (roleId) updateData.roleId = roleId
         if (typeof isActive === 'boolean') updateData.isActive = isActive
         if (password) {
             updateData.password = await hashPassword(password)
@@ -117,7 +118,8 @@ export async function PATCH(
                 id: true,
                 name: true,
                 email: true,
-                role: true,
+                role: { select: { name: true } },
+                legacyRole: true,
                 isActive: true,
                 updatedAt: true,
                 salesRepId: true
@@ -128,13 +130,13 @@ export async function PATCH(
         await logUpdate('USER', id, currentUser.id, currentUser.name, {
             name: existingUser.name,
             email: existingUser.email,
-            role: existingUser.role,
+            role: existingUser.role?.name || existingUser.legacyRole,
             isActive: existingUser.isActive,
             salesRepId: existingUser.salesRepId
         }, {
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.role?.name || user.legacyRole,
             isActive: user.isActive,
             salesRepId: user.salesRepId
         })
@@ -156,7 +158,7 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params
-        const currentUser = await requireRole(['ADMIN'])
+        const currentUser = await requirePermission('users:delete')
 
         // Prevent admin from deleting themselves
         if (id === currentUser.id) {
@@ -187,7 +189,7 @@ export async function DELETE(
         await logDelete('USER', id, currentUser.id, currentUser.name, {
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.legacyRole
         })
 
         return new Response(null, { status: 204 })

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
         // 1. Fetch Sales Reps
         let salesReps: { id: string; name: string }[] = []
-        if (user.role === 'SALES') {
+        if (user.legacyRole === 'SALES' || user.role?.name === 'SALES') {
             const me = await prisma.salesRep.findFirst({ where: { email: user.email } })
             if (me) salesReps = [me]
             // If not found in SalesRep table, might fallback to empty or user Logic, but assuming standard flow

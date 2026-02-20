@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 export async function GET(request: Request) {
     try {
         // Only ADMIN and MANAGER can view audit logs
-        await requireRole(['ADMIN', 'MANAGER'])
+        await requirePermission('audit_logs:read')
 
         const { searchParams } = new URL(request.url)
         const action = searchParams.get('action')

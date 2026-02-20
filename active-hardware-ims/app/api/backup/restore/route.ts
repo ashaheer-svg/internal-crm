@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { validateDatabaseFile, restoreDatabaseFromBackup } from '@/lib/backup'
 import { logRestore } from '@/lib/audit'
 import fs from 'fs'
@@ -7,7 +7,7 @@ import path from 'path'
 
 export async function POST(request: Request) {
     try {
-        const user = await requireRole(['ADMIN'])
+        const user = await requirePermission('settings:manage')
 
         const formData = await request.formData()
         const file = formData.get('file') as File

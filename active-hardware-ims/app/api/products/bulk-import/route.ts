@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logCreate } from '@/lib/audit'
 
@@ -41,7 +41,7 @@ function parseCSV(text: string): any[] {
 
 export async function POST(request: Request) {
     try {
-        const user = await requireRole(['ADMIN'])
+        const user = await requirePermission('inventory:create')
         const contentType = request.headers.get('content-type') || ''
 
         // Handle JSON Batch Import (Chunked)
@@ -282,7 +282,7 @@ export async function POST(request: Request) {
 // GET - Download CSV template
 export async function GET() {
     try {
-        await requireRole(['ADMIN'])
+        await requirePermission('inventory:create')
 
         const template = `sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
 SAMPLE001,Sample Product 1,Brand A,Electronics,Model X,High quality product,10,12,45.00,50.00

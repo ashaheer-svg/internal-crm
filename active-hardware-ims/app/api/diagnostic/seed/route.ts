@@ -251,7 +251,14 @@ export async function POST() {
         // Create sample Projects
         const partner = await prisma.customer.findFirst({ where: { isPartner: true } })
         const directCust = await prisma.customer.findFirst({ where: { isPartner: false } })
-        const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } }) // Assuming seeded
+        const adminUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { role: { name: 'ADMIN' } },
+                    { legacyRole: 'ADMIN' }
+                ]
+            }
+        })
 
         if (pipeline && partner && directCust && adminUser) {
             const stages = await prisma.cRMStage.findMany({ where: { pipelineId: pipeline.id } })

@@ -101,12 +101,25 @@ async function handleReset() {
 
         // Admin User
         const hashedPassword = await bcrypt.hash('Admin@123', 10)
+
+        // Ensure Admin Role exists before assigning (since we just deleted everything)
+        let adminRole = await prisma.role.findFirst({ where: { name: 'ADMIN' } })
+        if (!adminRole) {
+            adminRole = await prisma.role.create({
+                data: {
+                    name: 'ADMIN',
+                    description: 'System Administrator (Auto-generated)',
+                    isSystemDefault: true
+                }
+            })
+        }
+
         await prisma.user.create({
             data: {
                 name: 'System Administrator',
                 email: 'admin@activehardware.com',
                 password: hashedPassword,
-                role: 'ADMIN',
+                roleId: adminRole.id,
                 isActive: true,
                 mustChangePassword: true
             }
@@ -160,11 +173,22 @@ async function handleRestoreAdmin() {
     try {
         const hashedPassword = await bcrypt.hash('Admin@123', 10)
 
+        let adminRole = await prisma.role.findFirst({ where: { name: 'ADMIN' } })
+        if (!adminRole) {
+            adminRole = await prisma.role.create({
+                data: {
+                    name: 'ADMIN',
+                    description: 'System Administrator (Auto-generated)',
+                    isSystemDefault: true
+                }
+            })
+        }
+
         await prisma.user.upsert({
             where: { email: 'admin@activehardware.com' },
             update: {
                 password: hashedPassword,
-                role: 'ADMIN',
+                roleId: adminRole.id,
                 isActive: true,
                 // Unlock if locked?
             },
@@ -172,7 +196,7 @@ async function handleRestoreAdmin() {
                 name: 'System Administrator',
                 email: 'admin@activehardware.com',
                 password: hashedPassword,
-                role: 'ADMIN',
+                roleId: adminRole.id,
                 isActive: true,
                 mustChangePassword: true
             }

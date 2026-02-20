@@ -168,7 +168,9 @@ async function generateSalesReport(dateFilter: any) {
     const user = await requireAuth()
 
     // Filter by sales rep if user is restricted
-    const isRestrictedRole = !['ADMIN', 'MANAGER'].includes(user.role)
+    const p = (user as any).permissions || []
+    const isAdminOrManager = p.includes('reports:manage') || p.includes('all:manage')
+    const isRestrictedRole = !isAdminOrManager
     const salesRepFilter = isRestrictedRole && user.salesRepId
         ? { customer: { salesRepId: user.salesRepId } }
         : {}
@@ -361,12 +363,12 @@ async function generateBackorderReport() {
     })
 }
 
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 
 async function generateProfitabilityReport(dateFilter: any) {
     // 1. Enforce Admin Role
     try {
-        await requireRole(['ADMIN'])
+        await requirePermission('reports:manage')
     } catch (error) {
         return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
     }

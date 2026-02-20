@@ -23,14 +23,14 @@ import {
 } from "lucide-react"
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
-    { name: "Inventory", href: "/dashboard/inventory", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
-    { name: "CRM", href: "/dashboard/crm", icon: Users, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Services", href: "/dashboard/services", icon: Calendar, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Backorders", href: "/dashboard/backorders", icon: Package, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
-    { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, roles: ['ADMIN', 'MANAGER', 'SALES', 'VIEWER'] },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER'] },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Inventory", href: "/dashboard/inventory", icon: Package, permission: 'inventory:read' },
+    { name: "CRM", href: "/dashboard/crm", icon: Users, permission: 'customers:read' },
+    { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
+    { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
+    { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
+    { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'services:read' },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: 'settings:manage' },
 ]
 
 type User = {
@@ -38,6 +38,7 @@ type User = {
     name: string
     email: string
     role: string
+    permissions?: string[]
 }
 
 export function Sidebar() {
@@ -85,9 +86,9 @@ export function Sidebar() {
         }
     }
 
-    // Filter navigation based on user role
+    // Filter navigation based on user permissions
     const filteredNavigation = navigation.filter(item =>
-        !user || item.roles.includes(user.role)
+        !user || !('permission' in item) || (user.permissions && (user.permissions.includes('all:manage') || user.permissions.includes((item as any).permission)))
     )
 
     return (

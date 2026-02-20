@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { hashPassword } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logCreate } from '@/lib/audit'
@@ -7,14 +7,17 @@ import { logCreate } from '@/lib/audit'
 // GET - List all users (ADMIN only)
 export async function GET() {
     try {
-        const currentUser = await requireRole(['ADMIN'])
+        const currentUser = await requirePermission('users:read')
 
         const users = await prisma.user.findMany({
             select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true,
+                role: {
+                    select: { id: true, name: true }
+                },
+                legacyRole: true,
                 isActive: true,
                 lastLoginAt: true,
                 createdAt: true,
@@ -30,7 +33,13 @@ export async function GET() {
             orderBy: { createdAt: 'desc' }
         })
 
-        return NextResponse.json({ users })
+        // Map relation role name to top-level `role` property for frontend compatibility
+        const mappedUsers = users.map(u => ({
+            ...u,
+            role: u.role?.name || u.legacyRole || 'UNKNOWN'
+        }))
+
+        return NextResponse.json({ users: mappedUsers })
     } catch (error: any) {
         console.error('List users error:', error)
         return NextResponse.json(
@@ -43,13 +52,13 @@ export async function GET() {
 // POST - Create new user (ADMIN only)
 export async function POST(request: Request) {
     try {
-        const currentUser = await requireRole(['ADMIN'])
-        const { name, email, password, role, salesRepId } = await request.json()
+        const currentUser = await requirePermission('users:create')
+        const { name, email, password, roleId, salesRepId } = await request.json()
 
         // Validation
-        if (!name || !email || !password || !role) {
+        if (!name || !email || !password || !roleId) {
             return NextResponse.json(
-                { error: 'Name, email, password, and role are required' },
+                { error: 'Name, email, password, and role selection are required' },
                 { status: 400 }
             )
         }
@@ -66,11 +75,11 @@ export async function POST(request: Request) {
             )
         }
 
-        // Validate role
-        const validRoles = ['ADMIN', 'MANAGER', 'SALES', 'WAREHOUSE', 'VIEWER']
-        if (!validRoles.includes(role)) {
+        // Validate that the role exists
+        const roleRecord = await prisma.role.findUnique({ where: { id: roleId } })
+        if (!roleRecord) {
             return NextResponse.json(
-                { error: 'Invalid role' },
+                { error: 'Selected Role is invalid or has been deleted' },
                 { status: 400 }
             )
         }
@@ -84,7 +93,7 @@ export async function POST(request: Request) {
                 name,
                 email: email.toLowerCase(),
                 password: hashedPassword,
-                role,
+                roleId: roleId,
                 isActive: true,
                 mustChangePassword: true,
                 createdBy: currentUser.id,
@@ -94,7 +103,7 @@ export async function POST(request: Request) {
                 id: true,
                 name: true,
                 email: true,
-                role: true,
+                role: { select: { name: true } },
                 isActive: true,
                 createdAt: true,
                 salesRepId: true
@@ -105,7 +114,7 @@ export async function POST(request: Request) {
         await logCreate('USER', user.id, currentUser.id, currentUser.name, {
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.role?.name,
             salesRepId: user.salesRepId
         })
 

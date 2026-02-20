@@ -46,7 +46,7 @@ export async function GET(request: Request) {
                 },
                 skip,
                 take: limit,
-                orderBy: { updatedAt: 'desc' }
+                orderBy: { projectCode: 'desc' }
             }),
             prisma.cRMProject.count({ where })
         ])

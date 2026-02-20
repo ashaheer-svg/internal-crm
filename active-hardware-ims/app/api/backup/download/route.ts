@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { getDatabasePath, createBackupFilename } from '@/lib/backup'
 import { logBackup } from '@/lib/audit'
 import fs from 'fs'
@@ -10,7 +10,7 @@ const gzip = promisify(zlib.gzip)
 
 export async function GET() {
     try {
-        const user = await requireRole(['ADMIN'])
+        const user = await requirePermission('settings:manage')
 
         const dbPath = getDatabasePath()
 

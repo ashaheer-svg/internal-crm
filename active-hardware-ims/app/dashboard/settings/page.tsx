@@ -100,6 +100,13 @@ const settingsLinks = [
         icon: MessageSquare,
         description: "Manage WhatsApp & Third-Party Alerts",
         adminOnly: true
+    },
+    {
+        name: "Roles & Permissions",
+        href: "/dashboard/settings/roles",
+        icon: Shield,
+        description: "Manage user roles and access rights",
+        adminOnly: true
     }
 ]
 

@@ -33,11 +33,31 @@ export async function createSession(userId: string): Promise<string> {
 export async function getSession(token: string) {
     const session = await prisma.session.findUnique({
         where: { token },
-        include: { user: true }
+        include: {
+            user: {
+                include: {
+                    role: {
+                        include: {
+                            permissions: {
+                                include: { permission: true }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     })
 
     if (!session || session.expiresAt < new Date()) {
         return null
+    }
+
+    // Attach computed permissions array for easier access
+    const user = session.user as any
+    if (user.role) {
+        user.permissions = user.role.permissions.map((rp: any) => `${rp.permission.resource}:${rp.permission.action}`)
+    } else {
+        user.permissions = []
     }
 
     return session
@@ -76,11 +96,35 @@ export async function requireAuth() {
     return user
 }
 
+// Legacy Guard: Temporarily kept to avoid massive breakage during transition
 export async function requireRole(allowedRoles: string[]) {
-    const user = await requireAuth()
-    if (!allowedRoles.includes(user.role)) {
+    const user: any = await requireAuth()
+
+    // Check against new relational role name OR the legacy string field
+    const currentRoleName = user.role?.name || user.legacyRole
+
+    // As a safeguard, give ADMIN bypass to all route checking in legacy mode
+    if (currentRoleName === 'ADMIN') return user;
+
+    if (!allowedRoles.includes(currentRoleName)) {
         throw new Error('Forbidden')
     }
+    return user
+}
+
+// New Guard: Fine-grained RBAC action checking
+export async function requirePermission(resourceAction: string) {
+    const user: any = await requireAuth()
+
+    // Global manage permission automatically passes everything
+    if (user.permissions.includes('all:manage')) {
+        return user
+    }
+
+    if (!user.permissions.includes(resourceAction)) {
+        throw new Error(`Forbidden: Missing permission ${resourceAction}`)
+    }
+
     return user
 }
 

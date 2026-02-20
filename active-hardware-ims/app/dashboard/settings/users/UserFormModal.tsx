@@ -27,12 +27,13 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        role: user?.role || 'VIEWER',
+        roleId: (user as any)?.role?.id || '', // Relational role ID
         isActive: user?.isActive ?? true,
         password: '',
         salesRepId: user?.salesRepId || ''
     })
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
+    const [availableRoles, setAvailableRoles] = useState<{ id: string, name: string }[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -50,6 +51,16 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                 }
             })
             .catch(err => console.error('Failed to fetch sales reps:', err))
+
+        // Fetch dynamic roles
+        fetch('/api/settings/roles')
+            .then(res => res.json())
+            .then(data => {
+                if (data.roles) {
+                    setAvailableRoles(data.roles)
+                }
+            })
+            .catch(err => console.error('Failed to fetch roles:', err))
     }, [])
 
     async function handleSubmit(e: React.FormEvent) {
@@ -64,7 +75,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
             const body: any = {
                 name: formData.name,
                 email: formData.email,
-                role: formData.role,
+                roleId: formData.roleId,
                 isActive: formData.isActive,
                 salesRepId: formData.salesRepId || null
             }
@@ -153,16 +164,15 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                                 Role *
                             </label>
                             <select
-                                value={formData.role}
-                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                value={formData.roleId}
+                                onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                                 required
                             >
-                                <option value="VIEWER">Viewer</option>
-                                <option value="SALES">Sales</option>
-                                <option value="WAREHOUSE">Warehouse</option>
-                                <option value="MANAGER">Manager</option>
-                                <option value="ADMIN">Admin</option>
+                                <option value="" disabled>Select Role...</option>
+                                {availableRoles.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
                             </select>
                         </div>
 

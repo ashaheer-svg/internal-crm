@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { requireRole } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { logCreate } from '@/lib/audit'
 import bcrypt from 'bcryptjs'
 
 export async function POST() {
     try {
-        const user = await requireRole(['ADMIN'])
+        const user = await requirePermission('settings:manage')
 
         // Delete all data in order (respecting foreign key constraints)
         await prisma.$transaction(async (tx) => {
@@ -38,17 +38,25 @@ export async function POST() {
                 }
             })
 
+            // Get the Admin role
+            const adminRole = await (tx as any).role.findFirst({ where: { name: 'ADMIN' } })
+
             // Reset the current admin user to default state
             const hashedPassword = await bcrypt.hash('Admin@123', 10)
+
+            const userData: any = {
+                name: 'System Administrator',
+                email: 'admin@activehardware.com',
+                password: hashedPassword,
+                mustChangePassword: true
+            }
+            if (adminRole) {
+                userData.roleId = adminRole.id
+            }
+
             await tx.user.update({
                 where: { id: user.id },
-                data: {
-                    name: 'System Administrator',
-                    email: 'admin@activehardware.com',
-                    password: hashedPassword,
-                    role: 'ADMIN',
-                    mustChangePassword: true
-                }
+                data: userData
             })
         })
 

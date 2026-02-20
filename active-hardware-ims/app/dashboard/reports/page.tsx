@@ -32,16 +32,16 @@ export default function ReportsPage() {
     }, [])
 
     const reportTypes = [
-        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product', roles: ['ADMIN', 'MANAGER'] },
-        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements', roles: ['ADMIN', 'MANAGER', 'WAREHOUSE'] },
-        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue', roles: ['ADMIN', 'MANAGER', 'SALES'] },
-        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary', roles: ['ADMIN', 'MANAGER'] },
-        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status', roles: ['ADMIN', 'MANAGER', 'SALES'] },
-        { id: 'location', name: 'Location Report', description: 'Stock distribution by location', roles: ['ADMIN', 'MANAGER', 'WAREHOUSE'] },
-        { id: 'profitability', name: 'Profitability Report', description: 'GP Analysis per Order (Admin Only)', roles: ['ADMIN'] }
+        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product', permission: 'inventory:read' },
+        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements', permission: 'inventory:read' },
+        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue', permission: 'reports:read' },
+        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary', permission: 'reports:read' },
+        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status', permission: 'services:read' },
+        { id: 'location', name: 'Location Report', description: 'Stock distribution by location', permission: 'inventory:read' },
+        { id: 'profitability', name: 'Profitability Report', description: 'GP Analysis per Order', permission: 'reports:manage' }
     ]
 
-    const availableReports = reportTypes.filter(r => !r.roles || (user && r.roles.includes(user.role)))
+    const availableReports = reportTypes.filter(r => !r.permission || (user?.permissions && (user.permissions.includes('all:manage') || user.permissions.includes(r.permission))))
 
     async function generateReport() {
         setLoading(true)

@@ -12,13 +12,19 @@ model User {
   name               String
   email              String    @unique
   password           String // bcrypt hashed
-  role               String // ADMIN, MANAGER, SALES, WAREHOUSE, VIEWER
   isActive           Boolean   @default(true)
   mustChangePassword Boolean   @default(false)
   lastLoginAt        DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   createdBy          String?
+
+  // RBAC Relations
+  roleId             String?
+  role               Role?     @relation(fields: [roleId], references: [id])
+  
+  // Legacy string role (kept temporarily for migration mapping, will drop later)
+  legacyRole         String?   @map("role")
 
   // Relations
   reservations Reservation[]
@@ -34,6 +40,45 @@ model User {
 
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
+}
+
+// ------------------------------------------
+// Role-Based Access Control (RBAC)
+// ------------------------------------------
+
+model Role {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  description     String?
+  isSystemDefault Boolean          @default(false) // True for Admin, Sales, etc. Cannot be deleted.
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  users           User[]
+  permissions     RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  action      String           // e.g., 'create', 'read', 'update', 'delete', 'manage'
+  resource    String           // e.g., 'quotes', 'inventory', 'users', 'roles', 'all'
+  description String?
+  
+  roles       RolePermission[]
+
+  @@unique([action, resource])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  assignedAt   DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
 }
 
 model Session {

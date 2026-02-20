@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireRole } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
 
-        const user = await requireRole(['ADMIN', 'MANAGER'])
+        const user = await requirePermission('services:create')
         const contentType = request.headers.get('content-type') || ''
 
         // Handle JSON Batch Import (Chunked)

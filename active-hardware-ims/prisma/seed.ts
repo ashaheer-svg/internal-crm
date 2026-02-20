@@ -31,12 +31,21 @@ async function main() {
     // Create default admin user
     const hashedPassword = await bcrypt.hash('Admin@123', 10)
 
+    // Fetch admin role to assign to the new user
+    const adminRole = await prisma.role.findFirst({
+        where: { name: 'ADMIN' }
+    })
+
+    if (!adminRole) {
+        throw new Error('ADMIN role not found. Please run seed-roles.ts first.')
+    }
+
     const admin = await prisma.user.create({
         data: {
             name: 'System Administrator',
             email: 'admin@activehardware.com',
             password: hashedPassword,
-            role: 'ADMIN',
+            roleId: adminRole.id,
             isActive: true,
             mustChangePassword: true
         }
