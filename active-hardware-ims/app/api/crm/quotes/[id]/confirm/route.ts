@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { sendQuoteApprovedAlert } from '@/lib/whatsapp'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -11,8 +12,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             where: { id },
             data: {
                 status: 'ACCEPTED'
+            },
+            include: {
+                project: {
+                    include: {
+                        customer: true
+                    }
+                }
             }
         })
+
+        // WhatsApp Alert
+        const customerPhone = quote.project?.customer?.phone;
+        if (customerPhone) {
+            // Trigger asynchronously immediately
+            sendQuoteApprovedAlert(
+                customerPhone,
+                quote.quoteNumber,
+                quote.project?.customer?.name || 'Customer'
+            ).catch(err => console.error('Failed to send WhatsApp quote alert', err))
+        }
 
         // Optionally, we could update the Project Status to WON here if desired
         // For now, just mark quote as Accepted.

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { sendDeliveryShippedAlert, sendLowStockAlert } from '@/lib/whatsapp'
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -256,6 +257,37 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         data: { status: 'COMPLETED' }
                     })
                 })
+
+                // --- WhatsApp Alerts ---
+                try {
+                    // 1. Shipment Alert
+                    if (order.customerId) {
+                        const customer = await prisma.customer.findUnique({ where: { id: order.customerId } })
+                        if (customer?.phone) {
+                            sendDeliveryShippedAlert(customer.phone, order.orderNumber).catch(console.error)
+                        }
+                    }
+
+                    // 2. Low Stock Alerts
+                    const finalItems = await prisma.deliveryOrderItem.findMany({
+                        where: { deliveryOrderId: params.id }
+                    })
+
+                    for (const item of finalItems) {
+                        const product = await prisma.product.findUnique({ where: { id: item.productId } })
+                        if (product && product.minStock && product.minStock > 0) {
+                            const availableCount = await prisma.inventoryItem.count({
+                                where: { productId: product.id, status: 'AVAILABLE' }
+                            })
+                            if (availableCount < product.minStock) {
+                                sendLowStockAlert(product.name, availableCount, product.minStock).catch(console.error)
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to process WhatsApp alerts for Delivery Order:', err)
+                }
+
                 return NextResponse.json({ success: true })
             }
             // Simple status update for other transitions
