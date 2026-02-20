@@ -249,6 +249,8 @@ export default function DiagnosticPage() {
             <CheckSection title="User Table" data={data?.checks?.userTable} />
             {/* Admin User */}
             <CheckSection title="Admin User" data={data?.checks?.adminUser} />
+            {/* RBAC System */}
+            <CheckSection title="RBAC (Roles & Permissions)" data={data?.checks?.rbacSystem} />
             {/* Tables */}
             <CheckSection title="Database Tables" data={data?.checks?.tables} />
             {/* Schema Consistency */}

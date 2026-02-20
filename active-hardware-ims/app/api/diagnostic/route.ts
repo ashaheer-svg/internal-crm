@@ -121,11 +121,12 @@ export async function GET() {
                         id: true,
                         email: true,
                         name: true,
-                        role: true,
+                        role: { select: { name: true } },
+                        legacyRole: true,
                         isActive: true,
                         mustChangePassword: true,
                         createdAt: true
-                    }
+                    } as any
                 })
 
                 diagnostics.checks.adminUser = adminUser ? {
@@ -134,6 +135,24 @@ export async function GET() {
                 } : {
                     exists: false,
                     message: 'Admin user not found'
+                }
+
+                // 5b. Check RBAC (Roles and Permissions)
+                try {
+                    const p = prisma as any;
+                    const roleCount = await p.role.count()
+                    const permissionCount = await p.permission.count()
+                    diagnostics.checks.rbacSystem = {
+                        exists: true,
+                        rolesCount: roleCount,
+                        permissionsCount: permissionCount,
+                        status: (roleCount > 0 && permissionCount > 0) ? 'CONFIGURED' : 'UNCONFIGURED'
+                    }
+                } catch (error: any) {
+                    diagnostics.checks.rbacSystem = {
+                        exists: false,
+                        error: error.message
+                    }
                 }
             } catch (error: any) {
                 diagnostics.checks.userTable = {
@@ -234,9 +253,10 @@ export async function GET() {
         const hasAdminUser = diagnostics.checks.adminUser?.exists === true
         const hasEnv = diagnostics.checks.environment.hasEnvFile
         const schemaConsistent = diagnostics.checks.schemaConsistency?.status === 'CONSISTENT'
+        const rbacConfigured = diagnostics.checks.rbacSystem?.status === 'CONFIGURED'
 
         diagnostics.overallStatus = {
-            healthy: hasDatabase && hasConnection && hasAdminUser && hasEnv && schemaConsistent,
+            healthy: hasDatabase && hasConnection && hasAdminUser && hasEnv && schemaConsistent && rbacConfigured,
             issues: []
         }
 
@@ -245,6 +265,7 @@ export async function GET() {
         if (!hasConnection) diagnostics.overallStatus.issues.push('Cannot connect to database')
         if (!hasAdminUser) diagnostics.overallStatus.issues.push('Admin user not found in database')
         if (!schemaConsistent) diagnostics.overallStatus.issues.push('Database schema is inconsistent with Prisma schema')
+        if (!rbacConfigured) diagnostics.overallStatus.issues.push('RBAC (Roles & Permissions) is unconfigured or empty')
 
         // 10. Recommendations
         diagnostics.recommendations = []
@@ -256,6 +277,9 @@ export async function GET() {
         }
         if (!hasAdminUser) {
             diagnostics.recommendations.push('Run: npx prisma db seed')
+        }
+        if (!rbacConfigured) {
+            diagnostics.recommendations.push('Run: npx tsx prisma/seed-roles.ts (to seed default roles and permissions)')
         }
         if (!schemaConsistent) {
             diagnostics.recommendations.push('Run: npx prisma db push (to sync database schema with Prisma schema)')
