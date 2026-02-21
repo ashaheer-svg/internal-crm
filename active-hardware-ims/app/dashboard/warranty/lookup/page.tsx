@@ -27,6 +27,7 @@ type WarrantyInfo = {
         customer: string
         endCustomer: string | null
         type: string
+        invoiceNumber: string | null
     } | null
     history: Array<{
         id: string
@@ -50,12 +51,24 @@ type WarrantyInfo = {
             claimId: string
         } | null
     } | null
+    candidates?: Array<{
+        id: string
+        serialNumber: string
+        status: string
+        product: {
+            sku: string
+            name: string
+            brand: string
+            model: string
+        }
+    }>
 }
 
 export default function WarrantyLookupPage() {
     const [serial, setSerial] = useState("")
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<WarrantyInfo | null>(null)
+    const [candidates, setCandidates] = useState<any[] | null>(null)
     const [error, setError] = useState("")
 
     async function handleSearch(e: React.FormEvent) {
@@ -65,21 +78,33 @@ export default function WarrantyLookupPage() {
         setLoading(true)
         setError("")
         setResult(null)
+        setCandidates(null)
 
         try {
-            const res = await fetch(`/api/warranty/lookup?serial=${encodeURIComponent(serial.trim())}`)
+            const searchSerial = typeof e === 'string' ? e : serial.trim()
+            const res = await fetch(`/api/warranty/lookup?serial=${encodeURIComponent(searchSerial)}`)
             const data = await res.json()
 
             if (!res.ok) {
                 throw new Error(data.error || "Search failed")
             }
 
-            setResult(data)
+            if (data.candidates) {
+                setCandidates(data.candidates)
+            } else {
+                setResult(data)
+                setSerial(data.item.serialNumber) // Update input to exact serial if found
+            }
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
         }
+    }
+
+    function selectCandidate(s: string) {
+        setSerial(s)
+        handleSearch(s as any)
     }
 
     function getWarrantyStatus(expiryDate: string | null) {
@@ -155,6 +180,78 @@ export default function WarrantyLookupPage() {
                     </div>
                 )}
             </div>
+
+            {/* Candidate Selection List */}
+            {candidates && candidates.length > 0 && (
+                <div className="bg-white shadow rounded-lg overflow-hidden border-2 border-blue-100 no-print">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                        <h3 className="text-lg font-medium text-blue-900 flex items-center gap-2">
+                            <Search className="h-5 w-5" />
+                            Multiple matches found. Please select:
+                        </h3>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                        {candidates.map((cand) => (
+                            <button
+                                key={cand.id}
+                                onClick={() => selectCandidate(cand.serialNumber)}
+                                className="w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-xl text-gray-900 font-mono">{cand.serialNumber}</p>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                            <span className="text-gray-600 flex items-center gap-1">
+                                                <Package className="w-3.5 h-3.5" />
+                                                {cand.product.brand} {cand.product.model}
+                                            </span>
+                                            <span className="text-gray-500 font-mono text-xs flex items-center gap-1 border-l pl-4">
+                                                {cand.product.sku}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cand.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
+                                            cand.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {cand.status}
+                                        </span>
+                                        <p className="text-blue-600 text-sm font-medium mt-1">View Details →</p>
+                                    </div>
+                                </div>
+
+                                {/* Extra Details Grid */}
+                                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-3 rounded-md text-xs">
+                                    <div>
+                                        <p className="text-gray-500 font-medium">Location</p>
+                                        <p className="text-gray-900 font-semibold mt-0.5">{cand.location}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 font-medium">Partner / Customer</p>
+                                        <p className="text-gray-900 font-semibold mt-0.5 truncate max-w-[150px]" title={cand.partner}>
+                                            {cand.partner}
+                                            {cand.endCustomer && <span className="text-gray-400 font-normal"> → {cand.endCustomer}</span>}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 font-medium">Delivery Order</p>
+                                        <p className="text-gray-900 font-semibold mt-0.5">
+                                            {cand.deliveryOrder.number ? (
+                                                <>#{cand.deliveryOrder.number} <span className="text-gray-400 font-normal">({formatDate(cand.deliveryOrder.date)})</span></>
+                                            ) : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 font-medium">Invoice Number</p>
+                                        <p className="text-gray-900 font-semibold mt-0.5">{cand.deliveryOrder.invoiceNumber || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Results */}
             {result && (
@@ -243,6 +340,10 @@ export default function WarrantyLookupPage() {
                                                             </span>
                                                         )}
                                                     </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Invoice Number</p>
+                                                    <p className="font-medium text-gray-900">{result.saleParams.invoiceNumber || 'N/A'}</p>
                                                 </div>
                                             </div>
                                         </div>

@@ -15,26 +15,78 @@ export async function GET(request: Request) {
     }
 
     try {
-        // 1. Find the Inventory Item
-        const item = await prisma.inventoryItem.findUnique({
-            where: { serialNumber: serial },
+        // 1. Find the Inventory Item(s) using partial matching
+        const items = await prisma.inventoryItem.findMany({
+            where: {
+                serialNumber: {
+                    contains: serial
+                }
+            },
             include: {
                 product: true,
-                location: true
-            }
+                location: true,
+                deliveryOrderItem: {
+                    include: {
+                        deliveryOrder: {
+                            include: {
+                                customer: true,
+                                endCustomer: true
+                            }
+                        }
+                    }
+                }
+            },
+            take: 10 // Limit results for selection
         });
 
-        if (!item) {
+        if (items.length === 0) {
             return NextResponse.json({ error: 'Serial number not found' }, { status: 404 });
         }
 
+        let item = items[0];
+
+        // If multiple matches found, return candidates for selection
+        // UNLESS one of them is an exact match
+        if (items.length > 1) {
+            const exactMatch = items.find(i => i.serialNumber.toLowerCase() === serial.toLowerCase());
+            if (exactMatch) {
+                item = exactMatch;
+            } else {
+                return NextResponse.json({
+                    candidates: items.map(i => {
+                        const doInfo = i.deliveryOrderItem?.deliveryOrder;
+                        return {
+                            id: i.id,
+                            serialNumber: i.serialNumber,
+                            status: i.status,
+                            location: i.location.name,
+                            partner: doInfo?.customer?.name || doInfo?.customerName || 'N/A',
+                            endCustomer: doInfo?.endCustomer?.name || doInfo?.endCustomerName || null,
+                            deliveryOrder: {
+                                number: doInfo?.orderNumber || null,
+                                date: doInfo?.createdAt || null,
+                                invoiceNumber: doInfo?.invoiceNumber || null
+                            },
+                            product: {
+                                sku: i.product.sku,
+                                name: i.product.name,
+                                brand: i.product.brand,
+                                model: i.product.model
+                            }
+                        };
+                    })
+                });
+            }
+        }
+
+        const exactSerial = item.serialNumber;
         console.log("Found item:", item.id);
 
         // 2. Find associated Transaction Logs
         const transactionLogs = await prisma.transactionLog.findMany({
             where: {
                 OR: [
-                    { serialNumber: serial },
+                    { serialNumber: exactSerial },
                     { referenceId: item.id }
                 ]
             },
@@ -48,7 +100,7 @@ export async function GET(request: Request) {
                     // Warranty claims for this item
                     {
                         entityType: 'WARRANTY',
-                        metadata: { contains: serial }
+                        metadata: { contains: exactSerial }
                     },
                     // Inventory changes for this specific item
                     {
@@ -165,6 +217,7 @@ export async function GET(request: Request) {
 
         console.log("Total history events:", allHistory.length);
 
+        const doInfo = (item as any).deliveryOrderItem?.deliveryOrder;
         const result = {
             item: {
                 id: item.id,
@@ -179,6 +232,13 @@ export async function GET(request: Request) {
                     warrantyMonths: item.product.warrantyMonths
                 }
             },
+            saleParams: doInfo ? {
+                date: doInfo.createdAt,
+                orderNumber: doInfo.orderNumber,
+                customer: doInfo.customer?.name || doInfo.customerName || 'N/A',
+                endCustomer: doInfo.endCustomer?.name || doInfo.endCustomerName || null,
+                invoiceNumber: doInfo.invoiceNumber
+            } : null,
             history: allHistory,
             replacementInfo
         };
