@@ -214,71 +214,67 @@ export default function KanbanPage() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold">{pipeline ? pipeline.name : 'CRM Pipeline'}</h1>
+            <div className="flex items-center justify-between px-6 py-3 border-b bg-white shadow-sm">
+                {/* Left: title + view controls */}
+                <div className="flex items-center gap-3">
+                    <h1 className="text-xl font-semibold text-gray-900">
+                        {pipeline ? pipeline.name : 'CRM Pipeline'}
+                    </h1>
+
                     {/* View Toggle */}
-                    <div className="flex bg-gray-100 p-1 rounded-md">
+                    <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
                         <button
                             onClick={() => setViewMode('BOARD')}
-                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'BOARD' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                            title="Board View"
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'BOARD' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <LayoutTemplate className="w-4 h-4" />
+                            <LayoutTemplate className="w-3.5 h-3.5" />
+                            Board
                         </button>
                         <button
                             onClick={() => setViewMode('LIST')}
-                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'LIST' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                            title="List View"
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'LIST' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <List className="w-4 h-4" />
+                            <List className="w-3.5 h-3.5" />
+                            List
                         </button>
                     </div>
+
                     {/* Scope Toggle — only for users with projects:view_all permission */}
                     {canViewAll && (
-                        <div className="flex bg-gray-100 p-1 rounded-md border border-gray-200" title="Switch between your projects and all projects">
+                        <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
                             <button
                                 onClick={() => setScope('all')}
-                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${scope === 'all'
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${scope === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <Users className="w-3 h-3" />
-                                All Projects
+                                <Users className="w-3.5 h-3.5" />
+                                All
                             </button>
                             <button
                                 onClick={() => setScope('mine')}
-                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${scope === 'mine'
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${scope === 'mine' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <User className="w-3 h-3" />
-                                My Projects
+                                <User className="w-3.5 h-3.5" />
+                                Mine
                             </button>
                         </div>
                     )}
                 </div>
 
-
-                // ...
-
+                {/* Right: action buttons */}
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.push('/dashboard/crm/reports')}
-                        className="flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 shadow-sm"
-                        title="Reports"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                     >
-                        <BarChart3 className="w-4 h-4 mr-2" />
+                        <BarChart3 className="w-4 h-4" />
                         Reports
                     </button>
                     <CreateCustomerButton />
                     <button
                         onClick={() => router.push('/dashboard/crm/projects/new')}
-                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4" />
                         New Project
                     </button>
                 </div>
