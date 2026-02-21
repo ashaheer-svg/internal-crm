@@ -23,12 +23,23 @@ export default function PriceListPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [brandSearch, setBrandSearch] = useState("")
+  const [brandFilter, setBrandFilter] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("")
 
-  const filteredProducts = products.filter(product =>
-    brandSearch === "" ||
-    product.brand.toLowerCase().includes(brandSearch.toLowerCase()) ||
-    product.category.toLowerCase().includes(brandSearch.toLowerCase())
-  )
+  // Unique sorted values for dropdowns
+  const uniqueBrands = Array.from(new Set(products.map(p => p.brand).filter(Boolean))).sort()
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean))).sort()
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      brandSearch === "" ||
+      product.brand.toLowerCase().includes(brandSearch.toLowerCase()) ||
+      product.name.toLowerCase().includes(brandSearch.toLowerCase()) ||
+      product.sku.toLowerCase().includes(brandSearch.toLowerCase())
+    const matchesBrand = brandFilter === "" || product.brand === brandFilter
+    const matchesCategory = categoryFilter === "" || product.category === categoryFilter
+    return matchesSearch && matchesBrand && matchesCategory
+  })
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -73,6 +84,7 @@ export default function PriceListPage() {
 
           /* Keep rows together */
           thead { display: table-header-group; }
+          tfoot { display: table-footer-group; }
           .pl-table tr { break-inside: avoid; page-break-inside: avoid; }
 
           /* Force our column widths in print */
@@ -80,6 +92,9 @@ export default function PriceListPage() {
 
           /* Stripe rows for easy reading on B&W */
           .pl-table tbody tr:nth-child(even) { background-color: #f8fafc !important; }
+
+          /* Prevent last rows from overlapping the page footer */
+          .pl-print-wrapper { padding-bottom: 18mm; }
         }
       `}</style>
 
@@ -103,21 +118,47 @@ export default function PriceListPage() {
             </button>
           </div>
 
-          {/* Search */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
+          {/* Search + Filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
               <input
                 id="brand-search"
                 type="text"
                 value={brandSearch}
                 onChange={(e) => setBrandSearch(e.target.value)}
-                placeholder="Search by brand or category…"
-                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                placeholder="Search name, SKU, brand…"
+                className="block w-56 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
-            {brandSearch && (
+
+            {/* Brand dropdown */}
+            <select
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              className="block rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+            >
+              <option value="">All Brands</option>
+              {uniqueBrands.map(b => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+
+            {/* Category dropdown */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="block rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+            >
+              <option value="">All Categories</option>
+              {uniqueCategories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            {/* Clear all filters */}
+            {(brandSearch || brandFilter || categoryFilter) && (
               <button
-                onClick={() => setBrandSearch("")}
+                onClick={() => { setBrandSearch(""); setBrandFilter(""); setCategoryFilter("") }}
                 className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <X className="w-3.5 h-3.5" /> Clear
@@ -129,15 +170,16 @@ export default function PriceListPage() {
         {/* ── Print Header (hidden on screen) ──────────────────── */}
         <div className="hidden print:block mb-2">
           <DocumentHeader title="PRICE LIST" subtitle="Wholesale & Reseller Pricing" />
-          {brandSearch && (
+          {(brandSearch || brandFilter || categoryFilter) && (
             <p style={{ fontSize: '8pt', color: '#666', marginBottom: '4px' }}>
-              Filtered by: <strong>{brandSearch}</strong> — {filteredProducts.length} products shown
+              {[brandFilter && `Brand: ${brandFilter}`, categoryFilter && `Category: ${categoryFilter}`, brandSearch && `Search: "${brandSearch}"`].filter(Boolean).join(' · ')}
+              {' '}— {filteredProducts.length} of {products.length} products shown
             </p>
           )}
         </div>
 
         {/* ── Table ────────────────────────────────────────────── */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden print:shadow-none print:overflow-visible">
+        <div className="pl-print-wrapper bg-white shadow-sm rounded-lg overflow-hidden print:shadow-none print:overflow-visible print:bg-transparent">
           <div className="overflow-x-auto print:overflow-visible">
             <table className="pl-table min-w-full table-fixed text-sm" style={{ borderCollapse: 'collapse', width: '100%' }}>
               <colgroup>
