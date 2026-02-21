@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requirePermission } from '@/lib/auth'
 
 interface RouteParams {
     params: Promise<{ id: string }>
@@ -7,6 +8,7 @@ interface RouteParams {
 
 export async function GET(request: Request, { params }: RouteParams) {
     try {
+        await requirePermission('services:read')
         const { id } = await params
 
         const claim = await prisma.warrantyClaim.findUnique({
@@ -49,6 +51,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 export async function PATCH(request: Request, { params }: RouteParams) {
     try {
+        await requirePermission('services:update')
         const { id } = await params
         const body = await request.json()
         const { status, resolution, notes, customerName, description, inventoryItemId } = body
@@ -128,6 +131,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
 export async function DELETE(request: Request, { params }: RouteParams) {
     try {
+        await requirePermission('services:delete')
         const { id } = await params
 
         await prisma.warrantyClaim.delete({

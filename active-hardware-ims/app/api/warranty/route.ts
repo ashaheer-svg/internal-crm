@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { logCreate, logUpdate } from '@/lib/audit'
 
 export async function GET(request: Request) {
     try {
+        await requirePermission('services:read')
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status')
 
@@ -24,15 +25,15 @@ export async function GET(request: Request) {
         })
 
         return NextResponse.json(claims)
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to fetch warranty claims:', error)
-        return NextResponse.json({ error: 'Failed to fetch warranty claims' }, { status: 500 })
+        return NextResponse.json({ error: error.message || 'Failed to fetch warranty claims' }, { status: 500 })
     }
 }
 
 export async function POST(request: Request) {
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('services:create')
         const body = await request.json()
         const { inventoryItemId, customerName, description } = body
 

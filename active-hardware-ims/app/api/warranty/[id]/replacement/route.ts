@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { logUpdate } from '@/lib/audit'
 
 export async function POST(
@@ -8,7 +8,7 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('services:update')
         const body = await request.json()
         const { replacementType, replacementItemId, replacementExternalInfo, notes } = body
         const { id: claimId } = await params

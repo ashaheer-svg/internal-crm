@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requirePermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const serial = searchParams.get('serial');
-
-    // Log lookup attempt before validation
-    logger.info(`Attempting warranty lookup for serial: ${serial || 'N/A'}`);
-
-    if (!serial) {
-        logger.warn('Warranty lookup failed: Serial number is required');
-        return NextResponse.json({ error: 'Serial number is required' }, { status: 400 });
-    }
-
     try {
+        await requirePermission('services:read');
+        const { searchParams } = new URL(request.url);
+        const serial = searchParams.get('serial');
+
+        // Log lookup attempt before validation
+        logger.info(`Attempting warranty lookup for serial: ${serial || 'N/A'}`);
+
+        if (!serial) {
+            logger.warn('Warranty lookup failed: Serial number is required');
+            return NextResponse.json({ error: 'Serial number is required' }, { status: 400 });
+        }
+
         // 1. Find the Inventory Item(s) using partial matching
         const items = await prisma.inventoryItem.findMany({
             where: {
