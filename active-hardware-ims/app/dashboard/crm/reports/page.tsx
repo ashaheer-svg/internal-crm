@@ -107,17 +107,17 @@ export default function CRMReportsPage() {
             <div className="p-6 max-w-7xl mx-auto space-y-5">
 
                 {/* ── Page header ─────────────────────────────────── */}
-                <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard/crm/pipeline" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-x-6 gap-y-4 py-2">
+                    <div className="flex items-center gap-3">
+                        <Link href="/dashboard/crm/pipeline" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                             <ArrowLeft className="w-5 h-5 text-gray-600" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                            <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-tight">
                                 {range === 'history' ? '12-Month History' : 'Sales Forecast & History'}
                             </h1>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                                {range === 'history' ? 'CRM performance summary over the last year' : 'Pipeline breakdown by sales representative · ±2 months'}
+                            <p className="text-[11px] text-gray-500 leading-none mt-0.5">
+                                {range === 'history' ? 'Performance summary over the last year' : 'Pipeline breakdown by rep · ±2 months'}
                             </p>
                         </div>
                     </div>
