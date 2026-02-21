@@ -9,15 +9,25 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const scope = searchParams.get('scope') || 'all'
 
-        // Define Timeline
-        // Past 6 months
-        // Current Month
-        // Next 3 Months
-        // Total Range: Start of (Current - 6 months) to End of (Current + 3 months)
-
+        const range = searchParams.get('range') || 'forecast'
         const today = new Date()
-        const startOfRange = new Date(today.getFullYear(), today.getMonth() - 2, 1) // 2 months ago
-        const endOfRange = new Date(today.getFullYear(), today.getMonth() + 3, 0) // End of 2 months from now
+
+        // Define Timeline
+        let startOfRange: Date
+        let endOfRange: Date
+        const monthsRange: number[] = []
+
+        if (range === 'history') {
+            // Last 12 months (Current back to Current-11)
+            startOfRange = new Date(today.getFullYear(), today.getMonth() - 11, 1)
+            endOfRange = new Date(today.getFullYear(), today.getMonth() + 1, 0) // End of current month
+            for (let i = -11; i <= 0; i++) monthsRange.push(i)
+        } else {
+            // Forecast: ±2 months
+            startOfRange = new Date(today.getFullYear(), today.getMonth() - 2, 1)
+            endOfRange = new Date(today.getFullYear(), today.getMonth() + 3, 0)
+            for (let i = -2; i <= 2; i++) monthsRange.push(i)
+        }
 
         // Check if user can see all projects
         const u = user as any
@@ -91,14 +101,13 @@ export async function GET(request: Request) {
         const months: string[] = []
 
         // Generate Month Keys for Columns
-        // -2 to +2
-        for (let i = -2; i <= 2; i++) {
+        monthsRange.forEach(i => {
             const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
             const monthName = d.toLocaleString('default', { month: 'short' })
             const yearStr = d.getFullYear().toString().substr(2)
             const key = `${monthName} ${yearStr}`
-            months.push(key) // Ensure order
-        }
+            months.push(key)
+        })
 
         // Initialize Reps
         salesReps.forEach(rep => {
