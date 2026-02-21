@@ -153,7 +153,7 @@ export default function CustomersPage() {
                 <div className="flex gap-2">
                     <Link
                         href="/dashboard/settings/customers/import"
-                        className="flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 bg-white rounded-md hover:bg-blue-50 shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                     >
                         <Upload className="w-4 h-4" />
                         Import
@@ -163,7 +163,7 @@ export default function CustomersPage() {
                             setEditingCustomer(null)
                             setShowModal(true)
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         Add Partner
@@ -182,7 +182,7 @@ export default function CustomersPage() {
                         placeholder="Search partners..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="block w-full pl-10 rounded-md border-gray-300 border p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="block w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
                 </div>
 
@@ -283,27 +283,27 @@ export default function CustomersPage() {
                                         <div className="flex items-center gap-2 ml-4">
                                             <button
                                                 onClick={() => toggleStatus(customer)}
-                                                className={`p-2 text-gray-400 hover:text-gray-600 ${!customer.isActive ? 'text-green-600 hover:text-green-800' : ''}`}
+                                                className={`p-2 rounded-lg transition-colors ${!customer.isActive ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
                                                 title={customer.isActive ? "Deactivate" : "Activate"}
                                             >
-                                                {customer.isActive ? <Archive className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                                {customer.isActive ? <Archive className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                                             </button>
                                             <button
                                                 onClick={() => handleEdit(customer)}
-                                                className="p-2 text-gray-400 hover:text-blue-600"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
                                                 title="Edit"
                                             >
-                                                <Edit className="h-5 w-5" />
+                                                <Edit className="h-4 w-4" />
                                             </button>
                                             <button
                                                 onClick={() => {
                                                     setDeleteCustomer(customer)
                                                     setShowDeleteModal(true)
                                                 }}
-                                                className="p-2 text-gray-400 hover:text-red-600"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                                 title="Delete"
                                             >
-                                                <Trash2 className="h-5 w-5" />
+                                                <Trash2 className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </div>
@@ -402,25 +402,25 @@ export default function CustomersPage() {
                         <div className="space-y-3">
                             <button
                                 onClick={() => handleDelete(false)}
-                                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-orange-700 bg-orange-100 hover:bg-orange-200"
+                                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-orange-200 bg-orange-50 text-sm font-medium text-orange-700 hover:bg-orange-100 transition-colors"
                             >
-                                <Archive className="w-4 h-4 mr-2" />
+                                <Archive className="w-4 h-4" />
                                 Soft Delete (Deactivate)
                             </button>
                             <p className="text-xs text-gray-500 text-center">Keeps records but hides from selection</p>
 
                             <button
                                 onClick={() => handleDelete(true)}
-                                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200"
+                                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors"
                             >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="w-4 h-4" />
                                 Hard Delete (Permanent)
                             </button>
                             <p className="text-xs text-gray-500 text-center">Permanently removes data. Cannot be undone.</p>
 
                             <button
                                 onClick={() => setShowDeleteModal(false)}
-                                className="w-full mt-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                className="w-full inline-flex items-center justify-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mt-2"
                             >
                                 Cancel
                             </button>

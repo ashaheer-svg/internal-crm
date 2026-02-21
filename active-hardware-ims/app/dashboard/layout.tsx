@@ -18,16 +18,29 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="flex h-screen bg-gray-100 print:h-auto print:overflow-visible">
+        <div
+            className="flex h-screen print:h-auto print:overflow-visible"
+            style={{ backgroundColor: 'var(--chrome-bg)' }}
+        >
             <div className="hidden md:flex md:flex-col print:hidden">
                 <Sidebar />
             </div>
             <div className="flex flex-1 flex-col overflow-hidden print:overflow-visible print:h-auto print:block">
-                <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm print:hidden">
-                    <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
+                <header
+                    className="flex h-16 items-center justify-between px-6 shadow-sm print:hidden"
+                    style={{
+                        backgroundColor: 'var(--chrome-header-bg)',
+                        borderBottom: '1px solid var(--chrome-header-border)',
+                    }}
+                >
+                    <h2
+                        className="text-lg font-semibold"
+                        style={{ color: 'var(--chrome-header-text)' }}
+                    >
+                        Dashboard
+                    </h2>
                     <div className="flex items-center space-x-4">
-                        {/* User profile or other header items could go here */}
-                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
                             U
                         </div>
                     </div>

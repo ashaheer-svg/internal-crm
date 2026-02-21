@@ -106,7 +106,7 @@ export default function UsersTab() {
                 <div className="flex gap-2">
                     <button
                         onClick={handleLogoutAll}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm"
                     >
                         <LogOut className="h-4 w-4" />
                         Logout All Users
@@ -116,7 +116,7 @@ export default function UsersTab() {
                             setEditingUser(null)
                             setShowModal(true)
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         <Plus className="h-4 w-4" />
                         Add User
@@ -182,17 +182,17 @@ export default function UsersTab() {
                                                 setEditingUser(user)
                                                 setShowModal(true)
                                             }}
-                                            className="text-blue-600 hover:text-blue-900 mr-4 transition-colors"
+                                            className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
                                             title="Edit User"
                                         >
-                                            <Edit className="h-4 w-4 inline" />
+                                            <Edit className="h-4 w-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(user.id, user.name)}
-                                            className="text-red-600 hover:text-red-900 transition-colors"
+                                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             title="Deactivate User"
                                         >
-                                            <Trash2 className="h-4 w-4 inline" />
+                                            <Trash2 className="h-4 w-4" />
                                         </button>
                                     </td>
                                 </tr>

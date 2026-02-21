@@ -1,0 +1,386 @@
+/**
+ * Print Theme — Active Hardware IMS
+ * Single source of truth for all printout styling.
+ * To change brand colors or fonts, update the CSS variables below.
+ */
+
+/* ── Brand Tokens ───────────────────────────────────────────── */
+:root {
+    --print-brand-primary: #2563eb;
+    /* blue-600  — headings, totals, accents  */
+    --print-brand-dark: #1e3a8a;
+    /* blue-900  — logo text                  */
+    --print-text-base: #111827;
+    /* gray-900  — body text                  */
+    --print-text-muted: #6b7280;
+    /* gray-500  — labels, captions           */
+    --print-text-subtle: #9ca3af;
+    /* gray-400  — footers, timestamps        */
+    --print-border: #e5e7eb;
+    /* gray-200  — soft dividers              */
+    --print-border-dark: #374151;
+    /* gray-700  — heavy rules                */
+    --print-bg-section: #f9fafb;
+    /* gray-50   — info blocks, table headers */
+    --print-bg-alt: #f3f4f6;
+    /* gray-100  — table th background        */
+    --print-font: Arial, Helvetica, sans-serif;
+    --print-font-mono: 'Courier New', Courier, monospace;
+}
+
+/* ── Dark-Mode Lock ─────────────────────────────────────────── */
+/*
+ * Print pages MUST always render light regardless of OS theme.
+ * Without this block, printing from a dark-mode system produces
+ * inverted (dark background, white text) printouts.
+ * The !important is intentional here — print CSS must override
+ * any CSS-variable inheritance coming from the OS dark mode.
+ */
+@media (prefers-color-scheme: dark) {
+    .print-container {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+    }
+
+    .print-container * {
+        color: inherit !important;
+    }
+
+    /* Restore all print-specific token values to light equivalents */
+    .print-container {
+        --print-text-base: #111827;
+        --print-text-muted: #6b7280;
+        --print-text-subtle: #9ca3af;
+        --print-border: #e5e7eb;
+        --print-border-dark: #374151;
+        --print-bg-section: #f9fafb;
+        --print-bg-alt: #f3f4f6;
+        --print-brand-primary: #2563eb;
+    }
+
+    /* Print-button on dark OS: give floating buttons legible look */
+    .print-btn-secondary {
+        background-color: #1e293b;
+        color: #f1f5f9;
+    }
+}
+
+/* ── Page Setup ─────────────────────────────────────────────── */
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+@media print {
+
+    html,
+    body {
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Hide all dashboard chrome */
+    nav,
+    aside,
+    header,
+    .sidebar,
+    [data-sidebar],
+    [role="navigation"] {
+        display: none !important;
+    }
+
+    /* Elements marked no-print are hidden only on print */
+    .no-print {
+        display: none !important;
+    }
+
+    /* ── Monochrome / B&W printer fallbacks ────────────────────
+     * When the printer strips colour, filled backgrounds become
+     * mid-grey blobs. These rules replace fills with borders so
+     * the document hierarchy stays clear on any printer.
+     *
+     * The cascade priority: these are inside @media print so they
+     * only affect actual print output, not screen rendering.
+     * ---------------------------------------------------------*/
+
+    /* Table headers: replace grey fill with clean border rule */
+    .print-table th {
+        background-color: transparent !important;
+        border-top: 1px solid #000 !important;
+        border-bottom: 2px solid #000 !important;
+        color: #000 !important;
+    }
+
+    /* Table body rows */
+    .print-table td {
+        border-bottom: 1px solid #888 !important;
+        color: #000 !important;
+    }
+
+    /* Subtotal / total rows */
+    .print-table .total-row {
+        background-color: transparent !important;
+        border-top: 2px solid #000 !important;
+        border-bottom: 2px solid #000 !important;
+    }
+
+    /* Info sections: border instead of fill */
+    .print-info-section {
+        background-color: transparent !important;
+        border: 1px solid #888 !important;
+    }
+
+    /* Notes callout: border instead of fill */
+    .print-notes {
+        background-color: transparent !important;
+        border: 1px solid #888 !important;
+    }
+
+    /* Total row band */
+    .print-total-row {
+        background-color: transparent !important;
+        border: 2px solid #000 !important;
+    }
+
+    /* Total amount — bold black instead of coloured */
+    .print-total-amount {
+        color: #000 !important;
+        /* Keep the size/weight; just lose the colour */
+    }
+
+    /* Signature lines */
+    .print-signature-box {
+        border-top-color: #000 !important;
+    }
+
+    /* Section h3 borders inside info cards */
+    .print-info-section h3 {
+        border-bottom-color: #ccc !important;
+        color: #555 !important;
+    }
+
+    /* Footer borders */
+    .print-footer {
+        border-top-color: #ccc !important;
+        color: #555 !important;
+    }
+}
+
+/* ── Container ──────────────────────────────────────────────── */
+.print-container {
+    font-family: var(--print-font);
+    font-size: 14px;
+    color: var(--print-text-base);
+    background: #fff;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+@media print {
+    .print-container {
+        max-width: none;
+        padding: 0;
+        width: 100%;
+    }
+}
+
+/* ── Info Grid (2-column bill-to / doc-details blocks) ──────── */
+.print-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.print-info-section {
+    padding: 20px;
+    background-color: var(--print-bg-section);
+    border-radius: 8px;
+}
+
+.print-info-section h3 {
+    font-size: 11px;
+    color: var(--print-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--print-border);
+    padding-bottom: 6px;
+}
+
+.print-info-item {
+    margin-bottom: 8px;
+}
+
+.print-info-label {
+    font-size: 11px;
+    color: var(--print-text-muted);
+}
+
+.print-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* Info row (key : value on one line) */
+.print-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.print-info-row .label {
+    color: var(--print-text-muted);
+    font-weight: 500;
+}
+
+.print-info-row .value {
+    font-weight: 600;
+}
+
+/* ── Notes / Callout Block ──────────────────────────────────── */
+.print-notes {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: var(--print-bg-section);
+    border-radius: 6px;
+    border: 1px solid var(--print-border);
+}
+
+.print-notes-label {
+    font-size: 11px;
+    color: var(--print-text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+/* ── Table ──────────────────────────────────────────────────── */
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.print-table th {
+    background-color: var(--print-bg-alt);
+    padding: 12px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--print-text-muted);
+    border-bottom: 2px solid var(--print-border-dark);
+}
+
+.print-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--print-border);
+    font-size: 14px;
+    vertical-align: top;
+}
+
+.print-table .total-row {
+    font-weight: bold;
+    background-color: var(--print-bg-section);
+}
+
+/* ── Total Section ──────────────────────────────────────────── */
+.print-total-section {
+    margin-top: 30px;
+    text-align: right;
+}
+
+.print-total-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 40px;
+    padding: 15px 20px;
+    background-color: var(--print-bg-section);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.print-total-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--print-text-muted);
+}
+
+.print-total-amount {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--print-brand-primary);
+}
+
+/* ── Signature Area ─────────────────────────────────────────── */
+.print-signatures {
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.print-signature-box {
+    border-top: 1px solid var(--print-border-dark);
+    padding-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--print-text-muted);
+}
+
+/* ── Footer Bar ─────────────────────────────────────────────── */
+.print-footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--print-border);
+    font-size: 11px;
+    color: var(--print-text-subtle);
+    text-align: center;
+}
+
+/* ── Print Button (floating, hidden on print) ───────────────── */
+.print-actions {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media print {
+    .print-actions {
+        display: none !important;
+    }
+}
+
+.print-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.print-btn-primary {
+    background-color: var(--print-brand-primary);
+    color: #fff;
+}
+
+.print-btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.print-btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.print-btn-secondary:hover {
+    background-color: #e5e7eb;
+}

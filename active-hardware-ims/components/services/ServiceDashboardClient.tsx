@@ -76,15 +76,15 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Service Management</h1>
                 <div className="flex gap-2">
-                    <Link href="/dashboard/services/new-agreement" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4 mr-2" />
+                    <Link href="/dashboard/services/new-agreement" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm">
+                        <Plus className="w-4 h-4" />
                         New Agreement
                     </Link>
-                    <Link href="/dashboard/services/rentals" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        <Package className="w-4 h-4 mr-2" />
+                    <Link href="/dashboard/services/rentals" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                        <Package className="w-4 h-4" />
                         Rental Assets
                     </Link>
-                    <Link href="/dashboard/services/catalog" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <Link href="/dashboard/services/catalog" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
                         Service Catalog
                     </Link>
                 </div>
@@ -192,20 +192,20 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={`/dashboard/services/contracts/${contract.id}/edit`}
-                                                    className="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50"
+                                                    className="inline-flex items-center px-2 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 text-xs font-medium transition-colors"
                                                 >
                                                     Edit
                                                 </Link>
                                                 <Link
                                                     href={`/dashboard/services/contracts/${contract.id}/print`}
-                                                    className="text-gray-600 hover:text-gray-900 font-medium text-xs border border-gray-200 px-2 py-1 rounded hover:bg-gray-50"
+                                                    className="inline-flex items-center p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
                                                     target="_blank"
                                                 >
                                                     <Printer className="w-3 h-3" />
                                                 </Link>
                                                 <button
                                                     onClick={() => handleCompleteContract(contract.id)}
-                                                    className="text-green-600 hover:text-green-900 font-medium text-xs border border-green-200 px-2 py-1 rounded hover:bg-green-50"
+                                                    className="inline-flex items-center p-1.5 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors"
                                                     title="Mark as Completed"
                                                 >
                                                     <CheckCircle className="w-3 h-3" />

@@ -128,19 +128,19 @@ export default function WarrantyPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Warranty & RMA</h1>
                     <p className="mt-1 text-sm text-gray-500">Manage warranty claims and RMA requests</p>
                 </div>
-                <div className="mt-4 sm:mt-0">
+                <div className="mt-4 sm:mt-0 flex items-center gap-2">
                     <Link
                         href="/dashboard/warranty/new"
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4" />
                         New Claim
                     </Link>
                     <Link
                         href="/dashboard/warranty/lookup"
-                        className="ml-3 inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                     >
-                        <Search className="w-4 h-4 mr-2" />
+                        <Search className="w-4 h-4" />
                         Lookup
                     </Link>
                 </div>
@@ -157,7 +157,7 @@ export default function WarrantyPage() {
                         placeholder="Search by customer name, serial number, or product..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
                 </div>
             </div>

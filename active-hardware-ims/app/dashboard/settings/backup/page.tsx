@@ -195,7 +195,7 @@ export default function BackupPage() {
                 <button
                     onClick={handleDownloadBackup}
                     disabled={downloading}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Download className="h-4 w-4" />
                     {downloading ? 'Downloading...' : 'Download Backup'}
@@ -277,7 +277,7 @@ export default function BackupPage() {
                 <button
                     onClick={handleRestoreBackup}
                     disabled={!selectedFile || !confirmRestore || uploading}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Upload className="h-4 w-4" />
                     {uploading ? 'Restoring...' : 'Restore Database'}
@@ -297,7 +297,7 @@ export default function BackupPage() {
 
                 <button
                     onClick={() => setShowResetDialog(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 text-sm font-medium text-white hover:bg-orange-700 transition-colors shadow-sm"
                 >
                     <AlertTriangle className="h-4 w-4" />
                     Reset Database
@@ -353,14 +353,14 @@ export default function BackupPage() {
                                     setShowResetDialog(false)
                                     setConfirmReset(false)
                                 }}
-                                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleResetDatabase}
                                 disabled={!confirmReset || resetting}
-                                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 text-sm font-medium text-white hover:bg-orange-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {resetting ? 'Resetting...' : 'Reset Database'}
                             </button>

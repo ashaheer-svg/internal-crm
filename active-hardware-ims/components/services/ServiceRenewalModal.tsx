@@ -51,18 +51,18 @@ export default function ServiceRenewalModal({ isOpen, onClose, contract, onRenew
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">New Duration</label>
-                        <div className="mt-1 flex rounded-md shadow-sm">
+                        <div className="mt-1 flex gap-2">
                             <input
                                 type="number"
                                 value={durationValue}
                                 onChange={(e) => setDurationValue(Number(e.target.value))}
                                 min={1}
-                                className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-24 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                             <select
                                 value={durationUnit}
                                 onChange={(e) => setDurationUnit(e.target.value)}
-                                className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm border-l"
+                                className="block flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                             >
                                 <option value="DAY">Days</option>
                                 <option value="WEEK">Weeks</option>
@@ -72,18 +72,18 @@ export default function ServiceRenewalModal({ isOpen, onClose, contract, onRenew
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end space-x-3">
+                    <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
                         >
                             {loading ? "Renewing..." : "Confirm Renewal"}
                         </button>

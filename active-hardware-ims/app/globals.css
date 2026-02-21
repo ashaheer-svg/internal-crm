@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
+/* ── Semantic layout tokens ─────────────────────────────────── */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Chrome-level surface tokens used by dashboard layout */
+  --chrome-bg: #f3f4f6;
+  /* page background   (gray-100) */
+  --chrome-sidebar-bg: #111827;
+  /* sidebar           (gray-900) */
+  --chrome-header-bg: #ffffff;
+  /* top header        (white)    */
+  --chrome-header-border: #e5e7eb;
+  /* header bottom border         */
+  --chrome-header-text: #111827;
+  /* header title text            */
+  --chrome-card-bg: #ffffff;
+  /* card / panel bg              */
+  --chrome-card-border: #e5e7eb;
+  /* card border                  */
 }
 
 @theme inline {
@@ -14,8 +31,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+
+    --chrome-bg: #0f172a;
+    /* slate-900 */
+    --chrome-sidebar-bg: #0f172a;
+    /* sidebar stays dark */
+    --chrome-header-bg: #1e293b;
+    /* slate-800 */
+    --chrome-header-border: #334155;
+    /* slate-700 */
+    --chrome-header-text: #f1f5f9;
+    /* slate-100 */
+    --chrome-card-bg: #1e293b;
+    /* slate-800 */
+    --chrome-card-border: #334155;
+    /* slate-700 */
   }
 }
 
@@ -25,8 +57,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Fix for inputs being unreadable in dark mode or specific system themes */
-input, textarea, select {
-  color: #111827; /* text-gray-900 */
+/* ── Inputs: always light so forms stay readable ────────────── */
+input,
+textarea,
+select {
+  color: #111827;
   background-color: #ffffff;
 }

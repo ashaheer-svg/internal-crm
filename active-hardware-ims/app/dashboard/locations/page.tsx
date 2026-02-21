@@ -149,9 +149,9 @@ export default function LocationsPage() {
                             resetForm()
                             setShowForm(!showForm)
                         }}
-                        className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
-                        <Plus className="inline-block w-4 h-4 mr-1" />
+                        <Plus className="w-4 h-4" />
                         Add Location
                     </button>
                 </div>
@@ -184,7 +184,7 @@ export default function LocationsPage() {
                             <input
                                 type="text"
                                 required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             />
@@ -192,7 +192,7 @@ export default function LocationsPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Type *</label>
                             <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                             >
@@ -204,7 +204,7 @@ export default function LocationsPage() {
                             <label className="block text-sm font-medium text-gray-700">Address (Optional)</label>
                             <input
                                 type="text"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                             />
@@ -214,13 +214,13 @@ export default function LocationsPage() {
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             {editingId ? 'Update' : 'Save'}
                         </button>
@@ -249,18 +249,18 @@ export default function LocationsPage() {
                                 <div className="flex gap-2 ml-2">
                                     <button
                                         onClick={() => handleEdit(location)}
-                                        className="text-blue-600 hover:text-blue-800"
+                                        className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
                                         title="Edit location"
                                     >
                                         <Edit className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(location.id, location.name)}
-                                        className="text-red-600 hover:text-red-800"
+                                        className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                         title="Delete location"
                                         disabled={location._count.inventory > 0}
                                     >
-                                        <Trash2 className={`w-4 h-4 ${location._count.inventory > 0 ? 'opacity-30 cursor-not-allowed' : ''}`} />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -328,16 +328,16 @@ export default function LocationsPage() {
                                     setLocationToDelete(null)
                                     setTransferToLocationId('')
                                 }}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleTransferAndDelete}
                                 disabled={!transferToLocationId}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Transfer & Delete
+                                Transfer &amp; Delete
                             </button>
                         </div>
                     </div>

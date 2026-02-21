@@ -4,6 +4,7 @@ import { formatDate, formatDateTime } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
 import PrintButton from "@/components/PrintButton"
+import PrintLayout from "@/components/print/PrintLayout"
 import { Metadata } from "next"
 
 interface PageProps {
@@ -22,28 +23,15 @@ interface DeliveryOrderWithRelations {
     items: {
         id: string
         quantity: number
-        product: {
-            name: string
-            brand: string
-            model: string
-        }
-        reservedItems: {
-            serialNumber: string
-        }[]
+        product: { name: string; brand: string; model: string }
+        reservedItems: { serialNumber: string }[]
     }[]
 }
 
 async function getOrder(id: string): Promise<DeliveryOrderWithRelations | null> {
     const order = await prisma.deliveryOrder.findUnique({
         where: { id },
-        include: {
-            items: {
-                include: {
-                    product: true,
-                    reservedItems: true
-                }
-            }
-        }
+        include: { items: { include: { product: true, reservedItems: true } } }
     })
     return order as DeliveryOrderWithRelations | null
 }
@@ -51,9 +39,7 @@ async function getOrder(id: string): Promise<DeliveryOrderWithRelations | null> 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params
     const order = await getOrder(id)
-    return {
-        title: order ? `Packing Slip - ${order.orderNumber}` : 'Packing Slip',
-    }
+    return { title: order ? `Packing Slip - ${order.orderNumber}` : 'Packing Slip' }
 }
 
 export default async function PrintDeliveryOrderPage({ params }: PageProps) {
@@ -73,218 +59,106 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
         )
     }
 
-    if (!order) {
-        notFound()
-    }
+    if (!order) notFound()
 
     return (
-        <div className="fixed inset-0 z-50 bg-white overflow-auto">
-            <style>{`
-          @page {
-            size: A4;
-            margin: 15mm;
-          }
-          @media print {
-            body { margin: 0; -webkit-print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            nav, aside, header, .sidebar { display: none !important; }
-          }
-          .print-container {
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            max-width: 800px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: white;
-            color: #333;
-          }
-          .header {
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-          }
-          .company-name {
-            font-size: 24px;
-            font-weight: bold;
-          }
-          .document-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            text-transform: uppercase;
-          }
-          .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
-          }
-          .info-section h3 {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-          }
-          .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-          }
-          .label {
-            color: #666;
-            font-weight: 500;
-          }
-          .value {
-            font-weight: 600;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          th {
-            background-color: #f3f4f6;
-            padding: 10px;
-            text-align: left;
-            font-size: 12px;
-            text-transform: uppercase;
-            border-bottom: 2px solid #000;
-          }
-          td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            vertical-align: top;
-          }
-          .footer {
-            margin-top: 80px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-          }
-          .signature-box {
-            border-top: 1px solid #333;
-            padding-top: 10px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-          }
-          .print-button {
-            padding: 10px 20px;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-bottom: 20px;
-          }
-        `}</style>
-            <div className="print-container">
-                <PrintButton autoPrint={true} label="Print Packing Slip" />
+        <PrintLayout>
+            <PrintButton autoPrint={true} label="Print Packing Slip" />
 
-                <DocumentHeader title="PACKING SLIP" titleNextToLogo={true} />
+            <DocumentHeader title="PACKING SLIP" titleNextToLogo={true} />
 
-                <div className="info-grid">
-                    <div className="info-section">
-                        <h3>Ship To</h3>
-                        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>
-                            {order.customerName}
-                        </div>
-                        {order.deliveryAddress && (
-                            <div style={{ fontSize: '14px', color: '#444', whiteSpace: 'pre-wrap' }}>
-                                {order.deliveryAddress}
-                            </div>
-                        )}
+            <div className="print-info-grid">
+                <div className="print-info-section">
+                    <h3>Ship To</h3>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px' }}>
+                        {order.customerName}
                     </div>
-
-                    <div className="info-section">
-                        <h3>Order Details</h3>
-                        <div className="info-row">
-                            <span className="label">Order Number:</span>
-                            <span className="value">{order.orderNumber}</span>
+                    {order.deliveryAddress && (
+                        <div style={{ fontSize: '14px', color: '#444', whiteSpace: 'pre-wrap' }}>
+                            {order.deliveryAddress}
                         </div>
-                        {order.invoiceNumber && (
-                            <div className="info-row">
-                                <span className="label">Invoice Number:</span>
-                                <span className="value">{order.invoiceNumber}</span>
-                            </div>
-                        )}
-                        <div className="info-row">
-                            <span className="label">Date:</span>
-                            <span className="value">{formatDate(order.createdAt)}</span>
-                        </div>
-                        <div className="info-row">
-                            <span className="label">Status:</span>
-                            <span className="value">{order.status}</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                {order.notes && (
-                    <div style={{ marginBottom: '30px', padding: '10px', border: '1px solid #eee', borderRadius: '4px' }}>
-                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px', textTransform: 'uppercase' }}>Notes / Instructions</div>
-                        <div style={{ fontSize: '14px' }}>{order.notes}</div>
+                <div className="print-info-section">
+                    <h3>Order Details</h3>
+                    <div className="print-info-row">
+                        <span className="label">Order Number:</span>
+                        <span className="value">{order.orderNumber}</span>
                     </div>
-                )}
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40%' }}>Item / Description</th>
-                            <th style={{ width: '15%', textAlign: 'center' }}>Qty Ord</th>
-                            <th style={{ width: '15%', textAlign: 'center' }}>Qty Ship</th>
-                            <th style={{ width: '30%' }}>Allocated Serials</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {order.items.map((item) => {
-                            const shippedQty = item.reservedItems.length
-                            return (
-                                <tr key={item.id}>
-                                    <td>
-                                        <div style={{ fontWeight: 'bold' }}>{item.product.brand} {item.product.name}</div>
-                                        <div style={{ fontSize: '12px', color: '#666' }}>Model: {item.product.model}</div>
-                                    </td>
-                                    <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{shippedQty}</td>
-                                    <td>
-                                        {item.reservedItems.length > 0 ? (
-                                            <div style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
-                                                {item.reservedItems.map(i => i.serialNumber).join(', ')}
-                                            </div>
-                                        ) : (
-                                            <span style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>Pending Allocation</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-
-                <div className="footer">
-                    <div className="signature-box">
-                        <p>Checked By (Warehouse)</p>
+                    {order.invoiceNumber && (
+                        <div className="print-info-row">
+                            <span className="label">Invoice Number:</span>
+                            <span className="value">{order.invoiceNumber}</span>
+                        </div>
+                    )}
+                    <div className="print-info-row">
+                        <span className="label">Date:</span>
+                        <span className="value">{formatDate(order.createdAt)}</span>
                     </div>
-                    <div className="signature-box">
-                        <p>Received By (Customer)</p>
+                    <div className="print-info-row">
+                        <span className="label">Status:</span>
+                        <span className="value">{order.status}</span>
                     </div>
                 </div>
-
-                <div className="no-print" style={{ textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#999' }}>
-                    Generated on {formatDateTime(new Date())}
-                </div>
-
-                <DocumentFooter />
-
             </div>
-        </div>
+
+            {order.notes && (
+                <div className="print-notes">
+                    <div className="print-notes-label">Notes / Instructions</div>
+                    <div>{order.notes}</div>
+                </div>
+            )}
+
+            <table className="print-table">
+                <thead>
+                    <tr>
+                        <th style={{ width: '40%' }}>Item / Description</th>
+                        <th style={{ width: '15%', textAlign: 'center' }}>Qty Ord</th>
+                        <th style={{ width: '15%', textAlign: 'center' }}>Qty Ship</th>
+                        <th style={{ width: '30%' }}>Allocated Serials</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {order.items.map((item) => {
+                        const shippedQty = item.reservedItems.length
+                        return (
+                            <tr key={item.id}>
+                                <td>
+                                    <div style={{ fontWeight: 'bold' }}>{item.product.brand} {item.product.name}</div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Model: {item.product.model}</div>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{shippedQty}</td>
+                                <td>
+                                    {item.reservedItems.length > 0 ? (
+                                        <div style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
+                                            {item.reservedItems.map(i => i.serialNumber).join(', ')}
+                                        </div>
+                                    ) : (
+                                        <span style={{ color: '#9ca3af', fontSize: '12px', fontStyle: 'italic' }}>Pending Allocation</span>
+                                    )}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+
+            <div className="print-signatures">
+                <div className="print-signature-box">
+                    <p>Checked By (Warehouse)</p>
+                </div>
+                <div className="print-signature-box">
+                    <p>Received By (Customer)</p>
+                </div>
+            </div>
+
+            <div className="no-print print-footer">
+                Generated on {formatDateTime(new Date())}
+            </div>
+
+            <DocumentFooter />
+        </PrintLayout>
     )
 }
