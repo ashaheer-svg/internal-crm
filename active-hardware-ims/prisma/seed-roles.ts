@@ -81,21 +81,88 @@ async function main() {
             if (salesCreateQuotes) await prisma.rolePermission.upsert({ where: { roleId_permissionId: { roleId: role.id, permissionId: salesCreateQuotes.id } }, update: {}, create: { roleId: role.id, permissionId: salesCreateQuotes.id } })
         }
 
-        // Seed default report permissions
-        const defaultReportPermissions: Record<string, Array<{ action: string; resource: string }>> = {
+        // Comprehensive default permissions per role
+        const defaultPermissions: Record<string, Array<{ action: string; resource: string }>> = {
             MANAGER: [
                 { action: 'read', resource: 'reports' },
                 { action: 'manage', resource: 'reports' },
+                { action: 'read', resource: 'services' },
+                { action: 'create', resource: 'services' },
+                { action: 'update', resource: 'services' },
+                { action: 'delete', resource: 'services' },
+                { action: 'read', resource: 'inventory' },
+                { action: 'create', resource: 'inventory' },
+                { action: 'update', resource: 'inventory' },
+                { action: 'read', resource: 'customers' },
+                { action: 'create', resource: 'customers' },
+                { action: 'update', resource: 'customers' },
+                { action: 'read', resource: 'invoices' },
+                { action: 'create', resource: 'invoices' },
+                { action: 'update', resource: 'invoices' },
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'create', resource: 'delivery_orders' },
+                { action: 'update', resource: 'delivery_orders' },
+                { action: 'read', resource: 'purchase_orders' },
+                { action: 'create', resource: 'purchase_orders' },
+                { action: 'read', resource: 'projects' },
+                { action: 'create', resource: 'projects' },
+                { action: 'update', resource: 'projects' },
+                { action: 'view_all', resource: 'projects' },
+                { action: 'read', resource: 'quotes' },
+                { action: 'create', resource: 'quotes' },
+                { action: 'update', resource: 'quotes' },
+                { action: 'read', resource: 'audit_logs' },
+                { action: 'read', resource: 'users' },
             ],
             SALES: [
                 { action: 'read', resource: 'reports' },
+                { action: 'read', resource: 'services' },
+                { action: 'create', resource: 'services' },
+                { action: 'update', resource: 'services' },
+                { action: 'read', resource: 'customers' },
+                { action: 'create', resource: 'customers' },
+                { action: 'update', resource: 'customers' },
+                { action: 'read', resource: 'invoices' },
+                { action: 'create', resource: 'invoices' },
+                { action: 'update', resource: 'invoices' },
+                { action: 'read', resource: 'inventory' },
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'read', resource: 'projects' },
+                { action: 'create', resource: 'projects' },
+                { action: 'update', resource: 'projects' },
+                { action: 'read', resource: 'quotes' },
+                { action: 'create', resource: 'quotes' },
+                { action: 'update', resource: 'quotes' },
             ],
             WAREHOUSE: [
                 { action: 'read', resource: 'reports' },
+                // Warranty Lookup access (read-only to services for lookup)
+                { action: 'read', resource: 'services' },
+                { action: 'read', resource: 'inventory' },
+                { action: 'create', resource: 'inventory' },
+                { action: 'update', resource: 'inventory' },
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'create', resource: 'delivery_orders' },
+                { action: 'update', resource: 'delivery_orders' },
+                { action: 'read', resource: 'purchase_orders' },
+                { action: 'create', resource: 'purchase_orders' },
+                { action: 'update', resource: 'purchase_orders' },
+            ],
+            VIEWER: [
+                { action: 'read', resource: 'reports' },
+                // Warranty Lookup access (read-only)
+                { action: 'read', resource: 'services' },
+                { action: 'read', resource: 'inventory' },
+                { action: 'read', resource: 'customers' },
+                { action: 'read', resource: 'invoices' },
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'read', resource: 'purchase_orders' },
+                { action: 'read', resource: 'projects' },
+                { action: 'read', resource: 'quotes' },
             ],
         }
 
-        const permissionsForRole = defaultReportPermissions[role.name] || []
+        const permissionsForRole = defaultPermissions[role.name] || []
         for (const perm of permissionsForRole) {
             const permRecord = await prisma.permission.findUnique({ where: { action_resource: { action: perm.action, resource: perm.resource } } })
             if (permRecord) {
