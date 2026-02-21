@@ -86,7 +86,17 @@ export default function RolesTab() {
 
     // Group permissions by resource for the matrix rows
     const resources = Array.from(new Set(permissions.map(p => p.resource))).sort()
-    const actions = ['create', 'read', 'update', 'delete', 'manage']
+    const STANDARD_ACTIONS = ['create', 'read', 'update', 'delete', 'manage']
+
+    // Derive actions per resource dynamically so special ones (e.g. view_all) auto-appear
+    const getActionsForResource = (resource: string) => {
+        const resourceActions = permissions
+            .filter(p => p.resource === resource)
+            .map(p => p.action)
+        const standard = STANDARD_ACTIONS.filter(a => resourceActions.includes(a))
+        const extra = resourceActions.filter(a => !STANDARD_ACTIONS.includes(a)).sort()
+        return [...standard, ...extra]
+    }
 
     if (isLoading) return <div className="p-8 text-center text-gray-500">Loading Role Matrix...</div>
 
@@ -184,7 +194,7 @@ export default function RolesTab() {
                                 {roles.map(role => (
                                     <td key={`${resource}-${role.id}`} className="px-1.5 py-1.5 whitespace-nowrap text-center border-l bg-gray-50/20">
                                         <div className="flex flex-wrap justify-center gap-0.5">
-                                            {actions.map(action => {
+                                            {getActionsForResource(resource as string).map((action: string) => {
                                                 const permission = permissions.find(p => p.resource === resource && p.action === action)
                                                 if (!permission) return null
 
