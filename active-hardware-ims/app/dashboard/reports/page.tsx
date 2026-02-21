@@ -20,28 +20,40 @@ export default function ReportsPage() {
     const [endDate, setEndDate] = useState('')
     const [reportData, setReportData] = useState<ReportData | null>(null)
     const [loading, setLoading] = useState(false)
-
     const [user, setUser] = useState<any>(null)
+    const [hasReadPermission, setHasReadPermission] = useState(false)
+    const [hasManagePermission, setHasManagePermission] = useState(false)
 
     useEffect(() => {
         // Fetch user role
         fetch('/api/auth/me')
             .then(res => res.json())
-            .then(data => setUser(data.user || null))
+            .then(data => {
+                const u = data.user || null
+                setUser(u)
+                const perms: string[] = u?.permissions || []
+                const isAdmin = perms.includes('all:manage')
+                const canRead = isAdmin || perms.includes('reports:read') || perms.includes('reports:manage')
+                const canManage = isAdmin || perms.includes('reports:manage')
+                setHasReadPermission(canRead)
+                setHasManagePermission(canManage)
+            })
             .catch(err => console.error('Failed to fetch user', err))
     }, [])
 
     const reportTypes = [
-        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product', permission: 'inventory:read' },
-        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements', permission: 'inventory:read' },
-        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue', permission: 'reports:read' },
-        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary', permission: 'reports:read' },
-        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status', permission: 'services:read' },
-        { id: 'location', name: 'Location Report', description: 'Stock distribution by location', permission: 'inventory:read' },
-        { id: 'profitability', name: 'Profitability Report', description: 'GP Analysis per Order', permission: 'reports:manage' }
+        { id: 'inventory-valuation', name: 'Inventory Valuation', description: 'Current stock value by product', sensitive: true },
+        { id: 'stock-movement', name: 'Stock Movement', description: 'Inward and outward movements', sensitive: false },
+        { id: 'sales', name: 'Sales Report', description: 'Invoice summary and revenue', sensitive: false },
+        { id: 'purchase', name: 'Purchase Report', description: 'Purchase order summary', sensitive: true },
+        { id: 'warranty', name: 'Warranty Claims', description: 'RMA claims by status', sensitive: false },
+        { id: 'location', name: 'Location Report', description: 'Stock distribution by location', sensitive: false },
+        { id: 'profitability', name: 'Profitability Report', description: 'GP Analysis per Order', sensitive: true }
     ]
 
-    const availableReports = reportTypes.filter(r => !r.permission || (user?.permissions && (user.permissions.includes('all:manage') || user.permissions.includes(r.permission))))
+    const availableReports = reportTypes.filter(r =>
+        r.sensitive ? hasManagePermission : hasReadPermission
+    )
 
     async function generateReport() {
         setLoading(true)
@@ -220,31 +232,46 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                {/* Report Selection */}
-                <div className="bg-white shadow sm:rounded-lg p-6 no-print">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Select Report Type</h3>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {availableReports.map((report) => (
-                            <button
-                                key={report.id}
-                                onClick={() => setSelectedReport(report.id as ReportType)}
-                                className={`text-left p-4 border-2 rounded-lg transition-colors ${selectedReport === report.id
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <FileText className={`w-5 h-5 mt-0.5 ${selectedReport === report.id ? 'text-blue-600' : 'text-gray-400'
-                                        }`} />
-                                    <div>
-                                        <p className="font-medium text-gray-900">{report.name}</p>
-                                        <p className="text-sm text-gray-500 mt-1">{report.description}</p>
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
+                {/* No Access State */}
+                {user !== null && !hasReadPermission && (
+                    <div className="bg-white shadow sm:rounded-lg p-10 text-center">
+                        <p className="text-gray-500 font-medium">You do not have permission to access reports.</p>
+                        <p className="text-sm text-gray-400 mt-1">Contact your administrator to request access.</p>
                     </div>
-                </div>
+                )}
+
+                {/* Report Selection — only show if user has at least read access */}
+                {hasReadPermission && (
+                    <div className="bg-white shadow sm:rounded-lg p-6 no-print">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Select Report Type</h3>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {availableReports.map((report) => (
+                                <button
+                                    key={report.id}
+                                    onClick={() => setSelectedReport(report.id as ReportType)}
+                                    className={`text-left p-4 border-2 rounded-lg transition-colors ${selectedReport === report.id
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <FileText className={`w-5 h-5 mt-0.5 ${selectedReport === report.id ? 'text-blue-600' : 'text-gray-400'
+                                            }`} />
+                                        <div>
+                                            <p className="font-medium text-gray-900">{report.name}</p>
+                                            <p className="text-sm text-gray-500 mt-1">{report.description}</p>
+                                            {report.sensitive && (
+                                                <span className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Restricted</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+
 
                 {/* Date Range Filter */}
                 {['stock-movement', 'sales', 'purchase', 'warranty', 'profitability'].includes(selectedReport) && (
@@ -402,7 +429,7 @@ export default function ReportsPage() {
                         <DocumentFooter />
                     </div>
                 )}
-            </div>
+            </div >
         </>
     )
 }

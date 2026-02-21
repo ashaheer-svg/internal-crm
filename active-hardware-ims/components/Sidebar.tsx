@@ -30,6 +30,7 @@ const navigation = [
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Warranty / RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'services:read' },
+    { name: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: 'reports:read' },
     { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: 'settings:manage' },
 ]
 

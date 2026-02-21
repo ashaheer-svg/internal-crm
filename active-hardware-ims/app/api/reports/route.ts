@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requirePermission } from '@/lib/auth'
 
 export async function GET(request: Request) {
     try {
+        await requirePermission('reports:read')
         const { searchParams } = new URL(request.url)
         const type = searchParams.get('type')
         const startDate = searchParams.get('startDate')
@@ -51,6 +53,8 @@ export async function GET(request: Request) {
 }
 
 async function generateInventoryValuationReport(locationId: string | null) {
+    // Cost data is sensitive — require manage-level permission
+    await requirePermission('reports:manage')
     const where = locationId ? { locationId } : {}
 
     // Get ALL inventory items (not just AVAILABLE) for complete valuation
@@ -162,10 +166,10 @@ async function generateStockMovementReport(dateFilter: any) {
     })
 }
 
-import { requireAuth } from '@/lib/auth'
+// (auth imported at top of file)
 
 async function generateSalesReport(dateFilter: any) {
-    const user = await requireAuth()
+    const user = await requirePermission('reports:read')
 
     // Filter by sales rep if user is restricted
     const p = (user as any).permissions || []
@@ -211,6 +215,8 @@ async function generateSalesReport(dateFilter: any) {
 }
 
 async function generatePurchaseReport(dateFilter: any) {
+    // PO data with supplier pricing is sensitive
+    await requirePermission('reports:manage')
     const purchaseOrders = await prisma.purchaseOrder.findMany({
         where: dateFilter,
         include: {
@@ -363,7 +369,7 @@ async function generateBackorderReport() {
     })
 }
 
-import { requirePermission } from '@/lib/auth'
+// (auth imported at top of file)
 
 async function generateProfitabilityReport(dateFilter: any) {
     // 1. Enforce Admin Role

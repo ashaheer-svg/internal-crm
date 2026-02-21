@@ -73,12 +73,39 @@ async function main() {
             })
         }
 
-        // Example basic permission seeds (this will be fleshed out or managed by UI)
+        // Default permission seeds for SALES role
         if (role.name === 'SALES') {
             const salesReadQuotes = await prisma.permission.findUnique({ where: { action_resource: { action: 'read', resource: 'quotes' } } })
             const salesCreateQuotes = await prisma.permission.findUnique({ where: { action_resource: { action: 'create', resource: 'quotes' } } })
             if (salesReadQuotes) await prisma.rolePermission.upsert({ where: { roleId_permissionId: { roleId: role.id, permissionId: salesReadQuotes.id } }, update: {}, create: { roleId: role.id, permissionId: salesReadQuotes.id } })
             if (salesCreateQuotes) await prisma.rolePermission.upsert({ where: { roleId_permissionId: { roleId: role.id, permissionId: salesCreateQuotes.id } }, update: {}, create: { roleId: role.id, permissionId: salesCreateQuotes.id } })
+        }
+
+        // Seed default report permissions
+        const defaultReportPermissions: Record<string, Array<{ action: string; resource: string }>> = {
+            MANAGER: [
+                { action: 'read', resource: 'reports' },
+                { action: 'manage', resource: 'reports' },
+            ],
+            SALES: [
+                { action: 'read', resource: 'reports' },
+            ],
+            WAREHOUSE: [
+                { action: 'read', resource: 'reports' },
+            ],
+        }
+
+        const permissionsForRole = defaultReportPermissions[role.name] || []
+        for (const perm of permissionsForRole) {
+            const permRecord = await prisma.permission.findUnique({ where: { action_resource: { action: perm.action, resource: perm.resource } } })
+            if (permRecord) {
+                await prisma.rolePermission.upsert({
+                    where: { roleId_permissionId: { roleId: role.id, permissionId: permRecord.id } },
+                    update: {},
+                    create: { roleId: role.id, permissionId: permRecord.id }
+                })
+                console.log(`  Assigned ${perm.resource}:${perm.action} to ${role.name}`)
+            }
         }
     }
 

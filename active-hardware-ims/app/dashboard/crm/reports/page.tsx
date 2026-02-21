@@ -19,6 +19,22 @@ export default function CRMReportsPage() {
     const [scope, setScope] = useState<'all' | 'mine'>(scopeFromUrl)
     const [range, setRange] = useState<'forecast' | 'history'>(rangeFromUrl)
     const [canViewAll, setCanViewAll] = useState<boolean | null>(null)
+    const [hasReportAccess, setHasReportAccess] = useState<boolean | null>(null)
+
+    // Check report access
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(r => r.json())
+            .then(d => {
+                const perms: string[] = d.user?.permissions || []
+                setHasReportAccess(
+                    perms.includes('all:manage') ||
+                    perms.includes('reports:read') ||
+                    perms.includes('reports:manage')
+                )
+            })
+            .catch(() => setHasReportAccess(false))
+    }, [])
 
     useEffect(() => {
         fetch('/api/crm/projects?limit=1&page=1')
@@ -39,6 +55,18 @@ export default function CRMReportsPage() {
     const repLabel = selectedRep === 'ALL'
         ? 'All Representatives'
         : (salesReps.find(r => r.id === selectedRep)?.name || '')
+
+    // Early return if user has no report access
+    if (hasReportAccess === false) {
+        return (
+            <div className="p-6 max-w-7xl mx-auto">
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <p className="text-gray-500 font-medium">You do not have permission to view this report.</p>
+                    <p className="text-sm text-gray-400 mt-1">Contact your administrator to request access.</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <>

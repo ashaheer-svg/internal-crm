@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 
 export async function GET(request: Request) {
     try {
-        const user = await getCurrentUser()
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const user = await requirePermission('reports:read')
         const { searchParams } = new URL(request.url)
         const scope = searchParams.get('scope') || 'all'
 
