@@ -121,11 +121,29 @@ export async function GET(request: Request) {
                 ]
             },
             include: {
-                inventoryItem: { include: { product: true } },
-                replacementItem: { include: { product: true } }
+                inventoryItem: { include: { product: true } }
             },
             orderBy: { createdAt: 'desc' }
         }) as any[];
+
+        // Manually fetch replacement items since the relation is missing in schema
+        const replacementItemIds = warrantyClaims
+            .map(c => c.replacementItemId)
+            .filter((id): id is string => !!id);
+
+        if (replacementItemIds.length > 0) {
+            const replacementItems = await prisma.inventoryItem.findMany({
+                where: { id: { in: replacementItemIds } },
+                include: { product: true }
+            });
+
+            // Associate back to claims
+            warrantyClaims.forEach(c => {
+                if (c.replacementItemId) {
+                    c.replacementItem = replacementItems.find(i => i.id === c.replacementItemId);
+                }
+            });
+        }
 
         let replacementInfo = null;
         if (warrantyClaims.length > 0) {
