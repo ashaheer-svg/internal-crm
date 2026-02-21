@@ -4,9 +4,9 @@ const prisma = new PrismaClient()
 
 const DEFAULT_ROLES = [
     { name: 'ADMIN', description: 'System Administrator with full access to all features.', isSystemDefault: true },
-    { name: 'MANAGER', description: 'Store Manager with access to most features except system settings.', isSystemDefault: true },
-    { name: 'SALES', description: 'Sales Representative with access to CRM, Quotes, and Customers.', isSystemDefault: true },
-    { name: 'WAREHOUSE', description: 'Warehouse Staff with access to Inventory, GRN, and Delivery Orders.', isSystemDefault: true },
+    { name: 'MANAGER', description: 'Store Manager with access to most features except system settings.', isSystemDefault: false },
+    { name: 'SALES', description: 'Sales Representative with access to CRM, Quotes, and Customers.', isSystemDefault: false },
+    { name: 'WAREHOUSE', description: 'Warehouse Staff with access to Inventory, GRN, and Delivery Orders.', isSystemDefault: false },
     { name: 'VIEWER', description: 'Read-only access to standard reports and lists.', isSystemDefault: true }
 ]
 

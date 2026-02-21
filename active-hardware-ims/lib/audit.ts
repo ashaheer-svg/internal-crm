@@ -21,6 +21,8 @@ export type AuditEntityType =
     | 'PURCHASE_ORDER'
     | 'CRM_TASK'
     | 'CRM_PIPELINE'
+    | 'ROLE'
+    | 'ROLE_PERMISSION'
 
 interface AuditLogParams {
     action: AuditAction

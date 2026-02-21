@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Plus, Check, X, AlertCircle } from "lucide-react"
+import { Shield, Plus, Check, X, AlertCircle, Trash2, Printer } from "lucide-react"
 
 export default function RolesTab() {
     const [isLoading, setIsLoading] = useState(true)
@@ -31,7 +31,20 @@ export default function RolesTab() {
         }
     }
 
+    const handleDeleteRole = async (roleId: string, roleName: string) => {
+        if (!confirm(`Are you sure you want to permanently delete the "${roleName}" role? This cannot be undone.`)) return
+        try {
+            const res = await fetch(`/api/settings/roles?roleId=${roleId}`, { method: 'DELETE' })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+            await fetchData()
+        } catch (err: any) {
+            alert(`Failed to delete role: ${err.message}`)
+        }
+    }
+
     const handleTogglePermission = async (roleId: string, permissionId: string, currentlyHas: boolean) => {
+
         try {
             const action = currentlyHas ? 'REVOKE' : 'GRANT'
             const res = await fetch("/api/settings/roles", {
@@ -85,13 +98,22 @@ export default function RolesTab() {
                     <p className="text-sm text-gray-500">Manage user access rights across the platform via role assignments.</p>
                 </div>
                 {!isCreating && (
-                    <button
-                        onClick={() => setIsCreating(true)}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Custom Role
-                    </button>
+                    <div className="flex gap-2 print:hidden">
+                        <button
+                            onClick={() => window.print()}
+                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                        >
+                            <Printer className="mr-1.5 h-4 w-4" />
+                            Print
+                        </button>
+                        <button
+                            onClick={() => setIsCreating(true)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Custom Role
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -126,21 +148,28 @@ export default function RolesTab() {
                 </form>
             )}
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-                <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm print:shadow-none print:border-0">
+                <table className="min-w-full divide-y divide-gray-200 text-xs">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide sticky left-0 bg-gray-50 z-10 border-r border-b">
-                                Resource / Action
+                            <th scope="col" className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide sticky left-0 bg-gray-50 z-10 border-r border-b min-w-[100px]">
+                                Resource
                             </th>
                             {roles.map(role => (
-                                <th key={role.id} scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-900 uppercase tracking-wider border-l border-b bg-gray-50">
-                                    <div className="flex flex-col items-center gap-1.5">
-                                        <Shield className={`h-5 w-5 ${role.name === 'ADMIN' ? 'text-red-500' : 'text-blue-500'}`} />
-                                        <span>{role.name}</span>
-                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                                            {role._count?.users || 0} users
-                                        </span>
+                                <th key={role.id} scope="col" className="px-2 py-2 text-center text-[10px] font-bold text-gray-900 uppercase tracking-wider border-l border-b bg-gray-50 min-w-[70px] max-w-[90px]">
+                                    <div className="flex flex-col items-center gap-0.5">
+                                        <Shield className={`h-3.5 w-3.5 ${role.name === 'ADMIN' ? 'text-red-500' : 'text-blue-500'}`} />
+                                        <span className="truncate max-w-[80px]">{role.name}</span>
+                                        <span className="text-[9px] font-normal text-gray-500">{role._count?.users || 0}u</span>
+                                        {!role.isSystemDefault && (role._count?.users || 0) === 0 && (
+                                            <button
+                                                onClick={() => handleDeleteRole(role.id, role.name)}
+                                                className="mt-0.5 p-0.5 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors print:hidden"
+                                                title={`Delete ${role.name} role`}
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 </th>
                             ))}
@@ -149,12 +178,12 @@ export default function RolesTab() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {resources.map(resource => (
                             <tr key={resource as string} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 sticky left-0 bg-white/95 backdrop-blur border-r capitalize">
+                                <td className="px-3 py-1.5 whitespace-nowrap text-[11px] font-semibold text-gray-800 sticky left-0 bg-white/95 backdrop-blur border-r capitalize">
                                     {(resource as string).replace('_', ' ')}
                                 </td>
                                 {roles.map(role => (
-                                    <td key={`${resource}-${role.id}`} className="px-6 py-4 whitespace-nowrap text-sm text-center border-l bg-gray-50/20">
-                                        <div className="flex flex-col gap-2">
+                                    <td key={`${resource}-${role.id}`} className="px-1.5 py-1.5 whitespace-nowrap text-center border-l bg-gray-50/20">
+                                        <div className="flex flex-wrap justify-center gap-0.5">
                                             {actions.map(action => {
                                                 const permission = permissions.find(p => p.resource === resource && p.action === action)
                                                 if (!permission) return null
@@ -163,17 +192,19 @@ export default function RolesTab() {
                                                 const isAdmin = role.name === 'ADMIN'
 
                                                 return (
-                                                    <div key={action} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-white border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
-                                                        <span className="text-xs font-medium text-gray-500 uppercase w-16 text-left">{action}</span>
-                                                        <button
-                                                            disabled={isAdmin}
-                                                            onClick={() => handleTogglePermission(role.id, permission.id, hasPermission)}
-                                                            className={`p-1 rounded-full border ${hasPermission ? 'bg-green-50/50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'} ${isAdmin ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-110 active:scale-95 transition-all'}`}
-                                                            title={isAdmin ? "Admins have implicit access" : "Click to toggle"}
-                                                        >
-                                                            {hasPermission ? <Check className="h-4 w-4" strokeWidth={3} /> : <X className="h-4 w-4" strokeWidth={3} />}
-                                                        </button>
-                                                    </div>
+                                                    <button
+                                                        key={action}
+                                                        disabled={isAdmin}
+                                                        onClick={() => handleTogglePermission(role.id, permission.id, hasPermission)}
+                                                        title={`${action} — ${isAdmin ? 'Admin has implicit access' : hasPermission ? 'Click to revoke' : 'Click to grant'}`}
+                                                        className={`w-5 h-5 rounded flex items-center justify-center border text-[10px] font-bold transition-all
+                                                            ${hasPermission
+                                                                ? 'bg-green-100 text-green-700 border-green-300'
+                                                                : 'bg-gray-100 text-gray-400 border-gray-200'}
+                                                            ${isAdmin ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 active:scale-95 print:cursor-default'}`}
+                                                    >
+                                                        {hasPermission ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={2} />}
+                                                    </button>
                                                 )
                                             })}
                                         </div>
@@ -184,6 +215,7 @@ export default function RolesTab() {
                     </tbody>
                 </table>
             </div>
+            <p className="text-[10px] text-gray-400 text-right mt-1 print:block hidden">Printed: {new Date().toLocaleString()}</p>
         </div>
     )
 }
