@@ -308,7 +308,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                         color: '#6b7280',
                                         textAlign: i === 0 ? 'left' as const : 'right' as const,
                                         borderBottom: '2px solid #e5e7eb',
-                                        backgroundColor: '#f9fafb',
+                                        backgroundColor: '#fff',
                                         whiteSpace: 'nowrap' as const,
                                     }}>
                                         {h}
@@ -318,7 +318,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                         </thead>
                         <tbody>
                             {repTotals.map((rep: any, idx: number) => (
-                                <tr key={rep.id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
+                                <tr key={rep.id} style={{ backgroundColor: '#fff' }}>
                                     <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#111827', borderBottom: '1px solid #f3f4f6' }}>{rep.name}</td>
                                     <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#16a34a', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
                                         {rep.totalWon > 0 ? formatReportValue(rep.totalWon) : <span style={{ color: '#d1d5db' }}>—</span>}
@@ -340,7 +340,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                 </tr>
                             ))}
                             {/* Grand total row */}
-                            <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
+                            <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb', backgroundColor: '#fff' }}>
                                 <td style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: '#374151' }}>TOTAL</td>
                                 <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 700, color: '#16a34a', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatReportValue(grandWon)}</td>
                                 <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 700, color: '#2563eb', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatReportValue(grandExpected)}</td>
@@ -371,7 +371,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                 <th style={{
                                     padding: '8px 12px', textAlign: 'left', fontSize: '10px', fontWeight: 700,
                                     textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280',
-                                    borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb',
+                                    borderBottom: '2px solid #e5e7eb', backgroundColor: '#fff',
                                     position: 'sticky', left: 0, zIndex: 1, minWidth: '130px', whiteSpace: 'nowrap',
                                 }}>
                                     Sales Rep
@@ -380,7 +380,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                     <th key={month} style={{
                                         padding: '4px 8px', textAlign: 'right', fontSize: isHistory ? '7.5px' : '9px', fontWeight: 700,
                                         textTransform: 'uppercase', letterSpacing: '0.03em', color: '#6b7280',
-                                        borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb',
+                                        borderBottom: '2px solid #e5e7eb', backgroundColor: '#fff',
                                         minWidth: isHistory ? '60px' : '110px', whiteSpace: 'nowrap',
                                     }}>
                                         {month}
@@ -390,7 +390,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                 <th style={{
                                     padding: '4px 8px', textAlign: 'right', fontSize: isHistory ? '7.5px' : '9px', fontWeight: 700,
                                     textTransform: 'uppercase', letterSpacing: '0.03em', color: '#374151',
-                                    borderBottom: '2px solid #e5e7eb', backgroundColor: '#f0f4ff',
+                                    borderBottom: '2px solid #e5e7eb', backgroundColor: '#fff',
                                     minWidth: isHistory ? '60px' : '110px', whiteSpace: 'nowrap', borderLeft: '2px solid #e5e7eb',
                                 }}>
                                     Total
@@ -400,11 +400,11 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                         <tbody>
                             {/* One row per rep */}
                             {repTotals.map((rep: any, idx: number) => (
-                                <tr key={rep.id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
+                                <tr key={rep.id} style={{ backgroundColor: '#fff' }}>
                                     <td style={{
                                         padding: '8px 12px', fontSize: '12px', fontWeight: 600, color: '#111827',
                                         borderBottom: '1px solid #f3f4f6', borderRight: '1px solid #e5e7eb',
-                                        position: 'sticky', left: 0, backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
+                                        position: 'sticky', left: 0, backgroundColor: '#fff',
                                         zIndex: 1, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                     }} title={rep.name}>
                                         {rep.name}
@@ -420,7 +420,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                         )
                                     })}
                                     {/* Row total */}
-                                    <td style={{ padding: isHistory ? '4px 8px' : '7px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6', borderLeft: '2px solid #e5e7eb', verticalAlign: 'top', backgroundColor: idx % 2 === 0 ? '#f8faff' : '#f5f7ff' }}>
+                                    <td style={{ padding: isHistory ? '4px 8px' : '7px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6', borderLeft: '2px solid #e5e7eb', verticalAlign: 'top', backgroundColor: '#fff' }}>
                                         {rep.totalWon > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 700, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(rep.totalWon)}</div>}
                                         {rep.totalExpected > 0 && <div style={{ fontSize: isHistory ? '8px' : '10px', color: '#2563eb', lineHeight: 1.3, marginTop: rep.totalWon > 0 ? '2px' : 0 }}>{formatReportValue(rep.totalExpected)}</div>}
                                     </td>
@@ -428,17 +428,17 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                             ))}
                             {/* Month totals row */}
                             <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb' }}>
-                                <td style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#374151', position: 'sticky', left: 0, backgroundColor: '#f9fafb', zIndex: 1, borderRight: '1px solid #e5e7eb' }}>
+                                <td style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#374151', position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 1, borderRight: '1px solid #e5e7eb' }}>
                                     TOTAL
                                 </td>
                                 {data.months.map((month: string) => (
-                                    <td key={month} style={{ padding: isHistory ? '4px 8px' : '8px 12px', textAlign: 'right', backgroundColor: '#f9fafb', verticalAlign: 'top' }}>
+                                    <td key={month} style={{ padding: isHistory ? '4px 8px' : '8px 12px', textAlign: 'right', backgroundColor: '#fff', verticalAlign: 'top' }}>
                                         {monthTotals[month].won > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 700, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(monthTotals[month].won)}</div>}
                                         {monthTotals[month].expected > 0 && <div style={{ fontSize: isHistory ? '8px' : '10px', fontWeight: 600, lineHeight: 1.3, marginTop: monthTotals[month].won > 0 ? '2px' : 0 }}>{formatReportValue(monthTotals[month].expected)}</div>}
                                         {!monthTotals[month].won && !monthTotals[month].expected && <span style={{ color: '#d1d5db', fontSize: '11px' }}>—</span>}
                                     </td>
                                 ))}
-                                <td style={{ padding: isHistory ? '4px 8px' : '8px 12px', textAlign: 'right', backgroundColor: '#eef2ff', borderLeft: '2px solid #e5e7eb', verticalAlign: 'top' }}>
+                                <td style={{ padding: isHistory ? '4px 8px' : '8px 12px', textAlign: 'right', backgroundColor: '#fff', borderLeft: '2px solid #e5e7eb', verticalAlign: 'top' }}>
                                     <div style={{ fontSize: isHistory ? '11px' : '12px', fontWeight: 700, color: '#16a34a' }}>{formatReportValue(grandWon)}</div>
                                     <div style={{ fontSize: isHistory ? '9px' : '10px', color: '#2563eb', fontWeight: 600, marginTop: '2px' }}>{formatReportValue(grandExpected)}</div>
                                 </td>

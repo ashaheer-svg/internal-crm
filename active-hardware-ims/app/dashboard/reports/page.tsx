@@ -337,7 +337,7 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Summary */}
-                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 print:bg-white print:px-0 print:py-2 print:border-b">
+                        <div className="px-6 py-4 bg-white border-b border-gray-200 print:bg-white print:px-0 print:py-2 print:border-b">
                             <h4 className="text-sm font-medium text-gray-900 mb-2 print:text-xs print:mb-1">Summary</h4>
                             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 print:grid-cols-4 print:gap-2">
                                 {Object.entries(reportData.summary).map(([key, value]) => (
@@ -360,7 +360,7 @@ export default function ReportsPage() {
                         {/* Data Table */}
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-white">
                                     <tr>
                                         {reportData.data.length > 0 && Object.keys(reportData.data[0]).map((key) => (
                                             <th
