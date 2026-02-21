@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Printer } from "lucide-react"
+import { Printer, X } from "lucide-react"
 import { Currency } from "@/components/Currency"
-import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import '@/styles/print.css'
 
 type Product = {
   id: string
@@ -30,33 +30,20 @@ export default function PriceListPage() {
     product.category.toLowerCase().includes(brandSearch.toLowerCase())
   )
 
-  useEffect(() => {
-    fetchProducts()
-  }, [])
+  useEffect(() => { fetchProducts() }, [])
 
   async function fetchProducts() {
     try {
       const res = await fetch('/api/products')
-
       if (!res.ok) throw new Error('Failed to fetch products')
-
       const data = await res.json()
-      if (Array.isArray(data)) {
-        setProducts(data)
-      } else {
-        setProducts([])
-        console.error('Invalid products data:', data)
-      }
+      setProducts(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch products:', error)
       setProducts([])
     } finally {
       setLoading(false)
     }
-  }
-
-  function handlePrint() {
-    window.print()
   }
 
   if (loading) {
@@ -69,146 +56,176 @@ export default function PriceListPage() {
 
   return (
     <>
-      <style jsx global>{`
+      {/* ── Print Styles ─────────────────────────────────────────── */}
+      <style>{`
         @media print {
           @page {
-            size: A4 portrait;
-            margin: 10mm;
+            size: A4 landscape;
+            margin: 8mm 10mm;
           }
-          body {
-            margin: 0;
-            padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .no-print { display: none !important; }
-          nav { display: none !important; }
-          aside { display: none !important; }
-          header { display: none !important; }
-          
-          /* Ensure table fits and breaks correctly */
-          table { width: 100% !important; }
+          body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .no-print  { display: none !important; }
+          nav, aside, header, .sidebar { display: none !important; }
+
+          /* Compact type */
+          .pl-table th,
+          .pl-table td { font-size: 7.5pt !important; padding: 3px 5px !important; }
+
+          /* Keep rows together */
           thead { display: table-header-group; }
-          tr { break-inside: avoid; page-break-inside: avoid; }
-          th, td { font-size: 10pt !important; }
+          .pl-table tr { break-inside: avoid; page-break-inside: avoid; }
+
+          /* Force our column widths in print */
+          .pl-table { table-layout: fixed; width: 100% !important; }
+
+          /* Stripe rows for easy reading on B&W */
+          .pl-table tbody tr:nth-child(even) { background-color: #f8fafc !important; }
         }
       `}</style>
 
-      <div className="max-w-6xl mx-auto">
-        <div className="no-print mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Price List</h1>
+      <div className="max-w-7xl mx-auto">
+
+        {/* ── Screen Controls ───────────────────────────────────── */}
+        <div className="no-print mb-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Price List</h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {filteredProducts.length} of {products.length} products
+              </p>
+            </div>
             <button
-              onClick={handlePrint}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
             >
-              <Printer className="w-4 h-4 mr-2" />
+              <Printer className="w-4 h-4" />
               Print Price List
             </button>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label htmlFor="brand-search" className="block text-sm font-medium text-gray-700 mb-1">
-                Search by Brand
-              </label>
+
+          {/* Search */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
               <input
                 id="brand-search"
                 type="text"
                 value={brandSearch}
                 onChange={(e) => setBrandSearch(e.target.value)}
-                placeholder="Enter brand name..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Search by brand or category…"
+                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
             {brandSearch && (
-              <div className="pt-6">
-                <button
-                  onClick={() => setBrandSearch("")}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                >
-                  Clear Filter
-                </button>
-              </div>
+              <button
+                onClick={() => setBrandSearch("")}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" /> Clear
+              </button>
             )}
           </div>
+        </div>
+
+        {/* ── Print Header (hidden on screen) ──────────────────── */}
+        <div className="hidden print:block mb-2">
+          <DocumentHeader title="PRICE LIST" subtitle="Wholesale & Reseller Pricing" />
           {brandSearch && (
-            <p className="text-sm text-gray-600 mt-2">
-              Showing {filteredProducts.length} of {products.length} products
+            <p style={{ fontSize: '8pt', color: '#666', marginBottom: '4px' }}>
+              Filtered by: <strong>{brandSearch}</strong> — {filteredProducts.length} products shown
             </p>
           )}
         </div>
 
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden print:overflow-visible print:shadow-none">
-          {/* Header for print */}
-          <div className="hidden print:block border-b-0 p-0">
-            <DocumentHeader title="PRICE LIST" subtitle="Wholesale & Reseller Pricing" />
-          </div>
-
-          {/* Note */}
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 no-print">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> This price list shows current pricing for all products. Stock availability is shown for reference.
-            </p>
-          </div>
-
-          {/* Table */}
+        {/* ── Table ────────────────────────────────────────────── */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden print:shadow-none print:overflow-visible">
           <div className="overflow-x-auto print:overflow-visible">
-            <table className="min-w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-blue-600">
-                <tr>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[8%]" style={{ width: '8%' }}>
-                    SKU
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[42%]" style={{ width: '42%' }}>
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
-                    Brand
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
-                    Low Reseller
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
-                    Reseller
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider w-[10%]" style={{ width: '10%' }}>
-                    Stock
-                  </th>
+            <table className="pl-table min-w-full table-fixed text-sm" style={{ borderCollapse: 'collapse', width: '100%' }}>
+              <colgroup>
+                <col style={{ width: '9%' }} />  {/* SKU */}
+                <col style={{ width: '32%' }} />  {/* Product Name */}
+                <col style={{ width: '12%' }} />  {/* Brand */}
+                <col style={{ width: '11%' }} />  {/* Category */}
+                <col style={{ width: '10%' }} />  {/* Model */}
+                <col style={{ width: '11%' }} />  {/* Low Reseller */}
+                <col style={{ width: '11%' }} />  {/* Reseller */}
+                <col style={{ width: '4%' }} />  {/* Stock */}
+              </colgroup>
+              <thead>
+                <tr style={{ backgroundColor: '#2563eb' }}>
+                  {[
+                    { label: 'SKU', align: 'left' },
+                    { label: 'Product Name', align: 'left' },
+                    { label: 'Brand', align: 'left' },
+                    { label: 'Category', align: 'left' },
+                    { label: 'Model', align: 'left' },
+                    { label: 'Low Reseller', align: 'right' },
+                    { label: 'Reseller', align: 'right' },
+                    { label: 'Stock', align: 'center' },
+                  ].map(col => (
+                    <th
+                      key={col.label}
+                      style={{
+                        padding: '7px 8px',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        color: '#fff',
+                        textAlign: col.align as any,
+                        whiteSpace: 'nowrap',
+                        borderBottom: '2px solid #1d4ed8',
+                      }}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 overflow-hidden text-ellipsis">
-                      {product.sku}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 break-words">
-                      {product.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 overflow-hidden text-ellipsis">
-                      {product.brand}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 overflow-hidden text-ellipsis">
-                      {product.category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
-                      <Currency amount={product.lowResellerPrice} className="text-blue-600" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right">
-                      <Currency amount={product.resellerPrice} className="text-blue-600" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-center font-medium">
-                      {(product.inventory?.length || 0).toLocaleString()} units
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {filteredProducts.map((product, idx) => {
+                  const stock = product.inventory?.length || 0
+                  const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc'
+                  return (
+                    <tr key={product.id} style={{ backgroundColor: rowBg }}>
+                      {/* SKU */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', fontSize: '11px', fontWeight: 600, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.sku}
+                      </td>
+                      {/* Product Name */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '12px', color: '#111827', fontWeight: 500, wordBreak: 'break-word' }}>
+                        {product.name}
+                      </td>
+                      {/* Brand */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.brand}
+                      </td>
+                      {/* Category */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.category}
+                      </td>
+                      {/* Model */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.model}
+                      </td>
+                      {/* Low Reseller Price */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '12px', fontWeight: 600, color: '#2563eb', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <Currency amount={product.lowResellerPrice} className="text-blue-600" />
+                      </td>
+                      {/* Reseller Price */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '12px', fontWeight: 700, color: '#2563eb', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <Currency amount={product.resellerPrice} className="text-blue-600" />
+                      </td>
+                      {/* Stock */}
+                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', textAlign: 'center', fontWeight: 600, color: stock > 0 ? '#16a34a' : '#dc2626' }}>
+                        {stock}
+                      </td>
+                    </tr>
+                  )
+                })}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
-                      {brandSearch ? `No products found matching "${brandSearch}"` : "No products found"}
+                    <td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
+                      {brandSearch ? `No products matching "${brandSearch}"` : "No products found"}
                     </td>
                   </tr>
                 )}
@@ -216,17 +233,23 @@ export default function PriceListPage() {
             </table>
           </div>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 text-center">
-            <p className="text-sm font-medium text-gray-700">Pricing Tiers:</p>
-            <p className="text-xs text-gray-600 mt-1">
-              Low Reseller Price - For high-volume resellers | Reseller Price - Standard reseller pricing
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              This is a computer-generated document. Prices are subject to change without notice.
+          {/* ── Screen-only footer note ────────────────────────── */}
+          <div className="no-print border-t border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs text-gray-500">
+              <span className="font-semibold text-gray-600">Pricing Tiers:</span>{' '}
+              Low Reseller — high-volume partners &nbsp;·&nbsp; Reseller — standard reseller rate
+              &nbsp;·&nbsp; Prices subject to change without notice.
             </p>
           </div>
-          <DocumentFooter />
+
+          {/* ── Print footer ──────────────────────────────────── */}
+          <div className="hidden print:block">
+            <div style={{ marginTop: '6px', padding: '4px 0', borderTop: '1px solid #e5e7eb', fontSize: '7.5pt', color: '#9ca3af', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Low Reseller = high-volume rate &nbsp;·&nbsp; Reseller = standard rate &nbsp;·&nbsp; Prices subject to change without notice.</span>
+              <span>{filteredProducts.length} products &nbsp;·&nbsp; Printed {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            </div>
+            <DocumentFooter />
+          </div>
         </div>
       </div>
     </>
