@@ -9,50 +9,106 @@ interface DocumentHeaderProps {
     titleSize?: string
 }
 
-export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideMeta, titleSize = 'text-4xl' }: DocumentHeaderProps) {
+export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideMeta, titleSize }: DocumentHeaderProps) {
     return (
-        <div className="header flex justify-between items-center border-b-[3px] border-blue-600 pb-6 mb-10 h-32">
-            <div className="flex items-center">
-                <div className="relative w-64 h-32 flex-shrink-0">
-                    <Image
-                        src="/logo.png"
-                        alt="Active Solutions Logo"
-                        fill
-                        className="object-contain object-left"
-                        priority
-                    />
+        <div className="header pb-4 mb-8" style={{ borderBottom: '1px solid #e5e7eb' }}>
+            {/* Main row */}
+            <div className="flex justify-between items-center">
+                {/* Left: Logo + optional subtitle */}
+                <div className="flex items-center gap-6">
+                    <div className="relative flex-shrink-0" style={{ width: '180px', height: '72px' }}>
+                        <Image
+                            src="/logo.png"
+                            alt="Active Solutions Logo"
+                            fill
+                            className="object-contain object-left"
+                            priority
+                        />
+                    </div>
+                    {(subtitle || titleNextToLogo) && (
+                        <div
+                            style={{
+                                borderLeft: '1px solid #e5e7eb',
+                                paddingLeft: '1.5rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                gap: '2px',
+                            }}
+                        >
+                            {titleNextToLogo ? (
+                                <span
+                                    style={{
+                                        fontSize: '22px',
+                                        fontWeight: 900,
+                                        letterSpacing: '-0.05em',
+                                        textTransform: 'uppercase',
+                                        color: '#111827',
+                                    }}
+                                >
+                                    {title}
+                                </span>
+                            ) : subtitle ? (
+                                <span
+                                    style={{
+                                        fontSize: '10px',
+                                        fontWeight: 700,
+                                        letterSpacing: '0.2em',
+                                        textTransform: 'uppercase',
+                                        color: '#6b7280',
+                                    }}
+                                >
+                                    {subtitle}
+                                </span>
+                            ) : null}
+                        </div>
+                    )}
                 </div>
-                {titleNextToLogo && (
-                    <div className="ml-8 border-l-2 border-gray-200 pl-8 flex items-center h-20">
-                        <span className={`${titleSize} font-black tracking-tighter uppercase text-blue-600`}>
+
+                {/* Right: meta + document title */}
+                <div className="flex flex-col items-end gap-1">
+                    {!hideMeta && (
+                        <div className="flex flex-col items-end" style={{ lineHeight: 1 }}>
+                            <span
+                                style={{
+                                    fontSize: '8px',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.18em',
+                                    textTransform: 'uppercase',
+                                    color: '#9ca3af',
+                                }}
+                            >
+                                OFFICIAL DOCUMENT
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    color: '#6b7280',
+                                    marginTop: '3px',
+                                }}
+                            >
+                                {formatDate(new Date())}
+                            </span>
+                        </div>
+                    )}
+                    {!titleNextToLogo && (
+                        <div
+                            style={{
+                                fontSize: '28px',
+                                fontWeight: 900,
+                                letterSpacing: '-0.04em',
+                                textTransform: 'uppercase',
+                                color: '#111827',
+                                lineHeight: 1,
+                                paddingBottom: '4px',
+                                borderBottom: '2px solid #2563eb',
+                            }}
+                        >
                             {title}
-                        </span>
-                    </div>
-                )}
-                {subtitle && !titleNextToLogo && (
-                    <div className="ml-8 border-l-2 border-gray-200 pl-8 flex flex-col justify-center">
-                        <span className="text-blue-600 font-black tracking-[0.2em] text-[12px] uppercase">
-                            {subtitle}
-                        </span>
-                    </div>
-                )}
-            </div>
-            <div className="flex items-center gap-6 text-right h-full">
-                {!hideMeta && (
-                    <div className="flex flex-col items-end leading-none">
-                        <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
-                            OFFICIAL DOCUMENT
-                        </span>
-                        <span className="text-[12px] text-gray-500 font-black mt-1">
-                            {formatDate(new Date())}
-                        </span>
-                    </div>
-                )}
-                {!titleNextToLogo && (
-                    <div className={`px-8 py-3 bg-blue-600 text-white font-black ${titleSize} tracking-tighter uppercase shadow-sm`}>
-                        {title}
-                    </div>
-                )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )
