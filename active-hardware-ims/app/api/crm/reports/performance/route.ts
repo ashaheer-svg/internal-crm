@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function GET(request: Request) {
     try {
-        const user = await requireAuth()
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         const { searchParams } = new URL(request.url)
+        const scope = searchParams.get('scope') || 'all'
 
         // Define Timeline
         // Past 6 months
@@ -17,22 +19,25 @@ export async function GET(request: Request) {
         const startOfRange = new Date(today.getFullYear(), today.getMonth() - 3, 1) // 3 months ago
         const endOfRange = new Date(today.getFullYear(), today.getMonth() + 4, 0) // End of 3 months from now
 
+        // Check if user can see all projects
+        const u = user as any
+        const canViewAll = u.permissions?.includes('all:manage') ||
+            u.permissions?.includes('projects:manage') ||
+            u.permissions?.includes('projects:view_all')
+
         // 1. Fetch Sales Reps
         let salesReps: { id: string; name: string }[] = []
-        if (user.legacyRole === 'SALES' || user.role?.name === 'SALES') {
-            const me = await prisma.salesRep.findFirst({ where: { email: user.email } })
+
+        // Force personal scope if user lacks view_all OR explicitly requested mine
+        if (!canViewAll || scope === 'mine') {
+            const me = await prisma.salesRep.findFirst({ where: { email: (user as any).email } })
             if (me) salesReps = [me]
-            // If not found in SalesRep table, might fallback to empty or user Logic, but assuming standard flow
         } else {
             // Admin/Manager views all or filtered
             const filterRepId = searchParams.get('salesRepId')
-
             if (filterRepId && filterRepId !== 'ALL') {
                 salesReps = await prisma.salesRep.findMany({
-                    where: {
-                        id: filterRepId,
-                        isActive: true
-                    },
+                    where: { id: filterRepId, isActive: true },
                     orderBy: { name: 'asc' }
                 })
             } else {

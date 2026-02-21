@@ -27,9 +27,9 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                 <h3 className="text-lg font-medium text-gray-900">Project Quotes</h3>
                 <button
                     onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/new`)}
-                    className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                 >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     New Quote
                 </button>
             </div>

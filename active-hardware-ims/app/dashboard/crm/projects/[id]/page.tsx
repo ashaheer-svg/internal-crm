@@ -164,17 +164,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                         <button
                             onClick={() => setShowEditModal(true)}
-                            className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Edit Project
                         </button>
                         <button
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new`)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
+                            <Plus className="w-4 h-4" />
                             New Quote
                         </button>
                     </div>
@@ -279,9 +280,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                     </div>
                                     <button
                                         onClick={() => setActiveTab('team')}
-                                        className="mt-4 w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                        className="mt-4 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                                     >
-                                        <Plus className="w-4 h-4 mr-2" />
+                                        <Plus className="w-4 h-4" />
                                         Manage Team
                                     </button>
                                 </div>
@@ -295,7 +296,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 <h2 className="text-xl font-bold text-gray-900">Activity Timeline</h2>
                                 <button
                                     onClick={() => setShowActivityModal(true)}
-                                    className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                                 >
                                     Log Activity
                                 </button>

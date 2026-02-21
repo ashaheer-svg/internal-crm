@@ -25,9 +25,9 @@ export default function CRMTeamSection({ projectId, members, onUpdate }: TeamSec
                 <h3 className="text-lg font-medium text-gray-900">Project Team</h3>
                 <button
                     onClick={() => setShowAdd(!showAdd)}
-                    className="flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4" />
                     Add Member
                 </button>
             </div>
