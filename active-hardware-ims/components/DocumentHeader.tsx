@@ -6,9 +6,10 @@ interface DocumentHeaderProps {
     subtitle?: string
     titleNextToLogo?: boolean
     hideMeta?: boolean
+    titleSize?: string
 }
 
-export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideMeta }: DocumentHeaderProps) {
+export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideMeta, titleSize = 'text-4xl' }: DocumentHeaderProps) {
     return (
         <div className="header flex justify-between items-center border-b-[3px] border-blue-600 pb-6 mb-10 h-32">
             <div className="flex items-center">
@@ -23,7 +24,7 @@ export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideM
                 </div>
                 {titleNextToLogo && (
                     <div className="ml-8 border-l-2 border-gray-200 pl-8 flex items-center h-20">
-                        <span className="text-4xl font-black tracking-tighter uppercase text-blue-600">
+                        <span className={`${titleSize} font-black tracking-tighter uppercase text-blue-600`}>
                             {title}
                         </span>
                     </div>
@@ -48,7 +49,7 @@ export default function DocumentHeader({ title, subtitle, titleNextToLogo, hideM
                     </div>
                 )}
                 {!titleNextToLogo && (
-                    <div className="px-8 py-3 bg-blue-600 text-white font-black text-4xl tracking-tighter uppercase shadow-sm">
+                    <div className={`px-8 py-3 bg-blue-600 text-white font-black ${titleSize} tracking-tighter uppercase shadow-sm`}>
                         {title}
                     </div>
                 )}

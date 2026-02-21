@@ -143,7 +143,7 @@ export default function CRMReportsPage() {
 
                 {/* ── Print header ─────────────────────────────────── */}
                 <div className="hidden print:block">
-                    <DocumentHeader title="SALES FORECAST & HISTORY" subtitle="CRM Performance Report" />
+                    <DocumentHeader title="SALES FORECAST & HISTORY" subtitle="CRM Performance Report" titleSize="text-2xl" />
                     <div style={{ fontSize: '8pt', color: '#6b7280', marginBottom: '10px', display: 'flex', justifyContent: 'space-between' }}>
                         <span>{scope === 'mine' ? 'Scope: My Projects' : `Scope: All Projects${repLabel !== 'All Representatives' ? ` · Rep: ${repLabel}` : ''}`} · Period: ±2 months from current</span>
                         <span>Printed {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
