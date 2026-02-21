@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { getCurrentUser, requireAuth } from '@/lib/auth'
 
 export async function GET(request: Request) {
     try {
-        await requireAuth()
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
         const { searchParams } = new URL(request.url)
         const page = Number(searchParams.get('page')) || 1
         const limit = Number(searchParams.get('limit')) || 10
@@ -12,11 +14,24 @@ export async function GET(request: Request) {
         const stageId = searchParams.get('stageId')
         const status = searchParams.get('status')
         const salesRepId = searchParams.get('salesRepId')
+        const scope = searchParams.get('scope') || 'all' // 'all' | 'mine'
 
         const skip = (page - 1) * limit
 
+        // Check if user can see all projects
+        const canViewAll = user.permissions.includes('all:manage') ||
+            user.permissions.includes('projects:manage') ||
+            user.permissions.includes('projects:view_all')
+
         const where: any = {
             isDeleted: false
+        }
+
+        // Scope: restrict to own projects unless they have view_all permission
+        if (!canViewAll || scope === 'mine') {
+            where.members = {
+                some: { userId: user.id }
+            }
         }
 
         if (search) {
@@ -53,6 +68,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             projects,
+            canViewAll,
             meta: {
                 total,
                 page,

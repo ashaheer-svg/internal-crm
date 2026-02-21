@@ -14,6 +14,11 @@ const ALL_RESOURCES = [
     'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs'
 ]
 
+// Special per-resource permissions beyond the standard CRUD+manage matrix
+const SPECIAL_PERMISSIONS = [
+    { action: 'view_all', resource: 'projects', description: 'Can see all CRM projects (not just own)' }
+]
+
 async function main() {
     console.log('Seeding Default Roles and Permissions...')
 
@@ -31,6 +36,16 @@ async function main() {
                 create: { action, resource, description: `Can ${action} ${resource}` }
             })
         }
+    }
+
+    // Seed special permissions (outside standard CRUD matrix)
+    console.log('Creating special permissions...')
+    for (const sp of SPECIAL_PERMISSIONS) {
+        await prisma.permission.upsert({
+            where: { action_resource: { action: sp.action, resource: sp.resource } },
+            update: {},
+            create: sp
+        })
     }
 
     // Special global manage permission

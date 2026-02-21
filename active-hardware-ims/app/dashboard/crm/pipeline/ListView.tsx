@@ -31,7 +31,10 @@ interface SalesRep {
     name: string
 }
 
-export default function ListView() {
+export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
+    scope?: 'all' | 'mine'
+    onCanViewAllLoaded?: (val: boolean) => void
+}) {
     const router = useRouter()
     const [projects, setProjects] = useState<Project[]>([])
     const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 10, totalPages: 1 })
@@ -62,7 +65,7 @@ export default function ListView() {
 
     useEffect(() => {
         fetchProjects(1)
-    }, [debouncedSearch, status, salesRepId])
+    }, [debouncedSearch, status, salesRepId, scope])
 
     async function fetchProjects(page: number) {
         setLoading(true)
@@ -72,7 +75,8 @@ export default function ListView() {
                 limit: '10',
                 search: debouncedSearch,
                 status: status,
-                salesRepId: salesRepId
+                salesRepId: salesRepId,
+                scope: scope
             })
 
             const res = await fetch(`/api/crm/projects?${params}`)
@@ -80,6 +84,10 @@ export default function ListView() {
                 const data = await res.json()
                 setProjects(data.projects)
                 setMeta(data.meta)
+                // Notify parent about view_all capability
+                if (typeof data.canViewAll === 'boolean' && onCanViewAllLoaded) {
+                    onCanViewAllLoaded(data.canViewAll)
+                }
             }
         } catch (error) {
             console.error('Failed to fetch projects', error)

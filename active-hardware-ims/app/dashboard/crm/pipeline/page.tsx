@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, LayoutTemplate, List, BarChart3 } from 'lucide-react' // LayoutTemplate as Kanban icon
+import { Plus, LayoutTemplate, List, BarChart3, Users, User } from 'lucide-react'
 import ListView from './ListView'
 import { formatCurrency } from '@/lib/format'
 import CreateCustomerButton from '@/components/CreateCustomerButton'
@@ -36,6 +36,8 @@ export default function KanbanPage() {
     const [pipeline, setPipeline] = useState<PipelineData | null>(null)
     const [loading, setLoading] = useState(true)
     const [viewMode, setViewMode] = useState<'BOARD' | 'LIST'>('BOARD') // View Toggle State
+    const [canViewAll, setCanViewAll] = useState(false)  // from API: has projects:view_all permission
+    const [scope, setScope] = useState<'all' | 'mine'>('all') // scope toggle
     const router = useRouter()
 
     // Drag and Drop State
@@ -49,17 +51,18 @@ export default function KanbanPage() {
         } else {
             setLoading(false) // ListView fetches its own data
         }
-    }, [viewMode])
+    }, [viewMode, scope])
 
     async function fetchPipeline() {
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch('/api/crm/pipeline')
+            const res = await fetch(`/api/crm/pipeline?scope=${scope}`)
             const data = await res.json()
 
             if (res.ok) {
                 setPipeline(data)
+                if (typeof data.canViewAll === 'boolean') setCanViewAll(data.canViewAll)
             } else {
                 setError(data.error || 'Failed to load pipeline')
             }
@@ -231,6 +234,31 @@ export default function KanbanPage() {
                             <List className="w-4 h-4" />
                         </button>
                     </div>
+                    {/* Scope Toggle — only for users with projects:view_all permission */}
+                    {canViewAll && (
+                        <div className="flex bg-gray-100 p-1 rounded-md border border-gray-200" title="Switch between your projects and all projects">
+                            <button
+                                onClick={() => setScope('all')}
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${scope === 'all'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                <Users className="w-3 h-3" />
+                                All Projects
+                            </button>
+                            <button
+                                onClick={() => setScope('mine')}
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${scope === 'mine'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                <User className="w-3 h-3" />
+                                My Projects
+                            </button>
+                        </div>
+                    )}
                 </div>
 
 
@@ -263,7 +291,7 @@ export default function KanbanPage() {
                 <DashboardTasks />
                 {viewMode === 'BOARD' ? renderBoard() : (
                     <div className="flex-1 p-6">
-                        <ListView />
+                        <ListView scope={scope} onCanViewAllLoaded={setCanViewAll} />
                     </div>
                 )}
             </div>

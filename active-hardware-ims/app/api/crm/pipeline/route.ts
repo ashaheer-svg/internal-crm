@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: Request) {
     console.log('GET /api/crm/pipeline started')
     try {
-        console.log('Calling requireAuth...')
-        await requireAuth()
+        console.log('Calling getSession...')
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         console.log('Auth successful')
+
+        const { searchParams } = new URL(request.url)
+        const scope = searchParams.get('scope') || 'all'
+
+        // Check if user can see all projects
+        const canViewAll = user.permissions.includes('all:manage') ||
+            user.permissions.includes('projects:manage') ||
+            user.permissions.includes('projects:view_all')
+
+        // Build the project filter based on scope
+        const projectWhere: any = { isDeleted: false }
+        if (!canViewAll || scope === 'mine') {
+            projectWhere.members = { some: { userId: user.id } }
+        }
 
         // Fetch default pipeline with stages and projects
         console.log('Fetching pipeline...')
@@ -18,7 +33,7 @@ export async function GET() {
                     orderBy: { order: 'asc' },
                     include: {
                         projects: {
-                            where: { isDeleted: false },
+                            where: projectWhere,
                             include: {
                                 customer: true,
                                 members: {
@@ -55,7 +70,7 @@ export async function GET() {
                         orderBy: { order: 'asc' },
                         include: {
                             projects: {
-                                where: { isDeleted: false },
+                                where: projectWhere,
                                 include: {
                                     customer: true,
                                     members: {
@@ -68,10 +83,10 @@ export async function GET() {
                 }
             })
             console.log('Pipeline seeded')
-            return NextResponse.json(newPipeline)
+            return NextResponse.json({ ...newPipeline, canViewAll })
         }
 
-        return NextResponse.json(pipeline)
+        return NextResponse.json({ ...pipeline, canViewAll })
     } catch (error: any) {
         console.error('CRM Pipeline API Error:', error)
 
