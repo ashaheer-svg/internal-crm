@@ -19,9 +19,10 @@ export async function GET(request: Request) {
         const skip = (page - 1) * limit
 
         // Check if user can see all projects
-        const canViewAll = user.permissions.includes('all:manage') ||
-            user.permissions.includes('projects:manage') ||
-            user.permissions.includes('projects:view_all')
+        const u = user as any
+        const canViewAll = u.permissions?.includes('all:manage') ||
+            u.permissions?.includes('projects:manage') ||
+            u.permissions?.includes('projects:view_all')
 
         const where: any = {
             isDeleted: false

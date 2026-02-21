@@ -14,9 +14,10 @@ export async function GET(request: Request) {
         const scope = searchParams.get('scope') || 'all'
 
         // Check if user can see all projects
-        const canViewAll = user.permissions.includes('all:manage') ||
-            user.permissions.includes('projects:manage') ||
-            user.permissions.includes('projects:view_all')
+        const u = user as any
+        const canViewAll = u.permissions?.includes('all:manage') ||
+            u.permissions?.includes('projects:manage') ||
+            u.permissions?.includes('projects:view_all')
 
         // Build the project filter based on scope
         const projectWhere: any = { isDeleted: false }
