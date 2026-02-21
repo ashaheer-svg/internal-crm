@@ -148,7 +148,7 @@ export default function EditServicePackagePage() {
                                 value={sku}
                                 onChange={e => setSku(e.target.value)}
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -160,7 +160,7 @@ export default function EditServicePackagePage() {
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             >
                                 <option value="">Select a category</option>
                                 {categories.map((c) => (
@@ -178,7 +178,7 @@ export default function EditServicePackagePage() {
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -190,7 +190,7 @@ export default function EditServicePackagePage() {
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
                                 rows={3}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -205,7 +205,7 @@ export default function EditServicePackagePage() {
                                 <select
                                     value={serviceType}
                                     onChange={(e) => setServiceType(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="ONE_TIME">One Time (Labor/Install)</option>
                                     <option value="SUBSCRIPTION">Subscription</option>
@@ -220,7 +220,7 @@ export default function EditServicePackagePage() {
                                 <select
                                     value={billingCycle}
                                     onChange={(e) => setBillingCycle(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="">None / Manual</option>
                                     <option value="MONTHLY">Monthly</option>

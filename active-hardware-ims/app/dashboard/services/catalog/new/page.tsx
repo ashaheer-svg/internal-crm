@@ -73,7 +73,7 @@ export default function NewServicePackagePage() {
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/services/catalog" className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href="/dashboard/services/catalog" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Add Service Package</h1>
@@ -101,7 +101,7 @@ export default function NewServicePackagePage() {
                                 name="sku"
                                 id="sku"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. SVC-GOLD-1Y"
                             />
                         </div>
@@ -116,7 +116,7 @@ export default function NewServicePackagePage() {
                                 name="category"
                                 id="category"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             >
                                 <option value="">Select a category</option>
                                 {categories.map((category) => (
@@ -138,7 +138,7 @@ export default function NewServicePackagePage() {
                                 name="name"
                                 id="name"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. Gold Support Package (1 Year)"
                             />
                         </div>
@@ -153,7 +153,7 @@ export default function NewServicePackagePage() {
                                 id="description"
                                 name="description"
                                 rows={3}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="Details about what this service includes..."
                             />
                         </div>
@@ -170,7 +170,7 @@ export default function NewServicePackagePage() {
                                     id="serviceType"
                                     value={serviceType}
                                     onChange={(e) => setServiceType(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="ONE_TIME">One Time (Labor/Install)</option>
                                     <option value="SUBSCRIPTION">Subscription</option>
@@ -186,7 +186,7 @@ export default function NewServicePackagePage() {
                                     id="billingCycle"
                                     value={billingCycle}
                                     onChange={(e) => setBillingCycle(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="">None / Manual</option>
                                     <option value="MONTHLY">Monthly</option>

@@ -170,7 +170,7 @@ export default function EditServiceContractPage() {
                             type="text"
                             value={contractNumber}
                             onChange={(e) => setContractNumber(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
 
@@ -180,7 +180,7 @@ export default function EditServiceContractPage() {
                             type="text"
                             value={invoiceReference}
                             onChange={(e) => setInvoiceReference(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
 
@@ -196,7 +196,7 @@ export default function EditServiceContractPage() {
                                 step="0.01"
                                 value={contractValue}
                                 onChange={(e) => setContractValue(Number(e.target.value))}
-                                className="block w-full pl-10 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full pl-10 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -207,7 +207,7 @@ export default function EditServiceContractPage() {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                         <p className="mt-1 text-xs text-gray-500">Changing this will override the calculated duration.</p>
                     </div>
@@ -217,7 +217,7 @@ export default function EditServiceContractPage() {
                         <select
                             value={partnerId}
                             onChange={(e) => setPartnerId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">None</option>
                             {partners.map(p => (
@@ -231,7 +231,7 @@ export default function EditServiceContractPage() {
                         <select
                             value={salesRepId}
                             onChange={(e) => setSalesRepId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">None</option>
                             {salesReps.map(rep => (
@@ -246,7 +246,7 @@ export default function EditServiceContractPage() {
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
                 </div>
@@ -386,7 +386,7 @@ function LinkedAssetsSection({ contractId }: { contractId: string }) {
                     <select
                         value={selectedAssetId}
                         onChange={(e) => setSelectedAssetId(e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     >
                         <option value="">Select an available asset...</option>
                         {availableAssets.map(asset => (

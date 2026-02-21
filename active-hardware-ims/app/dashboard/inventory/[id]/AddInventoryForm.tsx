@@ -210,9 +210,9 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                         <div>
                             <Link
                                 href={`/dashboard/transactions/purchase-orders/${poId}`}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-green-700 hover:bg-green-100 transition-colors"
                             >
-                                <RefreshCw className="w-3 h-3 mr-1.5 rotate-180" />
+                                <RefreshCw className="w-3 h-3 rotate-180" />
                                 Back to Purchase Order
                             </Link>
                         </div>
@@ -233,7 +233,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                     required
                     rows={4}
                     autoFocus
-                    className="block w-full rounded-md border-gray-300 shadow-sm border p-3 text-sm font-mono"
+                    className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     placeholder="Enter serial numbers separated by comma, space, or new line&#10;Example:&#10;SN001, SN002, SN003&#10;or paste multiple lines"
                     value={serialInput}
                     onChange={(e) => setSerialInput(e.target.value)}
@@ -248,7 +248,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                     <label className="block text-sm font-medium text-gray-700 mb-1">Link to Purchase Order (Optional)</label>
                     <div className="relative">
                         <select
-                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm pl-9"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 pl-9 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             value={selectedPoId}
                             onChange={(e) => handlePoSelect(e.target.value)}
                             disabled={isLoadingData}
@@ -282,7 +282,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                             <input
                                 type="text"
                                 required
-                                className="block w-full rounded-l-md border-gray-300 shadow-sm border p-2 text-sm"
+                                className="block w-full rounded-l-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. GRN-YYMM-0001"
                                 value={grnNumber}
                                 onChange={(e) => setGrnNumber(e.target.value)}
@@ -290,7 +290,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                             <button
                                 type="button"
                                 onClick={fetchNextGrn}
-                                className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100"
+                                className="inline-flex items-center px-3 rounded-r-lg border border-l-0 border-gray-200 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 transition-colors"
                                 title="Auto-generated based on sequence"
                                 disabled={isFetchingGrn}
                             >
@@ -303,7 +303,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                         <input
                             type="text"
                             required
-                            className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             placeholder="e.g. Tech Distributor Inc."
                             value={supplier}
                             onChange={(e) => setSupplier(e.target.value)}
@@ -316,7 +316,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                 <label className="block text-sm font-medium text-gray-700 mb-1">Receive At Location *</label>
                 <select
                     required
-                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                    className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     value={locationId}
                     onChange={(e) => setLocationId(e.target.value)}
                 >
@@ -337,7 +337,7 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
                     step="0.01"
                     min="0"
                     required
-                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                    className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     placeholder="0.00"
                     value={unitCost}
                     onChange={(e) => setUnitCost(e.target.value)}
@@ -348,9 +348,9 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
             <button
                 type="submit"
                 disabled={loading || locations.length === 0 || serialNumbers.length === 0 || !grnNumber || !supplier}
-                className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4" />
                 {loading ? "Adding..." : `Add ${serialNumbers.length} Item${serialNumbers.length !== 1 ? 's' : ''} to Stock`}
             </button>
         </form>

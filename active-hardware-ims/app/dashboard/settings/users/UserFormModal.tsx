@@ -119,7 +119,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -140,7 +140,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             required
                         />
                     </div>
@@ -153,7 +153,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             type="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             required
                         />
                     </div>
@@ -166,7 +166,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             <select
                                 value={formData.roleId}
                                 onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                 required
                             >
                                 <option value="" disabled>Select Role...</option>
@@ -183,7 +183,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             <select
                                 value={formData.salesRepId}
                                 onChange={(e) => setFormData({ ...formData, salesRepId: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                             >
                                 <option value="">None</option>
                                 {salesReps.map(rep => (
@@ -203,7 +203,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             placeholder={isEditing ? "Leave blank to keep current" : "Enter password"}
                             minLength={8}
                         />
@@ -227,18 +227,18 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-4 border-t mt-6">
+                    <div className="flex justify-end gap-3 pt-4 border-t mt-6">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Saving...' : (isEditing ? 'Update User' : 'Create User')}
                         </button>

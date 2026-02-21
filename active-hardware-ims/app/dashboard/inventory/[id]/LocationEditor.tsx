@@ -49,7 +49,7 @@ export default function LocationEditor({ itemId, currentLocationId, currentLocat
         return (
             <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                 <select
-                    className="block w-full min-w-[120px] max-w-[200px] rounded-sm border-gray-300 shadow-sm border py-0 pl-1 pr-6 text-sm h-7 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full min-w-[120px] max-w-[200px] rounded-lg border border-gray-200 px-2 py-1 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     autoFocus
@@ -62,7 +62,7 @@ export default function LocationEditor({ itemId, currentLocationId, currentLocat
                     <button
                         onClick={handleSave}
                         disabled={loading}
-                        className="p-1 text-green-600 hover:text-green-800"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
                     >
                         {loading ? <span className="animate-spin h-3 w-3 border-2 border-green-600 rounded-full border-t-transparent block" /> : <Check className="w-4 h-4" />}
                     </button>
@@ -71,7 +71,7 @@ export default function LocationEditor({ itemId, currentLocationId, currentLocat
                             setIsEditing(false)
                             setSelectedLocation(currentLocationId)
                         }}
-                        className="p-1 text-red-500 hover:text-red-700"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>

@@ -221,7 +221,7 @@ export default function NewInvoicePage() {
     return (
         <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/transactions" className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href="/dashboard/transactions" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Delivery Order</h1>
@@ -248,7 +248,7 @@ export default function NewInvoicePage() {
                                     required
                                     value={invoiceNumber}
                                     onChange={(e) => setInvoiceNumber(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
 
@@ -259,7 +259,7 @@ export default function NewInvoicePage() {
                                     value={invoiceRef}
                                     onChange={(e) => setInvoiceRef(e.target.value)}
                                     placeholder="Optional - Enter invoice number if applicable"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
 
@@ -278,7 +278,7 @@ export default function NewInvoicePage() {
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
                                     disabled={!!selectedCustomer}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -289,7 +289,7 @@ export default function NewInvoicePage() {
                                     value={customerEmail}
                                     onChange={(e) => setCustomerEmail(e.target.value)}
                                     disabled={!!selectedCustomer}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -300,7 +300,7 @@ export default function NewInvoicePage() {
                                     value={customerPhone}
                                     onChange={(e) => setCustomerPhone(e.target.value)}
                                     disabled={!!selectedCustomer}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm disabled:bg-gray-100 disabled:text-gray-600"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-600"
                                 />
                             </div>
 
@@ -310,7 +310,7 @@ export default function NewInvoicePage() {
                                     rows={2}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
 
@@ -409,7 +409,7 @@ export default function NewInvoicePage() {
                                                     min="1"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItemQuantity(index, Number(e.target.value))}
-                                                    className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-center"
+                                                    className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                     aria-label="Quantity"
                                                 />
                                             ) : (
@@ -424,7 +424,7 @@ export default function NewInvoicePage() {
                                                 min="0"
                                                 value={item.unitPrice}
                                                 onChange={(e) => updateItemPrice(index, Number(e.target.value))}
-                                                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-right"
+                                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 aria-label="Price"
                                             />
                                         </div>
@@ -454,7 +454,7 @@ export default function NewInvoicePage() {
                     <div className="flex justify-end gap-3">
                         <Link
                             href="/dashboard/transactions"
-                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Cancel
                         </Link>

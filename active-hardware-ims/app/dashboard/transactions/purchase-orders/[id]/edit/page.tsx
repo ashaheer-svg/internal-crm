@@ -187,8 +187,8 @@ export default function EditPurchaseOrderPage({ params }: Props) {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href={`/dashboard/transactions/purchase-orders/${id}`} className="p-2 hover:bg-gray-200 rounded-full">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <Link href={`/dashboard/transactions/purchase-orders/${id}`} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Purchase Order</h1>
@@ -223,7 +223,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                 type="text"
                                 disabled
                                 value={poNumber}
-                                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm border p-2 text-sm cursor-not-allowed"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm shadow-sm cursor-not-allowed"
                             />
                         </div>
 
@@ -234,7 +234,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                 required
                                 value={supplier}
                                 onChange={(e) => setSupplier(e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -245,7 +245,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                             rows={2}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
                 </div>
@@ -293,7 +293,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                         value={item.quantity}
                                         onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
                                         disabled={isReadOnlyItems}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-center disabled:bg-gray-100"
+                                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
                                     />
                                 </div>
 
@@ -305,7 +305,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                         value={item.unitCost}
                                         onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
                                         disabled={isReadOnlyItems}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm text-right disabled:bg-gray-100"
+                                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
                                     />
                                 </div>
 
@@ -318,10 +318,10 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => removeItem(index)}
-                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             title="Remove item"
                                         >
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
@@ -341,16 +341,16 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                 <div className="flex justify-end gap-3">
                     <Link
                         href={`/dashboard/transactions/purchase-orders/${id}`}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                     >
                         Cancel
                     </Link>
                     <button
                         type="submit"
                         disabled={saving}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Save className="w-4 h-4 mr-2" />
+                        <Save className="w-4 h-4" />
                         {saving ? "Saving..." : "Save Changes"}
                     </button>
                 </div>

@@ -297,7 +297,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href={`/dashboard/transactions/delivery-orders/${id}`} className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href={`/dashboard/transactions/delivery-orders/${id}`} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">Edit Delivery Order</h1>
@@ -413,7 +413,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                         step="0.01"
                                         value={invoiceValue}
                                         onChange={(e) => setInvoiceValue(e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -424,7 +424,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     type="text"
                                     value={invoiceNumber}
                                     onChange={(e) => setInvoiceNumber(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     placeholder="e.g. INV-1234"
                                 />
                             </div>
@@ -433,7 +433,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 <select
                                     value={salesRepId}
                                     onChange={(e) => setSalesRepId(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="">Select Sales Rep</option>
                                     {salesReps.map(rep => (
@@ -525,7 +525,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                             onChange={(e) => setDeliveryAddress(e.target.value)}
                                                             rows={2}
                                                             placeholder="Enter custom delivery address..."
-                                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                         />
                                                     </div>
                                                 )}
@@ -538,7 +538,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                     onChange={(e) => setDeliveryAddress(e.target.value)}
                                                     rows={2}
                                                     placeholder="Enter delivery address..."
-                                                    className="mt-2 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                    className="mt-2 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 />
                                             </div>
                                         )}
@@ -602,7 +602,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => handleUpdateQuantity(idx, parseInt(e.target.value))}
-                                                className="w-full p-2 border border-gray-300 rounded-md text-center focus:ring-blue-500 focus:border-blue-500"
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 aria-label="Quantity"
                                             />
                                         </div>
@@ -617,7 +617,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                                         newItems[idx].unitPrice = Number(e.target.value)
                                                         setItems(newItems)
                                                     }}
-                                                    className="w-full p-2 border border-gray-300 rounded-md text-right pr-6 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-6"
                                                     aria-label="Price"
                                                 />
                                             </div>

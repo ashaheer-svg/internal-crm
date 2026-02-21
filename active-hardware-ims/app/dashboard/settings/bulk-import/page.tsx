@@ -265,7 +265,7 @@ export default function BulkImportPage() {
                             <button
                                 onClick={() => handleUpload(true)}
                                 disabled={!selectedFile || uploading}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Upload className="h-4 w-4" />
                                 {uploading ? 'Processing...' : 'Preview Import'}
@@ -286,7 +286,7 @@ export default function BulkImportPage() {
 
                         <button
                             onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             <Download className="h-4 w-4" />
                             Download CSV Template
@@ -337,14 +337,14 @@ export default function BulkImportPage() {
                                     setPreviewData(null)
                                     setResult(null)
                                 }}
-                                className="px-4 py-2 bg-white border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => handleUpload(false)}
                                 disabled={uploading}
-                                className="px-4 py-2 bg-green-600 text-white shadow-sm text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {uploading ? 'Importing...' : 'Confirm Import'}
                             </button>

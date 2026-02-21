@@ -127,7 +127,7 @@ export default function NewWarrantyClaimPage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/warranty" className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href="/dashboard/warranty" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <div>

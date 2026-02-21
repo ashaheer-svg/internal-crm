@@ -185,9 +185,9 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
         }
     }
 
-    const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    const buttonPrimaryClass = "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
-    const buttonSecondaryClass = "px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
+    const inputClass = "block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    const buttonPrimaryClass = "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    const buttonSecondaryClass = "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -197,8 +197,8 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                     <h2 className="text-xl font-semibold text-gray-900">
                         {customer ? "Edit Partner" : "Add New Partner"}
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <X className="h-6 w-6" />
+                    <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
 
@@ -341,7 +341,7 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                     <button
                                         type="button"
                                         onClick={() => openAddressForm()}
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                                     >
                                         + Add Address
                                     </button>
@@ -443,13 +443,15 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
                                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                 <button
                                                                     onClick={() => openAddressForm(addr)}
-                                                                    className="text-blue-600 hover:text-blue-800"
+                                                                    className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                                                                    title="Edit address"
                                                                 >
                                                                     Edit
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteAddress(addr.id)}
-                                                                    className="text-red-600 hover:text-red-800"
+                                                                    className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                                    title="Delete address"
                                                                 >
                                                                     Delete
                                                                 </button>

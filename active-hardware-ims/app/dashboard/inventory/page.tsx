@@ -174,7 +174,7 @@ export default function InventoryPage() {
                                             </td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                                 <div className="flex justify-end gap-2">
-                                                    <Link href={`/dashboard/inventory/${product.id}`} className="text-blue-600 hover:text-blue-900">
+                                                    <Link href={`/dashboard/inventory/${product.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
                                                         View
                                                     </Link>
                                                 </div>

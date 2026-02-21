@@ -107,7 +107,7 @@ export default function RentalAssetsPage() {
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     placeholder="Search assets by name or serial..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -131,7 +131,7 @@ export default function RentalAssetsPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${asset.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                                            asset.status === 'RENTED' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                        asset.status === 'RENTED' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                                         }`}>
                                         {asset.status}
                                     </span>
@@ -176,7 +176,7 @@ export default function RentalAssetsPage() {
                                 <input
                                     type="text"
                                     required
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     value={newName}
                                     onChange={e => setNewName(e.target.value)}
                                     placeholder="e.g. MacBook Pro 16"
@@ -187,7 +187,7 @@ export default function RentalAssetsPage() {
                                 <input
                                     type="text"
                                     required
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     value={newSerial}
                                     onChange={e => setNewSerial(e.target.value)}
                                     placeholder="e.g. SN-12345678"
@@ -196,7 +196,7 @@ export default function RentalAssetsPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
                                 <textarea
-                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     value={newNotes}
                                     onChange={e => setNewNotes(e.target.value)}
                                     rows={3}
@@ -206,7 +206,7 @@ export default function RentalAssetsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsCreateModalOpen(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                                 >
                                     Cancel
                                 </button>

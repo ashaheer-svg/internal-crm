@@ -131,7 +131,7 @@ export default function NewServiceAgreementPage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/services" className="p-2 hover:bg-gray-200 rounded-full">
+                <Link href="/dashboard/services" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Service Agreement</h1>
@@ -156,7 +156,7 @@ export default function NewServiceAgreementPage() {
                             required
                             value={customerId}
                             onChange={(e) => setCustomerId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">Select a Customer</option>
                             {customers.map(c => (
@@ -171,7 +171,7 @@ export default function NewServiceAgreementPage() {
                         <select
                             value={salesRepId}
                             onChange={(e) => setSalesRepId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">Select a Sales Rep</option>
                             {salesReps.map(rep => (
@@ -186,7 +186,7 @@ export default function NewServiceAgreementPage() {
                         <select
                             value={partnerId}
                             onChange={(e) => setPartnerId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">Select a Partner</option>
                             {customers.map(c => (
@@ -202,7 +202,7 @@ export default function NewServiceAgreementPage() {
                             required
                             value={productId}
                             onChange={(e) => setProductId(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">Select a Service</option>
                             {products.map(p => (
@@ -218,7 +218,7 @@ export default function NewServiceAgreementPage() {
                             type="text"
                             value={contractNumber}
                             onChange={(e) => setContractNumber(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             placeholder="e.g. CTR-2024-001"
                         />
                     </div>
@@ -229,7 +229,7 @@ export default function NewServiceAgreementPage() {
                             type="text"
                             value={invoiceReference}
                             onChange={(e) => setInvoiceReference(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             placeholder="e.g. INV-1023"
                         />
                     </div>
@@ -246,7 +246,7 @@ export default function NewServiceAgreementPage() {
                                 step="0.01"
                                 value={contractValue}
                                 onChange={(e) => setContractValue(Number(e.target.value))}
-                                className="block w-full pl-10 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full pl-10 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -259,7 +259,7 @@ export default function NewServiceAgreementPage() {
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -294,7 +294,7 @@ export default function NewServiceAgreementPage() {
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
                 </div>

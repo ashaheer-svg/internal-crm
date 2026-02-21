@@ -105,7 +105,7 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                 setFilterLocation(e.target.value)
                                 setCurrentPage(1)
                             }}
-                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                            className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         >
                             <option value="">All Locations</option>
                             {locations.map((loc) => (
@@ -145,7 +145,7 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                             placeholder="Search by serial number or customer..."
                             value={searchTerm}
                             onChange={(e) => handleSearch(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="block w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
                 </div>

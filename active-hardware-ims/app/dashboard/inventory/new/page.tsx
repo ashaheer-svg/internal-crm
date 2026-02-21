@@ -59,8 +59,8 @@ export default function NewProductPage() {
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/inventory" className="p-2 hover:bg-gray-200 rounded-full">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <Link href="/dashboard/inventory" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Add New Product</h1>
             </div>
@@ -87,7 +87,7 @@ export default function NewProductPage() {
                                 name="sku"
                                 id="sku"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. GPU-RTX4090-OC"
                             />
                         </div>
@@ -103,7 +103,7 @@ export default function NewProductPage() {
                                 name="brand"
                                 id="brand"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. ASUS"
                             />
                         </div>
@@ -119,7 +119,7 @@ export default function NewProductPage() {
                                 name="name"
                                 id="name"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. ROG Strix GeForce RTX 4090"
                             />
                         </div>
@@ -134,7 +134,7 @@ export default function NewProductPage() {
                                 name="category"
                                 id="category"
                                 required
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             >
                                 <option value="">Select a category</option>
                                 {categories.map((category) => (
@@ -155,7 +155,7 @@ export default function NewProductPage() {
                                 type="text"
                                 name="model"
                                 id="model"
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -169,7 +169,7 @@ export default function NewProductPage() {
                                 id="description"
                                 name="description"
                                 rows={3}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -185,7 +185,7 @@ export default function NewProductPage() {
                                 id="minStock"
                                 defaultValue={0}
                                 min={0}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
                     </div>
@@ -201,7 +201,7 @@ export default function NewProductPage() {
                                 id="warrantyMonths"
                                 defaultValue={0}
                                 min={0}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. 12 for 1 year"
                             />
                         </div>
@@ -210,19 +210,19 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="pt-5">
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-3">
                         <Link
                             href="/dashboard/inventory"
-                            className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Cancel
                         </Link>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="w-4 h-4 mr-2" />
+                            <Save className="w-4 h-4" />
                             {loading ? "Saving..." : "Save Product"}
                         </button>
                     </div>

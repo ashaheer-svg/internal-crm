@@ -130,7 +130,7 @@ export default function WarrantyLookupPage() {
                             value={serial}
                             onChange={(e) => setSerial(e.target.value)}
                             placeholder="Enter Serial Number..."
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-lg"
+                            className="block w-full pl-10 pr-3 py-3 rounded-lg border border-gray-200 text-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         />
                     </div>
                     <button

@@ -43,7 +43,7 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
         return (
             <div className="flex items-center justify-end space-x-2">
                 <select
-                    className="block w-32 rounded-md border-gray-300 shadow-sm border p-1 text-xs"
+                    className="block w-32 rounded-lg border border-gray-200 p-1 text-xs shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     value={targetLocation}
                     onChange={(e) => setTargetLocation(e.target.value)}
                     autoFocus
@@ -58,14 +58,14 @@ export default function InventoryItemActions({ itemId, currentLocationName, loca
                     <button
                         onClick={handleTransfer}
                         disabled={loading || !targetLocation}
-                        className="p-1 rounded-full text-green-600 hover:bg-green-100 hover:text-green-800 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
                         title="Confirm Transfer"
                     >
                         {loading ? <span className="animate-spin h-4 w-4 border-2 border-green-600 rounded-full border-t-transparent block"></span> : <Check className="w-4 h-4" />}
                     </button>
                     <button
                         onClick={() => setIsTransferring(false)}
-                        className="p-1 rounded-full text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Cancel"
                     >
                         <X className="w-4 h-4" />

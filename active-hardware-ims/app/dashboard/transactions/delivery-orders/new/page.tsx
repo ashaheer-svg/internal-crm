@@ -386,8 +386,8 @@ export default function NewDeliveryOrderPage() {
     return (
         <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/transactions?tab=do" className="p-2 hover:bg-gray-200 rounded-full">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <Link href="/dashboard/transactions?tab=do" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Delivery Order (Draft)</h1>
             </div>
@@ -438,7 +438,7 @@ export default function NewDeliveryOrderPage() {
                                     required
                                     value={orderNumber}
                                     onChange={(e) => setOrderNumber(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
 
@@ -480,7 +480,7 @@ export default function NewDeliveryOrderPage() {
                                         step="0.01"
                                         value={invoiceValue}
                                         onChange={(e) => setInvoiceValue(e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -491,7 +491,7 @@ export default function NewDeliveryOrderPage() {
                                     type="text"
                                     value={invoiceNumber}
                                     onChange={(e) => setInvoiceNumber(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     placeholder="e.g. INV-1234"
                                 />
                             </div>
@@ -507,7 +507,7 @@ export default function NewDeliveryOrderPage() {
                                         step="0.01"
                                         value={additionalCosts}
                                         onChange={(e) => setAdditionalCosts(e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -517,7 +517,7 @@ export default function NewDeliveryOrderPage() {
                                 <select
                                     value={salesRepId}
                                     onChange={(e) => setSalesRepId(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 >
                                     <option value="">Select Sales Rep</option>
                                     {salesReps.map(rep => (
@@ -531,7 +531,7 @@ export default function NewDeliveryOrderPage() {
                                     rows={1}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
 
@@ -610,7 +610,7 @@ export default function NewDeliveryOrderPage() {
                                                             value={deliveryAddress}
                                                             onChange={(e) => setDeliveryAddress(e.target.value)}
                                                             rows={2}
-                                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                         />
                                                     </div>
                                                 )}
@@ -623,7 +623,7 @@ export default function NewDeliveryOrderPage() {
                                                     onChange={(e) => setDeliveryAddress(e.target.value)}
                                                     rows={2}
                                                     placeholder="Enter delivery address..."
-                                                    className="mt-2 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                                    className="mt-2 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 />
                                             </div>
                                         )}
@@ -664,13 +664,13 @@ export default function NewDeliveryOrderPage() {
                                         onChange={(e) => setSerialInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSerialAdd())}
                                         placeholder="Scan or enter S/N"
-                                        className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     />
                                     <button
                                         type="button"
                                         onClick={handleSerialAdd}
                                         disabled={findingSerial || !serialInput}
-                                        className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                                        className="p-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-50"
                                     >
                                         <ScanLine className="w-4 h-4" />
                                     </button>
@@ -717,7 +717,7 @@ export default function NewDeliveryOrderPage() {
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => updateItemQuantity(idx, Number(e.target.value))}
-                                                className="w-full p-2 border border-gray-300 rounded-md text-center focus:ring-blue-500 focus:border-blue-500"
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 aria-label="Quantity"
                                             />
                                         </div>
@@ -727,7 +727,7 @@ export default function NewDeliveryOrderPage() {
                                                     type="number"
                                                     value={item.unitPrice}
                                                     onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
-                                                    className="w-full p-2 border border-gray-300 rounded-md text-right pr-6 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-6"
                                                     aria-label="Price"
                                                 />
                                             </div>
@@ -735,10 +735,10 @@ export default function NewDeliveryOrderPage() {
                                         <button
                                             type="button"
                                             onClick={() => removeItem(idx)}
-                                            className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             title="Remove item"
                                         >
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}
@@ -762,14 +762,14 @@ export default function NewDeliveryOrderPage() {
                             <button
                                 type="submit"
                                 disabled={loading || items.length === 0}
-                                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Save className="w-4 h-4 mr-2" />
+                                <Save className="w-4 h-4" />
                                 {loading ? "Creating..." : "Create Draft Order"}
                             </button>
                             <Link
                                 href="/dashboard/transactions"
-                                className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Cancel
                             </Link>

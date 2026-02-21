@@ -51,8 +51,8 @@ export default async function ProductDetailsPage({ params, searchParams }: PageP
         <div className="space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/inventory" className="p-2 hover:bg-gray-200 rounded-full">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    <Link href="/dashboard/inventory" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-gray-900">{product.name}</h1>
@@ -61,9 +61,9 @@ export default async function ProductDetailsPage({ params, searchParams }: PageP
                 </div>
                 <Link
                     href={`/dashboard/inventory/${product.id}/edit`}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                    <Edit className="w-4 h-4 mr-2" />
+                    <Edit className="w-4 h-4" />
                     Edit Product
                 </Link>
             </div>
