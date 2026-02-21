@@ -54,9 +54,9 @@ export default function CRMReportsPage() {
                     .recharts-wrapper,
                     .recharts-wrapper svg { width: 100% !important; height: 260px !important; }
 
-                    /* Compact table */
-                    .crm-report-table th,
-                    .crm-report-table td { font-size: 7.5pt !important; padding: 3px 6px !important; }
+                    /* Compact table — fixed row height for consistency */
+                    .crm-report-table th { font-size: 7.5pt !important; padding: 4px 6px !important; height: 22px !important; line-height: 1; }
+                    .crm-report-table td { font-size: 7.5pt !important; padding: 0 6px !important; height: 20px !important; line-height: 20px !important; overflow: hidden !important; white-space: nowrap !important; vertical-align: middle !important; }
 
                     /* Zebra stripes */
                     .crm-report-table tbody tr:nth-child(even) { background-color: #f8fafc !important; }
@@ -65,8 +65,8 @@ export default function CRMReportsPage() {
                     .crm-report-table tr { break-inside: avoid; }
                     thead { display: table-header-group; }
 
-                    /* Keep chart and table on same page if they fit, else break before chart */
-                    .print-chart-section { break-before: auto; }
+                    /* Hide chart — print table only */
+                    .print-chart-section { display: none !important; }
                 }
             `}</style>
 
@@ -227,11 +227,22 @@ function PerformanceTable({ selectedRep, scope }: { selectedRep: string; scope: 
                                     </td>
                                     {data.months.map((month: string) => {
                                         const cell = rep.data[month] || { won: 0, expected: 0 }
+                                        // Combine won + expected in one line so all rows are equal height
+                                        const parts = [
+                                            cell.won > 0 ? formatCurrency(cell.won) : null,
+                                            cell.expected > 0 ? `(${formatCurrency(cell.expected)})` : null,
+                                        ].filter(Boolean)
                                         return (
-                                            <td key={month} style={{ padding: '6px 8px', textAlign: 'right', fontSize: '11px', borderRight: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6' }}>
-                                                {cell.won > 0 && <div style={{ color: '#16a34a', fontWeight: 600 }}>{formatCurrency(cell.won)}</div>}
-                                                {cell.expected > 0 && <div style={{ color: '#2563eb', fontWeight: 500, fontSize: '10px' }}>{formatCurrency(cell.expected)}</div>}
-                                                {!cell.won && !cell.expected && <span style={{ color: '#d1d5db', fontSize: '11px' }}>—</span>}
+                                            <td key={month} style={{ padding: '6px 8px', textAlign: 'right', fontSize: '11px', borderRight: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                                                {parts.length > 0 ? (
+                                                    <span>
+                                                        {cell.won > 0 && <span style={{ color: '#16a34a', fontWeight: 600 }}>{formatCurrency(cell.won)}</span>}
+                                                        {cell.won > 0 && cell.expected > 0 && <span style={{ color: '#9ca3af', fontWeight: 400 }}> / </span>}
+                                                        {cell.expected > 0 && <span style={{ color: '#2563eb', fontWeight: 500 }}>{formatCurrency(cell.expected)}</span>}
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: '#d1d5db' }}>—</span>
+                                                )}
                                             </td>
                                         )
                                     })}
