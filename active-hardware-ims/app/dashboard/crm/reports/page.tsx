@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { formatCurrency } from '@/lib/format'
-import { User, Users, Printer, TrendingUp, DollarSign, Target } from 'lucide-react'
+import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft } from 'lucide-react'
 import DocumentHeader from '@/components/DocumentHeader'
 import DocumentFooter from '@/components/DocumentFooter'
 import '@/styles/print.css'
@@ -106,12 +107,34 @@ export default function CRMReportsPage() {
             <div className="p-6 max-w-7xl mx-auto space-y-5">
 
                 {/* ── Page header ─────────────────────────────────── */}
-                <div className="no-print flex justify-between items-start">
-                    <div>
-                        <h1 className="text-xl font-semibold text-gray-900">Sales Forecast &amp; History</h1>
-                        <p className="text-sm text-gray-500 mt-0.5">Performance breakdown by sales representative · ±2 months</p>
+                <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard/crm/pipeline" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                                {range === 'history' ? '12-Month History' : 'Sales Forecast & History'}
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-0.5">
+                                {range === 'history' ? 'CRM performance summary over the last year' : 'Pipeline breakdown by sales representative · ±2 months'}
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Range Toggle */}
+                        <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                            <button onClick={() => setRange('forecast')}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'forecast' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                                Forecast
+                            </button>
+                            <button onClick={() => setRange('history')}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'history' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                                History
+                            </button>
+                        </div>
+
                         {canViewAll && (
                             <>
                                 <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
@@ -126,9 +149,8 @@ export default function CRMReportsPage() {
                                 </div>
                                 {scope === 'all' && (
                                     <div className="flex items-center gap-2">
-                                        <label className="text-sm font-medium text-gray-600">Rep:</label>
                                         <select
-                                            className="rounded-lg border border-gray-200 shadow-sm px-2 py-1.5 text-sm bg-white focus:ring-blue-500 focus:border-blue-500"
+                                            className="rounded-lg border border-gray-200 shadow-sm px-2 py-1.5 text-sm bg-white focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             value={selectedRep}
                                             onChange={(e) => setSelectedRep(e.target.value)}
                                         >
@@ -141,22 +163,11 @@ export default function CRMReportsPage() {
                                 )}
                             </>
                         )}
-
-                        <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                            <button onClick={() => setRange('forecast')}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'forecast' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
-                                Forecast
-                            </button>
-                            <button onClick={() => setRange('history')}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'history' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
-                                12-Month History
-                            </button>
-                        </div>
                         <button
                             onClick={() => window.print()}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm ms-auto md:ms-0"
                         >
-                            <Printer className="w-4 h-4" /> Print Report
+                            <Printer className="w-4 h-4" /> Print
                         </button>
                     </div>
                 </div>
