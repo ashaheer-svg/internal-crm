@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Users, Building2, FileText, Shield, ScrollText, Database, Upload, Receipt, MessageSquare } from "lucide-react"
+import { Users, Building2, FileText, Shield, ScrollText, Database, Upload, Receipt, MessageSquare, Activity } from "lucide-react"
 
 const settingsLinks = [
     {
@@ -99,6 +99,13 @@ const settingsLinks = [
         href: "/dashboard/settings/integrations",
         icon: MessageSquare,
         description: "Manage WhatsApp & Third-Party Alerts",
+        adminOnly: true
+    },
+    {
+        name: "Maintenance & Health",
+        href: "/dashboard/settings/maintenance",
+        icon: Activity,
+        description: "System health, updates, and maintenance mode",
         adminOnly: true
     }
 ]

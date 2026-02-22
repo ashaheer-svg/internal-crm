@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/Sidebar"
 import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
+import MaintenanceGuard from "@/components/MaintenanceGuard"
 
 export default async function DashboardLayout({
     children,
@@ -46,7 +47,9 @@ export default async function DashboardLayout({
                     </div>
                 </header>
                 <main className="flex-1 overflow-auto p-6 print:overflow-visible print:h-auto print:p-0">
-                    {children}
+                    <MaintenanceGuard>
+                        {children}
+                    </MaintenanceGuard>
                 </main>
             </div>
         </div>

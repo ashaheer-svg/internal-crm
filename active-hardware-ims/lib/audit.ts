@@ -24,6 +24,7 @@ export type AuditEntityType =
     | 'ROLE'
     | 'ROLE_PERMISSION'
     | 'MESSAGE'
+    | 'SYSTEM_SETTING'
 
 interface AuditLogParams {
     action: AuditAction
