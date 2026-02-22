@@ -56,33 +56,29 @@ export default function MessagingPage() {
     const [tab, setTab] = useState<'inbox' | 'sent' | 'admin'>('inbox')
     const [searchQuery, setSearchQuery] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('ALL')
-    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null)
     const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false)
     const [currentUser, setCurrentUser] = useState<any>(null)
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
     // Resolution state
     const [resolutionComment, setResolutionComment] = useState('')
     const [submittingResolution, setSubmittingResolution] = useState(false)
 
     useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const res = await fetch('/api/auth/me')
+            if (res.ok) {
+                const data = await res.json()
+                setCurrentUser(data.user)
+            }
+        }
         fetchCurrentUser()
     }, [])
 
     useEffect(() => {
         fetchMessages()
     }, [tab])
-
-    const fetchCurrentUser = async () => {
-        const res = await fetch('/api/auth/me')
-        if (res.ok) {
-            const data = await res.json()
-            setCurrentUser(data.user)
-            if (data.user.role === 'ADMIN' || (data.user.permissions && data.user.permissions.includes('all:manage'))) {
-                // Admin can see admin tab
-            }
-        }
-    }
 
     const fetchMessages = async () => {
         setLoading(true)
@@ -106,7 +102,17 @@ export default function MessagingPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'read' })
             })
-            // Refresh to update read status locally if needed
+            setMessages(prev => prev.map(m => {
+                if (m.id === messageId) {
+                    return {
+                        ...m,
+                        receipts: m.receipts.map(r =>
+                            r.userId === currentUser.id ? { ...r, viewedAt: new Date().toISOString() } : r
+                        )
+                    }
+                }
+                return m
+            }))
         } catch (error) {
             console.error('Failed to mark as read:', error)
         }
@@ -128,7 +134,6 @@ export default function MessagingPage() {
 
             if (res.ok) {
                 setResolutionComment('')
-                // Update local state instead of full refetch
                 setMessages(prev => prev.map(m => {
                     if (m.id === messageId) {
                         return {
@@ -142,20 +147,8 @@ export default function MessagingPage() {
                     }
                     return m
                 }))
-                // update selected message too
-                if (selectedMessage?.id === messageId) {
-                    setSelectedMessage(prev => {
-                        if (!prev) return null
-                        return {
-                            ...prev,
-                            receipts: prev.receipts.map(r =>
-                                r.userId === currentUser.id
-                                    ? { ...r, isDone: true, doneAt: new Date().toISOString(), comment: resolutionComment }
-                                    : r
-                            )
-                        }
-                    })
-                }
+                setNotification({ type: 'success', message: "Task completed successfully!" })
+                setTimeout(() => setNotification(null), 3000)
             }
         } catch (error) {
             console.error('Failed to mark as done:', error)
@@ -164,322 +157,353 @@ export default function MessagingPage() {
         }
     }
 
-    const filteredMessages = messages.filter(m => {
+    const counts = {
+        total: messages.length,
+        unread: messages.filter(m => tab === 'inbox' && !m.receipts.find(r => r.userId === currentUser?.id)?.viewedAt).length,
+        urgent: messages.filter(m => m.priority === 'URGENT').length,
+        tasks: messages.filter(m => m.category === 'TASK').length
+    }
+
+    const toggleExpand = (id: string, isUnread: boolean) => {
+        const newExpanded = new Set(expandedIds)
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id)
+        } else {
+            newExpanded.add(id)
+            if (isUnread) handleReadMessage(id)
+        }
+        setExpandedIds(newExpanded)
+    }
+
+    const sortedMessages = [...messages].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+
+    const filteredMessages = sortedMessages.filter(m => {
         const matchesSearch = m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            m.sender.name.toLowerCase().includes(searchQuery.toLowerCase())
+            (m.sender?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
         const matchesCategory = categoryFilter === 'ALL' || m.category === categoryFilter
         return matchesSearch && matchesCategory
     })
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case 'URGENT': return 'text-red-600 bg-red-100'
-            case 'HIGH': return 'text-orange-600 bg-orange-100'
-            case 'MEDIUM': return 'text-blue-600 bg-blue-100'
-            case 'LOW': return 'text-gray-600 bg-gray-100'
-            default: return 'text-gray-600 bg-gray-100'
+            case 'URGENT': return 'text-red-600 bg-red-50 border-red-100'
+            case 'HIGH': return 'text-orange-600 bg-orange-50 border-orange-100'
+            case 'MEDIUM': return 'text-blue-600 bg-blue-50 border-blue-100'
+            case 'LOW': return 'text-gray-500 bg-gray-50 border-gray-100'
+            default: return 'text-gray-500 bg-gray-50 border-gray-100'
         }
     }
 
     return (
-        <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)]">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center">
-                    <Mail className="w-6 h-6 mr-2 text-blue-600" />
-                    Messaging
-                </h1>
-
-                {notification && (
-                    <div className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300",
-                        notification.type === 'success' ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"
-                    )}>
-                        {notification.message}
+        <div className="space-y-6 flex flex-col min-h-screen pb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
+                        <Mail className="w-6 h-6 text-white" />
                     </div>
-                )}
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Communication Center</h1>
+                        <p className="text-sm text-gray-500 font-medium">Manage team updates and critical tasks</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {notification && (
+                        <div className={cn(
+                            "px-4 py-2 rounded-xl text-sm font-bold shadow-sm animate-in fade-in slide-in-from-top-2",
+                            notification.type === 'success' ? "bg-green-100 text-green-700 border border-green-200" : "bg-red-100 text-red-700 border border-red-200"
+                        )}>
+                            {notification.message}
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setIsNewMessageModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 text-sm font-bold"
+                    >
+                        <Plus className="w-4 h-4" /> New Message
+                    </button>
+                </div>
             </div>
 
-            <div className="flex-1 flex bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                {/* Sidebar / List View */}
-                <div className={cn(
-                    "flex flex-col border-r border-gray-200 bg-white transition-all duration-300",
-                    selectedMessage ? "hidden md:flex md:w-1/3" : "w-full"
-                )}>
-                    <div className="p-4 border-b border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                                <Mail className="w-5 h-5 mr-2 text-blue-600" />
-                                Messaging
-                            </h2>
-                            <button
-                                onClick={() => setIsNewMessageModalOpen(true)}
-                                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
+            {/* Summary Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { label: 'Total Messages', count: counts.total, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Unread', count: counts.unread, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50' },
+                    { label: 'Urgent', count: counts.urgent, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+                    { label: 'Tasks', count: counts.tasks, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
+                ].map((stat, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
+                        <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
+                            <stat.icon className="w-5 h-5" />
                         </div>
-
-                        <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
-                            <button
-                                onClick={() => setTab('inbox')}
-                                className={cn("flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-md", tab === 'inbox' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
-                            >
-                                <Inbox className="w-3.5 h-3.5 mr-1.5" /> Inbox
-                            </button>
-                            <button
-                                onClick={() => setTab('sent')}
-                                className={cn("flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-md", tab === 'sent' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
-                            >
-                                <Send className="w-3.5 h-3.5 mr-1.5" /> Sent
-                            </button>
-                            {(currentUser?.role === 'ADMIN' || currentUser?.permissions?.includes('all:manage')) && (
-                                <button
-                                    onClick={() => setTab('admin')}
-                                    className={cn("flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-md", tab === 'admin' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
-                                >
-                                    <Filter className="w-3.5 h-3.5 mr-1.5" /> Admin
-                                </button>
-                            )}
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                            <p className="text-xl font-bold text-gray-900 leading-none">{stat.count}</p>
                         </div>
+                    </div>
+                ))}
+            </div>
 
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                {/* Filters/Tabs Bar */}
+                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/30">
+                    <div className="flex bg-gray-200 p-1 rounded-xl w-fit">
+                        <button
+                            onClick={() => setTab('inbox')}
+                            className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'inbox' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+                        >
+                            Inbox
+                        </button>
+                        <button
+                            onClick={() => setTab('sent')}
+                            className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'sent' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+                        >
+                            Sent
+                        </button>
+                        {(currentUser?.role === 'ADMIN' || currentUser?.permissions?.includes('all:manage')) && (
+                            <button
+                                onClick={() => setTab('admin')}
+                                className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'admin' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+                            >
+                                Admin Feed
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="bg-white border-gray-200 rounded-xl text-xs font-bold px-3 py-1.5 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                        >
+                            <option value="ALL">All Categories</option>
+                            <option value="TASK">Tasks</option>
+                            <option value="UPDATE">Updates</option>
+                            <option value="ALERT">Alerts</option>
+                            <option value="GENERAL">General</option>
+                        </select>
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search messages..."
+                                placeholder="Search conversations..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                className="pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 w-full md:w-64 shadow-sm"
                             />
                         </div>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto">
-                        {loading ? (
-                            <div className="flex justify-center p-8"><Clock className="w-5 h-5 animate-spin text-gray-400" /></div>
-                        ) : filteredMessages.length === 0 ? (
-                            <div className="text-center p-8 text-gray-500">No messages found</div>
-                        ) : (
-                            <div className="divide-y divide-gray-100">
-                                {filteredMessages.map((m) => {
-                                    const userReceipt = m.receipts.find(r => r.userId === currentUser?.id)
-                                    const isUnread = tab === 'inbox' && !userReceipt?.viewedAt
-                                    const isDone = userReceipt?.isDone
-
-                                    return (
-                                        <button
-                                            key={m.id}
-                                            onClick={() => {
-                                                setSelectedMessage(m)
-                                                if (isUnread) handleReadMessage(m.id)
-                                            }}
-                                            className={cn(
-                                                "w-full text-left p-4 hover:bg-gray-50 transition-colors border-l-4",
-                                                selectedMessage?.id === m.id ? "bg-blue-50 border-blue-600" : (isUnread ? "bg-white border-blue-400 font-semibold" : "bg-white border-transparent")
-                                            )}
-                                        >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{m.category}</span>
-                                                <span className="text-[10px] text-gray-400">{formatDateTime(m.createdAt)}</span>
-                                            </div>
-                                            <h3 className="text-sm text-gray-900 line-clamp-1">{m.subject}</h3>
-                                            <div className="flex items-center mt-2 gap-2">
-                                                <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-bold", getPriorityColor(m.priority))}>
-                                                    {m.priority}
-                                                </span>
-                                                {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />}
-                                                {m.deadline && (
-                                                    <span className="flex items-center text-[10px] text-orange-600">
-                                                        <Calendar className="w-3 h-3 mr-0.5" />
-                                                        {new Date(m.deadline).toLocaleDateString()}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
                 </div>
 
-                {/* Detail View */}
-                <div className={cn(
-                    "flex-1 flex flex-col bg-white",
-                    !selectedMessage && "hidden md:flex items-center justify-center bg-gray-50"
-                )}>
-                    {!selectedMessage ? (
-                        <div className="text-center">
-                            <div className="p-4 bg-gray-100 rounded-full inline-block mb-3">
-                                <MessageSquare className="w-8 h-8 text-gray-400" />
+                {/* Full-width Expandable List */}
+                <div className="divide-y divide-gray-100 min-h-[400px]">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center p-20 gap-3">
+                            <Clock className="w-8 h-8 animate-spin text-blue-500" />
+                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Hydrating Inbox...</p>
+                        </div>
+                    ) : filteredMessages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center p-20 text-center">
+                            <div className="p-4 bg-gray-50 rounded-full mb-3">
+                                <MessageSquare className="w-8 h-8 text-gray-300" />
                             </div>
-                            <p className="text-gray-500">Select a message to view details</p>
+                            <p className="text-gray-500 font-medium">No messages found in {tab} view</p>
+                            <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or search terms</p>
                         </div>
                     ) : (
-                        <>
-                            {/* Header */}
-                            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <button onClick={() => setSelectedMessage(null)} className="md:hidden mr-3 p-2 text-gray-400 hover:text-gray-600">
-                                        <ArrowLeft className="w-5 h-5" />
-                                    </button>
-                                    <div>
-                                        <h2 className="text-lg font-bold text-gray-900">{selectedMessage.subject}</h2>
-                                        <div className="flex items-center text-xs text-gray-500 mt-0.5">
-                                            <span className="font-medium text-gray-700">{selectedMessage.sender.name}</span>
-                                            <ChevronRight className="w-3 h-3 mx-1" />
-                                            <span>
-                                                {selectedMessage.recipientUser?.name || selectedMessage.recipientRole?.name || 'Multiple Recipients'}
+                        filteredMessages.map((m) => {
+                            const userReceipt = m.receipts.find(r => r.userId === currentUser?.id)
+                            const isUnread = tab === 'inbox' && !userReceipt?.viewedAt
+                            const isDone = userReceipt?.isDone
+                            const isExpanded = expandedIds.has(m.id)
+
+                            return (
+                                <div
+                                    key={m.id}
+                                    className={cn(
+                                        "transition-all duration-200 border-l-4",
+                                        isExpanded ? "bg-blue-50/30 border-blue-600" : (isUnread ? "bg-white border-blue-400" : "bg-white border-transparent hover:bg-gray-50")
+                                    )}
+                                >
+                                    {/* Single Line Summary */}
+                                    <div
+                                        onClick={() => toggleExpand(m.id, isUnread)}
+                                        className="p-4 flex items-center justify-between cursor-pointer group"
+                                    >
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className={cn(
+                                                "w-2 h-2 rounded-full flex-shrink-0 transition-all",
+                                                isUnread ? "bg-blue-600 scale-125 shadow-lg shadow-blue-200" : "bg-transparent"
+                                            )} />
+
+                                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 md:w-48 flex-shrink-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                                        <User className="w-4 h-4 text-gray-500" />
+                                                    </div>
+                                                    <span className={cn("text-sm truncate", isUnread ? "font-bold text-gray-900" : "text-gray-600 font-medium")}>
+                                                        {m.sender.name}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 uppercase tracking-tighter",
+                                                        m.category === 'TASK' ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600")}>
+                                                        {m.category}
+                                                    </span>
+                                                    <h3 className={cn("text-sm truncate pr-4 transition-colors",
+                                                        isUnread ? "font-bold text-gray-900" : "text-gray-700",
+                                                        !isExpanded && "group-hover:text-blue-600")}>
+                                                        {m.subject}
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                            <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border", getPriorityColor(m.priority))}>
+                                                {m.priority}
+                                            </div>
+                                            {isDone && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                            <span className="text-[10px] text-gray-400 font-bold whitespace-nowrap uppercase tracking-tighter hidden sm:block">
+                                                {formatDateTime(m.createdAt)}
                                             </span>
+                                            <ChevronRight className={cn("w-4 h-4 text-gray-300 transition-transform duration-300", isExpanded && "rotate-90 text-blue-600")} />
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold", getPriorityColor(selectedMessage.priority))}>
-                                        {selectedMessage.priority}
-                                    </span>
-                                </div>
-                            </div>
 
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6">
-                                <div className="flex items-center justify-between mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    <div className="flex gap-6">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-tighter">Category</span>
-                                            <span className="text-sm font-semibold">{selectedMessage.category}</span>
-                                        </div>
-                                        {selectedMessage.deadline && (
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-gray-400 uppercase tracking-tighter">Deadline</span>
-                                                <span className="text-sm font-semibold text-orange-600 flex items-center">
-                                                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                                                    {formatDateTime(selectedMessage.deadline)}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="text-[10px] text-gray-400 flex items-center">
-                                        <Clock className="w-3 h-3 mr-1" />
-                                        Sent on {formatDateTime(selectedMessage.createdAt)}
-                                    </div>
-                                </div>
-
-                                <div className="prose prose-sm max-w-none text-gray-800 whitespace-pre-wrap mb-8">
-                                    {selectedMessage.content}
-                                </div>
-
-                                {selectedMessage.attachments.length > 0 && (
-                                    <div className="mt-8 border-t pt-4">
-                                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center">
-                                            <Paperclip className="w-4 h-4 mr-2" />
-                                            Attachments ({selectedMessage.attachments.length})
-                                        </h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {selectedMessage.attachments.map(att => (
-                                                <a
-                                                    key={att.id}
-                                                    href={att.filePath}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
-                                                >
-                                                    <div className="p-2 bg-blue-50 rounded text-blue-600 group-hover:bg-blue-100 transition-colors">
-                                                        <Paperclip className="w-4 h-4" />
-                                                    </div>
-                                                    <div className="ml-3 overflow-hidden">
-                                                        <p className="text-xs font-medium text-gray-900 truncate">{att.fileName}</p>
-                                                        <p className="text-[10px] text-gray-400 uppercase">{att.fileType.split('/')[1] || 'FILE'}</p>
-                                                    </div>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tracking / Receipts */}
-                                <div className="mt-8 border-t pt-4">
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center">
-                                        <UsersIcon className="w-4 h-4 mr-2" />
-                                        Read & Resolution Tracking
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {selectedMessage.receipts.map(receipt => (
-                                            <div key={receipt.userId} className="flex items-start gap-4 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                <div className="p-2 bg-white rounded-full border border-gray-200 shadow-sm">
-                                                    <User className="w-4 h-4 text-gray-400" />
+                                    {/* Expanded Detail View */}
+                                    {isExpanded && (
+                                        <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
+                                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
+                                                <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap mb-8 leading-relaxed">
+                                                    {m.content}
                                                 </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between">
-                                                        <span className="font-bold text-gray-900">{receipt.user.name}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            {receipt.viewedAt ? (
-                                                                <span className="text-[10px] text-green-600 font-medium flex items-center">
-                                                                    Seen {formatDateTime(receipt.viewedAt)}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[10px] text-gray-400 font-medium underline decoration-dotted decoration-gray-300">Unseen</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
 
-                                                    {receipt.isDone ? (
-                                                        <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className="text-[10px] font-bold text-green-700 uppercase">Resolution</span>
-                                                                <span className="text-[10px] text-green-600">{formatDateTime(receipt.doneAt!)}</span>
-                                                            </div>
-                                                            <p className="text-sm text-green-800 font-medium italic">"{receipt.comment}"</p>
-                                                        </div>
-                                                    ) : (
-                                                        receipt.userId === currentUser?.id && (
-                                                            <div className="mt-3">
-                                                                <textarea
-                                                                    placeholder="Add a comment to mark as done..."
-                                                                    value={resolutionComment}
-                                                                    onChange={(e) => setResolutionComment(e.target.value)}
-                                                                    className="w-full p-3 text-sm border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 mb-2 transition-all shadow-inner"
-                                                                    rows={2}
-                                                                />
-                                                                <button
-                                                                    onClick={() => handleMarkDone(selectedMessage.id)}
-                                                                    disabled={submittingResolution}
-                                                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 shadow-md transform active:scale-95 transition-all"
+                                                {m.attachments.length > 0 && (
+                                                    <div className="mt-6 pt-6 border-t border-gray-50">
+                                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center">
+                                                            <Paperclip className="w-3.5 h-3.5 mr-2" />
+                                                            Files & Attachments
+                                                        </h4>
+                                                        <div className="flex flex-wrap gap-3">
+                                                            {m.attachments.map(att => (
+                                                                <a
+                                                                    key={att.id}
+                                                                    href={att.filePath}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center p-3 bg-gray-50 border border-transparent rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all group/file"
                                                                 >
-                                                                    {submittingResolution ? 'Saving...' : 'Mark as Done'}
-                                                                </button>
+                                                                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover/file:bg-blue-100">
+                                                                        <Paperclip className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                    <div className="ml-3 overflow-hidden">
+                                                                        <p className="text-xs font-bold text-gray-900 truncate max-w-[200px]">{att.fileName}</p>
+                                                                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{att.fileType.split('/')[1] || 'FILE'}</p>
+                                                                    </div>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Inline Resolution Tracking */}
+                                                <div className="mt-8 pt-6 border-t border-gray-100">
+                                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center">
+                                                        <UsersIcon className="w-3.5 h-3.5 mr-2" />
+                                                        Recipient Progress
+                                                    </h4>
+                                                    <div className="space-y-3">
+                                                        {m.receipts.map(receipt => (
+                                                            <div key={receipt.userId} className="flex items-start gap-4 text-sm bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
+                                                                <div className="p-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                                                    <User className="w-4 h-4 text-gray-400" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="font-bold text-gray-900">{receipt.user.name}</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {receipt.viewedAt ? (
+                                                                                <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">
+                                                                                    Seen {formatDateTime(receipt.viewedAt)}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mb-1.5 ml-1">Unseen</span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {receipt.isDone ? (
+                                                                        <div className="mt-2 p-3 bg-green-50 rounded-xl border border-green-100">
+                                                                            <div className="flex items-center justify-between mb-1">
+                                                                                <span className="text-[10px] font-bold text-green-700 uppercase">Resolved</span>
+                                                                                <span className="text-[10px] text-green-600 font-medium">{formatDateTime(receipt.doneAt!)}</span>
+                                                                            </div>
+                                                                            <p className="text-sm text-green-800 font-medium italic">"{receipt.comment}"</p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        receipt.userId === currentUser?.id && (
+                                                                            <div className="mt-3">
+                                                                                <div className="relative">
+                                                                                    <textarea
+                                                                                        placeholder="Action taken / Resolution comment..."
+                                                                                        value={resolutionComment}
+                                                                                        onChange={(e) => setResolutionComment(e.target.value)}
+                                                                                        className="w-full p-3 text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 mb-2 shadow-inner bg-white"
+                                                                                        rows={2}
+                                                                                    />
+                                                                                    <div className="absolute right-3 bottom-5">
+                                                                                        <button
+                                                                                            onClick={() => handleMarkDone(m.id)}
+                                                                                            disabled={submittingResolution}
+                                                                                            className="px-4 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-green-200 hover:bg-green-700 disabled:opacity-50 transition-all active:scale-95"
+                                                                                        >
+                                                                                            {submittingResolution ? 'Saving...' : 'Complete Task'}
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        )
-                                                    )}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        </>
+                            )
+                        })
                     )}
                 </div>
-
-                {isNewMessageModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden scale-in-center">
-                            <NewMessageForm
-                                onClose={() => setIsNewMessageModalOpen(false)}
-                                onSuccess={() => {
-                                    setIsNewMessageModalOpen(false)
-                                    fetchMessages()
-                                    setNotification({ type: 'success', message: 'Message sent successfully!' })
-                                }}
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
+
+            {isNewMessageModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <NewMessageForm
+                            onClose={() => setIsNewMessageModalOpen(false)}
+                            onSuccess={() => {
+                                setIsNewMessageModalOpen(false)
+                                fetchMessages()
+                                setNotification({ type: 'success', message: 'Message successfully dispatched!' })
+                                setTimeout(() => setNotification(null), 3000)
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
+
 
 function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
     const [users, setUsers] = useState<any[]>([])
