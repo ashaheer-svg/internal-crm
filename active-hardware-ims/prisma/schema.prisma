@@ -40,6 +40,11 @@ model User {
 
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
+
+  // Messaging Relations
+  sentMessages     Message[]        @relation("SentMessages")
+  receivedMessages Message[]        @relation("ReceivedMessages")
+  messageReceipts  MessageReceipt[]
 }
 
 // ------------------------------------------
@@ -56,6 +61,7 @@ model Role {
   
   users           User[]
   permissions     RolePermission[]
+  messages        Message[]
 }
 
 model Permission {
@@ -786,4 +792,63 @@ model SystemSetting {
   value     String // JSON or string value
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id               String       @id @default(uuid())
+  subject          String
+  content          String
+  category         String       @default("GENERAL") // e.g., TASK, ALERT, UPDATE, GENERAL
+  priority         String       @default("MEDIUM")  // LOW, MEDIUM, HIGH, URGENT
+  deadline         DateTime?
+  isSystemGenerated Boolean      @default(false)
+  
+  senderId         String
+  sender           User         @relation("SentMessages", fields: [senderId], references: [id])
+  
+  recipientUserId   String?
+  recipientUser     User?        @relation("ReceivedMessages", fields: [recipientUserId], references: [id])
+  
+  recipientRoleId   String?
+  recipientRole     Role?        @relation(fields: [recipientRoleId], references: [id])
+  
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  
+  attachments      MessageAttachment[]
+  receipts         MessageReceipt[]
+
+  @@index([senderId])
+  @@index([recipientUserId])
+  @@index([recipientRoleId])
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileName  String
+  filePath  String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+}
+
+model MessageReceipt {
+  id        String    @id @default(uuid())
+  messageId String
+  message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  
+  viewedAt  DateTime?
+  isDone    Boolean   @default(false)
+  doneAt    DateTime?
+  comment   String?
+  
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }

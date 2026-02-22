@@ -20,7 +20,8 @@ import {
     ChevronLeft,
     ChevronRight,
     BarChart3,
-    Search
+    Search,
+    Mail
 } from "lucide-react"
 
 const navigation = [
@@ -32,6 +33,7 @@ const navigation = [
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:create' },
     { name: "Warranty Lookup", href: "/dashboard/warranty/lookup", icon: Search, permission: 'warranty_lookup:read' },
+    { name: "Messaging", href: "/dashboard/messaging", icon: Mail },
     { name: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: 'reports:read' },
     { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: 'settings:manage' },
 ]
@@ -50,14 +52,28 @@ export function Sidebar() {
     const [user, setUser] = useState<User | null>(null)
     const [loggingOut, setLoggingOut] = useState(false)
     const [collapsed, setCollapsed] = useState(false)
+    const [unreadCount, setUnreadCount] = useState(0)
 
     useEffect(() => {
         fetchUser()
+        fetchUnreadCount()
         const savedState = localStorage.getItem('sidebar-collapsed')
         if (savedState) {
             setCollapsed(JSON.parse(savedState))
         }
     }, [])
+
+    const fetchUnreadCount = async () => {
+        try {
+            const res = await fetch('/api/messaging/count')
+            if (res.ok) {
+                const data = await res.json()
+                setUnreadCount(data.total || 0)
+            }
+        } catch (error) {
+            console.error('Failed to fetch unread count:', error)
+        }
+    }
 
     const toggleSidebar = () => {
         const newState = !collapsed
@@ -153,6 +169,17 @@ export function Sidebar() {
                                     )}
                                 />
                                 {!collapsed && item.name}
+                                {!collapsed && item.name === "Messaging" && unreadCount > 0 && (
+                                    <span className="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                                {collapsed && item.name === "Messaging" && unreadCount > 0 && (
+                                    <span className="absolute top-2 right-2 flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                    </span>
+                                )}
                             </Link>
                         )
                     })}

@@ -4,7 +4,7 @@ import { requireAuth } from '@/lib/auth'
 
 export async function GET() {
     try {
-        await requireAuth()
+        const user = await requireAuth()
 
         // Get total products count
         const totalProducts = await prisma.product.count({
@@ -73,6 +73,30 @@ export async function GET() {
             orderBy: { createdAt: 'desc' }
         })
 
+        // Get pending messages for this user
+        const pendingMessagesCount = await prisma.messageReceipt.count({
+            where: {
+                userId: user.id,
+                isDone: false
+            }
+        })
+
+        const pendingMessages = await prisma.message.findMany({
+            where: {
+                receipts: {
+                    some: {
+                        userId: user.id,
+                        isDone: false
+                    }
+                }
+            },
+            take: 5,
+            include: {
+                sender: { select: { name: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+
         return NextResponse.json({
             totalProducts,
             totalInventory,
@@ -106,7 +130,17 @@ export async function GET() {
                     description: `GRN ${grn.grnNumber} - ${grn.supplier}`,
                     date: grn.createdAt
                 }))
-            ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10)
+            ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10),
+            pendingMessagesCount,
+            pendingMessages: pendingMessages.map(m => ({
+                id: m.id,
+                subject: m.subject,
+                sender: m.sender.name,
+                priority: m.priority,
+                category: m.category,
+                deadline: m.deadline,
+                date: m.createdAt
+            }))
         })
     } catch (error: any) {
         if (error.message === 'Unauthorized' || error.message === 'Account is inactive') {
@@ -126,7 +160,9 @@ export async function GET() {
             pendingWarrantyClaims: 0,
             lowStockCount: 0,
             lowStockProducts: [],
-            recentActivity: []
+            recentActivity: [],
+            pendingMessagesCount: 0,
+            pendingMessages: []
         })
     }
 }

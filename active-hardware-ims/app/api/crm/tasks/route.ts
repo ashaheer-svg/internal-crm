@@ -29,8 +29,33 @@ export async function POST(request: Request) {
             }
         })
 
-        return NextResponse.json(task)
+        // Create auto-notification message
+        if (assignedToId) {
+            try {
+                // Using (prisma as any) safely handle potential stale linting/type indices
+                await (prisma as any).message.create({
+                    data: {
+                        subject: `New Task Assigned: ${task.title}`,
+                        content: `You have been assigned a new task: ${task.title}${description ? `\n\nDescription: ${description}` : ''}\nPriority: ${priority || 'MEDIUM'}${dueDate ? `\nDue Date: ${new Date(dueDate).toLocaleString()}` : ''}`,
+                        category: 'TASK',
+                        priority: priority || 'MEDIUM',
+                        deadline: dueDate ? new Date(dueDate) : null,
+                        isSystemGenerated: true,
+                        senderId: user.id,
+                        recipientUserId: assignedToId,
+                        receipts: {
+                            create: {
+                                userId: assignedToId
+                            }
+                        }
+                    }
+                })
+            } catch (msgError) {
+                console.error('Failed to send auto-notification:', msgError)
+            }
+        }
 
+        return NextResponse.json(task)
     } catch (error: any) {
         console.error('Failed to create task:', error)
         return NextResponse.json(

@@ -12,9 +12,14 @@ import {
     Clock,
     FileText,
     Users,
-    Truck
+    Truck,
+    Mail,
+    ChevronRight,
+    MessageSquare,
+    CheckCircle2,
+    User
 } from "lucide-react"
-import { formatDate, formatDateTime } from "@/lib/utils"
+import { formatDate, formatDateTime, cn } from "@/lib/utils"
 
 type DashboardStats = {
     totalProducts: number
@@ -39,6 +44,16 @@ type DashboardStats = {
         type: string
         description: string
         amount?: number
+        date: string
+    }>
+    pendingMessagesCount: number
+    pendingMessages: Array<{
+        id: string
+        subject: string
+        sender: string
+        priority: string
+        category: string
+        deadline?: string
         date: string
     }>
 }
@@ -265,6 +280,64 @@ export default function DashboardPage() {
                         </div>
                     ) : (
                         <div className="text-sm text-gray-500">No low stock alerts</div>
+                    )}
+                </div>
+
+                {/* Pending Messages Widget */}
+                <div className="rounded-lg bg-white p-6 shadow col-span-full">
+                    <div className="flex items-center justify-between mb-4 border-b pb-4">
+                        <div className="flex items-center gap-2">
+                            <Mail className="w-5 h-5 text-blue-500" />
+                            <h3 className="text-lg font-medium leading-6 text-gray-900">Pending Messages & Tasks</h3>
+                        </div>
+                        <Link href="/dashboard/messaging" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center">
+                            Go to Inbox <ChevronRight className="w-3 h-3 ml-0.5" />
+                        </Link>
+                    </div>
+
+                    {stats.pendingMessages.length > 0 ? (
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {stats.pendingMessages.map((msg) => (
+                                <Link
+                                    key={msg.id}
+                                    href="/dashboard/messaging"
+                                    className="flex flex-col p-4 border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-blue-200 transition-all group"
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className={cn(
+                                            "px-1.5 py-0.5 rounded text-[10px] font-bold",
+                                            msg.priority === 'URGENT' ? "bg-red-100 text-red-700" :
+                                                msg.priority === 'HIGH' ? "bg-orange-100 text-orange-700" :
+                                                    "bg-blue-100 text-blue-700"
+                                        )}>
+                                            {msg.priority}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-medium uppercase">{msg.category}</span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-gray-900 group-hover:text-blue-700 line-clamp-1 mb-1">{msg.subject}</h4>
+                                    <p className="text-xs text-gray-500 mb-3 flex items-center">
+                                        <User className="w-3 h-3 mr-1" /> From {msg.sender}
+                                    </p>
+
+                                    <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
+                                        {msg.deadline ? (
+                                            <span className="text-[10px] font-bold text-orange-600 flex items-center">
+                                                <Clock className="w-3 h-3 mr-1" />
+                                                Due: {new Date(msg.deadline).toLocaleDateString()}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400">No deadline</span>
+                                        )}
+                                        <span className="text-[10px] text-gray-400 italic">{formatDate(msg.date)}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                            <MessageSquare className="w-8 h-8 mb-2 opacity-20" />
+                            <p className="text-sm font-medium">All caught up! No pending messages.</p>
+                        </div>
                     )}
                 </div>
             </div>
