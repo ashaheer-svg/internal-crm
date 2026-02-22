@@ -1,7 +1,5 @@
-'use client'
-
-import { useState } from 'react'
-import { Calendar, CheckCircle, User } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar, CheckCircle, User, Users } from 'lucide-react'
 
 interface Task {
     id: string
@@ -9,6 +7,7 @@ interface Task {
     status: 'TODO' | 'DONE'
     dueDate: string | null
     assignedTo: { name: string } | null
+    assignedToRole: { name: string } | null
 }
 
 interface Member {
@@ -26,7 +25,28 @@ interface TaskSectionProps {
 export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: TaskSectionProps) {
     const [title, setTitle] = useState('')
     const [assignedToId, setAssignedToId] = useState('')
+    const [assignedToRoleId, setAssignedToRoleId] = useState('')
     const [dueDate, setDueDate] = useState('')
+
+    const [recipients, setRecipients] = useState<{ users: any[], roles: any[] }>({ users: [], roles: [] })
+    const [loadingRecipients, setLoadingRecipients] = useState(true)
+
+    useEffect(() => {
+        const fetchRecipients = async () => {
+            try {
+                const res = await fetch('/api/messaging/recipients')
+                if (res.ok) {
+                    const data = await res.json()
+                    setRecipients(data)
+                }
+            } catch (error) {
+                console.error('Failed to fetch recipients', error)
+            } finally {
+                setLoadingRecipients(false)
+            }
+        }
+        fetchRecipients()
+    }, [])
 
     async function addTask(e: React.FormEvent) {
         e.preventDefault()
@@ -40,12 +60,14 @@ export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: 
                     projectId,
                     title,
                     assignedToId: assignedToId || null,
+                    assignedToRoleId: assignedToRoleId || null,
                     dueDate: dueDate || null
                 })
             })
             if (res.ok) {
                 setTitle('')
                 setAssignedToId('')
+                setAssignedToRoleId('')
                 setDueDate('')
                 onUpdate()
             }
@@ -86,14 +108,34 @@ export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: 
                 <div className="w-48">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Assign To</label>
                     <select
-                        value={assignedToId}
-                        onChange={e => setAssignedToId(e.target.value)}
+                        value={assignedToId ? `user:${assignedToId}` : assignedToRoleId ? `role:${assignedToRoleId}` : ''}
+                        onChange={e => {
+                            const val = e.target.value
+                            if (val.startsWith('user:')) {
+                                setAssignedToId(val.replace('user:', ''))
+                                setAssignedToRoleId('')
+                            } else if (val.startsWith('role:')) {
+                                setAssignedToRoleId(val.replace('role:', ''))
+                                setAssignedToId('')
+                            } else {
+                                setAssignedToId('')
+                                setAssignedToRoleId('')
+                            }
+                        }}
                         className="w-full border-gray-300 rounded-md shadow-sm text-sm"
+                        disabled={loadingRecipients}
                     >
                         <option value="">Unassigned</option>
-                        {members.map((m) => (
-                            <option key={m.userId} value={m.userId}>{m.user.name}</option>
-                        ))}
+                        <optgroup label="Categories">
+                            {recipients.roles.map((r) => (
+                                <option key={r.id} value={`role:${r.id}`}>{r.name}</option>
+                            ))}
+                        </optgroup>
+                        <optgroup label="Users">
+                            {recipients.users.map((u) => (
+                                <option key={u.id} value={`user:${u.id}`}>{u.name}</option>
+                            ))}
+                        </optgroup>
                     </select>
                 </div>
                 <div className="w-40">
@@ -147,6 +189,12 @@ export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: 
                                                 <span className="text-xs text-gray-500 flex items-center">
                                                     <User className="w-3 h-3 mr-1" />
                                                     {task.assignedTo.name}
+                                                </span>
+                                            )}
+                                            {task.assignedToRole && (
+                                                <span className="text-xs text-blue-600 font-medium flex items-center bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                    <Users className="w-3 h-3 mr-1" />
+                                                    {task.assignedToRole.name}
                                                 </span>
                                             )}
                                         </div>
