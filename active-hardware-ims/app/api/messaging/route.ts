@@ -37,7 +37,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Recipient is required' }, { status: 400 })
         }
 
-        const deadline = deadlineStr ? new Date(deadlineStr) : null
+        const deadline = (deadlineStr && deadlineStr.trim()) ? new Date(deadlineStr) : null
 
         // Create the message
         const message = await prisma.message.create({

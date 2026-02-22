@@ -501,11 +501,17 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
     useEffect(() => {
         const fetchData = async () => {
             const [uRes, rRes] = await Promise.all([
-                fetch('/api/settings/users'),
+                fetch('/api/users'),
                 fetch('/api/settings/roles')
             ])
-            if (uRes.ok) setUsers(await uRes.json())
-            if (rRes.ok) setRoles(await rRes.json())
+            if (uRes.ok) {
+                const uData = await uRes.json()
+                setUsers(uData.users || [])
+            }
+            if (rRes.ok) {
+                const rData = await rRes.json()
+                setRoles(rData.roles || [])
+            }
             setLoading(false)
         }
         fetchData()
