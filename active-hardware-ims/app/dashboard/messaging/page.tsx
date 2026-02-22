@@ -524,17 +524,11 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
 
     useEffect(() => {
         const fetchData = async () => {
-            const [uRes, rRes] = await Promise.all([
-                fetch('/api/users'),
-                fetch('/api/settings/roles')
-            ])
-            if (uRes.ok) {
-                const uData = await uRes.json()
-                setUsers(uData.users || [])
-            }
-            if (rRes.ok) {
-                const rData = await rRes.json()
-                setRoles(rData.roles || [])
+            const res = await fetch('/api/messaging/recipients')
+            if (res.ok) {
+                const data = await res.json()
+                setUsers(data.users || [])
+                setRoles(data.roles || [])
             }
             setLoading(false)
         }
