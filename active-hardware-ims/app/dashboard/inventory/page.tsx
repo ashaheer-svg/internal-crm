@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Package, Printer, Search } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type Product = {
     id: string
@@ -84,33 +85,49 @@ export default function InventoryPage() {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inventory Management</h1>
-                <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showInactive}
-                            onChange={(e) => setShowInactive(e.target.checked)}
-                            className="sr-only peer"
-                        />
-                        <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span className="ms-3 text-sm font-medium text-gray-700">Show Inactive</span>
-                    </label>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Link
-                        href="/dashboard/inventory/price-list"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        <Printer className="w-4 h-4" />
-                        Price List
-                    </Link>
-                    <Link
-                        href="/dashboard/inventory/new"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Product
-                    </Link>
+                <div className="flex items-center gap-4">
+                    {/* Status Segmented Control */}
+                    <div className="flex p-1 bg-gray-100/80 rounded-xl border border-gray-200 shadow-sm backdrop-blur-sm">
+                        <button
+                            onClick={() => setShowInactive(false)}
+                            className={cn(
+                                "px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200",
+                                !showInactive
+                                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            Active Only
+                        </button>
+                        <button
+                            onClick={() => setShowInactive(true)}
+                            className={cn(
+                                "px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200",
+                                showInactive
+                                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            All Products
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/dashboard/inventory/price-list"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" />
+                            Price List
+                        </Link>
+                        <Link
+                            href="/dashboard/inventory/new"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Product
+                        </Link>
+                    </div>
                 </div>
             </div>
 
