@@ -284,14 +284,14 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Pending Messages Widget */}
-                <div className="rounded-lg bg-white p-6 shadow col-span-full">
-                    <div className="flex items-center justify-between mb-4 border-b pb-4">
+                <div className="rounded-lg bg-white p-6 shadow col-span-full border border-gray-100">
+                    <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
                         <div className="flex items-center gap-2">
-                            <Mail className="w-5 h-5 text-blue-500" />
-                            <h3 className="text-lg font-medium leading-6 text-gray-900">Pending Messages & Tasks</h3>
+                            <Mail className="w-5 h-5 text-blue-600" />
+                            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Pending Messages & Tasks</h3>
                         </div>
-                        <Link href="/dashboard/messaging" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center">
-                            Go to Inbox <ChevronRight className="w-3 h-3 ml-0.5" />
+                        <Link href="/dashboard/messaging" className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                            View Inbox <ChevronRight className="w-3.5 h-3.5 ml-1" />
                         </Link>
                     </div>
 
@@ -301,22 +301,32 @@ export default function DashboardPage() {
                                 <Link
                                     key={msg.id}
                                     href="/dashboard/messaging"
-                                    className="flex flex-col p-4 border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-blue-200 transition-all group"
+                                    className="flex flex-col p-4 border border-gray-100 rounded-xl hover:bg-white hover:border-blue-400 hover:shadow-lg transition-all group relative overflow-hidden"
                                 >
+                                    <div className="absolute top-0 right-0 p-1">
+                                        <div className={cn(
+                                            "w-1.5 h-1.5 rounded-full",
+                                            msg.priority === 'URGENT' ? "bg-red-500 animate-pulse" :
+                                                msg.priority === 'HIGH' ? "bg-orange-500" : "bg-blue-500"
+                                        )} />
+                                    </div>
                                     <div className="flex justify-between items-start mb-2">
                                         <span className={cn(
-                                            "px-1.5 py-0.5 rounded text-[10px] font-bold",
+                                            "px-1.5 py-0.5 rounded text-[10px] font-bold tracking-tight uppercase",
                                             msg.priority === 'URGENT' ? "bg-red-100 text-red-700" :
                                                 msg.priority === 'HIGH' ? "bg-orange-100 text-orange-700" :
                                                     "bg-blue-100 text-blue-700"
                                         )}>
                                             {msg.priority}
                                         </span>
-                                        <span className="text-[10px] text-gray-400 font-medium uppercase">{msg.category}</span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{msg.category}</span>
                                     </div>
                                     <h4 className="text-sm font-bold text-gray-900 group-hover:text-blue-700 line-clamp-1 mb-1">{msg.subject}</h4>
-                                    <p className="text-xs text-gray-500 mb-3 flex items-center">
-                                        <User className="w-3 h-3 mr-1" /> From {msg.sender}
+                                    <p className="text-xs text-gray-500 mb-3 flex items-center font-medium">
+                                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+                                            <User className="w-3 h-3 text-gray-400" />
+                                        </div>
+                                        From {msg.sender}
                                     </p>
 
                                     <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
@@ -326,17 +336,20 @@ export default function DashboardPage() {
                                                 Due: {new Date(msg.deadline).toLocaleDateString()}
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] text-gray-400">No deadline</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">No deadline</span>
                                         )}
-                                        <span className="text-[10px] text-gray-400 italic">{formatDate(msg.date)}</span>
+                                        <span className="text-[10px] text-gray-400 italic font-medium">{formatDate(msg.date)}</span>
                                     </div>
                                 </Link>
                             ))}
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                            <MessageSquare className="w-8 h-8 mb-2 opacity-20" />
-                            <p className="text-sm font-medium">All caught up! No pending messages.</p>
+                        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                            <div className="p-4 bg-gray-50 rounded-full mb-3">
+                                <MessageSquare className="w-8 h-8 opacity-20" />
+                            </div>
+                            <p className="text-sm font-bold text-gray-500">All caught up!</p>
+                            <p className="text-xs text-gray-400 mt-1">No pending messages or tasks</p>
                         </div>
                     )}
                 </div>
