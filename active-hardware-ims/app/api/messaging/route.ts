@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { join, extname } from 'path'
+import { logCreate } from '@/lib/audit'
+
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.zip', '.txt']
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'messaging')
 
@@ -21,6 +24,17 @@ export async function POST(req: Request) {
 
         if (!subject || !content) {
             return NextResponse.json({ error: 'Subject and content are required' }, { status: 400 })
+        }
+
+        // Verify Recipient Existence
+        if (recipientUserId) {
+            const recipient = await prisma.user.findUnique({ where: { id: recipientUserId } })
+            if (!recipient) return NextResponse.json({ error: 'Recipient user not found' }, { status: 400 })
+        } else if (recipientRoleId) {
+            const role = await prisma.role.findUnique({ where: { id: recipientRoleId } })
+            if (!role) return NextResponse.json({ error: 'Recipient role not found' }, { status: 400 })
+        } else {
+            return NextResponse.json({ error: 'Recipient is required' }, { status: 400 })
         }
 
         const deadline = deadlineStr ? new Date(deadlineStr) : null
@@ -46,6 +60,11 @@ export async function POST(req: Request) {
 
             if (file.size > 10 * 1024 * 1024) {
                 return NextResponse.json({ error: `File ${file.name} exceeds 10MB limit` }, { status: 400 })
+            }
+
+            const ext = extname(file.name).toLowerCase()
+            if (!ALLOWED_EXTENSIONS.includes(ext)) {
+                return NextResponse.json({ error: `File type ${ext} is not allowed` }, { status: 400 })
             }
 
             const bytes = await file.arrayBuffer()
@@ -97,6 +116,14 @@ export async function POST(req: Request) {
                 })
             }
         }
+
+        // Audit Log
+        await logCreate('MESSAGE', message.id, user.id, user.name, {
+            subject: message.subject,
+            category: message.category,
+            recipientUserId,
+            recipientRoleId
+        })
 
         return NextResponse.json({ message })
     } catch (error: any) {

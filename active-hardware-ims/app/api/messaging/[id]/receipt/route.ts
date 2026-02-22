@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { logUpdate } from '@/lib/audit'
 
 export async function PATCH(
     request: Request,
@@ -49,6 +50,9 @@ export async function PATCH(
                     comment
                 }
             })
+
+            // Audit Log
+            await logUpdate('MESSAGE', messageId, user.id, (user as any).name, { status: 'PENDING' }, { status: 'DONE', comment })
         } else {
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
         }

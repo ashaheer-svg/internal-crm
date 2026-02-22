@@ -23,6 +23,7 @@ export type AuditEntityType =
     | 'CRM_PIPELINE'
     | 'ROLE'
     | 'ROLE_PERMISSION'
+    | 'MESSAGE'
 
 interface AuditLogParams {
     action: AuditAction
