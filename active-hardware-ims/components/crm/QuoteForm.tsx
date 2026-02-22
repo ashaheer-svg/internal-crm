@@ -44,6 +44,9 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
     const [billToCustomer, setBillToCustomer] = useState<any>(initialData?.billTo || null)
     const [shipToCustomer, setShipToCustomer] = useState<any>(initialData?.shipTo || null)
 
+    // Items State
+    const [items, setItems] = useState<QuoteItem[]>(initialData?.items || [])
+
     const [availableTaxes, setAvailableTaxes] = useState<any[]>([])
     const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([])
 
@@ -106,6 +109,17 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             .catch(err => console.error('Failed to fetch taxes', err))
     }, [projectId])
 
+    // Calculations
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0)
+
+    // Calculate Tax
+    const selectedTaxes = availableTaxes.filter(t => selectedTaxIds.includes(t.id))
+    const taxTotal = selectedTaxes.reduce((sum, tax) => {
+        return sum + (subtotal * (tax.rate / 100))
+    }, 0)
+
+    const total = subtotal + taxTotal
+
     // Handlers
     const handleSaleTypeChange = (newType: "DIRECT" | "PARTNER") => {
         setSaleType(newType)
@@ -124,7 +138,6 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
     }
 
     const updateItem = (id: string, field: keyof QuoteItem, value: any) => {
-        // ... rest of the component remains similar ...
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const updated = { ...item, [field]: value }
