@@ -12,7 +12,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const task = await prisma.projectTask.create({
+        const task = await (prisma as any).projectTask.create({
             data: {
                 projectId,
                 title,
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
         // Automated notification if assigned to a user
         if (assignedToId && assignedToId !== user.id) {
-            await prisma.message.create({
+            await (prisma as any).message.create({
                 data: {
                     subject: `New CRM Task: ${title}`,
                     content: `You have been assigned a new task in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             })
 
             if (usersInRole.length > 0) {
-                await prisma.message.create({
+                await (prisma as any).message.create({
                     data: {
                         subject: `New CRM Task for Category: ${title}`,
                         content: `A new task has been assigned to your category in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,

@@ -13,7 +13,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     try {
         await requireAuth()
 
-        const project = await prisma.cRMProject.findUnique({
+        const project = await (prisma as any).cRMProject.findUnique({
             where: { id },
             include: {
                 customer: true,
@@ -39,7 +39,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                 },
                 tasks: {
                     orderBy: { createdAt: 'asc' }, // overdue first
-                    include: { assignedTo: true }
+                    include: {
+                        assignedTo: true,
+                        assignedToRole: true
+                    }
                 }
             }
         })

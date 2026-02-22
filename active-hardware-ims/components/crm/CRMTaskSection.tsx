@@ -61,7 +61,8 @@ export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: 
                     title,
                     assignedToId: assignedToId || null,
                     assignedToRoleId: assignedToRoleId || null,
-                    dueDate: dueDate || null
+                    dueDate: dueDate || null,
+                    priority: 'MEDIUM'
                 })
             })
             if (res.ok) {
