@@ -261,29 +261,36 @@ export default function KanbanPage() {
                 </div>
 
                 {/* Right: action buttons */}
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}`)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        <BarChart3 className="w-4 h-4" />
-                        Reports
-                    </button>
-                    <button
-                        onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}&range=history`)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        <History className="w-4 h-4" />
-                        History
-                    </button>
-                    <CreateCustomerButton />
-                    <button
-                        onClick={() => router.push('/dashboard/crm/projects/new')}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Project
-                    </button>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <BarChart3 className="w-4 h-4" />
+                            Reports
+                        </button>
+                        <button
+                            onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}&range=history`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <History className="w-4 h-4" />
+                            History
+                        </button>
+                    </div>
+
+                    <div className="h-6 w-px bg-gray-200" />
+
+                    <div className="flex items-center gap-3">
+                        <CreateCustomerButton variant="primary" />
+                        <button
+                            onClick={() => router.push('/dashboard/crm/projects/new')}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Project
+                        </button>
+                    </div>
                 </div>
             </div>
 

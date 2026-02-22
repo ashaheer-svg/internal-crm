@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-export default function CreateCustomerButton() {
+interface Props {
+    variant?: 'primary' | 'secondary'
+}
+
+export default function CreateCustomerButton({ variant = 'secondary' }: Props) {
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const router = useRouter()
@@ -57,26 +61,24 @@ export default function CreateCustomerButton() {
         }
     }
 
+    const buttonClasses = variant === 'primary'
+        ? "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+        : "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+
     if (!isOpen) {
         return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-            >
+            <button onClick={() => setIsOpen(true)} className={buttonClasses}>
                 <Plus className="w-4 h-4" />
-                New Customer
+                Add Customer
             </button>
         )
     }
 
     return (
         <>
-            <button
-                onClick={() => setIsOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-            >
+            <button onClick={() => setIsOpen(true)} className={buttonClasses}>
                 <Plus className="w-4 h-4" />
-                New Customer
+                Add Customer
             </button>
 
             {/* Modal Overlay */}
