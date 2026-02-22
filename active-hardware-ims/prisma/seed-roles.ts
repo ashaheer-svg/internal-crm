@@ -4,14 +4,12 @@ const prisma = new PrismaClient()
 
 const DEFAULT_ROLES = [
     { name: 'ADMIN', description: 'System Administrator with full access to all features.', isSystemDefault: true },
-    { name: 'MANAGER', description: 'Store Manager with access to most features except system settings.', isSystemDefault: false },
     { name: 'SALES', description: 'Sales Representative with access to CRM, Quotes, and Customers.', isSystemDefault: false },
-    { name: 'WAREHOUSE', description: 'Warehouse Staff with access to Inventory, GRN, and Delivery Orders.', isSystemDefault: false },
     { name: 'VIEWER', description: 'Read-only access to standard reports and lists.', isSystemDefault: true }
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs'
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'warranty_lookup'
 ]
 
 // Special per-resource permissions beyond the standard CRUD+manage matrix
@@ -83,42 +81,17 @@ async function main() {
 
         // Comprehensive default permissions per role
         const defaultPermissions: Record<string, Array<{ action: string; resource: string }>> = {
-            MANAGER: [
-                { action: 'read', resource: 'reports' },
-                { action: 'manage', resource: 'reports' },
-                { action: 'read', resource: 'services' },
-                { action: 'create', resource: 'services' },
-                { action: 'update', resource: 'services' },
-                { action: 'delete', resource: 'services' },
-                { action: 'read', resource: 'inventory' },
-                { action: 'create', resource: 'inventory' },
-                { action: 'update', resource: 'inventory' },
-                { action: 'read', resource: 'customers' },
-                { action: 'create', resource: 'customers' },
-                { action: 'update', resource: 'customers' },
-                { action: 'read', resource: 'invoices' },
-                { action: 'create', resource: 'invoices' },
-                { action: 'update', resource: 'invoices' },
-                { action: 'read', resource: 'delivery_orders' },
-                { action: 'create', resource: 'delivery_orders' },
-                { action: 'update', resource: 'delivery_orders' },
-                { action: 'read', resource: 'purchase_orders' },
-                { action: 'create', resource: 'purchase_orders' },
-                { action: 'read', resource: 'projects' },
-                { action: 'create', resource: 'projects' },
-                { action: 'update', resource: 'projects' },
-                { action: 'view_all', resource: 'projects' },
-                { action: 'read', resource: 'quotes' },
-                { action: 'create', resource: 'quotes' },
-                { action: 'update', resource: 'quotes' },
-                { action: 'read', resource: 'audit_logs' },
-                { action: 'read', resource: 'users' },
-            ],
             SALES: [
                 { action: 'read', resource: 'reports' },
                 { action: 'read', resource: 'services' },
                 { action: 'create', resource: 'services' },
                 { action: 'update', resource: 'services' },
+                // Warranty & RMA management
+                { action: 'read', resource: 'warranty_rma' },
+                { action: 'create', resource: 'warranty_rma' },
+                { action: 'update', resource: 'warranty_rma' },
+                // Warranty Lookup
+                { action: 'read', resource: 'warranty_lookup' },
                 { action: 'read', resource: 'customers' },
                 { action: 'create', resource: 'customers' },
                 { action: 'update', resource: 'customers' },
@@ -134,24 +107,10 @@ async function main() {
                 { action: 'create', resource: 'quotes' },
                 { action: 'update', resource: 'quotes' },
             ],
-            WAREHOUSE: [
-                { action: 'read', resource: 'reports' },
-                // Warranty Lookup access (read-only to services for lookup)
-                { action: 'read', resource: 'services' },
-                { action: 'read', resource: 'inventory' },
-                { action: 'create', resource: 'inventory' },
-                { action: 'update', resource: 'inventory' },
-                { action: 'read', resource: 'delivery_orders' },
-                { action: 'create', resource: 'delivery_orders' },
-                { action: 'update', resource: 'delivery_orders' },
-                { action: 'read', resource: 'purchase_orders' },
-                { action: 'create', resource: 'purchase_orders' },
-                { action: 'update', resource: 'purchase_orders' },
-            ],
             VIEWER: [
                 { action: 'read', resource: 'reports' },
-                // Warranty Lookup access (read-only)
-                { action: 'read', resource: 'services' },
+                // Warranty Lookup only (read-only)
+                { action: 'read', resource: 'warranty_lookup' },
                 { action: 'read', resource: 'inventory' },
                 { action: 'read', resource: 'customers' },
                 { action: 'read', resource: 'invoices' },

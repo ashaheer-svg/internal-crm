@@ -5,7 +5,7 @@ import { logCreate, logUpdate } from '@/lib/audit'
 
 export async function GET(request: Request) {
     try {
-        await requirePermission('services:read')
+        await requirePermission('warranty_rma:read')
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status')
 
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const user = await requirePermission('services:create')
+        const user = await requirePermission('warranty_rma:create')
         const body = await request.json()
         const { inventoryItemId, customerName, description } = body
 

@@ -8,7 +8,7 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const user = await requirePermission('services:update')
+        const user = await requirePermission('warranty_rma:update')
         const body = await request.json()
         const { notes } = body
         const { id: claimId } = await params

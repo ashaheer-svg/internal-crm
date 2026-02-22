@@ -1,8 +1,6 @@
 export const ROLES = {
     ADMIN: 'ADMIN',
-    MANAGER: 'MANAGER',
     SALES: 'SALES',
-    WAREHOUSE: 'WAREHOUSE',
     VIEWER: 'VIEWER'
 } as const
 
@@ -13,57 +11,57 @@ export const PERMISSIONS = {
     'users.create': [ROLES.ADMIN],
     'users.update': [ROLES.ADMIN],
     'users.delete': [ROLES.ADMIN],
-    'users.view': [ROLES.ADMIN, ROLES.MANAGER],
+    'users.view': [ROLES.ADMIN],
 
     // Inventory
-    'inventory.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'inventory.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'inventory.delete': [ROLES.ADMIN, ROLES.MANAGER],
-    'inventory.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.SALES, ROLES.VIEWER],
+    'inventory.create': [ROLES.ADMIN],
+    'inventory.update': [ROLES.ADMIN],
+    'inventory.delete': [ROLES.ADMIN],
+    'inventory.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // Invoices
-    'invoices.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'invoices.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'invoices.delete': [ROLES.ADMIN, ROLES.MANAGER],
-    'invoices.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.VIEWER],
+    'invoices.create': [ROLES.ADMIN, ROLES.SALES],
+    'invoices.update': [ROLES.ADMIN, ROLES.SALES],
+    'invoices.delete': [ROLES.ADMIN],
+    'invoices.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // Customers
-    'customers.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'customers.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'customers.delete': [ROLES.ADMIN, ROLES.MANAGER],
-    'customers.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.VIEWER],
+    'customers.create': [ROLES.ADMIN, ROLES.SALES],
+    'customers.update': [ROLES.ADMIN, ROLES.SALES],
+    'customers.delete': [ROLES.ADMIN],
+    'customers.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // Products
-    'products.create': [ROLES.ADMIN, ROLES.MANAGER],
-    'products.update': [ROLES.ADMIN, ROLES.MANAGER],
-    'products.delete': [ROLES.ADMIN, ROLES.MANAGER],
-    'products.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.SALES, ROLES.VIEWER],
+    'products.create': [ROLES.ADMIN],
+    'products.update': [ROLES.ADMIN],
+    'products.delete': [ROLES.ADMIN],
+    'products.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // Locations
-    'locations.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'locations.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'locations.delete': [ROLES.ADMIN, ROLES.MANAGER],
-    'locations.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.SALES, ROLES.VIEWER],
+    'locations.create': [ROLES.ADMIN],
+    'locations.update': [ROLES.ADMIN],
+    'locations.delete': [ROLES.ADMIN],
+    'locations.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // GRN
-    'grn.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'grn.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE],
-    'grn.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.VIEWER],
+    'grn.create': [ROLES.ADMIN],
+    'grn.update': [ROLES.ADMIN],
+    'grn.view': [ROLES.ADMIN, ROLES.VIEWER],
 
     // Warranty
-    'warranty.create': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'warranty.update': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES],
-    'warranty.view': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SALES, ROLES.VIEWER],
+    'warranty.create': [ROLES.ADMIN, ROLES.SALES],
+    'warranty.update': [ROLES.ADMIN, ROLES.SALES],
+    'warranty.view': [ROLES.ADMIN, ROLES.SALES, ROLES.VIEWER],
 
     // Audit logs
-    'audit.view': [ROLES.ADMIN, ROLES.MANAGER],
+    'audit.view': [ROLES.ADMIN],
 
     // Backup & Restore
     'backup.create': [ROLES.ADMIN],
     'backup.restore': [ROLES.ADMIN],
 
     // Settings
-    'settings.manage': [ROLES.ADMIN, ROLES.MANAGER]
+    'settings.manage': [ROLES.ADMIN]
 } as const
 
 export type Permission = keyof typeof PERMISSIONS
