@@ -37,18 +37,45 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
     // Sale Type State
     const [saleType, setSaleType] = useState<"DIRECT" | "PARTNER">(initialData?.saleType || "DIRECT")
 
+    // Project Defaults
+    const [projectDefaults, setProjectDefaults] = useState<any>(null)
+
     // Partner / End Customer State
     const [billToCustomer, setBillToCustomer] = useState<any>(initialData?.billTo || null)
     const [shipToCustomer, setShipToCustomer] = useState<any>(initialData?.shipTo || null)
 
-    // Items State
-    const [items, setItems] = useState<QuoteItem[]>(initialData?.items || [])
-
-    // Tax State
     const [availableTaxes, setAvailableTaxes] = useState<any[]>([])
     const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([])
 
     useEffect(() => {
+        // Fetch Project Defaults
+        fetch(`/api/crm/projects/${projectId}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(project => {
+                if (project) {
+                    setProjectDefaults(project)
+
+                    // Default values if not already provided
+                    if (!initialData) {
+                        if (saleType === "DIRECT") {
+                            setBillToCustomer(project.customer)
+                        } else {
+                            setBillToCustomer(project.partner)
+                            setShipToCustomer(project.customer)
+                        }
+                    } else {
+                        // For existing quotes, if billTo or shipTo is explicitly null/undefined, 
+                        // we can potentially default them if they match the current project.
+                        if (!initialData.billTo && saleType === "DIRECT") {
+                            setBillToCustomer(project.customer)
+                        } else if (saleType === "PARTNER") {
+                            if (!initialData.billTo) setBillToCustomer(project.partner)
+                            if (!initialData.shipTo) setShipToCustomer(project.customer)
+                        }
+                    }
+                }
+            })
+
         if (!validUntil) {
             const date = new Date()
             date.setDate(date.getDate() + 30)
@@ -62,12 +89,10 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                 setAvailableTaxes(data)
 
                 if (initialData?.taxDetails) {
-                    // If editing, try to match existing taxes
+                    // Match existing taxes...
                     try {
                         const savedTaxes = JSON.parse(initialData.taxDetails)
                         if (Array.isArray(savedTaxes)) {
-                            // This is tricky because we store snapshot name/rate/amount, not IDs.
-                            // We try to match by Name and Rate.
                             const matchedIds = data.filter((t: any) =>
                                 savedTaxes.some((st: any) => st.name === t.name && st.rate === t.rate)
                             ).map((t: any) => t.id)
@@ -75,26 +100,31 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                         }
                     } catch (e) { }
                 } else if (!initialData) {
-                    // Default select all active taxes for new quotes
                     setSelectedTaxIds(data.filter((t: any) => t.isActive).map((t: any) => t.id))
                 }
             })
             .catch(err => console.error('Failed to fetch taxes', err))
-    }, [])
-
-    // Calculations
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0)
-
-    // Calculate Tax
-    const selectedTaxes = availableTaxes.filter(t => selectedTaxIds.includes(t.id))
-    const taxTotal = selectedTaxes.reduce((sum, tax) => {
-        return sum + (subtotal * (tax.rate / 100))
-    }, 0)
-
-    const total = subtotal + taxTotal
+    }, [projectId])
 
     // Handlers
+    const handleSaleTypeChange = (newType: "DIRECT" | "PARTNER") => {
+        setSaleType(newType)
+        if (projectDefaults) {
+            if (newType === "DIRECT") {
+                setBillToCustomer(projectDefaults.customer)
+                setShipToCustomer(null)
+            } else {
+                setBillToCustomer(projectDefaults.partner)
+                setShipToCustomer(projectDefaults.customer)
+            }
+        } else {
+            setBillToCustomer(null)
+            setShipToCustomer(null)
+        }
+    }
+
     const updateItem = (id: string, field: keyof QuoteItem, value: any) => {
+        // ... rest of the component remains similar ...
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const updated = { ...item, [field]: value }
@@ -220,11 +250,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                     name="saleType"
                                     value="DIRECT"
                                     checked={saleType === "DIRECT"}
-                                    onChange={() => {
-                                        setSaleType("DIRECT")
-                                        setBillToCustomer(null)
-                                        setShipToCustomer(null)
-                                    }}
+                                    onChange={() => handleSaleTypeChange("DIRECT")}
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                 />
                                 <span className="text-sm font-medium text-gray-700">Direct Quote</span>
@@ -235,7 +261,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                     name="saleType"
                                     value="PARTNER"
                                     checked={saleType === "PARTNER"}
-                                    onChange={() => setSaleType("PARTNER")}
+                                    onChange={() => handleSaleTypeChange("PARTNER")}
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                 />
                                 <span className="text-sm font-medium text-gray-700">Partner Quote</span>
