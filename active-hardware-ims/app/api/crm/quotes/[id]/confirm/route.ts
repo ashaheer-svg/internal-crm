@@ -27,153 +27,188 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         }
 
 
-        // --- 2. Execute Transaction ---
-        const result = await prisma.$transaction(async (tx) => {
-            // A. Get and Update Sequence (Inside Transaction to prevent race conditions)
-            const now = new Date()
-            const year = now.getFullYear().toString().slice(-2)
-            const month = (now.getMonth() + 1).toString().padStart(2, '0')
-            const currentYearMonth = `${year}${month}`
+        // --- 2. Execute Transaction with Retry Logic (Self-Healing) ---
+        let attempts = 0
+        const MAX_ATTEMPTS = 5
+        let result: any = null
 
-            let sequence = await tx.sequence.findUnique({
-                where: { id: 'DO' }
-            })
+        while (attempts < MAX_ATTEMPTS) {
+            attempts++
+            try {
+                result = await prisma.$transaction(async (tx) => {
+                    // A. Get and Update Sequence (Inside Transaction to prevent race conditions)
+                    const now = new Date()
+                    const year = now.getFullYear().toString().slice(-2)
+                    const month = (now.getMonth() + 1).toString().padStart(2, '0')
+                    const currentYearMonth = `${year}${month}`
 
-            if (!sequence) {
-                sequence = await tx.sequence.create({
-                    data: {
-                        id: 'DO',
-                        prefix: 'DO-',
-                        nextNumber: 1,
-                        lastYearMonth: currentYearMonth
+                    // 1. Fetch current sequence
+                    let sequence = await tx.sequence.findUnique({
+                        where: { id: 'DO' }
+                    })
+
+                    if (!sequence) {
+                        sequence = await tx.sequence.create({
+                            data: {
+                                id: 'DO',
+                                prefix: 'DO-',
+                                nextNumber: 1,
+                                lastYearMonth: currentYearMonth
+                            }
+                        })
                     }
-                })
-            }
 
-            let nextNum = sequence.nextNumber
-            let lastYM = sequence.lastYearMonth
+                    // 2. Determine next number and update atomically
+                    let nextNum: number
+                    let lastYM = sequence.lastYearMonth
 
-            if (lastYM !== currentYearMonth) {
-                nextNum = 1
-                lastYM = currentYearMonth
-            }
-
-            const doNumber = `${sequence.prefix}${currentYearMonth}-${nextNum.toString().padStart(4, '0')}`
-
-            await tx.sequence.update({
-                where: { id: 'DO' },
-                data: {
-                    nextNumber: nextNum + 1,
-                    lastYearMonth: lastYM
-                }
-            })
-
-            // B. Create Delivery Order (DRAFT)
-            const deliveryOrder = await (tx as any).deliveryOrder.create({
-                data: {
-                    orderNumber: doNumber,
-                    customerId: quote.project.customerId,
-                    customerName: quote.project.customer?.name || 'Unknown',
-                    saleType: quote.saleType || 'DIRECT',
-                    invoiceValue: quote.totalAmount,
-                    notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,
-                    quoteReference: quote.id,
-                    status: 'DRAFT',
-                    items: {
-                        create: quote.items
-                            .filter((item: any) => item.productId) // Only items with products go to DO
-                            .map((item: any) => ({
-                                productId: item.productId,
-                                quantity: item.quantity,
-                                unitPrice: item.unitPrice,
-                                isBackorder: false
-                            }))
+                    if (lastYM !== currentYearMonth) {
+                        // Month reset
+                        await tx.sequence.update({
+                            where: { id: 'DO' },
+                            data: {
+                                nextNumber: 2,
+                                lastYearMonth: currentYearMonth
+                            }
+                        })
+                        nextNum = 1
+                        lastYM = currentYearMonth
+                    } else {
+                        // Standard increment
+                        const updated = await tx.sequence.update({
+                            where: { id: 'DO' },
+                            data: {
+                                nextNumber: { increment: 1 }
+                            }
+                        })
+                        nextNum = updated.nextNumber - 1
                     }
-                }
-            })
 
-            // C. Update Quote status and link DO
-            const updatedQuote = await (tx as any).cRMQuote.update({
-                where: { id },
-                data: {
-                    status: 'ACCEPTED',
-                    poNumber: body.poNumber || null,
-                    poDocumentUrl: body.poDocumentUrl || null,
-                    expectedDeliveryDate: body.expectedDeliveryDate ? new Date(body.expectedDeliveryDate) : null,
-                    urgency: body.urgency || null,
-                    deliveryOrderId: deliveryOrder.id
-                },
-                include: {
-                    project: {
-                        include: {
-                            customer: true
-                        }
-                    },
-                    deliveryOrder: true
-                }
-            })
+                    const doNumber = `${sequence.prefix}${currentYearMonth}-${nextNum.toString().padStart(4, '0')}`
 
-            // C2. Update Project status to WON
-            const wonStage = await (tx as any).cRMStage.findFirst({
-                where: {
-                    pipelineId: updatedQuote.project.pipelineId,
-                    name: { contains: 'Won' }
-                }
-            })
+                    console.log(`[DEBUG] Attempt ${attempts}: Trying DO number ${doNumber}`)
 
-            await (tx as any).cRMProject.update({
-                where: { id: updatedQuote.projectId },
-                data: {
-                    status: 'WON',
-                    closedAt: new Date(),
-                    ...(wonStage ? { stageId: wonStage.id } : {})
-                }
-            })
-
-            // D. Create Task for ACC-MGR
-            const accMgrRole = await (tx as any).role.findFirst({ where: { name: 'ACC-MGR' } })
-            if (accMgrRole) {
-                let description = `Quote ${quote.quoteNumber} has been approved and Delivery Order ${doNumber} has been created as a DRAFT.\n\n`
-                if (body.poNumber) description += `PO Number: ${body.poNumber}\n`
-                if (body.urgency) description += `Urgency: ${body.urgency}\n`
-                if (body.expectedDeliveryDate) description += `Requested Delivery: ${new Date(body.expectedDeliveryDate).toLocaleDateString()}\n`
-                description += `\nPlease review and finalize the Delivery Order.`
-
-                await (tx as any).projectTask.create({
-                    data: {
-                        projectId: quote.projectId,
-                        title: `Finalize DO ${doNumber} (Quote ${quote.quoteNumber})`,
-                        description,
-                        priority: body.urgency === 'URGENT' ? 'URGENT' : 'HIGH',
-                        status: 'TODO',
-                        assignedToRoleId: accMgrRole.id,
-                        createdById: user.id
-                    }
-                })
-
-                // E. Internal Message to ACC-MGR role
-                const usersInRole = await tx.user.findMany({ where: { roleId: accMgrRole.id, isActive: true } })
-                if (usersInRole.length > 0) {
-                    await (tx as any).message.create({
+                    // B. Create Delivery Order (DRAFT)
+                    const deliveryOrder = await (tx as any).deliveryOrder.create({
                         data: {
-                            subject: `DO Created: Quote ${quote.quoteNumber} Approved`,
-                            content: description,
-                            category: 'TASK',
-                            priority: body.urgency === 'URGENT' ? 'URGENT' : 'NORMAL',
-                            senderId: user.id,
-                            recipientRoleId: accMgrRole.id,
-                            receipts: {
-                                createMany: {
-                                    data: usersInRole.map(u => ({ userId: u.id }))
-                                }
+                            orderNumber: doNumber,
+                            customerId: quote.project.customerId,
+                            customerName: quote.project.customer?.name || 'Unknown',
+                            saleType: quote.saleType || 'DIRECT',
+                            invoiceValue: quote.totalAmount,
+                            notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,
+                            quoteReference: quote.id,
+                            status: 'DRAFT',
+                            items: {
+                                create: quote.items
+                                    .filter((item: any) => item.productId) // Only items with products go to DO
+                                    .map((item: any) => ({
+                                        productId: item.productId,
+                                        quantity: item.quantity,
+                                        unitPrice: item.unitPrice,
+                                        isBackorder: false
+                                    }))
                             }
                         }
                     })
-                }
-            }
 
-            return updatedQuote
-        })
+                    // C. Update Quote status and link DO
+                    const updatedQuote = await (tx as any).cRMQuote.update({
+                        where: { id },
+                        data: {
+                            status: 'ACCEPTED',
+                            poNumber: body.poNumber || null,
+                            poDocumentUrl: body.poDocumentUrl || null,
+                            expectedDeliveryDate: body.expectedDeliveryDate ? new Date(body.expectedDeliveryDate) : null,
+                            urgency: body.urgency || null,
+                            deliveryOrderId: deliveryOrder.id
+                        },
+                        include: {
+                            project: {
+                                include: {
+                                    customer: true
+                                }
+                            },
+                            deliveryOrder: true
+                        }
+                    })
+
+                    // C2. Update Project status to WON
+                    const wonStage = await (tx as any).cRMStage.findFirst({
+                        where: {
+                            pipelineId: updatedQuote.project.pipelineId,
+                            name: { contains: 'Won' }
+                        }
+                    })
+
+                    await (tx as any).cRMProject.update({
+                        where: { id: updatedQuote.projectId },
+                        data: {
+                            status: 'WON',
+                            closedAt: new Date(),
+                            ...(wonStage ? { stageId: wonStage.id } : {})
+                        }
+                    })
+
+                    // D. Create Task for ACC-MGR
+                    const accMgrRole = await (tx as any).role.findFirst({ where: { name: 'ACC-MGR' } })
+                    if (accMgrRole) {
+                        let description = `Quote ${quote.quoteNumber} has been approved and Delivery Order ${doNumber} has been created as a DRAFT.\n\n`
+                        if (body.poNumber) description += `PO Number: ${body.poNumber}\n`
+                        if (body.urgency) description += `Urgency: ${body.urgency}\n`
+                        if (body.expectedDeliveryDate) description += `Requested Delivery: ${new Date(body.expectedDeliveryDate).toLocaleDateString()}\n`
+                        description += `\nPlease review and finalize the Delivery Order.`
+
+                        await (tx as any).projectTask.create({
+                            data: {
+                                projectId: quote.projectId,
+                                title: `Finalize DO ${doNumber} (Quote ${quote.quoteNumber})`,
+                                description,
+                                priority: body.urgency === 'URGENT' ? 'URGENT' : 'HIGH',
+                                status: 'TODO',
+                                assignedToRoleId: accMgrRole.id,
+                                createdById: user.id
+                            }
+                        })
+
+                        // E. Internal Message to ACC-MGR role
+                        const usersInRole = await tx.user.findMany({ where: { roleId: accMgrRole.id, isActive: true } })
+                        if (usersInRole.length > 0) {
+                            await (tx as any).message.create({
+                                data: {
+                                    subject: `DO Created: Quote ${quote.quoteNumber} Approved`,
+                                    content: description,
+                                    category: 'TASK',
+                                    priority: body.urgency === 'URGENT' ? 'URGENT' : 'NORMAL',
+                                    senderId: user.id,
+                                    recipientRoleId: accMgrRole.id,
+                                    receipts: {
+                                        createMany: {
+                                            data: usersInRole.map(u => ({ userId: u.id }))
+                                        }
+                                    }
+                                }
+                            })
+                        }
+                    }
+
+                    return updatedQuote
+                })
+                break // BREAK if successful
+            } catch (error: any) {
+                // If unique constraint error on orderNumber, increment sequence and retry
+                if (error.code === 'P2002' && error.message?.includes('orderNumber')) {
+                    console.log(`[DEBUG] Collision detected on DO number: ${error.message}. Incrementing sequence and retrying...`)
+                    await prisma.sequence.update({
+                        where: { id: 'DO' },
+                        data: { nextNumber: { increment: 1 } }
+                    })
+                    if (attempts >= MAX_ATTEMPTS) throw new Error('Maximum attempts reached for generating a unique Delivery Order number.')
+                    continue
+                }
+                throw error // Bubble up other errors
+            }
+        }
 
         // F. WhatsApp Alert
         const customerPhone = result.project?.customer?.phone;
