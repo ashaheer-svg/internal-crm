@@ -43,7 +43,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { validUntil, items, terms, saleType, billToId, shipToId, taxDetails } = body
+        const { quoteNumber, validUntil, items, terms, saleType, billToId, shipToId, taxDetails } = body
 
         // Calculate Totals
         let subTotal = 0
@@ -140,6 +140,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             const res = await (tx as any).cRMQuote.update({
                 where: { id },
                 data: {
+                    quoteNumber: quoteNumber || undefined,
                     saleType: saleType || 'DIRECT',
                     billToId: billToId || null,
                     shipToId: shipToId || null,

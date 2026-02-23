@@ -20,10 +20,22 @@ export async function POST(request: Request) {
 
         if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
-        // 2. Generate Quote Number (Simulated Sequence)
-        const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-        const quoteNumber = `QT-${dateStr}-${random}`
+        // 2. Determine Quote Number
+        let quoteNumber = body.quoteNumber
+
+        if (!quoteNumber) {
+            const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+            quoteNumber = `QT-${dateStr}-${random}`
+        }
+
+        // Check for existing quote number to provide better error
+        const existing = await prisma.cRMQuote.findUnique({
+            where: { quoteNumber }
+        })
+        if (existing) {
+            return NextResponse.json({ error: `Quotation number ${quoteNumber} already exists. Please use a unique number.` }, { status: 400 })
+        }
 
         // 3. Current Version Calculation
         // Find existing quotes for this project to determine version
