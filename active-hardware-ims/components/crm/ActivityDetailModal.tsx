@@ -85,7 +85,13 @@ export default function ActivityDetailModal({ isOpen, onClose, userName, date, a
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sky-400 text-sm font-bold uppercase tracking-widest">
                                 <Clock className="w-4 h-4" />
-                                {format(new Date(date), 'MMMM d, yyyy')}
+                                {(() => {
+                                    try {
+                                        return format(new Date(date), 'MMMM d, yyyy')
+                                    } catch (e) {
+                                        return date
+                                    }
+                                })()}
                             </div>
                             <h3 className="text-3xl font-black tracking-tight">{userName}</h3>
                             <p className="text-white/60 text-sm font-medium">Daily Activity Breakdown & Opportunity Analysis</p>

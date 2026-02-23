@@ -93,35 +93,46 @@ export async function GET(request: Request) {
         })
 
         // 3. Process Data for Matrix
-        const days: string[] = []
-        const diffInDays = Math.round((targetWeekEnd.getTime() - targetWeekStart.getTime()) / (1000 * 60 * 60 * 24))
-        const iterations = viewType === 'monthly' ? diffInDays + 1 : 7
+        let columns: { id: string, label: string, start: Date, end: Date }[] = []
 
-        for (let i = 0; i < iterations; i++) {
-            const d = new Date(targetWeekStart)
-            d.setDate(d.getDate() + i)
-            days.push(format(d, 'yyyy-MM-dd'))
+        if (viewType === 'monthly') {
+            // 4 Weekly Summaries + Total
+            columns = [
+                { id: 'W1', label: 'W1 (1-7)', start: startOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 1)), end: endOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 7)) },
+                { id: 'W2', label: 'W2 (8-14)', start: startOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 8)), end: endOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 14)) },
+                { id: 'W3', label: 'W3 (15-21)', start: startOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 15)), end: endOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 21)) },
+                { id: 'W4', label: 'W4 (22-End)', start: startOfDay(new Date(targetWeekStart.getFullYear(), targetWeekStart.getMonth(), 22)), end: endOfDay(targetWeekEnd) }
+            ]
+        } else {
+            // Standard 7 Days
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(targetWeekStart)
+                d.setDate(d.getDate() + i)
+                columns.push({
+                    id: format(d, 'yyyy-MM-dd'),
+                    label: format(d, 'EEE d'),
+                    start: startOfDay(d),
+                    end: endOfDay(d)
+                })
+            }
         }
 
         const matrix = users.map(u => {
             const userData: Record<string, any> = {}
-            days.forEach(day => {
-                const dayStart = startOfDay(new Date(day))
-                const dayEnd = endOfDay(new Date(day))
-
-                const dayActivities = activities.filter(a =>
+            columns.forEach(col => {
+                const periodActivities = activities.filter(a =>
                     a.createdById === u.id &&
-                    a.createdAt >= dayStart &&
-                    a.createdAt <= dayEnd
+                    a.createdAt >= col.start &&
+                    a.createdAt <= col.end
                 )
 
-                userData[day] = {
-                    CALL: dayActivities.filter(a => a.type === 'CALL').length,
-                    MEETING: dayActivities.filter(a => a.type === 'MEETING').length,
-                    EMAIL: dayActivities.filter(a => a.type === 'EMAIL').length,
-                    NOTE: dayActivities.filter(a => a.type === 'NOTE').length,
-                    total: dayActivities.length,
-                    items: dayActivities.map((a: any) => ({
+                userData[col.id] = {
+                    CALL: periodActivities.filter(a => a.type === 'CALL').length,
+                    MEETING: periodActivities.filter(a => a.type === 'MEETING').length,
+                    EMAIL: periodActivities.filter(a => a.type === 'EMAIL').length,
+                    NOTE: periodActivities.filter(a => a.type === 'NOTE').length,
+                    total: periodActivities.length,
+                    items: periodActivities.map((a: any) => ({
                         id: a.id,
                         type: a.type,
                         subject: a.subject,
@@ -138,14 +149,14 @@ export async function GET(request: Request) {
             return {
                 userId: u.id,
                 userName: u.name,
-                days: userData
+                columns: userData
             }
         })
 
         return NextResponse.json({
             weekStart: targetWeekStart,
             weekEnd: targetWeekEnd,
-            days,
+            columns: columns.map(c => ({ id: c.id, label: c.label })),
             data: matrix
         })
 

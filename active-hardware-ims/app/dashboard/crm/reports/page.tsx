@@ -694,48 +694,101 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                 <th className="px-5 py-4 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 sticky left-0 bg-white z-10 min-w-[180px] shadow-[1px_0_0_0_#e5e7eb]">
                                     Sales Representative
                                 </th>
-                                {data.days.map((day: string) => (
-                                    <th key={day} className="px-3 py-4 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 min-w-[80px]">
-                                        <div className="flex flex-col items-center">
-                                            <span className="opacity-60">{format(new Date(day), 'EEE')}</span>
-                                            <span className="text-gray-900 mt-0.5">{format(new Date(day), 'd')}</span>
-                                        </div>
+                                {data.columns.map((col: any) => (
+                                    <th key={col.id} className="px-3 py-4 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 min-w-[100px]">
+                                        {viewType === 'monthly' ? (
+                                            <span className="text-gray-900">{col.label}</span>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <span className="opacity-60">{col.label.split(' ')[0]}</span>
+                                                <span className="text-gray-900 mt-0.5">{col.label.split(' ')[1]}</span>
+                                            </div>
+                                        )}
                                     </th>
                                 ))}
+                                <th className="px-3 py-4 text-center text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b border-gray-200 min-w-[80px] bg-slate-50/50">
+                                    Total
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
-                            {data.data.map((rep: any) => (
-                                <tr key={rep.userId} className="hover:bg-gray-50/30 transition-colors">
-                                    <td className="px-5 py-3 text-[11px] font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[1px_0_0_0_#e5e7eb]">
-                                        {rep.userName}
-                                    </td>
-                                    {data.days.map((day: string) => {
-                                        const cell = rep.days[day]
-                                        return (
-                                            <td
-                                                key={day}
-                                                className={`px-2 py-3 text-center border-r border-gray-50/50 last:border-r-0 cursor-pointer hover:bg-blue-50/50 transition-all group relative`}
-                                                onClick={() => cell.total > 0 && setSelectedCell({ userName: rep.userName, date: day, items: cell.items })}
-                                            >
-                                                {cell.total > 0 ? (
-                                                    <div className="flex flex-col items-center gap-0.5">
-                                                        <div className="flex items-center justify-center gap-0.5">
-                                                            {cell.CALL > 0 && <div className="w-1.5 h-1.5 rounded-full bg-green-500" title={`Calls: ${cell.CALL}`} />}
-                                                            {cell.MEETING > 0 && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" title={`Meetings: ${cell.MEETING}`} />}
+                            {data.data.map((rep: any) => {
+                                const rowTotal = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.total, 0)
+                                const rowCalls = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.CALL, 0)
+                                const rowMeetings = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.MEETING, 0)
+
+                                return (
+                                    <tr key={rep.userId} className="hover:bg-gray-50/30 transition-colors">
+                                        <td className="px-5 py-3 text-[11px] font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[1px_0_0_0_#e5e7eb]">
+                                            {rep.userName}
+                                        </td>
+                                        {data.columns.map((col: any) => {
+                                            const cell = rep.columns[col.id]
+                                            return (
+                                                <td
+                                                    key={col.id}
+                                                    className={`px-2 py-3 text-center border-r border-gray-50/50 last:border-r-0 cursor-pointer hover:bg-blue-50/50 transition-all group relative`}
+                                                    onClick={() => cell.total > 0 && setSelectedCell({ userName: rep.userName, date: col.label, items: cell.items })}
+                                                >
+                                                    {cell.total > 0 ? (
+                                                        <div className="flex flex-wrap justify-center gap-1">
+                                                            {cell.CALL > 0 && (
+                                                                <div title="Calls" className="flex items-center gap-1 bg-green-50 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-green-100">
+                                                                    <Phone className="w-2.5 h-2.5" /> {cell.CALL}
+                                                                </div>
+                                                            )}
+                                                            {cell.MEETING > 0 && (
+                                                                <div title="Visits" className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-100">
+                                                                    <Users className="w-2.5 h-2.5" /> {cell.MEETING}
+                                                                </div>
+                                                            )}
+                                                            <span className="no-print absolute top-0 right-0 opacity-0 group-hover:opacity-100 bg-sky-500 text-[6px] text-white px-1 rounded-sm font-bold uppercase transition-opacity">View</span>
                                                         </div>
-                                                        <span className="text-[10px] font-black text-gray-700">{cell.total}</span>
-                                                        <span className="no-print absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 bg-sky-500 text-[6px] text-white px-1 rounded-sm font-bold uppercase transition-opacity">View</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-200 text-[10px]">—</span>
-                                                )}
-                                            </td>
-                                        )
-                                    })}
-                                </tr>
-                            ))}
+                                                    ) : (
+                                                        <span className="text-gray-200 text-[10px]">—</span>
+                                                    )}
+                                                </td>
+                                            )
+                                        })}
+                                        <td className="px-3 py-3 text-center bg-slate-50/30 font-bold border-l border-gray-200">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <div className="flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px]">
+                                                    {rowTotal}
+                                                </div>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    {rowCalls > 0 && <span className="text-[8px] text-green-600">C:{rowCalls}</span>}
+                                                    {rowMeetings > 0 && <span className="text-[8px] text-blue-600">V:{rowMeetings}</span>}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
+                        <tfoot className="bg-slate-50/50 font-bold text-gray-900 text-[10px]">
+                            <tr>
+                                <td className="px-5 py-3 sticky left-0 bg-slate-50/80 z-10 border-r border-gray-200">TOTAL</td>
+                                {data.columns.map((col: any) => {
+                                    const colTotal = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.total || 0), 0)
+                                    const colCalls = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.CALL || 0), 0)
+                                    const colMeetings = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.MEETING || 0), 0)
+                                    return (
+                                        <td key={col.id} className="px-2 py-3 text-center border-r border-gray-200 last:border-r-0">
+                                            <div className="flex flex-col items-center">
+                                                <span>{colTotal}</span>
+                                                <div className="flex gap-1 mt-0.5">
+                                                    {colCalls > 0 && <span className="text-[7px] text-green-600">C:{colCalls}</span>}
+                                                    {colMeetings > 0 && <span className="text-[7px] text-blue-600">V:{colMeetings}</span>}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    )
+                                })}
+                                <td className="px-3 py-3 text-center bg-gray-100/50">
+                                    {data.data.reduce((acc: number, rep: any) => acc + Object.values(rep.columns).reduce((sum: number, c: any) => sum + c.total, 0), 0)}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
