@@ -140,65 +140,82 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 await prisma.$transaction(async (tx) => {
                     const { createBackorder } = body
 
-                    // 1. Calculate Unfulfilled Items
+                    // Refresh order data within transaction to ensure we have latest items
+                    const currentOrder = await tx.deliveryOrder.findUnique({
+                        where: { id: params.id },
+                        include: { items: { include: { reservedItems: true } } }
+                    })
+
+                    if (!currentOrder) throw new Error("Order not found during completion")
+
+                    // 1. Calculate Unfulfilled Items and Values
                     const backorderItems = []
                     const itemsToRemove = []
                     const itemsToUpdate = []
+                    let totalBackorderValue = 0
 
-                    for (const item of order.items) {
+                    for (const item of currentOrder.items) {
                         const reservedCount = item.reservedItems.length
                         const missingQty = item.quantity - reservedCount
 
                         if (missingQty > 0) {
+                            const itemValuePerUnit = item.unitPrice || 0
+                            const backorderVal = itemValuePerUnit * missingQty
+                            totalBackorderValue += backorderVal
+
                             if (createBackorder) {
-                                // Add to new backorder
                                 backorderItems.push({
                                     productId: item.productId,
-                                    quantity: missingQty,
+                                    quantity: Math.floor(missingQty),
                                     unitPrice: item.unitPrice,
                                     isBackorder: true
                                 })
                             } else {
                                 // Logic to REVERT existing backorder fulfillment if this item was linked
-                                // We need to check if this item has a backorderItemId
                                 const dbItem = await tx.deliveryOrderItem.findUnique({
                                     where: { id: item.id }
                                 })
 
                                 if ((dbItem as any)?.backorderItemId) {
-                                    // Revert the unfulfilled amount
                                     await tx.backorderItem.update({
                                         where: { id: (dbItem as any).backorderItemId },
                                         data: {
                                             quantityFulfilled: { decrement: missingQty },
-                                            status: 'PARTIAL' // Force back to partial/pending
+                                            status: 'PARTIAL'
                                         }
                                     })
                                 }
                             }
 
                             if (reservedCount === 0) {
-                                // Remove completely from original if nothing shipped
                                 itemsToRemove.push(item.id)
                             } else {
-                                // Reduce quantity to match shipped amount
-                                itemsToUpdate.push({ id: item.id, quantity: reservedCount })
+                                itemsToUpdate.push({ id: item.id, quantity: Math.floor(reservedCount) })
                             }
                         }
                     }
 
                     // 2. Process Backorder (if requested and needed)
                     if (createBackorder && backorderItems.length > 0) {
+                        // Generate robust backorder number
+                        const baseOrderNumber = currentOrder.orderNumber.split('-BO')[0]
+                        const boCount = await tx.deliveryOrder.count({
+                            where: { orderNumber: { startsWith: `${baseOrderNumber}-BO` } }
+                        })
+                        const newOrderNumber = `${baseOrderNumber}-BO${boCount + 1}`
+
                         // Create New DO
                         await tx.deliveryOrder.create({
                             data: {
-                                orderNumber: `${order.orderNumber}-BO`,
-                                customerName: order.customerName,
+                                orderNumber: newOrderNumber,
+                                customerName: currentOrder.customerName,
                                 status: 'DRAFT',
                                 isActive: true,
-                                customerId: order.customerId,
-                                deliveryAddress: order.deliveryAddress,
-                                salesRepId: order.salesRepId,
+                                customerId: currentOrder.customerId,
+                                deliveryAddress: currentOrder.deliveryAddress,
+                                salesRepId: currentOrder.salesRepId,
+                                invoiceValue: totalBackorderValue,
+                                quoteReference: (currentOrder as any).quoteReference,
                                 items: {
                                     create: backorderItems
                                 }
@@ -217,10 +234,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                 data: { quantity: update.quantity }
                             })
                         }
+
+                        // Adjust Original Order Value
+                        const currentInvoiceValue = Number(currentOrder.invoiceValue) || 0
+                        const newOriginalValue = Math.max(0, currentInvoiceValue - totalBackorderValue)
+                        await tx.deliveryOrder.update({
+                            where: { id: params.id },
+                            data: { invoiceValue: newOriginalValue }
+                        })
                     }
 
                     // 3. Mark allocated items as SOLD and log transactions
-                    // RE-FETCH items because we might have deleted/updated them above
                     const finalItems = await tx.deliveryOrderItem.findMany({
                         where: { deliveryOrderId: params.id },
                         include: { reservedItems: true }
@@ -233,18 +257,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                 data: { status: 'SOLD' }
                             })
 
-                            // Create TransactionLog entries for each unit
                             for (const reserved of item.reservedItems) {
                                 await tx.transactionLog.create({
                                     data: {
                                         type: 'ISSUE',
                                         referenceType: 'DELIVERY_ORDER',
-                                        referenceId: order.id,
+                                        referenceId: currentOrder.id,
                                         productId: item.productId,
                                         serialNumber: reserved.serialNumber,
                                         quantity: 1,
                                         unitCost: item.unitPrice,
-                                        notes: `Sold via Delivery Order ${order.orderNumber} to ${order.customerName}`
+                                        notes: `Sold via Delivery Order ${currentOrder.orderNumber} to ${currentOrder.customerName}`
                                     }
                                 })
                             }

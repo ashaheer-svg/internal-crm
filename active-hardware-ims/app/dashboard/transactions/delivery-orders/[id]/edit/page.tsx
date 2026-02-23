@@ -228,6 +228,21 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
         }
     }, [saleType, deliveryAddressSource, customer, endCustomer, loading])
 
+    // Effect to keep invoiceValue in sync with items total
+    const [prevItemsTotal, setPrevItemsTotal] = useState(0)
+
+    useEffect(() => {
+        if (loading) return
+        const currentTotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+
+        if (invoiceValue === "" || Number(invoiceValue) === prevItemsTotal) {
+            if (currentTotal > 0 || items.length > 0) {
+                setInvoiceValue(currentTotal.toString())
+            }
+        }
+        setPrevItemsTotal(currentTotal)
+    }, [items, loading])
+
 
     const handleSubmit = async () => {
         if (!customer) {

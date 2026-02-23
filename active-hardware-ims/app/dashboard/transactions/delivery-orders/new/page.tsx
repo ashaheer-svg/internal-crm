@@ -179,6 +179,16 @@ export default function NewDeliveryOrderPage() {
                 .catch(err => console.error("Failed to load product", err))
 
             setNotes(`Allocation for Backorder`)
+
+            // Initialize invoice value for backorder if not already set
+            if (!invoiceValue) {
+                fetch(`/api/products/${prodId}`)
+                    .then(res => res.json())
+                    .then(product => {
+                        const price = product.resellerPrice || 0
+                        setInvoiceValue((price * Number(qty)).toString())
+                    })
+            }
         }
     }, [searchParams])
 
@@ -211,6 +221,22 @@ export default function NewDeliveryOrderPage() {
             }
         }
     }, [saleType, deliveryAddressSource, customerId, endCustomerId])
+
+    // Effect to keep invoiceValue in sync with items total
+    // We only auto-sync if invoiceValue is empty or if it was previously equal to the old total
+    // to avoid overwriting manual changes.
+    const [prevItemsTotal, setPrevItemsTotal] = useState(0)
+
+    useEffect(() => {
+        const currentTotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+
+        if (invoiceValue === "" || Number(invoiceValue) === prevItemsTotal) {
+            if (currentTotal > 0) {
+                setInvoiceValue(currentTotal.toString())
+            }
+        }
+        setPrevItemsTotal(currentTotal)
+    }, [items])
 
     // Handle "Bill To" Customer Selection
     function handleCustomerSelect(customer: any) {

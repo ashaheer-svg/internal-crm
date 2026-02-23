@@ -87,7 +87,7 @@ export async function POST(request: Request) {
                     endCustomerId,
                     endCustomerName,
                     deliveryAddress: body.deliveryAddress,
-                    invoiceValue: Number(body.invoiceValue) || 0,
+                    invoiceValue: (Number(body.invoiceValue) || items.reduce((sum: number, i: any) => sum + (Number(i.unitPrice) * Number(i.quantity)), 0)) || 0,
                     invoiceNumber: invoiceNumber || null,
                     salesRepId: salesRepId || null,
                     additionalCosts: Number(body.additionalCosts) || 0,
