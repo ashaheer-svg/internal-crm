@@ -81,12 +81,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                     quoteReference: quote.id,
                     status: 'DRAFT',
                     items: {
-                        create: quote.items.map((item: any) => ({
-                            productId: item.productId,
-                            quantity: item.quantity,
-                            unitPrice: item.unitPrice,
-                            isBackorder: false
-                        }))
+                        create: quote.items
+                            .filter((item: any) => item.productId) // Only items with products go to DO
+                            .map((item: any) => ({
+                                productId: item.productId,
+                                quantity: item.quantity,
+                                unitPrice: item.unitPrice,
+                                isBackorder: false
+                            }))
                     }
                 }
             })
@@ -112,8 +114,25 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                 }
             })
 
+            // C2. Update Project status to WON
+            const wonStage = await (tx as any).cRMStage.findFirst({
+                where: {
+                    pipelineId: updatedQuote.project.pipelineId,
+                    name: { contains: 'Won' }
+                }
+            })
+
+            await (tx as any).cRMProject.update({
+                where: { id: updatedQuote.projectId },
+                data: {
+                    status: 'WON',
+                    closedAt: new Date(),
+                    ...(wonStage ? { stageId: wonStage.id } : {})
+                }
+            })
+
             // D. Create Task for ACC-MGR
-            const accMgrRole = await tx.role.findFirst({ where: { name: 'ACC-MGR' } })
+            const accMgrRole = await (tx as any).role.findFirst({ where: { name: 'ACC-MGR' } })
             if (accMgrRole) {
                 let description = `Quote ${quote.quoteNumber} has been approved and Delivery Order ${doNumber} has been created as a DRAFT.\n\n`
                 if (body.poNumber) description += `PO Number: ${body.poNumber}\n`

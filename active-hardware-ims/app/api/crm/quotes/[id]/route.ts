@@ -79,18 +79,65 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         const totalAmount = subTotal + taxAmount
 
         // 5. Update Quote (Transaction)
-        // We delete existing items and recreate them to handle additions/removals easily
         const updatedQuote = await prisma.$transaction(async (tx) => {
-            // Get before state (needs to be fetched inside tx or before)
-            // Ideally before tx, but for now we fetch it here or assume we have it if we did a GET before
-            // To be safe and simple, let's fetch before state before transaction if we want strict audit
-            // But here we are already inside. Let's rely on the fact that we can audit the 'update' action.
+            // Check current status and linked DO
+            const currentQuote = await (tx as any).cRMQuote.findUnique({
+                where: { id },
+                include: { deliveryOrder: true }
+            })
 
+            if (!currentQuote) throw new Error('Quote not found')
+
+            // Strict Lockdown: If DO is COMPLETED, no edits
+            if (currentQuote.deliveryOrder?.status === 'COMPLETED') {
+                throw new Error('This quote is locked and cannot be edited because the associated Delivery Order has already been shipped.')
+            }
+
+            // Logic for editing an APPROVED quote
+            if (currentQuote.status === 'ACCEPTED') {
+                // 1. Cancel the linked Delivery Order
+                if (currentQuote.deliveryOrderId) {
+                    await (tx as any).deliveryOrder.update({
+                        where: { id: currentQuote.deliveryOrderId },
+                        data: {
+                            status: 'CANCELLED',
+                            isActive: false,
+                            notes: `[System] Cancelled because Quote ${currentQuote.quoteNumber} was edited for revision.`
+                        }
+                    })
+
+                    // Release inventory for that DO
+                    const doItems = await (tx as any).deliveryOrderItem.findMany({
+                        where: { deliveryOrderId: currentQuote.deliveryOrderId }
+                    })
+
+                    for (const item of doItems) {
+                        await tx.inventoryItem.updateMany({
+                            where: { deliveryOrderItemId: item.id },
+                            data: {
+                                status: 'AVAILABLE',
+                                deliveryOrderItemId: null
+                            }
+                        })
+                    }
+                }
+
+                // 2. Reset Quote status to SENT and clear DO link
+                await (tx as any).cRMQuote.update({
+                    where: { id },
+                    data: {
+                        status: 'SENT',
+                        deliveryOrderId: null
+                    }
+                })
+            }
+
+            // Standard Update: Delete existing items and recreate
             await tx.cRMQuoteItem.deleteMany({
                 where: { quoteId: id }
             })
 
-            const res = await tx.cRMQuote.update({
+            const res = await (tx as any).cRMQuote.update({
                 where: { id },
                 data: {
                     saleType: saleType || 'DIRECT',

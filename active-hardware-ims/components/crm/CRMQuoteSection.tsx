@@ -18,6 +18,7 @@ interface Quote {
     deliveryOrder?: {
         id: string
         orderNumber: string
+        status: string
     }
 }
 
@@ -36,8 +37,30 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
-        if (!res.ok) throw new Error('Failed to approve quote')
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            alert(errorData.error || 'Failed to approve quote')
+            throw new Error(errorData.error || 'Failed to approve quote')
+        }
         router.refresh()
+    }
+
+    const handleEdit = (quote: Quote) => {
+        const isApproved = quote.status === 'ACCEPTED'
+        const isShipped = quote.deliveryOrder?.status === 'COMPLETED'
+
+        if (isShipped) {
+            alert('This order has already been shipped (Delivery Order is COMPLETED). No further edits are allowed.')
+            return
+        }
+
+        if (isApproved) {
+            if (!confirm('Warning: This quote is already APPROVED. Editing it will CANCEL the existing Delivery Order and require re-approval. Do you want to continue?')) {
+                return
+            }
+        }
+
+        router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}/edit`)
     }
 
     return (
@@ -61,7 +84,7 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                     <ul className="divide-y divide-gray-200">
                         {quotes.map((quote) => (
-                            <li key={quote.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <li key={quote.id} className={`p-4 flex items-center justify-between hover:bg-opacity-50 transition-colors ${quote.status === 'ACCEPTED' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}>
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-3">
                                         <button
@@ -72,19 +95,21 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                         </button>
                                         <span className={`text-xs px-2 py-0.5 rounded ${quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-700' :
                                             quote.status === 'SENT' ? 'bg-blue-100 text-blue-700' :
-                                                quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                                                quote.status === 'ACCEPTED' ? 'bg-green-600 text-white font-medium flex items-center gap-1 shadow-sm' :
                                                     'bg-red-100 text-red-700'
                                             }`}>
+                                            {quote.status === 'ACCEPTED' && <CheckCircle className="w-3 h-3" />}
                                             {quote.status}
                                         </span>
                                         {quote.deliveryOrder && (
                                             <button
                                                 onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
-                                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
-                                                title="View linked Delivery Order"
+                                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold border transition-colors ${quote.deliveryOrder.status === 'COMPLETED' ? 'bg-green-600 text-white border-green-700' : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'}`}
+                                                title={`View linked Delivery Order (${quote.deliveryOrder.status})`}
                                             >
                                                 <Package className="w-3 h-3" />
                                                 {quote.deliveryOrder.orderNumber}
+                                                {quote.deliveryOrder.status === 'COMPLETED' && <span className="text-[10px] ml-1 uppercase">Shipped</span>}
                                             </button>
                                         )}
                                     </div>
@@ -92,12 +117,12 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                         <p>Created {formatDistanceToNow(new Date(quote.createdAt))} ago</p>
                                         <p>Amount: {formatCurrency(quote.totalAmount)}</p>
                                         {quote.poNumber && (
-                                            <p className="flex items-center gap-1 text-blue-600 font-medium">
+                                            <p className="flex items-center gap-1 text-blue-600 font-bold">
                                                 PO: {quote.poNumber}
                                             </p>
                                         )}
                                         {quote.urgency && (
-                                            <p className={`flex items-center gap-1 font-semibold ${quote.urgency === 'URGENT' ? 'text-red-600' :
+                                            <p className={`flex items-center gap-1 font-semibold ${quote.urgency === 'URGENT' ? 'text-red-600 underline decoration-red-600 underline-offset-2' :
                                                 quote.urgency === 'HIGH' ? 'text-orange-600' :
                                                     'text-gray-600'
                                                 }`}>
@@ -108,9 +133,10 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <button
-                                        onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}/edit`)}
-                                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                        title="Edit Quote"
+                                        onClick={() => handleEdit(quote)}
+                                        className={`p-2 transition-colors ${quote.deliveryOrder?.status === 'COMPLETED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600'}`}
+                                        title={quote.deliveryOrder?.status === 'COMPLETED' ? 'Cannot edit shipped orders' : 'Edit Quote'}
+                                        disabled={quote.deliveryOrder?.status === 'COMPLETED'}
                                     >
                                         <Edit className="w-4 h-4" />
                                     </button>
