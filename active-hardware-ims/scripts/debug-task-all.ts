@@ -6,8 +6,8 @@ async function main() {
     console.log('--- CRM TASK CREATION DEBUG SESSION ---')
     try {
         const user = await prisma.user.findFirst({ where: { role: { name: 'ADMIN' } }, include: { role: true } })
-        if (!user) {
-            console.log('No admin user found')
+        if (!user || !user.role) {
+            console.log('No admin user or role found')
             return
         }
         console.log('Using user:', user.name, 'with role:', user.role.name)
