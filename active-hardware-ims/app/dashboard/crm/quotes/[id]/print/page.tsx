@@ -3,6 +3,8 @@
 import { useState, useEffect, use } from 'react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import DocumentHeader from '@/components/DocumentHeader'
+import DocumentFooter from '@/components/DocumentFooter'
 import '@/styles/print.css'
 
 interface Quote {
@@ -67,22 +69,12 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
 
             <div className="print-container" style={{ maxWidth: '210mm' }}>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', borderBottom: '1px solid var(--print-border)', paddingBottom: '1.5rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--print-brand-dark)' }}>Active Solutions</h1>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', lineHeight: 1.6 }}>
-                            123 Tech Park, Innovation Street<br />
-                            Mumbai, MH 400001<br />
-                            contact@activesolutions.com | +91 98765 43210
-                        </p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <h2 style={{ fontSize: '2.5rem', fontWeight: 300, color: 'var(--print-border)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Quote</h2>
-                        <div style={{ marginTop: '1rem', lineHeight: 1.8, fontSize: '0.875rem' }}>
-                            <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Quote #:</span> {quote.quoteNumber}</p>
-                            <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Date:</span> {format(new Date(quote.createdAt), 'dd MMM yyyy')}</p>
-                            <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Valid Until:</span> {quote.validUntil ? format(new Date(quote.validUntil), 'dd MMM yyyy') : 'N/A'}</p>
-                        </div>
+                <DocumentHeader title="Quotation" hideMeta />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem', marginTop: '-1.5rem' }}>
+                    <div style={{ textAlign: 'right', lineHeight: 1.8, fontSize: '0.875rem' }}>
+                        <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Quote #:</span> {quote.quoteNumber}</p>
+                        <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Date:</span> {format(new Date(quote.createdAt), 'dd MMM yyyy')}</p>
+                        <p><span style={{ fontWeight: 600, color: 'var(--print-text-muted)' }}>Valid Until:</span> {quote.validUntil ? format(new Date(quote.validUntil), 'dd MMM yyyy') : 'N/A'}</p>
                     </div>
                 </div>
 
@@ -166,6 +158,7 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                         <p style={{ fontSize: '0.75rem', color: 'var(--print-text-muted)' }}>Active Solutions</p>
                     </div>
                 </div>
+                <DocumentFooter />
             </div>
         </>
     )

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import DocumentHeader from "@/components/DocumentHeader"
+import DocumentFooter from "@/components/DocumentFooter"
 import '@/styles/print.css'
 
 export default function PrintContractPage() {
@@ -36,19 +38,11 @@ export default function PrintContractPage() {
     return (
         <div className="print-container" style={{ maxWidth: '56rem' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', borderBottom: '2px solid var(--print-text-base)', paddingBottom: '1rem' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.875rem', fontWeight: 900, color: 'var(--print-brand-primary)', textTransform: 'uppercase', letterSpacing: '-0.025em', lineHeight: 1 }}>
-                        Active Solutions
-                    </h1>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--print-text-muted)', fontWeight: 700, lineHeight: 1.4, marginTop: '0.25rem' }}>
-                        32/2-2/1 Nandimithra Place, Colombo 6, Sri Lanka.
-                    </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.025em' }}>Service Contract</h2>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', fontWeight: 500 }}>#{contract.contractNumber || 'DRAFT'}</p>
-                </div>
+            <DocumentHeader title="Service Contract" />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem', marginTop: '-1.5rem' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', fontWeight: 500 }}>
+                    #{contract.contractNumber || 'DRAFT'}
+                </p>
             </div>
 
             {/* Client & Contract Info */}
@@ -155,9 +149,10 @@ export default function PrintContractPage() {
             </div>
 
             {/* Footer */}
-            <div className="print-footer">
+            <div className="print-footer text-center mt-8 text-[10px] text-gray-400">
                 <p>This document is computer generated and valid without a seal.</p>
             </div>
+            <DocumentFooter />
         </div>
     )
 }

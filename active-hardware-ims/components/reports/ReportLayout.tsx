@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Download, Printer, Calendar, FileText, ArrowLeft, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import DocumentFooter from "@/components/DocumentFooter"
+import DocumentHeader from "@/components/DocumentHeader"
 import Link from "next/link"
 
 interface ReportLayoutProps {
@@ -178,20 +179,13 @@ export default function ReportLayout({
                 {dataPresent && (
                     <div className="bg-white shadow sm:rounded-lg overflow-hidden print:shadow-none print:border-none">
                         {/* Print Header */}
-                        <div className="hidden print:block border-b-2 border-black pb-4 mb-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h1 className="text-xl font-black text-blue-600 uppercase tracking-tighter">Active Solutions</h1>
-                                    <p className="text-[10px] text-gray-500 font-bold">32/2-2/1 Nandimithra Place, Colombo 6, Sri Lanka.</p>
-                                </div>
-                                <div className="text-right">
-                                    <h2 className="text-lg font-bold uppercase">{title}</h2>
-                                    <p className="text-[10px] text-gray-500 mt-1">Generated: {formatDate(new Date())}</p>
-                                    {(startDate || endDate) && (
-                                        <p className="text-[10px] font-semibold mt-1">Period: {startDate || 'Start'} to {endDate || 'Present'}</p>
-                                    )}
-                                </div>
-                            </div>
+                        <div className="hidden print:block mb-4">
+                            <DocumentHeader title={title} subtitle={description} />
+                            {(startDate || endDate) && (
+                                <p className="text-[10px] font-semibold text-gray-600 -mt-4 mb-4">
+                                    Period: {startDate || 'Start'} to {endDate || 'Present'}
+                                </p>
+                            )}
                         </div>
 
                         {/* Summary Section */}
@@ -207,9 +201,7 @@ export default function ReportLayout({
                             {children}
                         </div>
 
-                        <div className="no-print">
-                            <DocumentFooter />
-                        </div>
+                        <DocumentFooter />
                     </div>
                 )}
 
