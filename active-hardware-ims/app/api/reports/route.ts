@@ -20,27 +20,35 @@ export async function GET(request: Request) {
 
         switch (type) {
             case 'inventory-valuation':
+                await requirePermission('reports:inventory-valuation')
                 return await generateInventoryValuationReport(locationId)
 
             case 'stock-movement':
+                await requirePermission('reports:stock-movement')
                 return await generateStockMovementReport(dateFilter)
 
             case 'sales':
+                await requirePermission('reports:sales')
                 return await generateSalesReport(dateFilter)
 
             case 'purchase':
+                await requirePermission('reports:purchase')
                 return await generatePurchaseReport(dateFilter)
 
             case 'warranty':
+                await requirePermission('reports:warranty')
                 return await generateWarrantyReport(dateFilter)
 
             case 'location':
+                await requirePermission('reports:location')
                 return await generateLocationReport()
 
             case 'backorder':
+                await requirePermission('reports:backorder')
                 return await generateBackorderReport()
 
             case 'profitability':
+                await requirePermission('reports:profitability')
                 return await generateProfitabilityReport(dateFilter)
 
             default:
@@ -418,6 +426,7 @@ async function generateProfitabilityReport(dateFilter: any) {
             reportData.push({
                 orderDate: order.createdAt,
                 orderNumber: order.orderNumber,
+                invoiceNumber: order.invoiceNumber || 'N/A',
                 customer: order.customerName,
                 product: `${item.product.brand} ${item.product.model}`,
                 quantity: item.quantity,

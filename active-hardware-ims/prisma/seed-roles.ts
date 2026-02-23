@@ -9,7 +9,8 @@ const DEFAULT_ROLES = [
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'warranty_lookup'
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'warranty_lookup',
+    'reports:inventory-valuation', 'reports:stock-movement', 'reports:sales', 'reports:purchase', 'reports:warranty', 'reports:location', 'reports:backorder', 'reports:profitability'
 ]
 
 // Special per-resource permissions beyond the standard CRUD+manage matrix
