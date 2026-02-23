@@ -26,41 +26,40 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
         }
 
-        // --- 1. Generate DO Number ---
-        const now = new Date()
-        const year = now.getFullYear().toString().slice(-2)
-        const month = (now.getMonth() + 1).toString().padStart(2, '0')
-        const currentYearMonth = `${year}${month}`
-
-        // Find or create sequence
-        let sequence = await prisma.sequence.findUnique({
-            where: { id: 'DO' }
-        })
-
-        if (!sequence) {
-            sequence = await prisma.sequence.create({
-                data: {
-                    id: 'DO',
-                    prefix: 'DO-',
-                    nextNumber: 1,
-                    lastYearMonth: currentYearMonth
-                }
-            })
-        }
-
-        let nextNum = sequence.nextNumber
-        let lastYM = sequence.lastYearMonth
-
-        if (lastYM !== currentYearMonth) {
-            nextNum = 1
-            lastYM = currentYearMonth
-        }
-
-        const doNumber = `${sequence.prefix}${currentYearMonth}-${nextNum.toString().padStart(4, '0')}`
 
         // --- 2. Execute Transaction ---
         const result = await prisma.$transaction(async (tx) => {
-            // A. Update Sequence
+            // A. Get and Update Sequence (Inside Transaction to prevent race conditions)
+            const now = new Date()
+            const year = now.getFullYear().toString().slice(-2)
+            const month = (now.getMonth() + 1).toString().padStart(2, '0')
+            const currentYearMonth = `${year}${month}`
+
+            let sequence = await tx.sequence.findUnique({
+                where: { id: 'DO' }
+            })
+
+            if (!sequence) {
+                sequence = await tx.sequence.create({
+                    data: {
+                        id: 'DO',
+                        prefix: 'DO-',
+                        nextNumber: 1,
+                        lastYearMonth: currentYearMonth
+                    }
+                })
+            }
+
+            let nextNum = sequence.nextNumber
+            let lastYM = sequence.lastYearMonth
+
+            if (lastYM !== currentYearMonth) {
+                nextNum = 1
+                lastYM = currentYearMonth
+            }
+
+            const doNumber = `${sequence.prefix}${currentYearMonth}-${nextNum.toString().padStart(4, '0')}`
+
             await tx.sequence.update({
                 where: { id: 'DO' },
                 data: {
