@@ -4,20 +4,23 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { formatCurrency } from '@/lib/format'
-import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft } from 'lucide-react'
+import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft, Phone, Calendar, Mail, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
 import DocumentHeader from '@/components/DocumentHeader'
 import DocumentFooter from '@/components/DocumentFooter'
+import ActivityDetailModal from '@/components/crm/ActivityDetailModal'
+import { format, startOfWeek, endOfWeek, addWeeks, parseISO } from 'date-fns'
 import '@/styles/print.css'
 
 export default function CRMReportsPage() {
     const searchParams = useSearchParams()
     const scopeFromUrl = (searchParams.get('scope') as 'all' | 'mine') || 'all'
-    const rangeFromUrl = (searchParams.get('range') as 'forecast' | 'history') || 'forecast'
+    const rangeFromUrl = (searchParams.get('range') as 'forecast' | 'history' | 'activities') || 'forecast'
 
     const [salesReps, setSalesReps] = useState<any[]>([])
     const [selectedRep, setSelectedRep] = useState('ALL')
     const [scope, setScope] = useState<'all' | 'mine'>(scopeFromUrl)
-    const [range, setRange] = useState<'forecast' | 'history'>(rangeFromUrl)
+    const [range, setRange] = useState<'forecast' | 'history' | 'activities'>(rangeFromUrl)
+    const [weekOffset, setWeekOffset] = useState(0)
     const [canViewAll, setCanViewAll] = useState<boolean | null>(null)
     const [hasReportAccess, setHasReportAccess] = useState<boolean | null>(null)
 
@@ -142,10 +145,10 @@ export default function CRMReportsPage() {
                         </Link>
                         <div>
                             <h1 className="text-lg font-bold tracking-tight text-gray-900 leading-tight">
-                                {range === 'history' ? '12-Month History' : 'Sales Forecast & History'}
+                                {range === 'history' ? '12-Month History' : range === 'activities' ? 'SalesRep Activity Report' : 'Sales Forecast & History'}
                             </h1>
                             <p className="text-[11px] text-gray-500 leading-none mt-0.5">
-                                {range === 'history' ? 'Performance summary over the last year' : 'Pipeline breakdown by rep · ±2 months'}
+                                {range === 'history' ? 'Performance summary over the last year' : range === 'activities' ? 'Daily activity counts with weekly view' : 'Pipeline breakdown by rep · ±2 months'}
                             </p>
                         </div>
                     </div>
@@ -160,6 +163,10 @@ export default function CRMReportsPage() {
                             <button onClick={() => setRange('history')}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'history' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
                                 History
+                            </button>
+                            <button onClick={() => setRange('activities')}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'activities' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                                Activities
                             </button>
                         </div>
 
@@ -203,7 +210,7 @@ export default function CRMReportsPage() {
                 {/* ── Print header ─────────────────────────────────── */}
                 <div className="hidden print:block">
                     <DocumentHeader
-                        title={range === 'history' ? "CRM 12-MONTH HISTORY" : "SALES FORECAST & HISTORY"}
+                        title={range === 'history' ? "CRM 12-MONTH HISTORY" : range === 'activities' ? "SALESREP ACTIVITY REPORT" : "SALES FORECAST & HISTORY"}
                         subtitle="CRM Performance Report"
                         titleSize="text-2xl"
                     />
@@ -215,11 +222,20 @@ export default function CRMReportsPage() {
 
                 {/* ── Report ───────────────────────────────────────── */}
                 {canViewAll !== null && (
-                    <PerformanceTable
-                        selectedRep={scope === 'mine' ? 'ALL' : selectedRep}
-                        scope={scope}
-                        range={range}
-                    />
+                    range === 'activities' ? (
+                        <ActivitySummaryTable
+                            selectedRep={scope === 'mine' ? 'ALL' : selectedRep}
+                            scope={scope}
+                            weekOffset={weekOffset}
+                            setWeekOffset={setWeekOffset}
+                        />
+                    ) : (
+                        <PerformanceTable
+                            selectedRep={scope === 'mine' ? 'ALL' : selectedRep}
+                            scope={scope}
+                            range={range}
+                        />
+                    )
                 )}
 
                 {/* ── Print footer ─────────────────────────────────── */}
@@ -485,6 +501,140 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                     {isHistory ? "All amounts in 'k' (e.g. 5,000 = 5k) · " : ""}Green = Won · Blue = Pipeline (open forecast)
                 </div>
             </div>
+        </div>
+    )
+}
+
+function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset }: { selectedRep: string; scope: string; weekOffset: number; setWeekOffset: (v: number) => void }) {
+    const [data, setData] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [selectedCell, setSelectedCell] = useState<{ userName: string; date: string; items: any[] } | null>(null)
+
+    useEffect(() => {
+        setLoading(true)
+        fetch(`/api/crm/reports/activities?salesRepId=${selectedRep}&scope=${scope}&weekOffset=${weekOffset}`)
+            .then(res => res.json())
+            .then(setData)
+            .catch(console.error)
+            .finally(() => setLoading(false))
+    }, [selectedRep, scope, weekOffset])
+
+    if (loading) return <div className="text-center py-12 text-gray-400 text-sm">Loading activities…</div>
+    if (!data) return null
+
+    const weekRangeStr = data.weekStart && data.weekEnd
+        ? `${format(new Date(data.weekStart), 'do MMM')} - ${format(new Date(data.weekEnd), 'do MMM yyyy')}`
+        : 'Loading...'
+
+    return (
+        <div className="space-y-5">
+            {/* Week Navigation */}
+            <div className="no-print flex items-center justify-between bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setWeekOffset(weekOffset - 1)}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="text-center">
+                        <p className="text-sm font-bold text-gray-900">{weekRangeStr}</p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Week View</p>
+                    </div>
+                    <button
+                        onClick={() => setWeekOffset(weekOffset + 1)}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+                <button
+                    onClick={() => setWeekOffset(0)}
+                    disabled={weekOffset === 0}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 disabled:opacity-30 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-50 transition-all uppercase tracking-tight"
+                >
+                    Current Week
+                </button>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr className="bg-gray-50/50">
+                                <th className="px-6 py-4 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 sticky left-0 bg-white z-10 min-w-[200px]">
+                                    Sales Representative
+                                </th>
+                                {data.days.map((day: string) => (
+                                    <th key={day} className="px-4 py-4 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 min-w-[120px]">
+                                        <div className="flex flex-col items-center">
+                                            <span>{format(new Date(day), 'EEE')}</span>
+                                            <span className="text-gray-900 mt-0.5">{format(new Date(day), 'do MMM')}</span>
+                                        </div>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white">
+                            {data.data.map((rep: any) => (
+                                <tr key={rep.userId} className="hover:bg-gray-50/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-100 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                        {rep.userName}
+                                    </td>
+                                    {data.days.map((day: string) => {
+                                        const cell = rep.days[day]
+                                        return (
+                                            <td
+                                                key={day}
+                                                className={`px-4 py-4 text-center border-r border-gray-50/50 last:border-r-0 cursor-pointer hover:bg-blue-50/50 transition-all group relative`}
+                                                onClick={() => setSelectedCell({ userName: rep.userName, date: day, items: cell.items })}
+                                            >
+                                                {cell.total > 0 ? (
+                                                    <div className="flex flex-wrap justify-center gap-1">
+                                                        {cell.CALL > 0 && (
+                                                            <div title="Calls" className="flex items-center gap-1 bg-green-50 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-green-100">
+                                                                <Phone className="w-2.5 h-2.5" /> {cell.CALL}
+                                                            </div>
+                                                        )}
+                                                        {cell.MEETING > 0 && (
+                                                            <div title="Meetings" className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-100">
+                                                                <Users className="w-2.5 h-2.5" /> {cell.MEETING}
+                                                            </div>
+                                                        )}
+                                                        {cell.EMAIL > 0 && (
+                                                            <div title="Emails" className="flex items-center gap-1 bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-purple-100">
+                                                                <Mail className="w-2.5 h-2.5" /> {cell.EMAIL}
+                                                            </div>
+                                                        )}
+                                                        {(cell.total - (cell.CALL + cell.MEETING + cell.EMAIL)) > 0 && (
+                                                            <div title="Other" className="flex items-center gap-1 bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-bold border border-gray-200">
+                                                                <FileText className="w-2.5 h-2.5" /> {cell.total - (cell.CALL + cell.MEETING + cell.EMAIL)}
+                                                            </div>
+                                                        )}
+                                                        <span className="no-print absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 text-[8px] text-blue-500 font-bold uppercase transition-opacity">View</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-200 text-xs">—</span>
+                                                )}
+                                            </td>
+                                        )
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {selectedCell && (
+                <ActivityDetailModal
+                    isOpen={!!selectedCell}
+                    onClose={() => setSelectedCell(null)}
+                    userName={selectedCell.userName}
+                    date={selectedCell.date}
+                    activities={selectedCell.items}
+                />
+            )}
         </div>
     )
 }
