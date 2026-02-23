@@ -50,8 +50,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
+        // Validate internal duplicates within the request itself
+        const uniqueSerials = new Set(serials)
+        if (uniqueSerials.size !== serials.length) {
+            return NextResponse.json({ error: 'Duplicate serial numbers detected in the input payload.' }, { status: 400 })
+        }
+
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Check if ANY serial already exists
+            // 1. Check if ANY serial already exists in DB
             const existingItems = await tx.inventoryItem.findMany({
                 where: { serialNumber: { in: serials } },
                 select: { serialNumber: true }

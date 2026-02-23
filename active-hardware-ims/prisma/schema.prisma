@@ -479,7 +479,8 @@ model DeliveryOrder {
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
 
-  items DeliveryOrderItem[]
+  items  DeliveryOrderItem[]
+  quotes CRMQuote[]
 }
 
 model DeliveryOrderItem {
@@ -755,6 +756,9 @@ model CRMQuote {
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
+
+  deliveryOrderId String?
+  deliveryOrder   DeliveryOrder? @relation(fields: [deliveryOrderId], references: [id])
 
   // Sale Type handling (Direct vs Partner)
   saleType String @default("DIRECT") // DIRECT, PARTNER

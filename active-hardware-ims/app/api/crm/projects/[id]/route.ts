@@ -35,7 +35,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                     include: { createdBy: true }
                 },
                 quotes: {
-                    orderBy: { createdAt: 'desc' }
+                    orderBy: { createdAt: 'desc' },
+                    include: { deliveryOrder: true }
                 },
                 tasks: {
                     orderBy: { createdAt: 'asc' }, // overdue first

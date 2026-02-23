@@ -13,6 +13,12 @@ interface Quote {
     status: string
     createdAt: string
     totalAmount: number
+    poNumber?: string
+    urgency?: string
+    deliveryOrder?: {
+        id: string
+        orderNumber: string
+    }
 }
 
 interface QuoteSectionProps {
@@ -56,7 +62,7 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                     <ul className="divide-y divide-gray-200">
                         {quotes.map((quote) => (
                             <li key={quote.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                                <div>
+                                <div className="space-y-1">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}`)}
@@ -71,11 +77,34 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                             }`}>
                                             {quote.status}
                                         </span>
+                                        {quote.deliveryOrder && (
+                                            <button
+                                                onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
+                                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                                                title="View linked Delivery Order"
+                                            >
+                                                <Package className="w-3 h-3" />
+                                                {quote.deliveryOrder.orderNumber}
+                                            </button>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Created {formatDistanceToNow(new Date(quote.createdAt))} ago •
-                                        Amount: {formatCurrency(quote.totalAmount)}
-                                    </p>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                                        <p>Created {formatDistanceToNow(new Date(quote.createdAt))} ago</p>
+                                        <p>Amount: {formatCurrency(quote.totalAmount)}</p>
+                                        {quote.poNumber && (
+                                            <p className="flex items-center gap-1 text-blue-600 font-medium">
+                                                PO: {quote.poNumber}
+                                            </p>
+                                        )}
+                                        {quote.urgency && (
+                                            <p className={`flex items-center gap-1 font-semibold ${quote.urgency === 'URGENT' ? 'text-red-600' :
+                                                quote.urgency === 'HIGH' ? 'text-orange-600' :
+                                                    'text-gray-600'
+                                                }`}>
+                                                {quote.urgency}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <button
@@ -121,11 +150,11 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                         </button>
                                     )}
 
-                                    {quote.status === 'ACCEPTED' && (
+                                    {quote.status === 'ACCEPTED' && !quote.deliveryOrder && (
                                         <button
                                             onClick={() => router.push(`/dashboard/transactions/delivery-orders/new?quoteId=${quote.id}`)}
                                             className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                            title="Convert to Delivery Order"
+                                            title="Convert to Delivery Order (Manual)"
                                         >
                                             <Package className="w-4 h-4" />
                                         </button>

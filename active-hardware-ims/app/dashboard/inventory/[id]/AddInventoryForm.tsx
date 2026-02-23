@@ -158,6 +158,15 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
             }
         }
 
+        // Check for duplicates within the input
+        const uniqueSerials = new Set(serialNumbers)
+        if (uniqueSerials.size !== serialNumbers.length) {
+            const duplicates = serialNumbers.filter((item, index) => serialNumbers.indexOf(item) !== index)
+            const uniqueDuplicates = Array.from(new Set(duplicates))
+            setError(`Error: Duplicate serial numbers detected in your input.\nPlease remove duplicates before proceeding:\n${uniqueDuplicates.slice(0, 5).join(', ')}${uniqueDuplicates.length > 5 ? ' ...and more' : ''}`)
+            return
+        }
+
         setLoading(true)
         setError("")
         setSuccess("")
