@@ -88,6 +88,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
                     console.log(`[DEBUG] Attempt ${attempts}: Trying DO number ${doNumber}`)
 
+                    // 3. Pre-check existence (Safety Double-Check)
+                    const exists = await tx.deliveryOrder.findUnique({
+                        where: { orderNumber: doNumber }
+                    })
+
+                    if (exists) {
+                        console.log(`[DEBUG] Number ${doNumber} already exists in DB. Rolling back and incrementing sequence...`)
+                        throw { code: 'P2002', message: `orderNumber collision on ${doNumber}` }
+                    }
+
                     // B. Create Delivery Order (DRAFT)
                     const deliveryOrder = await (tx as any).deliveryOrder.create({
                         data: {
@@ -197,8 +207,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                 break // BREAK if successful
             } catch (error: any) {
                 // If unique constraint error on orderNumber, increment sequence and retry
-                if (error.code === 'P2002' && error.message?.includes('orderNumber')) {
-                    console.log(`[DEBUG] Collision detected on DO number: ${error.message}. Incrementing sequence and retrying...`)
+                const isCollision = error.code === 'P2002' &&
+                    (error.message?.includes('orderNumber') || error.message?.includes('collision'))
+
+                if (isCollision) {
+                    console.log(`[DEBUG] Collision detected: ${error.message}. Incrementing sequence and retrying...`)
                     await prisma.sequence.update({
                         where: { id: 'DO' },
                         data: { nextNumber: { increment: 1 } }
