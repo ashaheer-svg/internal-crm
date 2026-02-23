@@ -197,6 +197,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                                         createMany: {
                                             data: usersInRole.map(u => ({ userId: u.id }))
                                         }
+                                    },
+                                    attachments: {
+                                        create: {
+                                            fileName: `Quote-${quote.quoteNumber}.pdf`,
+                                            filePath: `/dashboard/crm/quotes/${quote.id}/print`,
+                                            fileType: 'application/pdf',
+                                            fileSize: 0
+                                        }
                                     }
                                 }
                             })
