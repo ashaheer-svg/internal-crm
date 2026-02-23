@@ -10,10 +10,21 @@ export async function GET(request: Request) {
 
         const weekOffset = parseInt(searchParams.get('weekOffset') || '0')
         const scope = searchParams.get('scope') || 'all'
+        const viewType = searchParams.get('viewType') || 'weekly'
+        const customerId = searchParams.get('customerId')
 
         const today = new Date()
-        const targetWeekStart = startOfWeek(addWeeks(today, weekOffset), { weekStartsOn: 1 }) // Monday
-        const targetWeekEnd = endOfWeek(targetWeekStart, { weekStartsOn: 1 })
+        let targetWeekStart: Date
+        let targetWeekEnd: Date
+
+        if (viewType === 'monthly') {
+            const targetMonth = new Date(today.getFullYear(), today.getMonth() + weekOffset, 1)
+            targetWeekStart = startOfDay(targetMonth)
+            targetWeekEnd = endOfDay(new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0))
+        } else {
+            targetWeekStart = startOfWeek(addWeeks(today, weekOffset), { weekStartsOn: 1 }) // Monday
+            targetWeekEnd = endOfWeek(targetWeekStart, { weekStartsOn: 1 })
+        }
 
         // Check permissions for view scope
         const u = user as any
@@ -47,6 +58,21 @@ export async function GET(request: Request) {
             }
         }
 
+        // Activity Filter
+        const activityFilter: any = {
+            createdAt: {
+                gte: targetWeekStart,
+                lte: targetWeekEnd
+            },
+            createdById: { in: (await prisma.user.findMany({ where: userFilter, select: { id: true } })).map(u => u.id) }
+        }
+
+        if (customerId && customerId !== 'ALL') {
+            activityFilter.project = {
+                customerId: customerId
+            }
+        }
+
         const users = await prisma.user.findMany({
             where: userFilter,
             select: { id: true, name: true },
@@ -55,13 +81,7 @@ export async function GET(request: Request) {
 
         // 2. Fetch Activities in range
         const activities = await prisma.cRMActivity.findMany({
-            where: {
-                createdAt: {
-                    gte: targetWeekStart,
-                    lte: targetWeekEnd
-                },
-                createdById: { in: users.map(u => u.id) }
-            },
+            where: activityFilter,
             include: {
                 createdBy: { select: { name: true } },
                 project: {
@@ -74,7 +94,10 @@ export async function GET(request: Request) {
 
         // 3. Process Data for Matrix
         const days: string[] = []
-        for (let i = 0; i < 7; i++) {
+        const diffInDays = Math.round((targetWeekEnd.getTime() - targetWeekStart.getTime()) / (1000 * 60 * 60 * 24))
+        const iterations = viewType === 'monthly' ? diffInDays + 1 : 7
+
+        for (let i = 0; i < iterations; i++) {
             const d = new Date(targetWeekStart)
             d.setDate(d.getDate() + i)
             days.push(format(d, 'yyyy-MM-dd'))
