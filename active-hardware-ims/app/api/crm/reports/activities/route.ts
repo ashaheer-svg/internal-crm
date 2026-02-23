@@ -63,7 +63,12 @@ export async function GET(request: Request) {
                 createdById: { in: users.map(u => u.id) }
             },
             include: {
-                createdBy: { select: { name: true } }
+                createdBy: { select: { name: true } },
+                project: {
+                    include: {
+                        customer: { select: { name: true } },
+                    }
+                }
             }
         })
 
@@ -93,12 +98,16 @@ export async function GET(request: Request) {
                     EMAIL: dayActivities.filter(a => a.type === 'EMAIL').length,
                     NOTE: dayActivities.filter(a => a.type === 'NOTE').length,
                     total: dayActivities.length,
-                    items: dayActivities.map(a => ({
+                    items: dayActivities.map((a: any) => ({
                         id: a.id,
                         type: a.type,
                         subject: a.subject,
                         content: a.content,
-                        createdAt: a.createdAt
+                        createdAt: a.createdAt,
+                        projectName: a.project?.title || 'Unknown Project',
+                        customerName: a.project?.customer?.name || 'Unknown Company',
+                        projectValue: a.project?.expectedValue || 0,
+                        projectStatus: a.project?.status || 'UNKNOWN'
                     }))
                 }
             })
