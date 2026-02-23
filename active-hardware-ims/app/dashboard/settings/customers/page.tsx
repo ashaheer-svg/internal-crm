@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Edit, Trash2, Search, Archive, AlertTriangle, Upload } from "lucide-react"
 import CustomerFormModal from "./CustomerFormModal"
+import BackButton from "@/components/BackButton"
 
 type Customer = {
     id: string
@@ -147,6 +148,7 @@ export default function CustomersPage() {
         <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold text-gray-900">Partner Management</h1>
                     <p className="text-sm text-gray-500">Manage customers, suppliers, and partners</p>
                 </div>

@@ -7,6 +7,7 @@ import {
     Cpu, HardDrive, RefreshCw, Send, Lock
 } from "lucide-react"
 import { formatDateTime, formatBytes } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 export default function MaintenanceDashboard() {
     // State for sections
@@ -151,6 +152,7 @@ export default function MaintenanceDashboard() {
         <div className="space-y-6 max-w-7xl mx-auto pb-12">
             <div className="flex items-center justify-between">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Activity className="h-6 w-6 text-blue-600" />
                         Maintenance & System Health

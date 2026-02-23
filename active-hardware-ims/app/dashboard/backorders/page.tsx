@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Package, ExternalLink, AlertCircle } from "lucide-react"
+import BackButton from "@/components/BackButton"
 import { formatDate } from "@/lib/utils"
 
 type BackorderItem = {
@@ -88,6 +89,7 @@ export default function BackordersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Backorders</h1>
                     <p className="text-sm text-gray-500 mt-1">
                         Manage and track pending backorder items

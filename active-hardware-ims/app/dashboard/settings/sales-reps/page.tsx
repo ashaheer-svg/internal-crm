@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Plus, Pencil, Trash2, Search, UserCircle, Phone, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 interface SalesRep {
     id: string
@@ -157,6 +158,7 @@ export default function SalesRepsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Sales Representatives</h1>
                     <p className="text-sm text-gray-500">Manage sales staff linked to Partners and Delivery Orders.</p>
                 </div>

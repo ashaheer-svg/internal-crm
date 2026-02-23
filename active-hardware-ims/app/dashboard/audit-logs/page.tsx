@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { FileText, Search, Download, Filter } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 type AuditLog = {
     id: string
@@ -69,6 +70,7 @@ export default function AuditLogsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
                     <p className="text-sm text-gray-600 mt-1">Track all system activities and changes</p>
                 </div>

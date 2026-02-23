@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Search } from "lucide-react"
+import BackButton from "@/components/BackButton"
 
 type ServiceProduct = {
     id: string
@@ -86,7 +87,10 @@ export default function ServiceCatalogPage() {
     return (
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Service Catalog</h1>
+                <div>
+                    <BackButton className="mb-4" />
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Service Catalog</h1>
+                </div>
                 <div className="flex items-center gap-2">
                     <label className="inline-flex items-center cursor-pointer">
                         <input

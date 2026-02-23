@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Search, Archive, RefreshCw, Trash2, Edit } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 type Product = {
     id: string
@@ -121,6 +122,7 @@ export default function ProductManagementPage() {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
+                    <BackButton className="mb-4" />
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Product Management</h1>
                     <p className="mt-1 text-sm text-gray-500">Admin view for managing all products.</p>
                 </div>
