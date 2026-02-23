@@ -173,12 +173,12 @@ export default function KanbanPage() {
         if (!pipeline) return <div className="p-8">No pipeline found. Please seed the CRM.</div>
 
         return (
-            <div className="flex-1 overflow-x-auto p-6 bg-gray-50">
-                <div className="flex space-x-6">
+            <div className="flex-1 overflow-x-auto p-4 bg-gray-50">
+                <div className="flex space-x-3">
                     {pipeline.stages?.map((stage) => (
                         <div
                             key={stage.id}
-                            className="w-56 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg"
+                            className="w-52 flex-shrink-0 flex flex-col bg-gray-100 rounded-lg"
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, stage.id)}
                         >
@@ -195,7 +195,7 @@ export default function KanbanPage() {
                                 {stage.projects.map((project) => (
                                     <div
                                         key={project.id}
-                                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer active:cursor-grabbing group"
+                                        className="bg-white p-3 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer active:cursor-grabbing group"
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, project.id)}
                                         onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
