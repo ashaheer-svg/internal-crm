@@ -14,7 +14,12 @@ export async function GET(request: Request) {
         const stageId = searchParams.get('stageId')
         const status = searchParams.get('status')
         const salesRepId = searchParams.get('salesRepId')
-        const scope = searchParams.get('scope') || 'all' // 'all' | 'mine'
+        const scope = searchParams.get('scope') || 'all'
+
+        // New filters
+        const hideWon = searchParams.get('hideWon') === 'true'
+        const hideApproved = searchParams.get('hideApproved') === 'true'
+        const hideShipped = searchParams.get('hideShipped') === 'true'
 
         const skip = (page - 1) * limit
 
@@ -48,8 +53,40 @@ export async function GET(request: Request) {
         if (status && status !== 'ALL') where.status = status
         if (salesRepId && salesRepId !== 'ALL') where.salesRepId = salesRepId
 
+        if (hideWon) {
+            where.status = { ...where.status, not: 'WON' }
+        }
+
+        if (hideApproved) {
+            where.NOT = [
+                ...(where.NOT || []),
+                {
+                    quotes: {
+                        some: {
+                            status: { in: ['APPROVED', 'ACCEPTED'] }
+                        }
+                    }
+                }
+            ]
+        }
+
+        if (hideShipped) {
+            where.NOT = [
+                ...(where.NOT || []),
+                {
+                    quotes: {
+                        some: {
+                            deliveryOrder: {
+                                status: 'COMPLETED'
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
         const [projects, total] = await prisma.$transaction([
-            prisma.cRMProject.findMany({
+            (prisma as any).cRMProject.findMany({
                 where,
                 include: {
                     customer: true,
@@ -60,8 +97,13 @@ export async function GET(request: Request) {
                         include: { user: true }
                     },
                     quotes: {
-                        where: { status: 'ACCEPTED' },
-                        select: { id: true }
+                        select: {
+                            id: true,
+                            status: true,
+                            deliveryOrder: {
+                                select: { status: true }
+                            }
+                        }
                     }
                 },
                 skip,

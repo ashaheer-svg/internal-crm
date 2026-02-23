@@ -17,7 +17,11 @@ interface Project {
     salesRep: { name: string } | null
     stage: { name: string; color: string }
     updatedAt: string
-    quotes?: { id: string }[]
+    quotes?: {
+        id: string;
+        status: string;
+        deliveryOrder?: { status: string } | null
+    }[]
 }
 
 interface Meta {
@@ -45,6 +49,9 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('ALL')
     const [salesRepId, setSalesRepId] = useState('ALL')
+    const [hideWon, setHideWon] = useState(false)
+    const [hideApproved, setHideApproved] = useState(false)
+    const [hideShipped, setHideShipped] = useState(false)
 
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
 
@@ -66,7 +73,7 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
 
     useEffect(() => {
         fetchProjects(1)
-    }, [debouncedSearch, status, salesRepId, scope])
+    }, [debouncedSearch, status, salesRepId, scope, hideWon, hideApproved, hideShipped])
 
     async function fetchProjects(page: number) {
         setLoading(true)
@@ -77,7 +84,10 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
                 search: debouncedSearch,
                 status: status,
                 salesRepId: salesRepId,
-                scope: scope
+                scope: scope,
+                hideWon: hideWon.toString(),
+                hideApproved: hideApproved.toString(),
+                hideShipped: hideShipped.toString()
             })
 
             const res = await fetch(`/api/crm/projects?${params}`)
@@ -146,6 +156,36 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
                             <option value="LOST">Lost</option>
                         </select>
                     </div>
+
+                    <div className="flex items-center gap-3 ml-2 border-l pl-4 border-gray-200 py-1">
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideWon}
+                                onChange={(e) => setHideWon(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Won</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideApproved}
+                                onChange={(e) => setHideApproved(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Approved</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideShipped}
+                                onChange={(e) => setHideShipped(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Shipped</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -209,12 +249,31 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
                                         {formatCurrency(project.expectedValue, project.currency)}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap">
-                                        <span
-                                            className="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full bg-gray-100 text-gray-800"
-                                            style={{ backgroundColor: project.stage?.color ? `${project.stage.color}20` : '#f3f4f6', color: project.stage?.color || '#1f2937' }}
-                                        >
-                                            {project.stage?.name || 'Unknown'}
-                                        </span>
+                                        {(() => {
+                                            const quotes = project.quotes || []
+                                            const isShipped = quotes.some(q => q.deliveryOrder?.status === 'COMPLETED')
+                                            const isApproved = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
+
+                                            let label = project.stage?.name || 'Unknown'
+                                            let color = project.stage?.color || '#1f2937'
+
+                                            if (isShipped) {
+                                                label = 'SHIPPED'
+                                                color = '#10b981'
+                                            } else if (isApproved) {
+                                                label = 'APPROVED'
+                                                color = '#6366f1'
+                                            }
+
+                                            return (
+                                                <span
+                                                    className="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full uppercase tracking-wider"
+                                                    style={{ backgroundColor: `${color}15`, color: color }}
+                                                >
+                                                    {label}
+                                                </span>
+                                            )
+                                        })()}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                                         {new Date(project.updatedAt).toLocaleDateString()}
