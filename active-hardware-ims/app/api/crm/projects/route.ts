@@ -58,6 +58,10 @@ export async function GET(request: Request) {
                     stage: true,
                     members: {
                         include: { user: true }
+                    },
+                    quotes: {
+                        where: { status: 'ACCEPTED' },
+                        select: { id: true }
                     }
                 },
                 skip,

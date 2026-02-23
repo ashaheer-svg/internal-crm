@@ -177,6 +177,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                                 priority: body.urgency === 'URGENT' ? 'URGENT' : 'HIGH',
                                 status: 'TODO',
                                 assignedToRoleId: accMgrRole.id,
+                                attachmentUrl: `/dashboard/crm/quotes/${quote.id}/print`,
                                 createdById: user.id
                             }
                         })

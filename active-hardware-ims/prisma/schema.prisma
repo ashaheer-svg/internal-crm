@@ -700,6 +700,8 @@ model ProjectTask {
   assignedToRoleId String?
   assignedToRole   Role?   @relation(fields: [assignedToRoleId], references: [id])
 
+  attachmentUrl String?
+  
   createdById String
   createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 

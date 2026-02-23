@@ -10,7 +10,10 @@ import {
     FileText,
     Users,
     User,
-    Plus
+    Plus,
+    CheckCircle,
+    Truck,
+    AlertCircle
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import CRMActivityFeed from '@/components/crm/CRMActivityFeed'
@@ -245,6 +248,64 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-3 gap-6">
                             <div className="col-span-2 space-y-6">
+                                {/* Approval Context Card */}
+                                {project.quotes.find(q => q.status === 'ACCEPTED') && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                                <h3 className="text-lg font-bold text-green-900">Quotation Approved</h3>
+                                            </div>
+                                            {project.quotes.find(q => q.status === 'ACCEPTED')?.urgency === 'URGENT' && (
+                                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded flex items-center gap-1 animate-pulse">
+                                                    <AlertCircle className="w-3 h-3" />
+                                                    URGENT FULFILLMENT
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {(() => {
+                                            const acceptedQuote = project.quotes.find(q => q.status === 'ACCEPTED');
+                                            return (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Purchase Order (PO)</p>
+                                                            <p className="text-sm font-bold text-gray-900">{acceptedQuote.poNumber || 'N/A'}</p>
+                                                            {acceptedQuote.poDocumentUrl && (
+                                                                <a href={acceptedQuote.poDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
+                                                                    <FileText className="w-3 h-3" />
+                                                                    View PO Document
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Expected Delivery</p>
+                                                            <p className="text-sm font-bold text-gray-900">
+                                                                {acceptedQuote.expectedDeliveryDate ? new Date(acceptedQuote.expectedDeliveryDate).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'Not Specified'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Delivery Order (DO)</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-sm font-bold text-gray-900">{acceptedQuote.deliveryOrder?.orderNumber || 'Generating...'}</p>
+                                                                <Truck className="w-4 h-4 text-green-600" />
+                                                            </div>
+                                                            <p className="text-[10px] text-green-600 font-medium mt-0.5">Status: {acceptedQuote.deliveryOrder?.status || 'DRAFT'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Quote Reference</p>
+                                                            <p className="text-sm font-bold text-gray-900">{acceptedQuote.quoteNumber}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
                                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Description</h3>
                                     <p className="text-gray-600 whitespace-pre-wrap">{project.description || 'No description provided.'}</p>

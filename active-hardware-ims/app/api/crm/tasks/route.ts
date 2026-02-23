@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { projectId, title, description, priority, dueDate, assignedToId, assignedToRoleId } = body
+        const { projectId, title, description, priority, dueDate, assignedToId, assignedToRoleId, attachmentUrl } = body
 
         if (!projectId || !title || !priority) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
                 dueDate: dueDate ? new Date(dueDate) : null,
                 assignedToId: assignedToId || null,
                 assignedToRoleId: assignedToRoleId || null,
+                attachmentUrl: attachmentUrl || null,
                 createdById: user.id
             },
             include: {
@@ -83,7 +84,7 @@ export async function PATCH(request: Request) {
     try {
         await requireAuth()
         const body = await request.json()
-        const { id, status, priority, assignedToId, assignedToRoleId } = body
+        const { id, status, priority, assignedToId, assignedToRoleId, attachmentUrl } = body
 
         if (!id) return NextResponse.json({ error: 'Task ID required' }, { status: 400 })
 
@@ -93,7 +94,8 @@ export async function PATCH(request: Request) {
                 status,
                 priority,
                 assignedToId: assignedToId || (assignedToId === null ? null : undefined),
-                assignedToRoleId: assignedToRoleId || (assignedToRoleId === null ? null : undefined)
+                assignedToRoleId: assignedToRoleId || (assignedToRoleId === null ? null : undefined),
+                attachmentUrl: attachmentUrl || (attachmentUrl === null ? null : undefined)
             },
             include: {
                 assignedTo: true,

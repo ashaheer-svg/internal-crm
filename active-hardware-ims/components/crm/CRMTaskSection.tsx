@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Calendar, CheckCircle, User, Users } from 'lucide-react'
+import { Calendar, CheckCircle, User, Users, FileText, ExternalLink } from 'lucide-react'
 
 interface Task {
     id: string
@@ -8,6 +8,7 @@ interface Task {
     dueDate: string | null
     assignedTo: { name: string } | null
     assignedToRole: { name: string } | null
+    attachmentUrl?: string | null
 }
 
 interface Member {
@@ -197,6 +198,19 @@ export default function CRMTaskSection({ projectId, tasks, members, onUpdate }: 
                                                     <Users className="w-3 h-3 mr-1" />
                                                     {task.assignedToRole.name}
                                                 </span>
+                                            )}
+                                            {task.attachmentUrl && (
+                                                <a
+                                                    href={task.attachmentUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-blue-600 font-bold flex items-center gap-1 hover:underline ml-2 px-2 py-0.5 bg-blue-50 rounded border border-blue-200"
+                                                    title="View Attached Quote PDF"
+                                                >
+                                                    <FileText className="w-3 h-3" />
+                                                    View Quote PDF
+                                                    <ExternalLink className="w-2.5 h-2.5 opacity-50" />
+                                                </a>
                                             )}
                                         </div>
                                     </div>

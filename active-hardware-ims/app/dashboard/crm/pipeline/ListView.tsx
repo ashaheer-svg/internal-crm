@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Filter, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 
 interface Project {
@@ -17,6 +17,7 @@ interface Project {
     salesRep: { name: string } | null
     stage: { name: string; color: string }
     updatedAt: string
+    quotes?: { id: string }[]
 }
 
 interface Meta {
@@ -188,7 +189,12 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
                                         {project.projectCode}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 truncate max-w-xs" title={project.title}>
-                                        {project.title}
+                                        <div className="flex items-center gap-1.5">
+                                            {project.title}
+                                            {project.quotes && project.quotes.length > 0 && (
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500 truncate max-w-[150px]" title={project.partner?.name}>
                                         {project.partner?.name || '-'}
