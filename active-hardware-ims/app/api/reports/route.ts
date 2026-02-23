@@ -54,9 +54,17 @@ export async function GET(request: Request) {
             default:
                 return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to generate report:', error)
-        return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 })
+
+        if (error.message?.includes('Forbidden') || error.message?.includes('Unauthorized')) {
+            return NextResponse.json({ error: error.message }, { status: error.message.includes('Forbidden') ? 403 : 401 })
+        }
+
+        return NextResponse.json({
+            error: error.message || 'Failed to generate report',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }, { status: 500 })
     }
 }
 
@@ -184,7 +192,12 @@ async function generateSalesReport(dateFilter: any) {
     const isAdminOrManager = p.includes('reports:manage') || p.includes('all:manage')
     const isRestrictedRole = !isAdminOrManager
     const salesRepFilter = isRestrictedRole && user.salesRepId
-        ? { customer: { salesRepId: user.salesRepId } }
+        ? {
+            OR: [
+                { salesRepId: user.salesRepId },
+                { customer: { salesRepId: user.salesRepId } }
+            ]
+        }
         : {}
 
     const invoices = await prisma.invoice.findMany({

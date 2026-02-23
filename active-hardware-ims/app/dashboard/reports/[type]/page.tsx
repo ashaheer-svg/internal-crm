@@ -161,7 +161,7 @@ export default function IndividualReportPage({ params }: PageProps) {
                     <table className={`min-w-full divide-y divide-gray-200 ${isProfitability ? 'table-fixed' : ''}`}>
                         <thead className="bg-gray-50 print:bg-white">
                             <tr>
-                                {Object.keys(reportData.data[0]).map((key) => (
+                                {reportData.data.length > 0 && Object.keys(reportData.data[0]).map((key) => (
                                     <th
                                         key={key}
                                         className={`px-3 py-2 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider print:text-[8pt] print:border print:border-gray-200`}
