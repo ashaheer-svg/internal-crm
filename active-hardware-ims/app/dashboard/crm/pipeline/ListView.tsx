@@ -36,9 +36,18 @@ interface SalesRep {
     name: string
 }
 
-export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
+export default function ListView({
+    scope = 'all',
+    onCanViewAllLoaded,
+    hideWon = false,
+    hideApproved = false,
+    hideShipped = false
+}: {
     scope?: 'all' | 'mine'
     onCanViewAllLoaded?: (val: boolean) => void
+    hideWon?: boolean
+    hideApproved?: boolean
+    hideShipped?: boolean
 }) {
     const router = useRouter()
     const [projects, setProjects] = useState<Project[]>([])
@@ -49,9 +58,6 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('ALL')
     const [salesRepId, setSalesRepId] = useState('ALL')
-    const [hideWon, setHideWon] = useState(false)
-    const [hideApproved, setHideApproved] = useState(false)
-    const [hideShipped, setHideShipped] = useState(false)
 
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
 
@@ -155,36 +161,6 @@ export default function ListView({ scope = 'all', onCanViewAllLoaded }: {
                             <option value="WON">Won</option>
                             <option value="LOST">Lost</option>
                         </select>
-                    </div>
-
-                    <div className="flex items-center gap-3 ml-2 border-l pl-4 border-gray-200 py-1">
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideWon}
-                                onChange={(e) => setHideWon(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Won</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideApproved}
-                                onChange={(e) => setHideApproved(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Approved</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideShipped}
-                                onChange={(e) => setHideShipped(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Shipped</span>
-                        </label>
                     </div>
                 </div>
             </div>

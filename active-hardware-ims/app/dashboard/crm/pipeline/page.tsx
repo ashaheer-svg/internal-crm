@@ -30,6 +30,11 @@ interface Project {
     currency: string
     customer: { name: string }
     status: string
+    quotes?: {
+        id: string;
+        status: string;
+        deliveryOrder?: { status: string } | null
+    }[]
 }
 
 export default function KanbanPage() {
@@ -38,6 +43,12 @@ export default function KanbanPage() {
     const [viewMode, setViewMode] = useState<'BOARD' | 'LIST'>('BOARD') // View Toggle State
     const [canViewAll, setCanViewAll] = useState(false)  // from API: has projects:view_all permission
     const [scope, setScope] = useState<'all' | 'mine'>('all') // scope toggle
+
+    // Filtering state
+    const [hideWon, setHideWon] = useState(false)
+    const [hideApproved, setHideApproved] = useState(false)
+    const [hideShipped, setHideShipped] = useState(false)
+
     const router = useRouter()
 
     // Drag and Drop State
@@ -51,13 +62,19 @@ export default function KanbanPage() {
         } else {
             setLoading(false) // ListView fetches its own data
         }
-    }, [viewMode, scope])
+    }, [viewMode, scope, hideWon, hideApproved, hideShipped])
 
     async function fetchPipeline() {
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch(`/api/crm/pipeline?scope=${scope}`)
+            const params = new URLSearchParams({
+                scope: scope,
+                hideWon: hideWon.toString(),
+                hideApproved: hideApproved.toString(),
+                hideShipped: hideShipped.toString()
+            })
+            const res = await fetch(`/api/crm/pipeline?${params}`)
             const data = await res.json()
 
             if (res.ok) {
@@ -178,22 +195,59 @@ export default function KanbanPage() {
                                 {stage.projects.map((project) => (
                                     <div
                                         key={project.id}
-                                        className="bg-white p-4 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer active:cursor-grabbing"
+                                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer active:cursor-grabbing group"
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, project.id)}
                                         onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
                                     >
-                                        <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
-                                        <p className="text-sm text-gray-500 mt-1 truncate">{project.customer?.name || 'Unknown Customer'}</p>
-                                        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                                            <span className="font-semibold text-gray-700">
-                                                {formatCurrency(project.expectedValue, project.currency)}
-                                            </span>
-                                            <span className={`px-1.5 py-0.5 rounded ${project.status === 'WON' ? 'bg-green-100 text-green-700' :
-                                                project.status === 'LOST' ? 'bg-red-100 text-red-700' :
-                                                    'bg-gray-100'
-                                                }`}>
-                                                {project.status || 'OPEN'}
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                {project.title}
+                                            </h3>
+                                        </div>
+
+                                        <div className="mt-2 space-y-1.5">
+                                            <div className="flex items-center gap-1.5 text-gray-500">
+                                                <Users className="w-3.5 h-3.5" />
+                                                <span className="text-xs truncate">{project.customer?.name || 'Unknown'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-xs font-bold text-gray-900">
+                                                    {formatCurrency(project.expectedValue, project.currency)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
+                                            {(() => {
+                                                const quotes = project.quotes || []
+                                                const isShipped = quotes.some(q => q.deliveryOrder?.status === 'COMPLETED')
+                                                const isApproved = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
+
+                                                let label = project.status || 'OPEN'
+                                                let colorClass = 'bg-gray-100 text-gray-600'
+
+                                                if (isShipped) {
+                                                    label = 'SHIPPED'
+                                                    colorClass = 'bg-green-100 text-green-700'
+                                                } else if (isApproved) {
+                                                    label = 'APPROVED'
+                                                    colorClass = 'bg-indigo-100 text-indigo-700'
+                                                } else if (project.status === 'WON') {
+                                                    colorClass = 'bg-green-100 text-green-700'
+                                                } else if (project.status === 'LOST') {
+                                                    colorClass = 'bg-red-100 text-red-700'
+                                                }
+
+                                                return (
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>
+                                                        {label}
+                                                    </span>
+                                                )
+                                            })()}
+
+                                            <span className="text-[10px] text-gray-400 font-medium">
+                                                ID: {project.id.slice(-4).toUpperCase()}
                                             </span>
                                         </div>
                                     </div>
@@ -258,6 +312,38 @@ export default function KanbanPage() {
                             </button>
                         </div>
                     )}
+
+                    <div className="h-6 w-px bg-gray-200 mx-1" />
+
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideWon}
+                                onChange={(e) => setHideWon(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Won</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideApproved}
+                                onChange={(e) => setHideApproved(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Approved</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={hideShipped}
+                                onChange={(e) => setHideShipped(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Shipped</span>
+                        </label>
+                    </div>
                 </div>
 
                 {/* Right: action buttons */}
@@ -301,7 +387,13 @@ export default function KanbanPage() {
                 <DashboardTasks />
                 {viewMode === 'BOARD' ? renderBoard() : (
                     <div className="flex-1 p-6">
-                        <ListView scope={scope} onCanViewAllLoaded={setCanViewAll} />
+                        <ListView
+                            scope={scope}
+                            onCanViewAllLoaded={setCanViewAll}
+                            hideWon={hideWon}
+                            hideApproved={hideApproved}
+                            hideShipped={hideShipped}
+                        />
                     </div>
                 )}
             </div>

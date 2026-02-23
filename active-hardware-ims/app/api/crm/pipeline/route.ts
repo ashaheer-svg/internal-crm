@@ -13,6 +13,11 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const scope = searchParams.get('scope') || 'all'
 
+        // New filters
+        const hideWon = searchParams.get('hideWon') === 'true'
+        const hideApproved = searchParams.get('hideApproved') === 'true'
+        const hideShipped = searchParams.get('hideShipped') === 'true'
+
         // Check if user can see all projects
         const u = user as any
         const canViewAll = u.permissions?.includes('all:manage') ||
@@ -25,9 +30,41 @@ export async function GET(request: Request) {
             projectWhere.members = { some: { userId: user.id } }
         }
 
+        if (hideWon) {
+            projectWhere.status = { ...projectWhere.status, not: 'WON' }
+        }
+
+        if (hideApproved) {
+            projectWhere.NOT = [
+                ...(projectWhere.NOT || []),
+                {
+                    quotes: {
+                        some: {
+                            status: { in: ['APPROVED', 'ACCEPTED'] }
+                        }
+                    }
+                }
+            ]
+        }
+
+        if (hideShipped) {
+            projectWhere.NOT = [
+                ...(projectWhere.NOT || []),
+                {
+                    quotes: {
+                        some: {
+                            deliveryOrder: {
+                                status: 'COMPLETED'
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
         // Fetch default pipeline with stages and projects
         console.log('Fetching pipeline...')
-        const pipeline = await prisma.cRMPipeline.findFirst({
+        const pipeline = await (prisma as any).cRMPipeline.findFirst({
             where: { isDefault: true },
             include: {
                 stages: {
@@ -39,6 +76,15 @@ export async function GET(request: Request) {
                                 customer: true,
                                 members: {
                                     include: { user: true }
+                                },
+                                quotes: {
+                                    select: {
+                                        id: true,
+                                        status: true,
+                                        deliveryOrder: {
+                                            select: { status: true }
+                                        }
+                                    }
                                 }
                             }
                         }
