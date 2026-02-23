@@ -474,6 +474,8 @@ model DeliveryOrder {
   updatedAt       DateTime @updatedAt
   isActive        Boolean  @default(true)
 
+  quoteReference  String? // Track origin quote
+
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
 
@@ -741,6 +743,12 @@ model CRMQuote {
   items CRMQuoteItem[]
 
   templateId String?
+
+  // PO and Delivery Tracking
+  poNumber             String?
+  poDocumentUrl        String?
+  expectedDeliveryDate DateTime?
+  urgency              String? // LOW, MEDIUM, HIGH, URGENT
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

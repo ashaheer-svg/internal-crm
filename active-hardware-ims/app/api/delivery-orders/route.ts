@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId } = body
+        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId, quoteReference } = body
 
         if (!orderNumber || !customerName) {
             return NextResponse.json({ error: 'Order Number and Customer Name are required' }, { status: 400 })
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
             }
 
             // Create Delivery Order
-            const newOrder = await tx.deliveryOrder.create({
+            const newOrder = await (tx as any).deliveryOrder.create({
                 data: {
                     orderNumber,
                     customerId,
@@ -93,6 +93,7 @@ export async function POST(request: Request) {
                     additionalCosts: Number(body.additionalCosts) || 0,
                     notes,
                     status: 'DRAFT',
+                    quoteReference: quoteReference || null,
                     items: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
                 if (backorderItem) {
                     // Find the matching item in the new DO
                     // We assume the backorder product is present in the items list
-                    const doItem = newOrder.items.find((i: any) => i.productId === backorderItem.productId)
+                    const doItem = (newOrder as any).items.find((i: any) => i.productId === backorderItem.productId)
 
                     if (doItem) {
                         // LINK THE ITEMS

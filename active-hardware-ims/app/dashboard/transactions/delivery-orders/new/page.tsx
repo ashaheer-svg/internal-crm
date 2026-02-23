@@ -103,14 +103,56 @@ export default function NewDeliveryOrderPage() {
     useEffect(() => {
         fetchSalesReps()
 
-        // Check for backorder params
         const boId = searchParams.get('backorderId')
         const custId = searchParams.get('customerId')
         const custName = searchParams.get('customerName')
         const prodId = searchParams.get('productId')
         const qty = searchParams.get('qty')
+        const quoteId = searchParams.get('quoteId')
 
-        if (boId && custId && prodId && qty) {
+        if (quoteId) {
+            // Load Quote Data for DO conversion
+            fetch(`/api/crm/quotes/${quoteId}`)
+                .then(res => res.json())
+                .then(quote => {
+                    if (quote.project?.customer) {
+                        handleCustomerSelect(quote.project.customer)
+                    }
+                    if (quote.saleType) {
+                        setSaleType(quote.saleType as "DIRECT" | "PARTNER")
+                    }
+                    if (quote.billToId && quote.saleType === "PARTNER") {
+                        fetch(`/api/customers/${quote.billToId}`)
+                            .then(r => r.json())
+                            .then(customer => handleCustomerSelect(customer))
+                            .catch(e => console.error(e))
+
+                        // the main customer in quote is the project customer, which for partner deal is the end customer
+                        if (quote.project?.customer) {
+                            handleEndCustomerSelect(quote.project.customer)
+                        }
+                    }
+
+                    setInvoiceValue(quote.subTotal.toString())
+
+                    let newNotes = `Converted from Quote #${quote.quoteNumber}`
+                    if (quote.poNumber) newNotes += `\nPO: ${quote.poNumber}`
+                    if (quote.urgency) newNotes += `\nUrgency: ${quote.urgency}`
+                    setNotes(newNotes)
+
+                    if (quote.items && Array.isArray(quote.items)) {
+                        const quoteItems: DeliveryOrderItem[] = quote.items.map((qi: any) => ({
+                            productId: qi.productId || '',
+                            productName: qi.product ? `${qi.product.brand || ''} ${qi.product.name}`.trim() : qi.description,
+                            quantity: qi.quantity,
+                            unitPrice: qi.unitPrice,
+                            isBackorder: false
+                        }))
+                        setItems(quoteItems)
+                    }
+                })
+                .catch(err => console.error("Failed to load quote details", err))
+        } else if (boId && custId && prodId && qty) {
             setBackorderId(boId)
             // Pre-load customer if ID available
             // We need to fetch customer details to populate selectedCustomer object properly for the selector
@@ -361,6 +403,7 @@ export default function NewDeliveryOrderPage() {
                 salesRepId: salesRepId || null,
                 notes,
                 backorderId, // Include backorder ID
+                quoteReference: searchParams.get('quoteId'), // Include origin quote reference
                 items
             }
 

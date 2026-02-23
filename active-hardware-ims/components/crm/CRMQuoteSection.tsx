@@ -1,9 +1,11 @@
 'use client'
 
-import { Plus, FileText, Edit, Copy, CheckCircle } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, FileText, Edit, Copy, CheckCircle, Package } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
+import QuoteApprovalModal from './QuoteApprovalModal'
 
 interface Quote {
     id: string
@@ -20,6 +22,17 @@ interface QuoteSectionProps {
 
 export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps) {
     const router = useRouter()
+    const [approvingQuote, setApprovingQuote] = useState<Quote | null>(null)
+
+    const handleApprove = async (quoteId: string, data: any) => {
+        const res = await fetch(`/api/crm/quotes/${quoteId}/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        if (!res.ok) throw new Error('Failed to approve quote')
+        router.refresh()
+    }
 
     return (
         <div className="space-y-6">
@@ -97,24 +110,24 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                     >
                                         <FileText className="w-4 h-4" />
                                     </button>
+
                                     {quote.status !== 'ACCEPTED' && (
                                         <button
-                                            onClick={async () => {
-                                                if (!confirm('Mark as Accepted?')) return
-                                                try {
-                                                    const res = await fetch(`/api/crm/quotes/${quote.id}/confirm`, { method: 'POST' })
-                                                    if (res.ok) {
-                                                        router.refresh()
-                                                    }
-                                                } catch (e) {
-                                                    console.error(e)
-                                                    alert('Failed to confirm')
-                                                }
-                                            }}
+                                            onClick={() => setApprovingQuote(quote)}
                                             className="p-2 text-gray-400 hover:text-green-600 transition-colors"
                                             title="Approve Quote"
                                         >
                                             <CheckCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
+
+                                    {quote.status === 'ACCEPTED' && (
+                                        <button
+                                            onClick={() => router.push(`/dashboard/transactions/delivery-orders/new?quoteId=${quote.id}`)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                            title="Convert to Delivery Order"
+                                        >
+                                            <Package className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
@@ -122,6 +135,15 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                         ))}
                     </ul>
                 </div>
+            )}
+
+            {approvingQuote && (
+                <QuoteApprovalModal
+                    isOpen={true}
+                    onClose={() => setApprovingQuote(null)}
+                    quoteNumber={approvingQuote.quoteNumber}
+                    onApprove={async (data) => await handleApprove(approvingQuote.id, data)}
+                />
             )}
         </div>
     )
