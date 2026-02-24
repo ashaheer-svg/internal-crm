@@ -365,6 +365,7 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [expandedReps, setExpandedReps] = useState<Set<string>>(new Set())
+    const [filterMonth, setFilterMonth] = useState('ALL')
 
     const toggleRep = (id: string) => {
         const next = new Set(expandedReps)
@@ -389,6 +390,9 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
     const repTotals = data.data.map((rep: any) => {
         let totalWon = 0, totalExpected = 0, bestMonth = '', bestWon = 0
         data.months.forEach((m: string) => {
+            // Apply month filter
+            if (filterMonth !== 'ALL' && filterMonth !== m) return
+
             const cell = rep.data[m] || { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
             const wonVal = metric === 'sales' ? cell.won : cell.wonProfit
             const expectedVal = metric === 'sales' ? cell.expected : cell.expectedProfit
@@ -459,7 +463,21 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
 
                 {/* Section label */}
                 <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between print:px-0 print:py-1 print:border-gray-300">
-                    <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Representative Summary</h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Representative Summary</h2>
+                        <div className="no-print">
+                            <select
+                                value={filterMonth}
+                                onChange={(e) => setFilterMonth(e.target.value)}
+                                className="text-[10px] font-bold uppercase tracking-wider border border-slate-200 rounded px-2 py-1 bg-slate-50 text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="ALL">All Months</option>
+                                {data.months.map((m: string) => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                     <span className="no-print text-xs text-gray-400">{data.data.length} rep{data.data.length !== 1 ? 's' : ''}</span>
                 </div>
 
@@ -532,50 +550,49 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-slate-50">
-                                                                {data.months.flatMap((m: string) =>
-                                                                    (rep.data[m]?.projects || []).map((p: any) => ({ ...p, monthKey: m }))
-                                                                ).sort((a: any, b: any) => {
-                                                                    // Simple sort by month if needed, but they are already grouped by month
-                                                                    return 0
-                                                                }).map((p: any) => (
-                                                                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                                                                        <td className="px-4 py-3">
-                                                                            <Link href={`/dashboard/crm/projects/${p.id}`} className="flex flex-col group/link">
-                                                                                <span className="text-[11px] font-black text-slate-900 leading-tight group-hover/link:text-blue-600 transition-colors uppercase tracking-tight">{p.projectCode}</span>
-                                                                                <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">{p.title}</span>
-                                                                            </Link>
-                                                                        </td>
-                                                                        <td className="px-4 py-3 text-[10px] font-bold text-slate-600">{p.monthKey}</td>
-                                                                        <td className="px-4 py-3 text-right text-[11px] font-bold text-slate-900">{formatReportValue(p.value)}</td>
-                                                                        <td className="px-4 py-3 text-right text-[11px] font-bold text-green-600">
-                                                                            <div className="flex flex-col items-end group/gp relative">
-                                                                                <span>{formatReportValue(p.profit)}</span>
-                                                                                <span className="text-[9px] text-slate-400 font-medium">({Math.round((p.profit / p.value) * 100)}%)</span>
+                                                                {data.months
+                                                                    .filter((m: string) => filterMonth === 'ALL' || filterMonth === m)
+                                                                    .flatMap((m: string) =>
+                                                                        (rep.data[m]?.projects || []).map((p: any) => ({ ...p, monthKey: m }))
+                                                                    ).map((p: any) => (
+                                                                        <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                                                                            <td className="px-4 py-3">
+                                                                                <Link href={`/dashboard/crm/projects/${p.id}`} className="flex flex-col group/link">
+                                                                                    <span className="text-[11px] font-black text-slate-900 leading-tight group-hover/link:text-blue-600 transition-colors uppercase tracking-tight">{p.projectCode}</span>
+                                                                                    <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">{p.title}</span>
+                                                                                </Link>
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-[10px] font-bold text-slate-600">{p.monthKey}</td>
+                                                                            <td className="px-4 py-3 text-right text-[11px] font-bold text-slate-900">{formatReportValue(p.value)}</td>
+                                                                            <td className="px-4 py-3 text-right text-[11px] font-bold text-green-600">
+                                                                                <div className="flex flex-col items-end group/gp relative">
+                                                                                    <span>{formatReportValue(p.profit)}</span>
+                                                                                    <span className="text-[9px] text-slate-400 font-medium">({Math.round((p.profit / p.value) * 100)}%)</span>
 
-                                                                                {/* Tooltip for GP calculation */}
-                                                                                <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] rounded shadow-xl opacity-0 group-hover/gp:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed font-normal">
-                                                                                    GP = Expected Value - Total Cost.
-                                                                                    <br />Costs are pulled from latest GRN for each item, or default to 75% if no purchase history exists.
+                                                                                    {/* Tooltip for GP calculation */}
+                                                                                    <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] rounded shadow-xl opacity-0 group-hover/gp:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed font-normal">
+                                                                                        GP = Expected Value - Total Cost.
+                                                                                        <br />Costs are pulled from latest GRN for each item, or default to 75% if no purchase history exists.
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="px-4 py-3 text-center">
-                                                                            {p.quoteNumber ? (
-                                                                                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{p.quoteNumber}</span>
-                                                                            ) : <span className="text-slate-300">—</span>}
-                                                                        </td>
-                                                                        <td className="px-4 py-3 text-center">
-                                                                            {p.doNumber ? (
-                                                                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{p.doNumber}</span>
-                                                                            ) : <span className="text-slate-300">—</span>}
-                                                                        </td>
-                                                                        <td className="px-4 py-3 text-center">
-                                                                            {p.invoiceNumber ? (
-                                                                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100">{p.invoiceNumber}</span>
-                                                                            ) : <span className="text-slate-300">—</span>}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-center">
+                                                                                {p.quoteNumber ? (
+                                                                                    <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{p.quoteNumber}</span>
+                                                                                ) : <span className="text-slate-300">—</span>}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-center">
+                                                                                {p.doNumber ? (
+                                                                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{p.doNumber}</span>
+                                                                                ) : <span className="text-slate-300">—</span>}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-center">
+                                                                                {p.invoiceNumber ? (
+                                                                                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100">{p.invoiceNumber}</span>
+                                                                                ) : <span className="text-slate-300">—</span>}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
                                                             </tbody>
                                                         </table>
                                                     </div>
