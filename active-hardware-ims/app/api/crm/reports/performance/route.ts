@@ -89,6 +89,12 @@ export async function GET(request: Request) {
                     orderBy: { createdAt: 'desc' },
                     take: 1,
                     include: {
+                        deliveryOrder: {
+                            select: {
+                                orderNumber: true,
+                                invoiceNumber: true
+                            }
+                        },
                         items: {
                             include: {
                                 product: {
@@ -131,7 +137,7 @@ export async function GET(request: Request) {
             }
             // Init Months
             months.forEach(m => {
-                aggregated[rep.id].data[m] = { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
+                aggregated[rep.id].data[m] = { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0, projects: [] }
             })
         })
 
@@ -174,6 +180,19 @@ export async function GET(request: Request) {
                     repData[key].expected += deal.expectedValue
                     repData[key].expectedProfit += profit
                 }
+
+                // Add to detailed project list
+                repData[key].projects.push({
+                    id: deal.id,
+                    projectCode: deal.projectCode,
+                    title: deal.title,
+                    status: deal.status,
+                    value: deal.expectedValue,
+                    profit: profit,
+                    quoteNumber: approvedQuote?.quoteNumber || null,
+                    doNumber: (approvedQuote as any)?.deliveryOrder?.orderNumber || null,
+                    invoiceNumber: (approvedQuote as any)?.deliveryOrder?.invoiceNumber || null
+                })
             }
         })
 

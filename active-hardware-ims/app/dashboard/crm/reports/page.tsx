@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { formatCurrency } from '@/lib/format'
-import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft, Phone, Calendar, Mail, FileText, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft, Phone, Calendar, Mail, FileText, ChevronLeft, ChevronRight, Search, X, ChevronDown, ExternalLink } from 'lucide-react'
 import DocumentHeader from '@/components/DocumentHeader'
 import DocumentFooter from '@/components/DocumentFooter'
 import ActivityDetailModal from '@/components/crm/ActivityDetailModal'
@@ -364,6 +364,14 @@ export default function CRMReportsPage() {
 function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: string; scope: string; range: string; metric: 'sales' | 'profit' }) {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [expandedReps, setExpandedReps] = useState<Set<string>>(new Set())
+
+    const toggleRep = (id: string) => {
+        const next = new Set(expandedReps)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        setExpandedReps(next)
+    }
 
     useEffect(() => {
         setLoading(true)
@@ -478,28 +486,105 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                             </tr>
                         </thead>
                         <tbody>
-                            {repTotals.map((rep: any, idx: number) => (
-                                <tr key={rep.id} style={{ backgroundColor: '#fff' }}>
-                                    <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#111827', borderBottom: '1px solid #f3f4f6' }}>{rep.name}</td>
-                                    <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#16a34a', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
-                                        {rep.totalWon > 0 ? formatReportValue(rep.totalWon) : <span style={{ color: '#d1d5db' }}>—</span>}
-                                    </td>
-                                    <td style={{ padding: '8px 12px', fontSize: '13px', color: '#2563eb', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
-                                        {rep.totalExpected > 0 ? formatReportValue(rep.totalExpected) : <span style={{ color: '#d1d5db' }}>—</span>}
-                                    </td>
-                                    <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 500, color: '#374151', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
-                                        {formatReportValue(rep.totalWon + rep.totalExpected)}
-                                    </td>
-                                    <td style={{ padding: '8px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: 700, color: rep.winRate >= 50 ? '#16a34a' : rep.winRate >= 25 ? '#d97706' : '#dc2626' }}>
-                                            {rep.winRate}%
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '8px 12px', fontSize: '12px', color: '#6b7280', textAlign: 'right', borderBottom: '1px solid #f3f4f6' }}>
-                                        {rep.bestMonth || <span style={{ color: '#d1d5db' }}>—</span>}
-                                    </td>
-                                </tr>
-                            ))}
+                            {repTotals.map((rep: any, idx: number) => {
+                                const isExpanded = expandedReps.has(rep.id)
+                                return (
+                                    <React.Fragment key={rep.id}>
+                                        <tr style={{ backgroundColor: '#fff', cursor: 'pointer' }} onClick={() => toggleRep(rep.id)} className="group hover:bg-slate-50 transition-colors">
+                                            <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#111827', borderBottom: '1px solid #f3f4f6' }}>
+                                                <div className="flex items-center gap-2">
+                                                    {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" />}
+                                                    {rep.name}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 600, color: '#16a34a', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
+                                                {rep.totalWon > 0 ? formatReportValue(rep.totalWon) : <span style={{ color: '#d1d5db' }}>—</span>}
+                                            </td>
+                                            <td style={{ padding: '8px 12px', fontSize: '13px', color: '#2563eb', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
+                                                {rep.totalExpected > 0 ? formatReportValue(rep.totalExpected) : <span style={{ color: '#d1d5db' }}>—</span>}
+                                            </td>
+                                            <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 500, color: '#374151', textAlign: 'right', borderBottom: '1px solid #f3f4f6', whiteSpace: 'nowrap' }}>
+                                                {formatReportValue(rep.totalWon + rep.totalExpected)}
+                                            </td>
+                                            <td style={{ padding: '8px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6' }}>
+                                                <span style={{ fontSize: '12px', fontWeight: 700, color: rep.winRate >= 50 ? '#16a34a' : rep.winRate >= 25 ? '#d97706' : '#dc2626' }}>
+                                                    {rep.winRate}%
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '8px 12px', fontSize: '12px', color: '#6b7280', textAlign: 'right', borderBottom: '1px solid #f3f4f6' }}>
+                                                {rep.bestMonth || <span style={{ color: '#d1d5db' }}>—</span>}
+                                            </td>
+                                        </tr>
+                                        {isExpanded && (
+                                            <tr className="bg-slate-50/30">
+                                                <td colSpan={6} className="px-5 py-4">
+                                                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in slide-in-from-top-1 duration-200">
+                                                        <table className="min-w-full divide-y divide-slate-100">
+                                                            <thead className="bg-slate-50/50">
+                                                                <tr>
+                                                                    <th className="px-4 py-2 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project</th>
+                                                                    <th className="px-4 py-2 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Month</th>
+                                                                    <th className="px-4 py-2 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest">Value</th>
+                                                                    <th className="px-4 py-2 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest">GP</th>
+                                                                    <th className="px-4 py-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quote #</th>
+                                                                    <th className="px-4 py-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">DO #</th>
+                                                                    <th className="px-4 py-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Invoice #</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-slate-50">
+                                                                {data.months.flatMap((m: string) =>
+                                                                    (rep.data[m]?.projects || []).map((p: any) => ({ ...p, monthKey: m }))
+                                                                ).sort((a: any, b: any) => {
+                                                                    // Simple sort by month if needed, but they are already grouped by month
+                                                                    return 0
+                                                                }).map((p: any) => (
+                                                                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                                                                        <td className="px-4 py-3">
+                                                                            <Link href={`/dashboard/crm/projects/${p.id}`} className="flex flex-col group/link">
+                                                                                <span className="text-[11px] font-black text-slate-900 leading-tight group-hover/link:text-blue-600 transition-colors uppercase tracking-tight">{p.projectCode}</span>
+                                                                                <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">{p.title}</span>
+                                                                            </Link>
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-[10px] font-bold text-slate-600">{p.monthKey}</td>
+                                                                        <td className="px-4 py-3 text-right text-[11px] font-bold text-slate-900">{formatReportValue(p.value)}</td>
+                                                                        <td className="px-4 py-3 text-right text-[11px] font-bold text-green-600">
+                                                                            <div className="flex flex-col items-end group/gp relative">
+                                                                                <span>{formatReportValue(p.profit)}</span>
+                                                                                <span className="text-[9px] text-slate-400 font-medium">({Math.round((p.profit / p.value) * 100)}%)</span>
+
+                                                                                {/* Tooltip for GP calculation */}
+                                                                                <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] rounded shadow-xl opacity-0 group-hover/gp:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed font-normal">
+                                                                                    GP = Expected Value - Total Cost.
+                                                                                    <br />Costs are pulled from latest GRN for each item, or default to 75% if no purchase history exists.
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-center">
+                                                                            {p.quoteNumber ? (
+                                                                                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">{p.quoteNumber}</span>
+                                                                            ) : <span className="text-slate-300">—</span>}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-center">
+                                                                            {p.doNumber ? (
+                                                                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{p.doNumber}</span>
+                                                                            ) : <span className="text-slate-300">—</span>}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-center">
+                                                                            {p.invoiceNumber ? (
+                                                                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100">{p.invoiceNumber}</span>
+                                                                            ) : <span className="text-slate-300">—</span>}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                )
+                            })}
                             {/* Grand total row */}
                             <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb', backgroundColor: '#fff' }}>
                                 <td style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: '#374151' }}>TOTAL</td>
