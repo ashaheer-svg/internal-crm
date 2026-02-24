@@ -434,6 +434,16 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
         return { ...rep, totalWon, totalExpected, winRate, bestMonth }
     })
 
+    // Prepare detailed project list for the selected rep (if only one is selected)
+    const detailedProjects = selectedRep !== 'ALL' && data.data.length > 0
+        ? data.months
+            .filter((m: string) => filterMonth === 'ALL' || filterMonth === m)
+            .flatMap((m: string) => {
+                const rep = data.data[0]
+                return (rep?.data[m]?.projects || []).map((p: any) => ({ ...p, monthKey: m }))
+            })
+        : []
+
     const grandWon = repTotals.reduce((s: number, r: any) => s + r.totalWon, 0)
     const grandExpected = repTotals.reduce((s: number, r: any) => s + r.totalExpected, 0)
     const grandWinRate = (grandWon + grandExpected) > 0
@@ -462,6 +472,8 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
         }
         return formatCurrency(val)
     }
+
+    const hasSpecificRep = selectedRep !== 'ALL'
 
     return (
         <div className="space-y-5">
@@ -734,6 +746,94 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                     {isHistory ? "All amounts in 'k' (e.g. 5,000 = 5k) · " : ""}Green = Won · Blue = Pipeline (open forecast)
                 </div>
             </div>
+
+            {/* ── Detailed Project Section (Appears when single rep selected) ── */}
+            {hasSpecificRep && detailedProjects.length > 0 && (
+                <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                            <h2 className="text-base font-black text-slate-900 tracking-tight uppercase">Detailed Project Audit</h2>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{detailedProjects.length} Transactions</span>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden border-b-4 border-b-slate-300">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50/80">
+                                <tr>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Project Reference</th>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Month</th>
+                                    <th className="px-5 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Value</th>
+                                    <th className="px-5 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Margin (GP)</th>
+                                    <th className="px-5 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
+                                    <th className="px-5 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {detailedProjects.sort((a: any, b: any) => b.value - a.value).map((p: any) => (
+                                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-5 py-4">
+                                            <Link href={`/dashboard/crm/projects/${p.id}`} className="flex flex-col group/link">
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-xs font-black text-slate-900 leading-tight group-hover/link:text-blue-600 transition-colors uppercase tracking-tight">{p.projectCode}</span>
+                                                    <ExternalLink className="w-2.5 h-2.5 text-slate-300 group-hover/link:text-blue-600 opacity-0 group-hover/link:opacity-100 transition-all" />
+                                                </div>
+                                                <span className="text-[10px] text-slate-500 font-bold truncate max-w-[280px] uppercase tracking-tighter mt-0.5">{p.title}</span>
+                                            </Link>
+                                        </td>
+                                        <td className="px-5 py-4 text-[11px] font-black text-slate-700">{p.monthKey}</td>
+                                        <td className="px-5 py-4 text-right text-sm font-black text-slate-900 tabular-nums">{formatCurrency(p.value)}</td>
+                                        <td className="px-5 py-4 text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-xs font-black text-green-600">{formatCurrency(p.profit)}</span>
+                                                <span className="text-[10px] text-slate-400 font-black tracking-tighter">({Math.round((p.profit / p.value) * 100)}%)</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                                {p.quoteNumber && (
+                                                    <div title="Quote Reference" className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 rounded-md text-[9px] font-black text-slate-600 border border-slate-200">
+                                                        <FileText className="w-2.5 h-2.5" /> {p.quoteNumber}
+                                                    </div>
+                                                )}
+                                                {p.doNumber && (
+                                                    <div title="Delivery Order" className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-md text-[9px] font-black text-blue-600 border border-blue-100">
+                                                        <ChevronRight className="w-2.5 h-2.5" /> {p.doNumber}
+                                                    </div>
+                                                )}
+                                                {p.invoiceNumber && (
+                                                    <div title="Invoice Number" className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 rounded-md text-[9px] font-black text-emerald-600 border border-emerald-100 underline decoration-dotted">
+                                                        {p.invoiceNumber}
+                                                    </div>
+                                                )}
+                                                {!p.quoteNumber && !p.doNumber && !p.invoiceNumber && <span className="text-slate-300">—</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-center">
+                                            <span className={`inline-flex px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${p.status === 'WON' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700 border border-blue-200 shadow-sm'}`}>
+                                                {p.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot className="bg-slate-50/50">
+                                <tr className="divide-x divide-slate-100">
+                                    <td colSpan={2} className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Aggregated View</td>
+                                    <td className="px-5 py-4 text-right text-sm font-black text-slate-900 tabular-nums">{formatCurrency(detailedProjects.reduce((s: number, p: any) => s + p.value, 0))}</td>
+                                    <td className="px-5 py-4 text-right text-xs font-black text-green-600 tabular-nums">{formatCurrency(detailedProjects.reduce((s: number, p: any) => s + p.profit, 0))}</td>
+                                    <td colSpan={2} className="px-5 py-4 bg-slate-100/30" />
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium px-1 flex items-center gap-2">
+                        <TrendingUp className="w-3 h-3" />
+                        This section represents a raw project-level audit for {repTotals[0]?.name}. Data is pulled from associated quotations and delivery documents.
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
@@ -776,6 +876,15 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
         : (data.weekStart && data.weekEnd
             ? `${format(new Date(data.weekStart), 'do MMM')} - ${format(new Date(data.weekEnd), 'do MMM yyyy')}`
             : 'Loading...')
+
+    const hasSpecificRep = selectedRep !== 'ALL'
+
+    // Flat list of all activities for the selected rep
+    const allActivities = hasSpecificRep && data.data.length > 0
+        ? Object.values(data.data[0].columns as Record<string, any>)
+            .flatMap((col: any) => col.items || [])
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        : []
 
     return (
         <div className="space-y-5">
@@ -902,13 +1011,81 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                 </div>
             </div>
 
+            {/* ── Detailed Activity Log (Appears when single rep selected) ── */}
+            {hasSpecificRep && allActivities.length > 0 && (
+                <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-emerald-600 rounded-full" />
+                            <h2 className="text-base font-black text-slate-900 tracking-tight uppercase">Activity Audit Log</h2>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{allActivities.length} Interaction{allActivities.length !== 1 ? 's' : ''}</span>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden border-b-4 border-b-slate-300">
+                        <table className="min-w-full divide-y divide-slate-100">
+                            <thead className="bg-slate-50/80">
+                                <tr>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Timestamp</th>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Customer / Partner</th>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Activity Type</th>
+                                    <th className="px-5 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Summary & Notes</th>
+                                    <th className="px-5 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Project</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {allActivities.map((act: any) => (
+                                    <tr key={act.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">{format(new Date(act.date), 'do MMM yyyy')}</span>
+                                                <span className="text-[9px] text-slate-400 font-bold uppercase">{act.time || '—'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-black text-slate-800 uppercase tracking-tighter truncate max-w-[200px]">{act.customerName}</span>
+                                                <span className="text-[9px] text-slate-400 font-bold uppercase">{act.partnerName ? `Partner: ${act.partnerName}` : 'Direct Customer'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${act.type === 'CALL' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {act.type === 'CALL' ? <Phone className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}
+                                                {act.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex flex-col gap-0.5">
+                                                <p className="text-[11px] font-bold text-slate-700 leading-tight">{act.summary}</p>
+                                                {act.notes && <p className="text-[9px] text-slate-400 italic line-clamp-1">{act.notes}</p>}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-center">
+                                            {act.projectCode ? (
+                                                <Link href={`/dashboard/crm/projects/${act.projectId}`} className="inline-flex px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] font-black text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                    {act.projectCode}
+                                                </Link>
+                                            ) : <span className="text-slate-300">—</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium px-1 flex items-center gap-2">
+                        <BarChart3 className="w-3 h-3" />
+                        This log captures all registered CRM activities for {data.data[0]?.userName} within the selected period.
+                    </p>
+                </div>
+            )}
+
             {selectedCell && (
                 <ActivityDetailModal
                     isOpen={!!selectedCell}
                     onClose={() => setSelectedCell(null)}
-                    userName={selectedCell.userName}
-                    date={selectedCell.date}
-                    activities={selectedCell.items}
+                    userName={selectedCell?.userName || ''}
+                    date={selectedCell?.date || ''}
+                    activities={selectedCell?.items || []}
                 />
             )}
         </div>
