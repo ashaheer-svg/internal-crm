@@ -1,0 +1,310 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import {
+    BarChart3,
+    ArrowLeft,
+    TrendingUp,
+    Users,
+    Target,
+    DollarSign,
+    Calendar,
+    ChevronRight,
+    Search,
+    Filter
+} from 'lucide-react'
+import { format } from 'date-fns'
+import Link from 'next/link'
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area
+} from 'recharts'
+import InsightCard from '@/components/crm/InsightCard'
+import { formatCurrency } from '@/lib/format'
+
+export default function CRMInsightsPage() {
+    const [data, setData] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const searchParams = useSearchParams()
+    const scope = searchParams.get('scope') || 'all'
+    const router = useRouter()
+
+    useEffect(() => {
+        fetchData()
+    }, [scope])
+
+    async function fetchData() {
+        setLoading(true)
+        try {
+            // Reusing the existing comprehensive API but parsing it for insights
+            const res = await fetch(`/api/crm/reports/performance?scope=${scope}&range=history`)
+            const json = await res.json()
+            setData(json)
+        } catch (error) {
+            console.error('Failed to fetch insights:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-50/50">
+                <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                <p className="mt-4 text-sm font-bold text-slate-400 uppercase tracking-widest">Generating Insights...</p>
+            </div>
+        )
+    }
+
+    if (!data) return null
+
+    // Process data for charts and cards
+    const months = data.months || []
+    const chartData = months.map((m: string) => {
+        let won = 0, expected = 0
+        data.data.forEach((rep: any) => {
+            won += rep.data[m]?.won || 0
+            expected += rep.data[m]?.expected || 0
+        })
+        return { name: m, Won: won, Pipeline: expected }
+    })
+
+    const totalWon = data.totals.won
+    const totalPipeline = data.totals.expected
+    const winRate = (totalWon + totalPipeline) > 0 ? Math.round((totalWon / (totalWon + totalPipeline)) * 100) : 0
+
+    // Derived Metric: Average Deal Value (Mocked for UI from totals)
+    const avgDealValue = totalWon / (data.data.length || 1)
+
+    return (
+        <div className="min-h-screen bg-[#f8fafc] pb-12">
+            {/* Header */}
+            <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 rounded-xl hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 border border-transparent hover:border-slate-200"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-tighter">BETA</span>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight">CRM Insights Dashboard</h1>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium">Modular performance intelligence for {scope === 'all' ? 'Entire Organization' : 'Your Portfolio'}</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <Link
+                        href={`/dashboard/crm/reports?scope=${scope}`}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300"
+                    >
+                        <Search className="w-4 h-4" />
+                        Comprehensive Report
+                    </Link>
+                    <div className="h-8 w-px bg-slate-200" />
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                        <Filter className="w-4 h-4" />
+                        Adjust Scope
+                    </button>
+                </div>
+            </header>
+
+            <main className="px-8 mt-8 space-y-8 max-w-7xl mx-auto">
+                {/* 1. Pulse Section (KPIs) */}
+                <section>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Pipeline Pulse</h2>
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase">Real-time stats</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <InsightCard
+                            title="Total Sales (WON)"
+                            value={formatCurrency(totalWon)}
+                            subtitle="Last 12 Months"
+                            icon={DollarSign}
+                            variant="green"
+                            trend={{ value: 12, label: 'Prev Period', isPositive: true }}
+                        />
+                        <InsightCard
+                            title="Active Pipeline"
+                            value={formatCurrency(totalPipeline)}
+                            subtitle="Open Opportunities"
+                            icon={Target}
+                            variant="indigo"
+                            trend={{ value: 5, label: 'Last Month', isPositive: true }}
+                        />
+                        <InsightCard
+                            title="Winning Momentum"
+                            value={`${winRate}%`}
+                            subtitle="Conversion Efficiency"
+                            icon={TrendingUp}
+                            variant="blue"
+                        />
+                        <InsightCard
+                            title="Team Capacity"
+                            value={data.data.length}
+                            subtitle="Active Agents"
+                            icon={Users}
+                            variant="slate"
+                        />
+                    </div>
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* 2. Revenue Trend Section */}
+                    <section className="lg:col-span-2 space-y-4">
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm shadow-slate-100 flex flex-col h-[400px]">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-sm font-black text-slate-900">Revenue Performance Map</h2>
+                                    <p className="text-[11px] text-slate-500 font-medium">Comparison of Secured vs Forecasted Revenue</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase">Won</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase">Pipeline</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 w-full -ml-8">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData}>
+                                        <defs>
+                                            <linearGradient id="colorWon" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                            </linearGradient>
+                                            <linearGradient id="colorPipe" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                                        />
+                                        <YAxis hide />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <RechartsTooltip
+                                            contentStyle={{
+                                                borderRadius: '16px',
+                                                border: 'none',
+                                                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                                                fontSize: '11px',
+                                                fontWeight: 800
+                                            }}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="Won"
+                                            stroke="#10b981"
+                                            strokeWidth={3}
+                                            fillOpacity={1}
+                                            fill="url(#colorWon)"
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="Pipeline"
+                                            stroke="#6366f1"
+                                            strokeWidth={3}
+                                            fillOpacity={1}
+                                            fill="url(#colorPipe)"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* 3. Team Leaderboard */}
+                    <section className="space-y-4">
+                        <div className="bg-white overflow-hidden rounded-3xl border border-slate-200 shadow-sm shadow-slate-100 flex flex-col h-[400px]">
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Top Performers</h2>
+                                <button className="text-[10px] font-black text-blue-600 hover:text-blue-700">VIEW ALL</button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                {data.data
+                                    .map((rep: any) => {
+                                        let total = 0
+                                        months.forEach((m: string) => total += rep.data[m]?.won || 0)
+                                        return { ...rep, total }
+                                    })
+                                    .sort((a: any, b: any) => b.total - a.total)
+                                    .map((rep: any, idx: number) => (
+                                        <div key={rep.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black">
+                                                    #{idx + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-slate-900">{rep.name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ranked #{idx + 1} this month</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[11px] font-black text-emerald-600">{formatCurrency(rep.total)}</p>
+                                                <span className="text-[9px] text-slate-400 font-medium">Secured</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                {/* 4. Monthly Calendar Strip */}
+                <section>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Monthly Footprint</h2>
+                        <div className="flex bg-white rounded-lg p-0.5 border border-slate-200">
+                            <button className="px-3 py-1 bg-slate-100 rounded-md text-[10px] font-black text-slate-900">WON</button>
+                            <button className="px-3 py-1 text-[10px] font-black text-slate-400">PIPELINE</button>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                        {months.map((m: string) => {
+                            let total = 0
+                            data.data.forEach((rep: any) => total += rep.data[m]?.won || 0)
+                            const isCurrent = m.includes(format(new Date(), 'MMM yy'))
+
+                            return (
+                                <div
+                                    key={m}
+                                    className={`flex-shrink-0 w-36 p-4 rounded-2xl border transition-all hover:-translate-y-1 ${isCurrent ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-200' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm shadow-slate-100'}`}
+                                >
+                                    <p className={`text-[10px] font-bold uppercase tracking-wider ${isCurrent ? 'text-blue-100' : 'text-slate-400'}`}>{m}</p>
+                                    <p className={`mt-2 text-sm font-black ${isCurrent ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(total)}</p>
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <div className={`w-full h-1 rounded-full ${isCurrent ? 'bg-blue-400' : 'bg-slate-100'}`}>
+                                            <div className={`h-full rounded-full ${isCurrent ? 'bg-white' : 'bg-emerald-500'}`} style={{ width: '65%' }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </section>
+            </main>
+        </div>
+    )
+}

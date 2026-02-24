@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, LayoutTemplate, List, BarChart3, Users, User, History } from 'lucide-react'
+import { Plus, LayoutTemplate, List, BarChart3, Users, User, History, TrendingUp } from 'lucide-react'
 import ListView from './ListView'
 import { formatCurrency } from '@/lib/format'
 import CreateCustomerButton from '@/components/CreateCustomerButton'
@@ -304,6 +304,13 @@ export default function KanbanPage() {
                             >
                                 <BarChart3 className="w-4 h-4 text-blue-600" />
                                 Reports
+                            </button>
+                            <button
+                                onClick={() => router.push(`/dashboard/crm/insights?scope=${scope}`)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                Insights
                             </button>
                             <button
                                 onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}&range=history`)}

@@ -2,9 +2,28 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/format'
-import { User, Users, Printer, TrendingUp, DollarSign, Target, ArrowLeft, Phone, Calendar, Mail, FileText, ChevronLeft, ChevronRight, Search, X, ChevronDown, ExternalLink } from 'lucide-react'
+import {
+    User,
+    Users,
+    Printer,
+    TrendingUp,
+    DollarSign,
+    Target,
+    ArrowLeft,
+    Phone,
+    Calendar,
+    Mail,
+    FileText,
+    ChevronLeft,
+    ChevronRight,
+    Search,
+    X,
+    ChevronDown,
+    ExternalLink,
+    BarChart3
+} from 'lucide-react'
 import DocumentHeader from '@/components/DocumentHeader'
 import DocumentFooter from '@/components/DocumentFooter'
 import ActivityDetailModal from '@/components/crm/ActivityDetailModal'
@@ -13,6 +32,7 @@ import '@/styles/print.css'
 
 export default function CRMReportsPage() {
     const searchParams = useSearchParams()
+    const router = useRouter()
     const scopeFromUrl = (searchParams.get('scope') as 'all' | 'mine') || 'all'
     const rangeFromUrl = (searchParams.get('range') as 'forecast' | 'history' | 'activities') || 'forecast'
 
@@ -161,7 +181,6 @@ export default function CRMReportsPage() {
             `}</style>
 
             <div className="p-6 max-w-7xl mx-auto space-y-5">
-
                 {/* ── Page header ─────────────────────────────────── */}
                 <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-x-6 gap-y-4 py-2">
                     <div className="flex items-center gap-3">
@@ -192,6 +211,16 @@ export default function CRMReportsPage() {
                             <button onClick={() => setRange('activities')}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${range === 'activities' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
                                 Activities
+                            </button>
+                        </div>
+
+                        <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200 no-print">
+                            <button
+                                onClick={() => router.push(`/dashboard/crm/insights?scope=${scope}`)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-emerald-600 hover:bg-white hover:shadow-sm"
+                            >
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                Insights
                             </button>
                         </div>
 
@@ -360,7 +389,6 @@ export default function CRMReportsPage() {
     )
 }
 
-
 function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: string; scope: string; range: string; metric: 'sales' | 'profit' }) {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
@@ -427,7 +455,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
     const formatReportValue = (val: number) => {
         if (isHistory && val > 0) {
             const kVal = val / 1000
-            // If it's a whole number or close to it, avoid decimals to save space
             const formattedK = kVal >= 10
                 ? Math.round(kVal).toLocaleString()
                 : kVal.toLocaleString('en-US', { maximumFractionDigits: 1 })
@@ -438,7 +465,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
 
     return (
         <div className="space-y-5">
-
             {/* ── KPI cards (screen only) ───────────────────────── */}
             <div className={`no-print grid grid-cols-3 gap-4`}>
                 {[
@@ -460,8 +486,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
 
             {/* ── Rep Summary table (both screen + print) ──────── */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible">
-
-                {/* Section label */}
                 <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between print:px-0 print:py-1 print:border-gray-300">
                     <div className="flex items-center gap-4">
                         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Representative Summary</h2>
@@ -504,7 +528,7 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                             </tr>
                         </thead>
                         <tbody>
-                            {repTotals.map((rep: any, idx: number) => {
+                            {repTotals.map((rep: any) => {
                                 const isExpanded = expandedReps.has(rep.id)
                                 return (
                                     <React.Fragment key={rep.id}>
@@ -568,8 +592,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                                                                 <div className="flex flex-col items-end group/gp relative">
                                                                                     <span>{formatReportValue(p.profit)}</span>
                                                                                     <span className="text-[9px] text-slate-400 font-medium">({Math.round((p.profit / p.value) * 100)}%)</span>
-
-                                                                                    {/* Tooltip for GP calculation */}
                                                                                     <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-800 text-white text-[9px] rounded shadow-xl opacity-0 group-hover/gp:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed font-normal">
                                                                                         GP = Expected Value - Total Cost.
                                                                                         <br />Costs are pulled from latest GRN for each item, or default to 75% if no purchase history exists.
@@ -602,7 +624,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                     </React.Fragment>
                                 )
                             })}
-                            {/* Grand total row */}
                             <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb', backgroundColor: '#fff' }}>
                                 <td style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: '#374151' }}>TOTAL</td>
                                 <td style={{ padding: '8px 12px', fontSize: '13px', fontWeight: 700, color: '#16a34a', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatReportValue(grandWon)}</td>
@@ -616,8 +637,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                 </div>
             </div>
 
-            {/* ── Monthly crosstab: reps as rows, months as cols ── */}
-            {/* Original orientation preserved */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4">
                 <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between print:px-0 print:py-1 print:border-gray-300">
                     <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{metric === 'sales' ? 'Monthly Breakdown' : 'Monthly Profit Breakdown'}</h2>
@@ -630,7 +649,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                     <table className={`crm-report-table min-w-full ${isHistory ? 'compact' : ''}`} style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>
-                                {/* First col: Sales Rep */}
                                 <th style={{
                                     padding: '8px 12px', textAlign: 'left', fontSize: '10px', fontWeight: 700,
                                     textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280',
@@ -649,7 +667,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                         {month}
                                     </th>
                                 ))}
-                                {/* Total column */}
                                 <th style={{
                                     padding: '4px 8px', textAlign: 'right', fontSize: isHistory ? '7.5px' : '9px', fontWeight: 700,
                                     textTransform: 'uppercase', letterSpacing: '0.03em', color: '#374151',
@@ -661,8 +678,7 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                             </tr>
                         </thead>
                         <tbody>
-                            {/* One row per rep */}
-                            {repTotals.map((rep: any, idx: number) => (
+                            {repTotals.map((rep: any) => (
                                 <tr key={rep.id} style={{ backgroundColor: '#fff' }}>
                                     <td style={{
                                         padding: '8px 12px', fontSize: '12px', fontWeight: 600, color: '#111827',
@@ -676,7 +692,6 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                         const cell = rep.data[month] || { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
                                         const wonVal = metric === 'sales' ? cell.won : cell.wonProfit
                                         const expectedVal = metric === 'sales' ? cell.expected : cell.expectedProfit
-
                                         return (
                                             <td key={month} style={{ padding: isHistory ? '4px 8px' : '7px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6', borderRight: '1px solid #f9fafb', verticalAlign: 'top' }}>
                                                 {wonVal > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 600, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(wonVal)}</div>}
@@ -685,14 +700,12 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                                             </td>
                                         )
                                     })}
-                                    {/* Row total */}
                                     <td style={{ padding: isHistory ? '4px 8px' : '7px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6', borderLeft: '2px solid #e5e7eb', verticalAlign: 'top', backgroundColor: '#fff' }}>
                                         {rep.totalWon > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 700, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(rep.totalWon)}</div>}
                                         {rep.totalExpected > 0 && <div style={{ fontSize: isHistory ? '8px' : '10px', color: '#2563eb', lineHeight: 1.3, marginTop: rep.totalWon > 0 ? '2px' : 0 }}>{formatReportValue(rep.totalExpected)}</div>}
                                     </td>
                                 </tr>
                             ))}
-                            {/* Month totals row */}
                             <tr className="totals-row" style={{ borderTop: '2px solid #e5e7eb' }}>
                                 <td style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: '#374151', position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 1, borderRight: '1px solid #e5e7eb' }}>
                                     TOTAL
@@ -713,12 +726,10 @@ function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: 
                     </table>
                 </div>
 
-                {/* Legend — screen */}
                 <div className="no-print px-5 py-2 border-t border-gray-100 bg-gray-50 flex items-center gap-5 text-xs text-gray-400">
-                    <span>Green = Won (closed &amp; won)</span>
+                    <span>Green = Won (closed & won)</span>
                     <span>Blue = Pipeline (open forecast)</span>
                 </div>
-                {/* Legend — print */}
                 <div className="hidden print:block" style={{ fontSize: '6pt', color: '#9ca3af', marginTop: '4px' }}>
                     {isHistory ? "All amounts in 'k' (e.g. 5,000 = 5k) · " : ""}Green = Won · Blue = Pipeline (open forecast)
                 </div>
@@ -768,7 +779,6 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
 
     return (
         <div className="space-y-5">
-            {/* View Controls & Navigation */}
             <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200 shrink-0">
                     <button onClick={() => { setViewType('weekly'); setWeekOffset(0) }}
@@ -782,22 +792,14 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setWeekOffset(weekOffset - 1)}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200"
-                    >
+                    <button onClick={() => setWeekOffset(weekOffset - 1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200">
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <div className="text-center min-w-[150px]">
                         <p className="text-sm font-bold text-gray-900">{dateRangeStr}</p>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">
-                            {viewType === 'monthly' ? 'Month View' : 'Week View'}
-                        </p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{viewType === 'monthly' ? 'Month View' : 'Week View'}</p>
                     </div>
-                    <button
-                        onClick={() => setWeekOffset(weekOffset + 1)}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200"
-                    >
+                    <button onClick={() => setWeekOffset(weekOffset + 1)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors border border-transparent hover:border-gray-200">
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
@@ -816,14 +818,10 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                     <table className="min-w-full divide-y divide-gray-200" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                         <thead>
                             <tr className="bg-gray-50/50">
-                                <th className="px-5 py-4 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 sticky left-0 bg-white z-10 min-w-[180px] shadow-[1px_0_0_0_#e5e7eb]">
-                                    Sales Representative
-                                </th>
+                                <th className="px-5 py-4 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 sticky left-0 bg-white z-10 min-w-[180px] shadow-[1px_0_0_0_#e5e7eb]">Representative</th>
                                 {data.columns.map((col: any) => (
                                     <th key={col.id} className="px-3 py-4 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 min-w-[100px]">
-                                        {viewType === 'monthly' ? (
-                                            <span className="text-gray-900">{col.label}</span>
-                                        ) : (
+                                        {viewType === 'monthly' ? col.label : (
                                             <div className="flex flex-col items-center">
                                                 <span className="opacity-60">{col.label.split(' ')[0]}</span>
                                                 <span className="text-gray-900 mt-0.5">{col.label.split(' ')[1]}</span>
@@ -831,9 +829,7 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                         )}
                                     </th>
                                 ))}
-                                <th className="px-3 py-4 text-center text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b border-gray-200 min-w-[80px] bg-slate-50/50">
-                                    Total
-                                </th>
+                                <th className="px-3 py-4 text-center text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b border-gray-200 min-w-[80px] bg-slate-50/50">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
@@ -841,20 +837,13 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                 const rowTotal = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.total, 0)
                                 const rowCalls = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.CALL, 0)
                                 const rowMeetings = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.MEETING, 0)
-
                                 return (
                                     <tr key={rep.userId} className="hover:bg-gray-50/30 transition-colors">
-                                        <td className="px-5 py-3 text-[11px] font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[1px_0_0_0_#e5e7eb]">
-                                            {rep.userName}
-                                        </td>
+                                        <td className="px-5 py-3 text-[11px] font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[1px_0_0_0_#e5e7eb]">{rep.userName}</td>
                                         {data.columns.map((col: any) => {
                                             const cell = rep.columns[col.id]
                                             return (
-                                                <td
-                                                    key={col.id}
-                                                    className={`px-2 py-3 text-center border-r border-gray-50/50 last:border-r-0 cursor-pointer hover:bg-blue-50/50 transition-all group relative`}
-                                                    onClick={() => cell.total > 0 && setSelectedCell({ userName: rep.userName, date: col.label, items: cell.items })}
-                                                >
+                                                <td key={col.id} className="px-2 py-3 text-center border-r border-gray-50/50 last:border-r-0 cursor-pointer hover:bg-blue-50/50 transition-all group relative" onClick={() => cell.total > 0 && setSelectedCell({ userName: rep.userName, date: col.label, items: cell.items })}>
                                                     {cell.total > 0 ? (
                                                         <div className="flex flex-wrap justify-center gap-1">
                                                             {cell.CALL > 0 && (
@@ -867,19 +856,14 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                                                     <Users className="w-2.5 h-2.5" /> {cell.MEETING}
                                                                 </div>
                                                             )}
-                                                            <span className="no-print absolute top-0 right-0 opacity-0 group-hover:opacity-100 bg-sky-500 text-[6px] text-white px-1 rounded-sm font-bold uppercase transition-opacity">View</span>
                                                         </div>
-                                                    ) : (
-                                                        <span className="text-gray-200 text-[10px]">—</span>
-                                                    )}
+                                                    ) : <span className="text-gray-200 text-[10px]">—</span>}
                                                 </td>
                                             )
                                         })}
                                         <td className="px-3 py-3 text-center bg-slate-50/30 font-bold border-l border-gray-200">
                                             <div className="flex flex-col items-center gap-1">
-                                                <div className="flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px]">
-                                                    {rowTotal}
-                                                </div>
+                                                <div className="flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px]">{rowTotal}</div>
                                                 <div className="flex items-center justify-center gap-1">
                                                     {rowCalls > 0 && <span className="text-[8px] text-green-600">C:{rowCalls}</span>}
                                                     {rowMeetings > 0 && <span className="text-[8px] text-blue-600">V:{rowMeetings}</span>}
