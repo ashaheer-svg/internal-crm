@@ -70,19 +70,21 @@ export default function CRMInsightsPage() {
     const months = data.months || []
     const chartData = months.map((m: string) => {
         let won = 0, expected = 0
-        data.data.forEach((rep: any) => {
-            won += rep.data[m]?.won || 0
-            expected += rep.data[m]?.expected || 0
+        const items = data.data || []
+        items.forEach((rep: any) => {
+            const cell = rep.data && rep.data[m]
+            won += cell?.won || 0
+            expected += cell?.expected || 0
         })
         return { name: m, Won: won, Pipeline: expected }
     })
 
-    const totalWon = data.totals.won
-    const totalPipeline = data.totals.expected
+    const totalWon = chartData.reduce((acc: number, curr: any) => acc + (curr.Won || 0), 0)
+    const totalPipeline = chartData.reduce((acc: number, curr: any) => acc + (curr.Pipeline || 0), 0)
     const winRate = (totalWon + totalPipeline) > 0 ? Math.round((totalWon / (totalWon + totalPipeline)) * 100) : 0
 
     // Derived Metric: Average Deal Value (Mocked for UI from totals)
-    const avgDealValue = totalWon / (data.data.length || 1)
+    const avgDealValue = totalWon / ((data.data || []).length || 1)
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-12">
@@ -153,7 +155,7 @@ export default function CRMInsightsPage() {
                         />
                         <InsightCard
                             title="Team Capacity"
-                            value={data.data.length}
+                            value={(data.data || []).length}
                             subtitle="Active Agents"
                             icon={Users}
                             variant="slate"
@@ -243,10 +245,10 @@ export default function CRMInsightsPage() {
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                                {data.data
+                                {(data.data || [])
                                     .map((rep: any) => {
                                         let total = 0
-                                        months.forEach((m: string) => total += rep.data[m]?.won || 0)
+                                        months.forEach((m: string) => total += (rep.data && rep.data[m])?.won || 0)
                                         return { ...rep, total }
                                     })
                                     .sort((a: any, b: any) => b.total - a.total)
@@ -284,8 +286,9 @@ export default function CRMInsightsPage() {
                     <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
                         {months.map((m: string) => {
                             let total = 0
-                            data.data.forEach((rep: any) => total += rep.data[m]?.won || 0)
-                            const isCurrent = m.includes(format(new Date(), 'MMM yy'))
+                            const items = data.data || []
+                            items.forEach((rep: any) => total += (rep.data && rep.data[m])?.won || 0)
+                            const isCurrent = typeof m === 'string' && m.includes(format(new Date(), 'MMM yy'))
 
                             return (
                                 <div
