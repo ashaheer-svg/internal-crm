@@ -20,6 +20,7 @@ export default function CRMReportsPage() {
     const [selectedRep, setSelectedRep] = useState('ALL')
     const [scope, setScope] = useState<'all' | 'mine'>(scopeFromUrl)
     const [range, setRange] = useState<'forecast' | 'history' | 'activities'>(rangeFromUrl)
+    const [metric, setMetric] = useState<'sales' | 'profit'>('sales')
     const [weekOffset, setWeekOffset] = useState(0)
     const [viewType, setViewType] = useState<'weekly' | 'monthly'>('weekly')
     const [selectedCustomer, setSelectedCustomer] = useState<{ id: string, name: string } | null>(null)
@@ -194,6 +195,20 @@ export default function CRMReportsPage() {
                             </button>
                         </div>
 
+                        {/* Metric Toggle */}
+                        {range !== 'activities' && (
+                            <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                <button onClick={() => setMetric('sales')}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${metric === 'sales' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                                    Sales
+                                </button>
+                                <button onClick={() => setMetric('profit')}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${metric === 'profit' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                                    GP
+                                </button>
+                            </div>
+                        )}
+
                         {canViewAll && (
                             <>
                                 <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
@@ -331,6 +346,7 @@ export default function CRMReportsPage() {
                             selectedRep={scope === 'mine' ? 'ALL' : selectedRep}
                             scope={scope}
                             range={range}
+                            metric={metric}
                         />
                     )
                 )}
@@ -345,7 +361,7 @@ export default function CRMReportsPage() {
 }
 
 
-function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; scope: string; range: string }) {
+function PerformanceTable({ selectedRep, scope, range, metric }: { selectedRep: string; scope: string; range: string; metric: 'sales' | 'profit' }) {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
@@ -365,10 +381,13 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
     const repTotals = data.data.map((rep: any) => {
         let totalWon = 0, totalExpected = 0, bestMonth = '', bestWon = 0
         data.months.forEach((m: string) => {
-            const cell = rep.data[m] || { won: 0, expected: 0 }
-            totalWon += cell.won
-            totalExpected += cell.expected
-            if (cell.won > bestWon) { bestWon = cell.won; bestMonth = m }
+            const cell = rep.data[m] || { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
+            const wonVal = metric === 'sales' ? cell.won : cell.wonProfit
+            const expectedVal = metric === 'sales' ? cell.expected : cell.expectedProfit
+
+            totalWon += wonVal
+            totalExpected += expectedVal
+            if (wonVal > bestWon) { bestWon = wonVal; bestMonth = m }
         })
         const winRate = (totalWon + totalExpected) > 0
             ? Math.round((totalWon / (totalWon + totalExpected)) * 100) : 0
@@ -385,8 +404,9 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
     data.months.forEach((m: string) => {
         let won = 0, expected = 0
         data.data.forEach((rep: any) => {
-            const cell = rep.data[m] || { won: 0, expected: 0 }
-            won += cell.won; expected += cell.expected
+            const cell = rep.data[m] || { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
+            won += metric === 'sales' ? cell.won : cell.wonProfit
+            expected += metric === 'sales' ? cell.expected : cell.expectedProfit
         })
         monthTotals[m] = { won, expected }
     })
@@ -410,8 +430,8 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
             {/* ── KPI cards (screen only) ───────────────────────── */}
             <div className={`no-print grid grid-cols-3 gap-4`}>
                 {[
-                    { icon: DollarSign, label: 'Total Won', value: formatReportValue(grandWon), color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
-                    { icon: Target, label: 'Pipeline (Expected)', value: formatReportValue(grandExpected), color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+                    { icon: DollarSign, label: metric === 'sales' ? 'Total Won' : 'Total Profit (Won)', value: formatReportValue(grandWon), color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
+                    { icon: Target, label: metric === 'sales' ? 'Pipeline (Expected)' : 'Pipeline Profit', value: formatReportValue(grandExpected), color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
                     { icon: TrendingUp, label: 'Overall Win Rate', value: `${grandWinRate}%`, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
                 ].map(card => (
                     <div key={card.label} className={`flex items-center gap-3 p-4 rounded-xl border ${card.border} ${card.bg}`}>
@@ -439,7 +459,7 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                     <table className={`rep-summary-table min-w-full ${isHistory ? 'compact' : ''}`} style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ backgroundColor: undefined }}>
-                                {['Sales Representative', 'Total Won', 'Pipeline', 'Total Forecast', 'Win Rate', 'Best Month'].map((h, i) => (
+                                {['Sales Representative', metric === 'sales' ? 'Total Won' : 'Total Profit', metric === 'sales' ? 'Pipeline' : 'Pipeline Profit', 'Total Forecast', 'Win Rate', 'Best Month'].map((h, i) => (
                                     <th key={h} style={{
                                         padding: '8px 12px',
                                         fontSize: '10px',
@@ -498,10 +518,10 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
             {/* Original orientation preserved */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4">
                 <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between print:px-0 print:py-1 print:border-gray-300">
-                    <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Monthly Breakdown</h2>
+                    <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{metric === 'sales' ? 'Monthly Breakdown' : 'Monthly Profit Breakdown'}</h2>
                     <div className="no-print flex items-center gap-4 text-xs text-gray-400">
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500 inline-block" /> Won</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400 inline-block" /> Pipeline</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500 inline-block" /> {metric === 'sales' ? 'Won' : 'Profit (Won)'}</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-400 inline-block" /> {metric === 'sales' ? 'Pipeline' : 'Profit (Pipeline)'}</span>
                     </div>
                 </div>
                 <div className="overflow-x-auto print:overflow-visible text-[10px]">
@@ -551,12 +571,15 @@ function PerformanceTable({ selectedRep, scope, range }: { selectedRep: string; 
                                         {rep.name}
                                     </td>
                                     {data.months.map((month: string) => {
-                                        const cell = rep.data[month] || { won: 0, expected: 0 }
+                                        const cell = rep.data[month] || { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
+                                        const wonVal = metric === 'sales' ? cell.won : cell.wonProfit
+                                        const expectedVal = metric === 'sales' ? cell.expected : cell.expectedProfit
+
                                         return (
                                             <td key={month} style={{ padding: isHistory ? '4px 8px' : '7px 12px', textAlign: 'right', borderBottom: '1px solid #f3f4f6', borderRight: '1px solid #f9fafb', verticalAlign: 'top' }}>
-                                                {cell.won > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 600, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(cell.won)}</div>}
-                                                {cell.expected > 0 && <div style={{ fontSize: isHistory ? '8px' : '10px', color: '#2563eb', lineHeight: 1.3, marginTop: cell.won > 0 ? '2px' : 0 }}>{formatReportValue(cell.expected)}</div>}
-                                                {!cell.won && !cell.expected && <span style={{ color: '#d1d5db', fontSize: '11px' }}>—</span>}
+                                                {wonVal > 0 && <div style={{ fontSize: isHistory ? '10px' : '12px', fontWeight: 600, color: '#16a34a', lineHeight: 1.3 }}>{formatReportValue(wonVal)}</div>}
+                                                {expectedVal > 0 && <div style={{ fontSize: isHistory ? '8px' : '10px', color: '#2563eb', lineHeight: 1.3, marginTop: wonVal > 0 ? '2px' : 0 }}>{formatReportValue(expectedVal)}</div>}
+                                                {wonVal <= 0 && expectedVal <= 0 && <span style={{ color: '#d1d5db', fontSize: '11px' }}>—</span>}
                                             </td>
                                         )
                                     })}

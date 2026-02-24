@@ -83,18 +83,32 @@ export async function GET(request: Request) {
                     }
                 ]
             },
-            select: {
-                id: true,
-                status: true,
-                expectedValue: true,
-                closedAt: true,
-                expectedCloseDate: true,
-                salesRepId: true
+            include: {
+                quotes: {
+                    where: { status: { in: ['APPROVED', 'ACCEPTED'] } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    include: {
+                        items: {
+                            include: {
+                                product: {
+                                    select: {
+                                        grnItems: {
+                                            orderBy: { createdAt: 'desc' },
+                                            take: 1,
+                                            select: { unitCost: true }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         })
 
         // 3. Aggregate Data
-        // Structure: { [salesRepId]: { name: string, data: { [monthKey]: { won: number, expected: number } } } }
+        // Structure: { [salesRepId]: { name: string, data: { [monthKey]: { won: number, expected: number, wonProfit: number, expectedProfit: number } } } }
 
         const aggregated: Record<string, any> = {}
         const months: string[] = []
@@ -117,13 +131,13 @@ export async function GET(request: Request) {
             }
             // Init Months
             months.forEach(m => {
-                aggregated[rep.id].data[m] = { won: 0, expected: 0 }
+                aggregated[rep.id].data[m] = { won: 0, expected: 0, wonProfit: 0, expectedProfit: 0 }
             })
         })
 
         // Process Deals
         deals.forEach(deal => {
-            if (!deal.salesRepId || !aggregated[deal.salesRepId]) return // Skip if unassigned or rep not in list (e.g. filter)
+            if (!deal.salesRepId || !aggregated[deal.salesRepId]) return
 
             const repData = aggregated[deal.salesRepId].data
 
@@ -137,10 +151,28 @@ export async function GET(request: Request) {
             const key = `${monthName} ${yearStr}`
 
             if (repData[key]) {
+                // Profit Calculation Logic
+                let profit = 0
+                const approvedQuote = (deal.quotes as any[])?.[0]
+
+                if (approvedQuote && approvedQuote.items.length > 0) {
+                    let totalCost = 0
+                    approvedQuote.items.forEach((item: any) => {
+                        const productCost = item.product?.grnItems?.[0]?.unitCost || item.unitPrice * 0.75 // Fallback to 75% cost if no GRN found
+                        totalCost += productCost * item.quantity
+                    })
+                    profit = deal.expectedValue - totalCost
+                } else {
+                    // Fallback margin: 25% of expected value
+                    profit = deal.expectedValue * 0.25
+                }
+
                 if (deal.status === 'WON') {
                     repData[key].won += deal.expectedValue
+                    repData[key].wonProfit += profit
                 } else {
                     repData[key].expected += deal.expectedValue
+                    repData[key].expectedProfit += profit
                 }
             }
         })
