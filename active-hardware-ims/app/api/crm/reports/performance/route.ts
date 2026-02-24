@@ -157,27 +157,38 @@ export async function GET(request: Request) {
             const key = `${monthName} ${yearStr}`
 
             if (repData[key]) {
-                // Profit Calculation Logic
+                // Determine value and profit source
+                let valueToUse = deal.expectedValue
                 let profit = 0
                 const approvedQuote = (deal.quotes as any[])?.[0]
 
-                if (approvedQuote && approvedQuote.items.length > 0) {
+                if (approvedQuote) {
+                    valueToUse = approvedQuote.subTotal
                     let totalCost = 0
-                    approvedQuote.items.forEach((item: any) => {
-                        const productCost = item.product?.grnItems?.[0]?.unitCost || item.unitPrice * 0.75 // Fallback to 75% cost if no GRN found
-                        totalCost += productCost * item.quantity
-                    })
-                    profit = deal.expectedValue - totalCost
+                    if (approvedQuote.items?.length > 0) {
+                        approvedQuote.items.forEach((item: any) => {
+                            const productCost = item.product?.grnItems?.[0]?.unitCost || item.unitPrice * 0.75
+                            totalCost += productCost * item.quantity
+                        })
+                        profit = valueToUse - totalCost
+                    } else {
+                        profit = valueToUse * 0.25
+                    }
                 } else {
-                    // Fallback margin: 25% of expected value
-                    profit = deal.expectedValue * 0.25
+                    if (deal.status === 'WON') {
+                        // Per user request: use ONLY actual values from confirmed quotes for historical
+                        valueToUse = 0
+                        profit = 0
+                    } else {
+                        profit = valueToUse * 0.25
+                    }
                 }
 
                 if (deal.status === 'WON') {
-                    repData[key].won += deal.expectedValue
+                    repData[key].won += valueToUse
                     repData[key].wonProfit += profit
                 } else {
-                    repData[key].expected += deal.expectedValue
+                    repData[key].expected += valueToUse
                     repData[key].expectedProfit += profit
                 }
 
@@ -187,7 +198,7 @@ export async function GET(request: Request) {
                     projectCode: deal.projectCode,
                     title: deal.title,
                     status: deal.status,
-                    value: deal.expectedValue,
+                    value: valueToUse,
                     profit: profit,
                     quoteNumber: approvedQuote?.quoteNumber || null,
                     doNumber: (approvedQuote as any)?.deliveryOrder?.orderNumber || null,
