@@ -45,6 +45,7 @@ export async function GET(request: Request) {
                 { title: { contains: search } },
                 { projectCode: { contains: search } },
                 { customer: { name: { contains: search } } },
+                { partner: { name: { contains: search } } },
                 { salesRep: { name: { contains: search } } }
             ]
         }

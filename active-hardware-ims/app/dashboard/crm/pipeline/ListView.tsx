@@ -127,7 +127,7 @@ export default function ListView({
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                         type="text"
-                        placeholder="Search projects, customers, reps..."
+                        placeholder="Search projects, customers, partners, reps..."
                         className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}

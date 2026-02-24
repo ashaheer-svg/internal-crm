@@ -268,114 +268,116 @@ export default function KanbanPage() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-3 border-b bg-white shadow-sm">
-                {/* Left: title + view controls */}
-                <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                        {pipeline ? pipeline.name : 'CRM Pipeline'}
-                    </h1>
+            <div className="flex flex-col border-b bg-white shadow-sm">
+                {/* Row 1: Title + Primary Actions */}
+                <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                            {pipeline ? pipeline.name : 'CRM Pipeline'}
+                        </h1>
 
-                    {/* View Toggle */}
-                    <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                        <button
-                            onClick={() => setViewMode('BOARD')}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'BOARD' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <LayoutTemplate className="w-3.5 h-3.5" />
-                            Board
-                        </button>
-                        <button
-                            onClick={() => setViewMode('LIST')}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'LIST' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <List className="w-3.5 h-3.5" />
-                            List
-                        </button>
-                    </div>
-
-                    {/* Scope Toggle — only for users with projects:view_all permission */}
-                    {canViewAll && (
+                        {/* View Toggle */}
                         <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
                             <button
-                                onClick={() => setScope('all')}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${scope === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setViewMode('BOARD')}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'BOARD' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <Users className="w-3.5 h-3.5" />
-                                All
+                                <LayoutTemplate className="w-3.5 h-3.5" />
+                                Board
                             </button>
                             <button
-                                onClick={() => setScope('mine')}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${scope === 'mine' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setViewMode('LIST')}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'LIST' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <User className="w-3.5 h-3.5" />
-                                Mine
+                                <List className="w-3.5 h-3.5" />
+                                List
                             </button>
                         </div>
-                    )}
+                    </div>
 
-                    <div className="h-6 w-px bg-gray-200 mx-1" />
+                    {/* Right: action buttons */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}`)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                <BarChart3 className="w-4 h-4 text-blue-600" />
+                                Reports
+                            </button>
+                            <button
+                                onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}&range=history`)}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                <History className="w-4 h-4 text-blue-600" />
+                                History
+                            </button>
+                        </div>
 
-                    <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideWon}
-                                onChange={(e) => setHideWon(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Won</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideApproved}
-                                onChange={(e) => setHideApproved(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Approved</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                checked={hideShipped}
-                                onChange={(e) => setHideShipped(e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Hide Shipped</span>
-                        </label>
+                        <div className="h-6 w-px bg-gray-200" />
+
+                        <div className="flex items-center gap-3">
+                            <CreateCustomerButton variant="primary" />
+                            <button
+                                onClick={() => router.push('/dashboard/crm/projects/new')}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Project
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Right: action buttons */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                            <BarChart3 className="w-4 h-4" />
-                            Reports
-                        </button>
-                        <button
-                            onClick={() => router.push(`/dashboard/crm/reports?scope=${scope}&range=history`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                            <History className="w-4 h-4" />
-                            History
-                        </button>
-                    </div>
+                {/* Row 2: Secondary Controls (Filters, Scope) */}
+                <div className="flex items-center gap-6 px-6 py-2 bg-gray-50/50">
+                    {/* Scope Toggle — only for users with projects:view_all permission */}
+                    {canViewAll && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Scope</span>
+                            <div className="flex bg-gray-200/50 rounded-lg p-0.5 border border-gray-200">
+                                <button
+                                    onClick={() => setScope('all')}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all ${scope === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <Users className="w-3.5 h-3.5" />
+                                    ALL
+                                </button>
+                                <button
+                                    onClick={() => setScope('mine')}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all ${scope === 'mine' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <User className="w-3.5 h-3.5" />
+                                    MINE
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
-                    <div className="h-6 w-px bg-gray-200" />
+                    <div className="h-4 w-px bg-gray-300" />
 
                     <div className="flex items-center gap-3">
-                        <CreateCustomerButton variant="primary" />
-                        <button
-                            onClick={() => router.push('/dashboard/crm/projects/new')}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Project
-                        </button>
+                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Filters</span>
+                        <div className="flex bg-gray-200/50 rounded-lg p-0.5 border border-gray-200">
+                            <button
+                                onClick={() => setHideWon(!hideWon)}
+                                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${hideWon ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                HIDE WON
+                            </button>
+                            <button
+                                onClick={() => setHideApproved(!hideApproved)}
+                                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${hideApproved ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                HIDE APPROVED
+                            </button>
+                            <button
+                                onClick={() => setHideShipped(!hideShipped)}
+                                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${hideShipped ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                HIDE SHIPPED
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
