@@ -12,7 +12,9 @@ import {
     Calendar,
     ChevronRight,
     Search,
-    Filter
+    Filter,
+    ArrowUpDown,
+    Check
 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -33,6 +35,7 @@ import { formatCurrency } from '@/lib/format'
 export default function CRMInsightsPage() {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [showScopeDropdown, setShowScopeDropdown] = useState(false)
     const searchParams = useSearchParams()
     const scope = searchParams.get('scope') || 'all'
     const router = useRouter()
@@ -83,6 +86,15 @@ export default function CRMInsightsPage() {
     const totalPipeline = chartData.reduce((acc: number, curr: any) => acc + (curr.Pipeline || 0), 0)
     const winRate = (totalWon + totalPipeline) > 0 ? Math.round((totalWon / (totalWon + totalPipeline)) * 100) : 0
 
+    // Dynamic Trend Calculation
+    const currentMonthLabel = format(new Date(), 'MMM yy')
+    const currentMonthData = chartData.find((c: any) => c.name === currentMonthLabel)
+    const avgMonthlyWon = totalWon / (chartData.length || 1)
+    const wonTrendValue = avgMonthlyWon > 0 ? Math.round(((currentMonthData?.Won || 0) - avgMonthlyWon) / avgMonthlyWon * 100) : 0
+
+    const avgMonthlyPipeline = totalPipeline / (chartData.length || 1)
+    const pipelineTrendValue = avgMonthlyPipeline > 0 ? Math.round(((currentMonthData?.Pipeline || 0) - avgMonthlyPipeline) / avgMonthlyPipeline * 100) : 0
+
     // Derived Metric: Average Deal Value (Mocked for UI from totals)
     const avgDealValue = totalWon / ((data.data || []).length || 1)
 
@@ -115,10 +127,40 @@ export default function CRMInsightsPage() {
                         Comprehensive Report
                     </Link>
                     <div className="h-8 w-px bg-slate-200" />
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                        <Filter className="w-4 h-4" />
-                        Adjust Scope
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowScopeDropdown(!showScopeDropdown)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                        >
+                            <Filter className="w-4 h-4" />
+                            {scope === 'all' ? 'Organization' : 'My Portfolio'}
+                        </button>
+
+                        {showScopeDropdown && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                <button
+                                    onClick={() => {
+                                        router.push(`/dashboard/crm/insights?scope=all`)
+                                        setShowScopeDropdown(false)
+                                    }}
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'all' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <span>Entire Organization</span>
+                                    {scope === 'all' && <Check className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        router.push(`/dashboard/crm/insights?scope=mine`)
+                                        setShowScopeDropdown(false)
+                                    }}
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'mine' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <span>My Portfolio</span>
+                                    {scope === 'mine' && <Check className="w-3.5 h-3.5" />}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -136,7 +178,7 @@ export default function CRMInsightsPage() {
                             subtitle="Last 12 Months"
                             icon={DollarSign}
                             variant="green"
-                            trend={{ value: 12, label: 'Prev Period', isPositive: true }}
+                            trend={{ value: Math.abs(wonTrendValue), label: 'Monthly Avg', isPositive: wonTrendValue >= 0 }}
                         />
                         <InsightCard
                             title="Active Pipeline"
@@ -144,7 +186,7 @@ export default function CRMInsightsPage() {
                             subtitle="Open Opportunities"
                             icon={Target}
                             variant="indigo"
-                            trend={{ value: 5, label: 'Last Month', isPositive: true }}
+                            trend={{ value: Math.abs(pipelineTrendValue), label: 'Monthly Avg', isPositive: pipelineTrendValue >= 0 }}
                         />
                         <InsightCard
                             title="Winning Momentum"
@@ -241,7 +283,7 @@ export default function CRMInsightsPage() {
                         <div className="bg-white overflow-hidden rounded-3xl border border-slate-200 shadow-sm shadow-slate-100 flex flex-col h-[400px]">
                             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Top Performers</h2>
-                                <button className="text-[10px] font-black text-blue-600 hover:text-blue-700">VIEW ALL</button>
+                                <Link href={`/dashboard/crm/reports?scope=${scope}`} className="text-[10px] font-black text-blue-600 hover:text-blue-700">VIEW ALL</Link>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -289,6 +331,8 @@ export default function CRMInsightsPage() {
                             const items = data.data || []
                             items.forEach((rep: any) => total += (rep.data && rep.data[m])?.won || 0)
                             const isCurrent = typeof m === 'string' && m.includes(format(new Date(), 'MMM yy'))
+                            const maxWon = Math.max(...chartData.map((c: any) => c.Won), 1)
+                            const weight = Math.round((total / maxWon) * 100)
 
                             return (
                                 <div
@@ -299,7 +343,7 @@ export default function CRMInsightsPage() {
                                     <p className={`mt-2 text-sm font-black ${isCurrent ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(total)}</p>
                                     <div className="mt-3 flex items-center justify-between">
                                         <div className={`w-full h-1 rounded-full ${isCurrent ? 'bg-blue-400' : 'bg-slate-100'}`}>
-                                            <div className={`h-full rounded-full ${isCurrent ? 'bg-white' : 'bg-emerald-500'}`} style={{ width: '65%' }} />
+                                            <div className={`h-full rounded-full ${isCurrent ? 'bg-white' : 'bg-emerald-500'}`} style={{ width: `${weight}%` }} />
                                         </div>
                                     </div>
                                 </div>
