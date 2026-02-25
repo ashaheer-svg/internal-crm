@@ -35,12 +35,17 @@ export async function GET(request: Request) {
         // 1. Fetch Users/SalesReps to include in report
         let userFilter: any = { isActive: true }
 
-        if (!canViewAll || scope === 'mine') {
+        // CRM RBAC: SALES role is strictly locked to their own data
+        const isSalesRole = u.role === 'SALES' || u.legacyRole === 'SALES'
+        const isSalesMgr = u.role === 'SALES-MGR' || u.legacyRole === 'SALES-MGR'
+
+        if (isSalesRole && !isSalesMgr) {
+            userFilter.id = user.id
+        } else if (!canViewAll || scope === 'mine') {
             userFilter.id = user.id
         } else {
             const filterRepId = searchParams.get('salesRepId')
             if (filterRepId && filterRepId !== 'ALL') {
-                // If filterRepId is provided, we need to find the user associated with that salesRep
                 const rep = await prisma.salesRep.findUnique({
                     where: { id: filterRepId },
                     include: { users: true }
@@ -48,12 +53,11 @@ export async function GET(request: Request) {
                 if (rep?.users?.[0]) {
                     userFilter.id = rep.users[0].id
                 } else if (!rep?.users?.length) {
-                    // Fallback to searching by email if relation is not set
                     const associatedUser = await prisma.user.findFirst({
                         where: { email: rep?.email || '___' }
                     })
                     if (associatedUser) userFilter.id = associatedUser.id
-                    else return NextResponse.json({ days: [], data: [] }) // No user found
+                    else return NextResponse.json({ days: [], data: [] })
                 }
             }
         }

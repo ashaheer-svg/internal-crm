@@ -37,8 +37,11 @@ export async function GET(request: Request) {
         // 1. Fetch Sales Reps
         let salesReps: { id: string; name: string }[] = []
 
-        // Force personal scope if user lacks view_all OR explicitly requested mine
-        if (!canViewAll || scope === 'mine') {
+        // Force personal scope if user lacks view_all OR user is explicitly SALES role (not manager)
+        const isSalesRole = user.legacyRole === 'SALES' || (user as any).role?.name === 'SALES'
+        const isSalesMgr = user.legacyRole === 'SALES-MGR' || (user as any).role?.name === 'SALES-MGR'
+
+        if (!canViewAll || scope === 'mine' || (isSalesRole && !isSalesMgr)) {
             const me = await prisma.salesRep.findFirst({ where: { email: (user as any).email } })
             if (me) salesReps = [me]
         } else {

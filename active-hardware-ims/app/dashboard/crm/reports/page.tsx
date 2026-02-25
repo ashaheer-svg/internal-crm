@@ -49,6 +49,7 @@ export default function CRMReportsPage() {
     const [showResults, setShowResults] = useState(false)
     const [canViewAll, setCanViewAll] = useState<boolean | null>(null)
     const [hasReportAccess, setHasReportAccess] = useState<boolean | null>(null)
+    const [isSalesOnly, setIsSalesOnly] = useState<boolean>(false)
 
     // Customer Search logic
     useEffect(() => {
@@ -75,11 +76,21 @@ export default function CRMReportsPage() {
             .then(r => r.json())
             .then(d => {
                 const perms: string[] = d.user?.permissions || []
+                const roleName = d.user?.role || ''
+
                 setHasReportAccess(
                     perms.includes('all:manage') ||
                     perms.includes('reports:read') ||
                     perms.includes('reports:manage')
                 )
+
+                // RBAC: SALES category is strictly locked to personal view
+                // SALES-MGR is the parent category with full access
+                const salesOnly = roleName === 'SALES'
+                setIsSalesOnly(salesOnly)
+                if (salesOnly) {
+                    setScope('mine')
+                }
             })
             .catch(() => setHasReportAccess(false))
     }, [])
@@ -238,7 +249,7 @@ export default function CRMReportsPage() {
                             </div>
                         )}
 
-                        {canViewAll && (
+                        {canViewAll && !isSalesOnly && (
                             <>
                                 <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
                                     <button onClick={() => { setScope('all'); setSelectedRep('ALL') }}
@@ -1068,10 +1079,10 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                         </td>
                                         <td className="px-5 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${act.type === 'CALL' ? 'bg-green-100 text-green-700 border border-green-200' :
-                                                    act.type === 'MEETING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                                        act.type === 'EMAIL' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-                                                            act.type === 'NOTE' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                                                'bg-slate-100 text-slate-700 border border-slate-200'
+                                                act.type === 'MEETING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                                    act.type === 'EMAIL' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                                                        act.type === 'NOTE' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                                            'bg-slate-100 text-slate-700 border border-slate-200'
                                                 }`}>
                                                 {act.type === 'CALL' ? <Phone className="w-2.5 h-2.5" /> :
                                                     act.type === 'MEETING' ? <Users className="w-2.5 h-2.5" /> :

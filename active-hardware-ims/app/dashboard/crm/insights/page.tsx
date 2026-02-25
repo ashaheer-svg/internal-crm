@@ -41,9 +41,23 @@ export default function CRMInsightsPage() {
     const searchParams = useSearchParams()
     const scope = searchParams.get('scope') || 'all'
     const router = useRouter()
+    const [isSalesOnly, setIsSalesOnly] = useState<boolean>(false)
 
     useEffect(() => {
-        fetchData()
+        fetch('/api/auth/me')
+            .then(r => r.json())
+            .then(d => {
+                const roleName = d.user?.role || ''
+                const salesOnly = roleName === 'SALES'
+                setIsSalesOnly(salesOnly)
+
+                if (salesOnly && scope !== 'mine') {
+                    router.replace('/dashboard/crm/insights?scope=mine')
+                } else {
+                    fetchData()
+                }
+            })
+            .catch(() => fetchData())
     }, [scope])
 
     async function fetchData() {
@@ -151,40 +165,42 @@ export default function CRMInsightsPage() {
                         Comprehensive Report
                     </Link>
                     <div className="h-8 w-px bg-slate-200" />
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowScopeDropdown(!showScopeDropdown)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
-                        >
-                            <Filter className="w-4 h-4" />
-                            {scope === 'all' ? 'Organization' : 'My Portfolio'}
-                        </button>
+                    {!isSalesOnly && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowScopeDropdown(!showScopeDropdown)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                            >
+                                <Filter className="w-4 h-4" />
+                                {scope === 'all' ? 'Organization' : 'My Portfolio'}
+                            </button>
 
-                        {showScopeDropdown && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                <button
-                                    onClick={() => {
-                                        router.push(`/dashboard/crm/insights?scope=all`)
-                                        setShowScopeDropdown(false)
-                                    }}
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'all' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <span>Entire Organization</span>
-                                    {scope === 'all' && <Check className="w-3.5 h-3.5" />}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        router.push(`/dashboard/crm/insights?scope=mine`)
-                                        setShowScopeDropdown(false)
-                                    }}
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'mine' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <span>My Portfolio</span>
-                                    {scope === 'mine' && <Check className="w-3.5 h-3.5" />}
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                            {showScopeDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <button
+                                        onClick={() => {
+                                            router.push(`/dashboard/crm/insights?scope=all`)
+                                            setShowScopeDropdown(false)
+                                        }}
+                                        className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'all' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        <span>Entire Organization</span>
+                                        {scope === 'all' && <Check className="w-3.5 h-3.5" />}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            router.push(`/dashboard/crm/insights?scope=mine`)
+                                            setShowScopeDropdown(false)
+                                        }}
+                                        className={`w-full flex items-center justify-between p-3 rounded-xl text-left text-xs font-bold transition-colors ${scope === 'mine' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        <span>My Portfolio</span>
+                                        {scope === 'mine' && <Check className="w-3.5 h-3.5" />}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </header>
 

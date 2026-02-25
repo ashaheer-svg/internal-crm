@@ -18,7 +18,10 @@ export async function GET(request: Request) {
         }
 
         // Access Control: Sales Reps view only their own
-        if (user.legacyRole === 'SALES' || user.role?.name === 'SALES') {
+        const isSalesRole = user.legacyRole === 'SALES' || user.role?.name === 'SALES'
+        const isSalesMgr = user.legacyRole === 'SALES-MGR' || user.role?.name === 'SALES-MGR'
+
+        if (isSalesRole && !isSalesMgr) {
             const salesRep = await prisma.salesRep.findFirst({ where: { email: user.email } })
             if (salesRep) {
                 where.salesRepId = salesRep.id
