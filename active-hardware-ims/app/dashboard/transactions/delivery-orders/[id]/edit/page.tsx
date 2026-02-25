@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Search, Trash2, Save, ScanLine, Box, AlertCircle, Load
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
 import BulkEntryModal from "@/app/dashboard/transactions/invoices/new/BulkEntryModal"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -422,12 +423,9 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">Rs.</span>
                                     </div>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={invoiceValue}
-                                        onChange={(e) => setInvoiceValue(e.target.value)}
+                                    <FormattedNumberInput
+                                        value={Number(invoiceValue) || 0}
+                                        onChange={(val) => setInvoiceValue(val.toString())}
                                         className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
@@ -624,12 +622,11 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
 
                                         <div className="w-32">
                                             <div className="relative rounded-md shadow-sm">
-                                                <input
-                                                    type="number"
+                                                <FormattedNumberInput
                                                     value={item.unitPrice}
-                                                    onChange={(e) => {
+                                                    onChange={(val) => {
                                                         const newItems = [...items]
-                                                        newItems[idx].unitPrice = Number(e.target.value)
+                                                        newItems[idx].unitPrice = val
                                                         setItems(newItems)
                                                     }}
                                                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-6"
