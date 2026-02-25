@@ -149,7 +149,26 @@ export function Sidebar() {
             <div className="flex-1 overflow-y-auto py-4">
                 <nav className="space-y-1 px-3">
                     {filteredNavigation.map((item) => {
-                        const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                        // Logic for isActive: 
+                        // 1. If href is exactly /dashboard, only highlight if pathname is exactly /dashboard
+                        // 2. Otherwise, check if it's the most specific match (longest href)
+                        const matchesPath = pathname === item.href || pathname?.startsWith(item.href + '/')
+
+                        let isActive = false
+                        if (matchesPath) {
+                            if (item.href === '/dashboard') {
+                                isActive = pathname === '/dashboard'
+                            } else {
+                                // For other items, ensure there isn't a more specific match among ALL items
+                                const hasMoreSpecificMatch = navigation.some(other =>
+                                    other.href !== item.href &&
+                                    other.href.length > item.href.length &&
+                                    (pathname === other.href || pathname?.startsWith(other.href + '/'))
+                                )
+                                isActive = !hasMoreSpecificMatch
+                            }
+                        }
+
                         return (
                             <Link
                                 key={item.name}
