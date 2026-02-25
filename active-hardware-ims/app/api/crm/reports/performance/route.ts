@@ -113,6 +113,36 @@ export async function GET(request: Request) {
             }
         })
 
+        // 2.1 Fetch Standalone Delivery Orders (Legacy Imports)
+        const standaloneDOs = await prisma.deliveryOrder.findMany({
+            where: {
+                status: 'COMPLETED',
+                isActive: true,
+                createdAt: {
+                    gte: startOfRange,
+                    lte: endOfRange
+                },
+                // Only those that don't have a quote pointing to them
+                quotes: { none: {} }
+            },
+            include: {
+                items: {
+                    include: {
+                        product: {
+                            select: {
+                                grnItems: {
+                                    orderBy: { createdAt: 'desc' },
+                                    take: 1,
+                                    select: { unitCost: true }
+                                }
+                            }
+                        },
+                        reservedItems: true // For legacy imports, we stored the true cost here
+                    }
+                }
+            }
+        })
+
         // 3. Aggregate Data
         // Structure: { [salesRepId]: { name: string, data: { [monthKey]: { won: number, expected: number, wonProfit: number, expectedProfit: number } } } }
 
@@ -203,6 +233,50 @@ export async function GET(request: Request) {
                     quoteNumber: approvedQuote?.quoteNumber || null,
                     doNumber: (approvedQuote as any)?.deliveryOrder?.orderNumber || null,
                     invoiceNumber: (approvedQuote as any)?.deliveryOrder?.invoiceNumber || null
+                })
+            }
+        })
+
+        // 3.2 Process Standalone DOs (Legacy Imports)
+        standaloneDOs.forEach(doRecord => {
+            if (!doRecord.salesRepId || !aggregated[doRecord.salesRepId]) return
+
+            const repData = aggregated[doRecord.salesRepId].data
+            const d = new Date(doRecord.createdAt)
+            const monthName = d.toLocaleString('default', { month: 'short' })
+            const yearStr = d.getFullYear().toString().substr(2)
+            const key = `${monthName} ${yearStr}`
+
+            if (repData[key]) {
+                let totalValue = doRecord.totalAmount
+                let totalCost = 0
+
+                doRecord.items.forEach(item => {
+                    // For legacy imports, we stored the unitCost in reservedItems
+                    // If not there, fallback to GRN or 75%
+                    const itemCost = (item as any).reservedItems?.[0]?.unitCost ||
+                        item.product?.grnItems?.[0]?.unitCost ||
+                        item.unitPrice * 0.75
+                    totalCost += itemCost * item.quantity
+                })
+
+                const profit = totalValue - totalCost
+
+                repData[key].won += totalValue
+                repData[key].wonProfit += profit
+
+                // Add to projects list
+                repData[key].projects.push({
+                    id: doRecord.id,
+                    projectCode: doRecord.orderNumber,
+                    title: `Legacy Order: ${doRecord.orderNumber}`,
+                    status: 'WON',
+                    value: totalValue,
+                    profit: profit,
+                    quoteNumber: doRecord.quoteReference || null,
+                    doNumber: doRecord.orderNumber,
+                    invoiceNumber: doRecord.invoiceNumber || null,
+                    isLegacy: true
                 })
             }
         })

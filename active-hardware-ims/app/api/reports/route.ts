@@ -200,6 +200,7 @@ async function generateSalesReport(dateFilter: any) {
         }
         : {}
 
+    // 1. Fetch Invoices (Standard Sales)
     const invoices = await prisma.invoice.findMany({
         where: {
             ...dateFilter,
@@ -215,22 +216,63 @@ async function generateSalesReport(dateFilter: any) {
         orderBy: { createdAt: 'desc' }
     })
 
-    const reportData = invoices.map(inv => ({
+    // 2. Fetch Standalone Delivery Orders (Legacy Imports)
+    // Legacy imports have an invoiceNumber and status COMPLETED, but are not tied to an Invoice record
+    const legacyOrders = await prisma.deliveryOrder.findMany({
+        where: {
+            ...dateFilter,
+            ...salesRepFilter,
+            status: 'COMPLETED',
+            invoiceNumber: { not: null },
+            // We want ONLY those that are legacy (not tied to any Invoice via back-links)
+            // In our system, the Invoice -> DeliveryOrder connection is currently loose or missing in schema
+            // but we can check if they were created via the legacy-import route.
+            // A more robust check: does this invoiceNumber exist in the Invoice table?
+            // For now, if invoiceNumber exists and it's COMPLETED, we'll try to include it 
+            // but we MUST avoid double counting if an Invoice exists for it.
+        },
+        include: {
+            items: true
+        }
+    })
+
+    // Filter legacyOrders to only those whose invoiceNumber doesn't already exist in the 'invoices' list
+    const existingInvoiceNumbers = new Set(invoices.map(inv => inv.invoiceNumber).filter(n => n !== null))
+    const uniqueLegacyOrders = legacyOrders.filter(lo => !existingInvoiceNumbers.has(lo.invoiceNumber as string))
+
+    const standardSales = invoices.map(inv => ({
         invoiceNumber: inv.invoiceNumber,
         date: inv.createdAt,
         customer: inv.customerName,
         items: (inv as any).items.length,
         totalAmount: inv.totalAmount,
-        status: inv.status
+        status: inv.status,
+        type: 'INVOICE'
     }))
+
+    const legacySales = uniqueLegacyOrders.map(lo => ({
+        invoiceNumber: lo.invoiceNumber!,
+        date: lo.createdAt,
+        customer: lo.customerName,
+        items: (lo as any).items.length,
+        totalAmount: lo.totalAmount,
+        status: lo.status,
+        type: 'LEGACY_DO'
+    }))
+
+    const reportData = [...standardSales, ...legacySales].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
 
     return NextResponse.json({
         type: 'sales',
         data: reportData,
         summary: {
-            totalInvoices: invoices.length,
-            totalItems: invoices.reduce((sum, inv) => sum + (inv as any).items.length, 0),
-            totalRevenue: invoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
+            totalInvoices: invoices.length + uniqueLegacyOrders.length,
+            totalItems: invoices.reduce((sum, inv) => sum + (inv as any).items.length, 0) +
+                uniqueLegacyOrders.reduce((sum, lo) => sum + (lo as any).items.length, 0),
+            totalRevenue: invoices.reduce((sum, inv) => sum + inv.totalAmount, 0) +
+                uniqueLegacyOrders.reduce((sum, lo) => sum + lo.totalAmount, 0)
         }
     })
 }

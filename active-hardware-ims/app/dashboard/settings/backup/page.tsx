@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Upload, Database, AlertTriangle, CheckCircle, Info, Users } from "lucide-react"
+import { Download, Upload, Database, AlertTriangle, CheckCircle, Info, Users, History, FileJson } from "lucide-react"
+import Link from "next/link"
 import { formatDateTime } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
 
@@ -25,6 +26,10 @@ export default function BackupPage() {
     const [exportingCustomers, setExportingCustomers] = useState(false)
     const [importingCustomers, setImportingCustomers] = useState(false)
     const [customerFile, setCustomerFile] = useState<File | null>(null)
+
+    // Legacy Data Migration State
+    const [importingLegacy, setImportingLegacy] = useState(false)
+    const [legacyFile, setLegacyFile] = useState<File | null>(null)
 
 
     useEffect(() => {
@@ -231,6 +236,51 @@ export default function BackupPage() {
         }
     }
 
+    function handleLegacyFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (file) {
+            if (!file.name.endsWith('.json')) {
+                setMessage({ type: 'error', message: 'Please select a .json file' } as any)
+                return
+            }
+            setLegacyFile(file)
+            setMessage(null)
+        }
+    }
+
+    async function handleImportLegacy() {
+        if (!legacyFile) return
+        if (!confirm(`Import legacy delivery orders from ${legacyFile.name}? This will create completed orders and mark items as SOLD.`)) return
+
+        setImportingLegacy(true)
+        setMessage(null)
+
+        try {
+            const reader = new FileReader()
+            const fileContent = await new Promise((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target?.result)
+                reader.onerror = (e) => reject(new Error('Failed to read file'))
+                reader.readAsText(legacyFile)
+            })
+
+            const res = await fetch('/api/backup/legacy-import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Failed to import legacy data')
+
+            setMessage({ type: 'success', text: data.message })
+            setLegacyFile(null)
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message })
+        } finally {
+            setImportingLegacy(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div>
@@ -405,6 +455,59 @@ export default function BackupPage() {
                                 >
                                     <Upload className="h-4 w-4" />
                                     {importingCustomers ? 'Importing...' : `Import ${customerFile.name}`}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Legacy Data Migration Section */}
+            <div className="bg-white shadow rounded-lg p-6 border-2 border-blue-200">
+                <div className="flex items-center gap-3 mb-4">
+                    <History className="h-6 w-6 text-blue-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Legacy Data Migration (Orders & SNs)</h2>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-6">
+                    Import historical delivery orders to track past serial number movements and include old sales in profitability reports.
+                    Use the <strong>Legacy Data Entry Form</strong> to prepare your data correctly.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Entry Tool Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">1. Prepare Import Data</h3>
+                        <p className="text-xs text-gray-500">Manually enter historical orders and generate the migration JSON file.</p>
+                        <Link
+                            href="/dashboard/settings/backup/legacy-import"
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
+                        >
+                            <FileJson className="h-4 w-4" />
+                            Open Legacy Data Entry Form
+                        </Link>
+                    </div>
+
+                    {/* Import Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">2. Import Legacy File</h3>
+                        <p className="text-xs text-gray-500">Upload the generated legacy_migration.json file to ingest historical records.</p>
+
+                        <div className="flex flex-col gap-3">
+                            <input
+                                type="file"
+                                accept=".json"
+                                onChange={handleLegacyFileSelect}
+                                className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            {legacyFile && (
+                                <button
+                                    onClick={handleImportLegacy}
+                                    disabled={importingLegacy}
+                                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    {importingLegacy ? 'Importing...' : `Import ${legacyFile.name}`}
                                 </button>
                             )}
                         </div>
