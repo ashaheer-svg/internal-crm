@@ -25,7 +25,7 @@ interface ActivityDetailModalProps {
 
 export default function ActivityDetailModal({ isOpen, onClose, userName, date, activities }: ActivityDetailModalProps) {
     const [search, setSearch] = useState('')
-    const [activeTypes, setActiveTypes] = useState<string[]>(['CALL', 'MEETING'])
+    const [activeTypes, setActiveTypes] = useState<string[]>(['CALL', 'MEETING', 'EMAIL', 'NOTE'])
 
     if (!isOpen) return null
 
@@ -63,8 +63,7 @@ export default function ActivityDetailModal({ isOpen, onClose, userName, date, a
             a.customerName.toLowerCase().includes(search.toLowerCase()) ||
             (a.content || '').toLowerCase().includes(search.toLowerCase());
 
-        const isOther = !['CALL', 'MEETING'].includes(a.type);
-        const matchesType = activeTypes.includes(a.type) || (activeTypes.includes('OTHER') && isOther);
+        const matchesType = activeTypes.includes(a.type);
 
         return matchesSearch && matchesType;
     })
@@ -148,10 +147,16 @@ export default function ActivityDetailModal({ isOpen, onClose, userName, date, a
                             Visits
                         </button>
                         <button
-                            onClick={() => toggleType('OTHER')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${activeTypes.includes('OTHER') ? 'bg-slate-700 text-white border-slate-800 shadow-lg shadow-slate-700/20' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
+                            onClick={() => toggleType('EMAIL')}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${activeTypes.includes('EMAIL') ? 'bg-purple-500 text-white border-purple-600 shadow-lg shadow-purple-500/20' : 'bg-white text-slate-400 border-slate-200 hover:border-purple-200'}`}
                         >
-                            Other
+                            Emails
+                        </button>
+                        <button
+                            onClick={() => toggleType('NOTE')}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${activeTypes.includes('NOTE') ? 'bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/20' : 'bg-white text-slate-400 border-slate-200 hover:border-orange-200'}`}
+                        >
+                            Notes
                         </button>
                     </div>
                 </div>

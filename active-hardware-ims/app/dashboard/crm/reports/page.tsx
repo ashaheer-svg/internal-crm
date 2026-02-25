@@ -946,6 +946,8 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                 const rowTotal = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.total, 0)
                                 const rowCalls = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.CALL, 0)
                                 const rowMeetings = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.MEETING, 0)
+                                const rowEmails = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.EMAIL, 0)
+                                const rowNotes = Object.values(rep.columns).reduce((acc: number, curr: any) => acc + curr.NOTE, 0)
                                 return (
                                     <tr key={rep.userId} className="hover:bg-gray-50/30 transition-colors">
                                         <td className="px-5 py-3 text-[11px] font-bold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[1px_0_0_0_#e5e7eb]">{rep.userName}</td>
@@ -965,6 +967,16 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                                                     <Users className="w-2.5 h-2.5" /> {cell.MEETING}
                                                                 </div>
                                                             )}
+                                                            {cell.EMAIL > 0 && (
+                                                                <div title="Emails" className="flex items-center gap-1 bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-purple-100">
+                                                                    <Mail className="w-2.5 h-2.5" /> {cell.EMAIL}
+                                                                </div>
+                                                            )}
+                                                            {cell.NOTE > 0 && (
+                                                                <div title="Notes" className="flex items-center gap-1 bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-100">
+                                                                    <FileText className="w-2.5 h-2.5" /> {cell.NOTE}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ) : <span className="text-gray-200 text-[10px]">—</span>}
                                                 </td>
@@ -973,9 +985,11 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                         <td className="px-3 py-3 text-center bg-slate-50/30 font-bold border-l border-gray-200">
                                             <div className="flex flex-col items-center gap-1">
                                                 <div className="flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px]">{rowTotal}</div>
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {rowCalls > 0 && <span className="text-[8px] text-green-600">C:{rowCalls}</span>}
-                                                    {rowMeetings > 0 && <span className="text-[8px] text-blue-600">V:{rowMeetings}</span>}
+                                                <div className="flex flex-center flex-wrap justify-center gap-1">
+                                                    {rowCalls > 0 && <span className="text-[8px] font-black text-green-600">C:{rowCalls}</span>}
+                                                    {rowMeetings > 0 && <span className="text-[8px] font-black text-blue-600">V:{rowMeetings}</span>}
+                                                    {rowEmails > 0 && <span className="text-[8px] font-black text-purple-600">E:{rowEmails}</span>}
+                                                    {rowNotes > 0 && <span className="text-[8px] font-black text-orange-600">N:{rowNotes}</span>}
                                                 </div>
                                             </div>
                                         </td>
@@ -990,13 +1004,17 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                     const colTotal = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.total || 0), 0)
                                     const colCalls = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.CALL || 0), 0)
                                     const colMeetings = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.MEETING || 0), 0)
+                                    const colEmails = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.EMAIL || 0), 0)
+                                    const colNotes = data.data.reduce((acc: number, rep: any) => acc + (rep.columns[col.id]?.NOTE || 0), 0)
                                     return (
                                         <td key={col.id} className="px-2 py-3 text-center border-r border-gray-200 last:border-r-0">
                                             <div className="flex flex-col items-center">
                                                 <span>{colTotal}</span>
-                                                <div className="flex gap-1 mt-0.5">
-                                                    {colCalls > 0 && <span className="text-[7px] text-green-600">C:{colCalls}</span>}
-                                                    {colMeetings > 0 && <span className="text-[7px] text-blue-600">V:{colMeetings}</span>}
+                                                <div className="flex flex-wrap justify-center gap-1 mt-0.5 px-0.5">
+                                                    {colCalls > 0 && <span className="text-[7px] font-black text-green-600">C:{colCalls}</span>}
+                                                    {colMeetings > 0 && <span className="text-[7px] font-black text-blue-600">V:{colMeetings}</span>}
+                                                    {colEmails > 0 && <span className="text-[7px] font-black text-purple-600">E:{colEmails}</span>}
+                                                    {colNotes > 0 && <span className="text-[7px] font-black text-orange-600">N:{colNotes}</span>}
                                                 </div>
                                             </div>
                                         </td>
@@ -1049,8 +1067,16 @@ function ActivitySummaryTable({ selectedRep, scope, weekOffset, setWeekOffset, v
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${act.type === 'CALL' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {act.type === 'CALL' ? <Phone className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}
+                                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${act.type === 'CALL' ? 'bg-green-100 text-green-700 border border-green-200' :
+                                                    act.type === 'MEETING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                                        act.type === 'EMAIL' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                                                            act.type === 'NOTE' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                                                'bg-slate-100 text-slate-700 border border-slate-200'
+                                                }`}>
+                                                {act.type === 'CALL' ? <Phone className="w-2.5 h-2.5" /> :
+                                                    act.type === 'MEETING' ? <Users className="w-2.5 h-2.5" /> :
+                                                        act.type === 'EMAIL' ? <Mail className="w-2.5 h-2.5" /> :
+                                                            <FileText className="w-2.5 h-2.5" />}
                                                 {act.type}
                                             </span>
                                         </td>
