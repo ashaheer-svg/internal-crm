@@ -34,20 +34,30 @@ export default function LegacyDataEntryPage() {
     // Current order being edited
     const activeOrder = orders.find(o => o.id === activeOrderId) || null
 
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
+
     function addOrder() {
-        const newOrder: LegacyOrder = {
-            id: crypto.randomUUID(),
-            orderNumber: `DO-LEGACY-${Date.now().toString().slice(-6)}`,
-            date: new Date().toISOString().split('T')[0],
-            customerName: "",
-            endCustomerName: "",
-            salesRepName: "",
-            invoiceNumber: "",
-            invoiceValue: 0,
-            items: []
+        try {
+            const newOrder: LegacyOrder = {
+                id: generateId(),
+                orderNumber: `DO-LEGACY-${Date.now().toString().slice(-6)}`,
+                date: new Date().toISOString().split('T')[0],
+                customerName: "",
+                endCustomerName: "",
+                salesRepName: "",
+                invoiceNumber: "",
+                invoiceValue: 0,
+                items: []
+            }
+            setOrders([...orders, newOrder])
+            setActiveOrderId(newOrder.id)
+            setStatus({ type: 'info', message: "New order created." })
+        } catch (error: any) {
+            console.error("Failed to add order:", error)
+            setStatus({ type: 'error', message: "Failed to create new order." })
         }
-        setOrders([...orders, newOrder])
-        setActiveOrderId(newOrder.id)
     }
 
     function removeOrder(id: string) {
@@ -61,18 +71,23 @@ export default function LegacyDataEntryPage() {
     }
 
     function addItem(orderId: string) {
-        setOrders(orders.map(o => {
-            if (o.id !== orderId) return o
-            const newItem: LegacyItem = {
-                id: crypto.randomUUID(),
-                sku: "",
-                serialNumber: "",
-                unitCost: 0,
-                sellingPrice: 0,
-                quantity: 1
-            }
-            return { ...o, items: [...o.items, newItem] }
-        }))
+        try {
+            setOrders(orders.map(o => {
+                if (o.id !== orderId) return o
+                const newItem: LegacyItem = {
+                    id: generateId(),
+                    sku: "",
+                    serialNumber: "",
+                    unitCost: 0,
+                    sellingPrice: 0,
+                    quantity: 1
+                }
+                return { ...o, items: [...o.items, newItem] }
+            }))
+        } catch (error: any) {
+            console.error("Failed to add item:", error)
+            setStatus({ type: 'error', message: "Failed to add item to order." })
+        }
     }
 
     function removeItem(orderId: string, itemId: string) {
@@ -148,8 +163,8 @@ export default function LegacyDataEntryPage() {
 
             {status && (
                 <div className={`p-4 rounded-lg flex items-center gap-3 ${status.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
-                        status.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
-                            'bg-blue-50 border border-blue-200 text-blue-700'
+                    status.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
+                        'bg-blue-50 border border-blue-200 text-blue-700'
                     }`}>
                     {status.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
                     <span className="text-sm font-medium">{status.message}</span>
