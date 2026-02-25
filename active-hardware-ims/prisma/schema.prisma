@@ -45,6 +45,9 @@ model User {
   sentMessages     Message[]        @relation("SentMessages")
   receivedMessages Message[]        @relation("ReceivedMessages")
   messageReceipts  MessageReceipt[]
+ 
+  // Build Workflow
+  builtOrders     DeliveryOrder[]  @relation("BuiltBy")
 }
 
 // ------------------------------------------
@@ -478,6 +481,12 @@ model DeliveryOrder {
 
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
+ 
+  // Build Workflow
+  builtById   String?
+  builtBy     User?      @relation("BuiltBy", fields: [builtById], references: [id])
+  buildNotes  String?
+  builtAt     DateTime?
 
   items  DeliveryOrderItem[]
   quotes CRMQuote[]

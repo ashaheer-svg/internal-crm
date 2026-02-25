@@ -6,9 +6,13 @@ export async function GET(request: Request) {
     try {
         await requireAuth()
         const { searchParams } = new URL(request.url)
+        const status = searchParams.get('status')
         const includeInactive = searchParams.get('includeInactive') === 'true'
 
-        const where = includeInactive ? {} : { isActive: true }
+        const where: any = includeInactive ? {} : { isActive: true }
+        if (status) {
+            where.status = status
+        }
 
         const orders = await prisma.deliveryOrder.findMany({
             where,

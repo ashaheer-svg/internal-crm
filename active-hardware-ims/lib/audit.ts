@@ -25,6 +25,8 @@ export type AuditEntityType =
     | 'ROLE_PERMISSION'
     | 'MESSAGE'
     | 'SYSTEM_SETTING'
+    | 'DELIVERY_ORDER_BUILD'
+    | 'DELIVERY_ORDER_BUILD_REJECT'
 
 interface AuditLogParams {
     action: AuditAction

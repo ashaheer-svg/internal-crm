@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2 } from "lucide-react"
+import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2, Hammer } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate } from "@/lib/utils"
 
@@ -45,6 +45,9 @@ type DeliveryOrder = {
     invoiceNumber?: string | null
     additionalCosts?: number
     notes: string | null
+    buildNotes: string | null
+    builtBy?: { name: string } | null
+    builtAt?: string | null
     createdAt: string
     isActive: boolean
     salesRepId?: string | null
@@ -228,6 +231,10 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     if (!order) return <div className="p-8 text-center text-red-500">Order not found</div>
 
     const isDraft = order.status === 'DRAFT'
+    const isConfirmed = order.status === 'CONFIRMED'
+    const isReadyForBuild = order.status === 'READY_FOR_BUILD'
+    const isBuilding = order.status === 'BUILDING'
+    const isBuilt = order.status === 'BUILT'
     const isCompleted = order.status === 'COMPLETED'
     const isCancelled = order.status === 'CANCELLED'
 
@@ -244,10 +251,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             {order.orderNumber}
                             <span className={`px-2 py-1 text-xs rounded-full border 
                                 ${order.status === 'DRAFT' ? 'bg-gray-100 border-gray-200 text-gray-700' : ''}
+                                ${order.status === 'READY_FOR_BUILD' ? 'bg-amber-100 border-amber-200 text-amber-700' : ''}
+                                ${order.status === 'BUILDING' ? 'bg-blue-100 border-blue-200 text-blue-700' : ''}
+                                ${order.status === 'BUILT' ? 'bg-indigo-100 border-indigo-200 text-indigo-700' : ''}
                                 ${order.status === 'COMPLETED' ? 'bg-green-100 border-green-200 text-green-700' : ''}
                                 ${order.status === 'CANCELLED' ? 'bg-red-100 border-red-200 text-red-700' : ''}
                             `}>
-                                {order.status}
+                                {order.status.replace(/_/g, ' ')}
                             </span>
                         </h1>
                         <p className="text-sm text-gray-500">Created on {formatDate(order.createdAt)} for {order.customerName}</p>
@@ -275,22 +285,46 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                     )}
 
                     {/* Status Actions - Only for Active Orders */}
-                    {order.isActive && isDraft && (
+                    {order.isActive && (
                         <>
-                            <button
-                                onClick={() => handleStatusChange('CANCELLED')}
-                                className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md border border-transparent hover:border-red-200"
-                            >
-                                Cancel Order
-                            </button>
-                            <button
-                                onClick={() => handleStatusChange('COMPLETED')}
-                                disabled={actionLoading}
-                                className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
-                            >
-                                <Truck className="w-4 h-4" />
-                                Ship & Complete
-                            </button>
+                            {(isDraft || isConfirmed) && (
+                                <>
+                                    {isDraft && (
+                                        <button
+                                            onClick={() => handleStatusChange('CANCELLED')}
+                                            className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md border border-transparent hover:border-red-200"
+                                        >
+                                            Cancel Order
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleStatusChange('READY_FOR_BUILD')}
+                                        disabled={actionLoading}
+                                        className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        <Hammer className="w-4 h-4" />
+                                        Ready for Build
+                                    </button>
+                                </>
+                            )}
+
+                            {(isReadyForBuild || isBuilding) && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md border border-blue-100 text-xs font-medium">
+                                    <Hammer className="w-3 h-3 animate-pulse" />
+                                    Technical Build in Progress
+                                </div>
+                            )}
+
+                            {isBuilt && (
+                                <button
+                                    onClick={() => handleStatusChange('COMPLETED')}
+                                    disabled={actionLoading}
+                                    className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <Truck className="w-4 h-4" />
+                                    Ship & Complete
+                                </button>
+                            )}
                         </>
                     )}
 
@@ -401,8 +435,19 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             )}
                             {order.notes && (
                                 <div className="pt-3 border-t">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Notes</p>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">General Notes</p>
                                     <p className="text-gray-700 bg-yellow-50 p-2 rounded">{order.notes}</p>
+                                </div>
+                            )}
+                            {order.buildNotes && (
+                                <div className="pt-3 border-t">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Technical Build Notes</p>
+                                    <div className="text-gray-700 bg-blue-50 p-2 rounded space-y-1">
+                                        <p className="whitespace-pre-wrap">{order.buildNotes}</p>
+                                        {order.builtBy && (
+                                            <p className="text-[10px] text-blue-600 text-right">Built by {order.builtBy.name} on {formatDate(order.builtAt)}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

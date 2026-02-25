@@ -107,7 +107,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
-            include: { items: { include: { reservedItems: true } } }
+            include: {
+                items: { include: { reservedItems: true } },
+                quotes: true
+            }
+
         })
 
         if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
@@ -318,6 +322,25 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 where: { id: params.id },
                 data: { status }
             })
+
+            // Sync with CRM Quotes if linked
+            if (order.quotes && order.quotes.length > 0) {
+                // Determine a CRM-friendly status name for the new workflow
+                let crmStatus = 'ACCEPTED' // Default
+                if (status === 'READY_FOR_BUILD') crmStatus = 'READY FOR BUILD'
+                if (status === 'BUILDING') crmStatus = 'BUILDING'
+                if (status === 'BUILT') crmStatus = 'BUILT'
+                if (status === 'COMPLETED') crmStatus = 'SHIPPED'
+                if (status === 'CANCELLED') crmStatus = 'CANCELLED'
+
+                for (const quote of order.quotes) {
+                    await prisma.cRMQuote.update({
+                        where: { id: quote.id },
+                        data: { status: crmStatus }
+                    })
+                }
+            }
+
             return NextResponse.json({ success: true })
         }
 

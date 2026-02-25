@@ -21,7 +21,8 @@ import {
     ChevronRight,
     BarChart3,
     Search,
-    Mail
+    Mail,
+    Hammer
 } from "lucide-react"
 
 const navigation = [
@@ -30,6 +31,7 @@ const navigation = [
     { name: "CRM", href: "/dashboard/crm", icon: Users, permission: 'customers:read' },
     { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
+    { name: "Technical Build", href: "/dashboard/build", icon: Hammer, permission: 'inventory:manage' },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:create' },
     { name: "Warranty Lookup", href: "/dashboard/warranty/lookup", icon: Search, permission: 'warranty_lookup:read' },
