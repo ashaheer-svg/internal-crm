@@ -34,7 +34,7 @@ const navigation = [
     { name: "Technical Build", href: "/dashboard/build", icon: Hammer, permission: 'inventory:manage' },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:create' },
-    { name: "Warranty Lookup", href: "/dashboard/warranty/lookup", icon: Search, permission: 'warranty_lookup:read' },
+    { name: "Lookup", href: "/dashboard/warranty/lookup", icon: Search, permission: 'warranty_lookup:read' },
     { name: "Messaging", href: "/dashboard/messaging", icon: Mail },
     { name: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: 'reports:read' },
     { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: 'settings:manage' },
