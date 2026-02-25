@@ -796,8 +796,6 @@ export default function NewDeliveryOrderPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                            </div>
-                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => removeItem(idx)}
