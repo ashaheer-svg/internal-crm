@@ -31,12 +31,97 @@ export default function LegacyDataEntryPage() {
     const [orders, setOrders] = useState<LegacyOrder[]>([])
     const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
     const [status, setStatus] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null)
+    const [verifying, setVerifying] = useState(false)
+    const [importing, setImporting] = useState(false)
+    const [validatedSkus, setValidatedSkus] = useState<Record<string, boolean>>({})
+    const [validatedNames, setValidatedNames] = useState<Record<string, boolean>>({})
+    const [showBulkPaste, setShowBulkPaste] = useState(false)
+    const [bulkPasteText, setBulkPasteText] = useState("")
 
     // Current order being edited
     const activeOrder = orders.find(o => o.id === activeOrderId) || null
 
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
+
+    async function verifyEntities() {
+        if (orders.length === 0) return
+        setVerifying(true)
+        setStatus({ type: 'info', message: "Verifying SKUs and Customers..." })
+
+        try {
+            // Collect all unique SKUs and Names
+            const skus = new Set<string>()
+            const names = new Set<string>()
+
+            orders.forEach(o => {
+                if (o.customerName) names.add(o.customerName)
+                if (o.endCustomerName) names.add(o.endCustomerName)
+                if (o.salesRepName) names.add(o.salesRepName) // Verify Sales Reps too?
+                o.items.forEach(i => {
+                    if (i.sku) skus.add(i.sku)
+                })
+            })
+
+            const [skuRes, nameRes] = await Promise.all([
+                fetch('/api/products/validate-skus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skus: Array.from(skus) })
+                }),
+                fetch('/api/customers/validate-names', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ names: Array.from(names) })
+                })
+            ])
+
+            const [skuData, nameData] = await Promise.all([skuRes.json(), nameRes.json()])
+
+            setValidatedSkus(skuData.results || {})
+            setValidatedNames(nameData.results || {})
+
+            const totalInvalid = (skuData.invalidCount || 0) + (nameData.invalidCount || 0)
+            if (totalInvalid > 0) {
+                setStatus({ type: 'error', message: `Verification complete. Found ${skuData.invalidCount} invalid SKUs and ${nameData.invalidCount} invalid Names.` })
+            } else {
+                setStatus({ type: 'success', message: "All SKUs and Customers verified successfully!" })
+            }
+        } catch (error) {
+            console.error("Verification failed:", error)
+            setStatus({ type: 'error', message: "Failed to verify data with server." })
+        } finally {
+            setVerifying(false)
+        }
+    }
+
+    async function importToSystem() {
+        if (orders.length === 0) return
+        if (!confirm(`Are you sure you want to import ${orders.length} orders into the live system? This action cannot be easily undone.`)) return
+
+        setImporting(true)
+        setStatus({ type: 'info', message: "Importing data to system..." })
+
+        try {
+            const res = await fetch('/api/backup/legacy-import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: orders })
+            })
+
+            const result = await res.json()
+            if (!res.ok) throw new Error(result.error || "Failed to import")
+
+            setStatus({ type: 'success', message: result.message })
+            setOrders([])
+            setActiveOrderId(null)
+        } catch (error: any) {
+            console.error("Import failed:", error)
+            setStatus({ type: 'error', message: error.message || "Import failed. Please check your data." })
+        } finally {
+            setImporting(false)
+        }
     }
 
     function addOrder() {
@@ -59,6 +144,29 @@ export default function LegacyDataEntryPage() {
             console.error("Failed to add order:", error)
             setStatus({ type: 'error', message: "Failed to create new order." })
         }
+    }
+
+    function handleBulkPaste(text: string) {
+        if (!activeOrderId) return
+        const serials = text.split(/[\n,\s]+/).map(s => s.trim()).filter(s => s.length > 0)
+        if (serials.length === 0) return
+
+        const newItems: LegacyItem[] = serials.map(sn => ({
+            id: generateId(),
+            sku: "", // User will fill this in or paste logic will need to handle it
+            serialNumber: sn,
+            unitCost: 0,
+            sellingPrice: 0,
+            quantity: 1
+        }))
+
+        setOrders(orders.map(o => {
+            if (o.id !== activeOrderId) return o
+            return { ...o, items: [...o.items, ...newItems] }
+        }))
+
+        setShowBulkPaste(false)
+        setBulkPasteText("")
     }
 
     function removeOrder(id: string) {
@@ -108,6 +216,14 @@ export default function LegacyDataEntryPage() {
         }))
     }
 
+    function clearAll() {
+        if (orders.length === 0) return
+        if (!confirm("Clear all orders in the current list? This will not affect the database.")) return
+        setOrders([])
+        setActiveOrderId(null)
+        setStatus({ type: 'info', message: "List cleared." })
+    }
+
     function downloadJson() {
         if (orders.length === 0) {
             setStatus({ type: 'error', message: "No orders to export." })
@@ -146,6 +262,19 @@ export default function LegacyDataEntryPage() {
                 </div>
                 <div className="flex gap-2">
                     <button
+                        onClick={clearAll}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors shadow-sm"
+                    >
+                        Clear All
+                    </button>
+                    <button
+                        onClick={verifyEntities}
+                        disabled={verifying || orders.length === 0}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-600 text-sm font-medium text-white hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        {verifying ? "Verifying..." : "Verify Data"}
+                    </button>
+                    <button
                         onClick={addOrder}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
@@ -153,11 +282,18 @@ export default function LegacyDataEntryPage() {
                         Add New Order
                     </button>
                     <button
+                        onClick={importToSystem}
+                        disabled={importing || orders.length === 0}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        {importing ? "Importing..." : "Finalize & Import to System"}
+                    </button>
+                    <button
                         onClick={downloadJson}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                        title="Export current list to JSON backup"
                     >
                         <Download className="w-4 h-4" />
-                        Download Import JSON
                     </button>
                 </div>
             </div>
@@ -261,9 +397,12 @@ export default function LegacyDataEntryPage() {
                                             type="text"
                                             value={activeOrder.customerName}
                                             onChange={(e) => updateOrder(activeOrder.id, { customerName: e.target.value })}
-                                            className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:ring-2 outline-none ${activeOrder.customerName && validatedNames[activeOrder.customerName] === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                                             placeholder="Primary Customer"
                                         />
+                                        {activeOrder.customerName && validatedNames[activeOrder.customerName] === false && (
+                                            <p className="text-[10px] text-red-600 mt-0.5">Customer not found in system</p>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -272,9 +411,12 @@ export default function LegacyDataEntryPage() {
                                         type="text"
                                         value={activeOrder.endCustomerName}
                                         onChange={(e) => updateOrder(activeOrder.id, { endCustomerName: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 outline-none ${activeOrder.endCustomerName && validatedNames[activeOrder.endCustomerName] === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                                         placeholder="Ship to Client"
                                     />
+                                    {activeOrder.endCustomerName && validatedNames[activeOrder.endCustomerName] === false && (
+                                        <p className="text-[10px] text-red-600 mt-0.5">End Customer not found in system</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Sales Rep Name</label>
@@ -282,9 +424,12 @@ export default function LegacyDataEntryPage() {
                                         type="text"
                                         value={activeOrder.salesRepName}
                                         onChange={(e) => updateOrder(activeOrder.id, { salesRepName: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className={`w-full px-3 py-2 rounded-lg border text-sm focus:ring-2 outline-none ${activeOrder.salesRepName && validatedNames[activeOrder.salesRepName] === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                                         placeholder="John Doe"
                                     />
+                                    {activeOrder.salesRepName && validatedNames[activeOrder.salesRepName] === false && (
+                                        <p className="text-[10px] text-red-600 mt-0.5">Sales Rep not found (Will be auto-created)</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Total Sales Value</label>
@@ -302,13 +447,22 @@ export default function LegacyDataEntryPage() {
                                         <Package className="w-4 h-4 text-blue-500" />
                                         Ordered Items ({activeOrder.items.length})
                                     </h3>
-                                    <button
-                                        onClick={() => addItem(activeOrder.id)}
-                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded"
-                                    >
-                                        <Plus className="w-3.5 h-3.5" />
-                                        Add Item
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowBulkPaste(true)}
+                                            className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Bulk Paste Serials
+                                        </button>
+                                        <button
+                                            onClick={() => addItem(activeOrder.id)}
+                                            className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Add Single Item
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {activeOrder.items.length === 0 ? (
@@ -325,9 +479,12 @@ export default function LegacyDataEntryPage() {
                                                         type="text"
                                                         value={item.sku}
                                                         onChange={(e) => updateItem(activeOrder.id, item.id, { sku: e.target.value })}
-                                                        className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                                        className={`w-full px-2 py-1.5 rounded border text-xs focus:ring-1 outline-none ${item.sku && validatedSkus[item.sku] === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                                                         placeholder="Product SKU"
                                                     />
+                                                    {item.sku && validatedSkus[item.sku] === false && (
+                                                        <p className="text-[10px] text-red-600">SKU not in system</p>
+                                                    )}
                                                 </div>
                                                 <div className="md:col-span-2 space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Serial Number</label>
@@ -387,6 +544,40 @@ export default function LegacyDataEntryPage() {
                     )}
                 </div>
             </div>
+
+            {/* Bulk Paste Modal */}
+            {showBulkPaste && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-gray-900">Bulk Paste Serial Numbers</h3>
+                            <button onClick={() => setShowBulkPaste(false)} className="text-gray-400 hover:text-gray-600"><Plus className="w-5 h-5 rotate-45" /></button>
+                        </div>
+                        <p className="text-sm text-gray-500">Paste a list of serial numbers (one per line). Each will be added as a new item to the current order.</p>
+                        <textarea
+                            rows={10}
+                            value={bulkPasteText}
+                            onChange={(e) => setBulkPasteText(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                            placeholder="SN-123&#10;SN-456&#10;SN-789"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowBulkPaste(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleBulkPaste(bulkPasteText)}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+                            >
+                                Add Items
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
