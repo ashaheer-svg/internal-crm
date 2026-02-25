@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Download, Upload, Database, AlertTriangle, CheckCircle, Info } from "lucide-react"
+import { Download, Upload, Database, AlertTriangle, CheckCircle, Info, Users } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
 
@@ -22,6 +22,9 @@ export default function BackupPage() {
     const [showResetDialog, setShowResetDialog] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [backupHistory, setBackupHistory] = useState<BackupHistory[]>([])
+    const [exportingCustomers, setExportingCustomers] = useState(false)
+    const [importingCustomers, setImportingCustomers] = useState(false)
+    const [customerFile, setCustomerFile] = useState<File | null>(null)
 
 
     useEffect(() => {
@@ -158,6 +161,76 @@ export default function BackupPage() {
         }
     }
 
+    async function handleExportCustomers() {
+        setExportingCustomers(true)
+        setMessage(null)
+        try {
+            const res = await fetch('/api/backup/customers/export')
+            if (!res.ok) throw new Error('Failed to export customers')
+
+            const blob = await res.blob()
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `customers_backup_${new Date().toISOString().split('T')[0]}.json`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+
+            setMessage({ type: 'success', text: 'Customer data exported successfully!' })
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message })
+        } finally {
+            setExportingCustomers(false)
+        }
+    }
+
+    function handleCustomerFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (file) {
+            if (!file.name.endsWith('.json')) {
+                setMessage({ type: 'error', text: 'Please select a .json file' })
+                return
+            }
+            setCustomerFile(file)
+            setMessage(null)
+        }
+    }
+
+    async function handleImportCustomers() {
+        if (!customerFile) return
+        if (!confirm(`Import customers from ${customerFile.name}? Existing records with matching IDs will be updated.`)) return
+
+        setImportingCustomers(true)
+        setMessage(null)
+
+        try {
+            const reader = new FileReader()
+            const fileContent = await new Promise((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target?.result)
+                reader.onerror = (e) => reject(new Error('Failed to read file'))
+                reader.readAsText(customerFile)
+            })
+
+            const res = await fetch('/api/backup/customers/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Failed to import customers')
+
+            setMessage({ type: 'success', text: data.message })
+            setCustomerFile(null)
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message })
+        } finally {
+            setImportingCustomers(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div>
@@ -284,6 +357,59 @@ export default function BackupPage() {
                     <Upload className="h-4 w-4" />
                     {uploading ? 'Restoring...' : 'Restore Database'}
                 </button>
+            </div>
+
+            {/* Customer Data Backup & Restore Section */}
+            <div className="bg-white shadow rounded-lg p-6 border-2 border-green-200">
+                <div className="flex items-center gap-3 mb-4">
+                    <Users className="h-6 w-6 text-green-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Customer Data Portable Backup</h2>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-6">
+                    Export or import only Customer, Partner, and Supplier records. This is useful for migrating contact data without affecting inventory or transaction history.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Export Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">Export Customer Data</h3>
+                        <p className="text-xs text-gray-500">Download all partners, employees, and addresses as a portable JSON file.</p>
+                        <button
+                            onClick={handleExportCustomers}
+                            disabled={exportingCustomers}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            <Download className="h-4 w-4" />
+                            {exportingCustomers ? 'Exporting...' : 'Export Customers (JSON)'}
+                        </button>
+                    </div>
+
+                    {/* Import Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">Import Customer Data</h3>
+                        <p className="text-xs text-gray-500">Upload a customers_export.json file to update or create partner records.</p>
+
+                        <div className="flex flex-col gap-3">
+                            <input
+                                type="file"
+                                accept=".json"
+                                onChange={handleCustomerFileSelect}
+                                className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                            />
+                            {customerFile && (
+                                <button
+                                    onClick={handleImportCustomers}
+                                    disabled={importingCustomers}
+                                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-green-600 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    {importingCustomers ? 'Importing...' : `Import ${customerFile.name}`}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Reset Database Section */}

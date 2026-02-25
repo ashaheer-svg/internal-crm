@@ -36,93 +36,95 @@ export async function POST(req: Request) {
 
 async function handleReset() {
     try {
-        // 1. Delete all data in reverse topological order (children first)
-        await prisma.$transaction([
-            // Transaction/Activity Logs
-            prisma.auditLog.deleteMany(),
-            prisma.transactionLog.deleteMany(),
+        // Delete all data in order (respecting foreign key constraints)
+        await prisma.$transaction(async (tx) => {
+            // 1. CRM & Projects
+            await tx.cRMQuoteItem.deleteMany({})
+            await tx.cRMQuote.deleteMany({})
+            await tx.cRMActivity.deleteMany({})
+            await tx.projectTask.deleteMany({})
+            await tx.projectMember.deleteMany({})
+            await tx.cRMProject.deleteMany({})
+            await tx.cRMStage.deleteMany({})
+            await tx.cRMPipeline.deleteMany({})
 
-            // Financial Documents & Items
-            prisma.backorderItem.deleteMany(),
-            prisma.invoiceItem.deleteMany(),
-            prisma.invoice.deleteMany(),
+            // 2. Messaging
+            await tx.messageReceipt.deleteMany({})
+            await tx.messageAttachment.deleteMany({})
+            await tx.message.deleteMany({})
 
-            prisma.deliveryOrderItem.deleteMany(),
-            prisma.deliveryOrder.deleteMany(),
+            // 3. Services & Rental
+            await tx.rentalAsset.deleteMany({})
+            await tx.serviceContract.deleteMany({})
+            await tx.serviceDefinition.deleteMany({})
 
-            prisma.purchaseOrderItem.deleteMany(),
-            prisma.purchaseOrder.deleteMany(),
+            // 4. Sales & Inventory
+            await tx.deliveryOrderItem.deleteMany({})
+            await tx.deliveryOrder.deleteMany({})
+            await tx.backorderItem.deleteMany({})
+            await tx.invoiceItem.deleteMany({})
+            await tx.invoice.deleteMany({})
+            await tx.reservation.deleteMany({})
+            await tx.warrantyClaim.deleteMany({})
+            await tx.inventoryItem.deleteMany({})
+            await tx.gRNItem.deleteMany({})
+            await tx.goodsReceiptNote.deleteMany({})
+            await tx.purchaseOrderItem.deleteMany({})
+            await tx.purchaseOrder.deleteMany({})
+            await tx.product.deleteMany({})
+            await tx.location.deleteMany({})
 
-            prisma.gRNItem.deleteMany(),
-            prisma.goodsReceiptNote.deleteMany(),
+            // 5. Customers & Partners
+            await tx.partnerEmployee.deleteMany({})
+            await tx.deliveryAddress.deleteMany({})
+            await tx.customer.deleteMany({})
+            await tx.salesRep.deleteMany({})
 
-            // Warranty & Reservations
-            prisma.warrantyClaim.deleteMany(),
-            prisma.reservation.deleteMany(),
+            // 6. Generic Settings & Logs
+            await tx.transactionLog.deleteMany({})
+            await tx.category.deleteMany({})
+            await tx.sequence.deleteMany({})
+            await tx.taxConfiguration.deleteMany({})
+            await tx.systemSetting.deleteMany({})
+            await tx.auditLog.deleteMany({})
 
-            // Core Inventory
-            prisma.inventoryItem.deleteMany(),
+            // 7. Identity Cleanup
+            await tx.session.deleteMany({})
+            await tx.user.deleteMany({})
 
-            // Settings / Auxiliary
-            prisma.deliveryAddress.deleteMany(),
-
-            // Main Entities
-            prisma.product.deleteMany(),
-            prisma.customer.deleteMany(),
-            // prisma.location.deleteMany(), // Keep locations or reset? Resetting is cleaner.
-            prisma.location.deleteMany(),
-            prisma.category.deleteMany(),
-
-            // System
-            prisma.session.deleteMany(),
-            prisma.user.deleteMany(),
-            prisma.sequence.deleteMany(),
-        ])
-
-        // 2. Re-seed Admin User and Default Location (Hardcoded here to avoid spawning 'npm run seed' process which might be slow/complex)
-
-        // Default Location
-        await prisma.location.create({
-            data: {
-                name: 'Main Warehouse',
-                type: 'PHYSICAL',
-                address: '123 Main St' // Placeholder
+            // 8. Re-initialize Admin Role and User
+            let adminRole = await tx.role.findFirst({ where: { name: 'ADMIN' } })
+            if (!adminRole) {
+                adminRole = await tx.role.create({
+                    data: {
+                        name: 'ADMIN',
+                        description: 'System Administrator (Auto-generated)',
+                        isSystemDefault: true
+                    }
+                })
             }
-        })
 
-        // Sold Location
-        await prisma.location.create({
-            data: {
-                name: 'Sold',
-                address: 'Virtual Location',
-                type: 'VIRTUAL'
-            }
-        })
+            const hashedPassword = await bcrypt.hash('Admin@123', 10)
 
-        // Admin User
-        const hashedPassword = await bcrypt.hash('Admin@123', 10)
-
-        // Ensure Admin Role exists before assigning (since we just deleted everything)
-        let adminRole = await prisma.role.findFirst({ where: { name: 'ADMIN' } })
-        if (!adminRole) {
-            adminRole = await prisma.role.create({
+            await tx.user.create({
                 data: {
-                    name: 'ADMIN',
-                    description: 'System Administrator (Auto-generated)',
-                    isSystemDefault: true
+                    name: 'System Administrator',
+                    email: 'admin@activehardware.com',
+                    password: hashedPassword,
+                    roleId: adminRole.id,
+                    isActive: true,
+                    mustChangePassword: true
                 }
             })
-        }
 
-        await prisma.user.create({
-            data: {
-                name: 'System Administrator',
-                email: 'admin@activehardware.com',
-                password: hashedPassword,
-                roleId: adminRole.id,
-                isActive: true,
-                mustChangePassword: true
-            }
+            // 9. Re-seed default "Sold" Location
+            await tx.location.create({
+                data: {
+                    name: 'Sold',
+                    address: 'Virtual Location',
+                    type: 'VIRTUAL'
+                }
+            })
         })
 
         return NextResponse.json({

@@ -10,20 +10,57 @@ export async function POST() {
 
         // Delete all data in order (respecting foreign key constraints)
         await prisma.$transaction(async (tx) => {
-            // Delete child records first
+            // 1. CRM & Projects
+            await tx.cRMQuoteItem.deleteMany({})
+            await tx.cRMQuote.deleteMany({})
+            await tx.cRMActivity.deleteMany({})
+            await tx.projectTask.deleteMany({})
+            await tx.projectMember.deleteMany({})
+            await tx.cRMProject.deleteMany({})
+            await tx.cRMStage.deleteMany({})
+            await tx.cRMPipeline.deleteMany({})
+
+            // 2. Messaging
+            await tx.messageReceipt.deleteMany({})
+            await tx.messageAttachment.deleteMany({})
+            await tx.message.deleteMany({})
+
+            // 3. Services & Rental
+            await tx.rentalAsset.deleteMany({})
+            await tx.serviceContract.deleteMany({})
+            await tx.serviceDefinition.deleteMany({})
+
+            // 4. Sales & Inventory
+            await tx.deliveryOrderItem.deleteMany({})
+            await tx.deliveryOrder.deleteMany({})
             await tx.backorderItem.deleteMany({})
-            await tx.warrantyClaim.deleteMany({})
             await tx.invoiceItem.deleteMany({})
             await tx.invoice.deleteMany({})
+            await tx.reservation.deleteMany({})
+            await tx.warrantyClaim.deleteMany({})
             await tx.inventoryItem.deleteMany({})
+            await tx.gRNItem.deleteMany({})
             await tx.goodsReceiptNote.deleteMany({})
+            await tx.purchaseOrderItem.deleteMany({})
+            await tx.purchaseOrder.deleteMany({})
             await tx.product.deleteMany({})
             await tx.location.deleteMany({})
-            await tx.customer.deleteMany({})
 
-            // Delete audit logs (except we'll keep the reset log)
+            // 5. Customers & Partners
+            await tx.partnerEmployee.deleteMany({})
+            await tx.deliveryAddress.deleteMany({})
+            await tx.customer.deleteMany({})
+            await tx.salesRep.deleteMany({})
+
+            // 6. Generic Settings & Logs
+            await tx.transactionLog.deleteMany({})
+            await tx.category.deleteMany({})
+            await tx.sequence.deleteMany({})
+            await tx.taxConfiguration.deleteMany({})
+            await tx.systemSetting.deleteMany({})
             await tx.auditLog.deleteMany({})
 
+            // 7. Identity Cleanup
             // Delete all sessions except current user's
             await tx.session.deleteMany({
                 where: {
@@ -38,25 +75,28 @@ export async function POST() {
                 }
             })
 
-            // Get the Admin role
-            const adminRole = await (tx as any).role.findFirst({ where: { name: 'ADMIN' } })
-
-            // Reset the current admin user to default state
+            // 8. Re-initialize current user to default Admin state
+            const adminRole = await tx.role.findFirst({ where: { name: 'ADMIN' } })
             const hashedPassword = await bcrypt.hash('Admin@123', 10)
-
-            const userData: any = {
-                name: 'System Administrator',
-                email: 'admin@activehardware.com',
-                password: hashedPassword,
-                mustChangePassword: true
-            }
-            if (adminRole) {
-                userData.roleId = adminRole.id
-            }
 
             await tx.user.update({
                 where: { id: user.id },
-                data: userData
+                data: {
+                    name: 'System Administrator',
+                    email: 'admin@activehardware.com',
+                    password: hashedPassword,
+                    mustChangePassword: true,
+                    roleId: adminRole?.id || undefined
+                }
+            })
+
+            // 9. Re-seed default "Sold" Location
+            await tx.location.create({
+                data: {
+                    name: 'Sold',
+                    address: 'Virtual Location',
+                    type: 'VIRTUAL'
+                }
             })
         })
 
