@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -254,13 +255,10 @@ export default function EditProductPage({ params }: PageProps) {
                             Minimum Stock Level
                         </label>
                         <div className="mt-1">
-                            <input
-                                type="number"
-                                name="minStock"
-                                id="minStock"
+                            <FormattedNumberInput
                                 value={formData.minStock}
-                                onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
-                                min={0}
+                                onChange={(val) => setFormData({ ...formData, minStock: val })}
+                                id="minStock"
                                 className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
@@ -271,13 +269,10 @@ export default function EditProductPage({ params }: PageProps) {
                             Warranty Period (Months)
                         </label>
                         <div className="mt-1">
-                            <input
-                                type="number"
-                                name="warrantyMonths"
-                                id="warrantyMonths"
+                            <FormattedNumberInput
                                 value={formData.warrantyMonths}
-                                onChange={(e) => setFormData({ ...formData, warrantyMonths: Number(e.target.value) })}
-                                min={0}
+                                onChange={(val) => setFormData({ ...formData, warrantyMonths: val })}
+                                id="warrantyMonths"
                                 placeholder="0 = No warranty"
                                 className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
@@ -327,11 +322,9 @@ export default function EditProductPage({ params }: PageProps) {
                                 <div className="sm:col-span-3">
                                     <label className="block text-sm font-medium text-gray-700">Default Duration</label>
                                     <div className="mt-1 flex rounded-md shadow-sm">
-                                        <input
-                                            type="number"
+                                        <FormattedNumberInput
                                             value={durationValue}
-                                            onChange={(e) => setDurationValue(Number(e.target.value))}
-                                            min={1}
+                                            onChange={setDurationValue}
                                             className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                                         />
                                         <select

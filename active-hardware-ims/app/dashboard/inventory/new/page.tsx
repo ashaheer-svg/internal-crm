@@ -4,12 +4,15 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 export default function NewProductPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
     const [categories, setCategories] = useState<{ id: string, name: string }[]>([])
+    const [minStock, setMinStock] = useState(0)
+    const [warrantyMonths, setWarrantyMonths] = useState(0)
 
     useEffect(() => {
         fetch("/api/categories")
@@ -31,8 +34,8 @@ export default function NewProductPage() {
             category: formData.get("category"),
             model: formData.get("model"),
             description: formData.get("description"),
-            minStock: formData.get("minStock"),
-            warrantyMonths: formData.get("warrantyMonths"),
+            minStock: minStock,
+            warrantyMonths: warrantyMonths,
         }
 
         try {
@@ -179,12 +182,10 @@ export default function NewProductPage() {
                             Minimum Stock Level
                         </label>
                         <div className="mt-1">
-                            <input
-                                type="number"
-                                name="minStock"
+                            <FormattedNumberInput
+                                value={minStock}
+                                onChange={setMinStock}
                                 id="minStock"
-                                defaultValue={0}
-                                min={0}
                                 className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
@@ -195,12 +196,10 @@ export default function NewProductPage() {
                             Warranty Period (Months)
                         </label>
                         <div className="mt-1">
-                            <input
-                                type="number"
-                                name="warrantyMonths"
+                            <FormattedNumberInput
+                                value={warrantyMonths}
+                                onChange={setWarrantyMonths}
                                 id="warrantyMonths"
-                                defaultValue={0}
-                                min={0}
                                 className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 placeholder="e.g. 12 for 1 year"
                             />

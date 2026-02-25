@@ -8,6 +8,7 @@ import { Currency } from "@/components/Currency"
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
 import BulkSerialEntryModal from "@/components/BulkSerialEntryModal"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type DeliveryOrderItem = {
     productId: string
@@ -62,9 +63,9 @@ export default function NewDeliveryOrderPage() {
     const [endCustomerName, setEndCustomerName] = useState("")
 
     const [notes, setNotes] = useState("")
-    const [invoiceValue, setInvoiceValue] = useState<string>("")
+    const [invoiceValue, setInvoiceValue] = useState<number>(0)
     const [invoiceNumber, setInvoiceNumber] = useState<string>("")
-    const [additionalCosts, setAdditionalCosts] = useState<string>("")
+    const [additionalCosts, setAdditionalCosts] = useState<number>(0)
     const [salesRepId, setSalesRepId] = useState<string>("")
     const [salesReps, setSalesReps] = useState<any[]>([])
 
@@ -133,7 +134,7 @@ export default function NewDeliveryOrderPage() {
                         }
                     }
 
-                    setInvoiceValue(quote.subTotal.toString())
+                    setInvoiceValue(quote.subTotal)
 
                     let newNotes = `Converted from Quote #${quote.quoteNumber}`
                     if (quote.poNumber) newNotes += `\nPO: ${quote.poNumber}`
@@ -181,12 +182,12 @@ export default function NewDeliveryOrderPage() {
             setNotes(`Allocation for Backorder`)
 
             // Initialize invoice value for backorder if not already set
-            if (!invoiceValue) {
+            if (invoiceValue === 0) {
                 fetch(`/api/products/${prodId}`)
                     .then(res => res.json())
                     .then(product => {
                         const price = product.resellerPrice || 0
-                        setInvoiceValue((price * Number(qty)).toString())
+                        setInvoiceValue(price * Number(qty))
                     })
             }
         }
@@ -230,9 +231,9 @@ export default function NewDeliveryOrderPage() {
     useEffect(() => {
         const currentTotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
 
-        if (invoiceValue === "" || Number(invoiceValue) === prevItemsTotal) {
-            if (currentTotal > 0) {
-                setInvoiceValue(currentTotal.toString())
+        if (invoiceValue === 0 || invoiceValue === prevItemsTotal) {
+            if (currentTotal> 0) {
+                setInvoiceValue(currentTotal)
             }
         }
         setPrevItemsTotal(currentTotal)
@@ -293,7 +294,7 @@ export default function NewDeliveryOrderPage() {
                     const defaultAddr = data.find((a: any) => a.isDefault)
                     if (defaultAddr) {
                         setDeliveryAddress(defaultAddr.address)
-                    } else if (data.length > 0) {
+                    } else if (data.length> 0) {
                         setDeliveryAddress(data[0].address)
                     } else {
                         setDeliveryAddress("")
@@ -543,12 +544,9 @@ export default function NewDeliveryOrderPage() {
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">Rs.</span>
                                     </div>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
+                                    <FormattedNumberInput
                                         value={invoiceValue}
-                                        onChange={(e) => setInvoiceValue(e.target.value)}
+                                        onChange={setInvoiceValue}
                                         className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
@@ -570,12 +568,9 @@ export default function NewDeliveryOrderPage() {
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">Rs.</span>
                                     </div>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
+                                    <FormattedNumberInput
                                         value={additionalCosts}
-                                        onChange={(e) => setAdditionalCosts(e.target.value)}
+                                        onChange={setAdditionalCosts}
                                         className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="0.00"
                                     />
@@ -587,7 +582,7 @@ export default function NewDeliveryOrderPage() {
                                     value={salesRepId}
                                     onChange={(e) => setSalesRepId(e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                >
+                               >
                                     <option value="">Select Sales Rep</option>
                                     {salesReps.map(rep => (
                                         <option key={rep.id} value={rep.id}>{rep.name}</option>
@@ -620,7 +615,7 @@ export default function NewDeliveryOrderPage() {
                                                     ? "bg-white shadow text-gray-900"
                                                     : "text-gray-500 hover:text-gray-900"
                                                     }`}
-                                            >
+                                           >
                                                 Partner Address
                                             </button>
                                             <button
@@ -630,7 +625,7 @@ export default function NewDeliveryOrderPage() {
                                                     ? "bg-white shadow text-gray-900"
                                                     : "text-gray-500 hover:text-gray-900"
                                                     }`}
-                                            >
+                                           >
                                                 End Customer Address
                                             </button>
                                         </div>
@@ -640,7 +635,7 @@ export default function NewDeliveryOrderPage() {
                                 {((saleType === "DIRECT" && customerId) ||
                                     (saleType === "PARTNER" && ((deliveryAddressSource === "PARTNER" && customerId) || (deliveryAddressSource === "END_CUSTOMER" && endCustomerId)))) ? (
                                     <div className="space-y-3">
-                                        {availableAddresses.length > 0 ? (
+                                        {availableAddresses.length> 0 ? (
                                             <div className="grid grid-cols-1 gap-2">
                                                 {availableAddresses.map((addr) => (
                                                     <label key={addr.id} className={`flex items-start p-3 border rounded-md cursor-pointer hover:bg-gray-50 ${deliveryAddress === addr.address ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' : ''}`}>
@@ -740,7 +735,7 @@ export default function NewDeliveryOrderPage() {
                                         onClick={handleSerialAdd}
                                         disabled={findingSerial || !serialInput}
                                         className="p-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                                    >
+                                   >
                                         <ScanLine className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -749,7 +744,7 @@ export default function NewDeliveryOrderPage() {
                                         type="button"
                                         onClick={() => setIsBulkEntryOpen(true)}
                                         className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
-                                    >
+                                   >
                                         + Bulk Add via Serial List
                                     </button>
                                 </div>
@@ -781,24 +776,26 @@ export default function NewDeliveryOrderPage() {
                                             <p className="font-medium text-gray-900">{item.productName}</p>
                                         </div>
                                         <div className="w-24">
-                                            <input
-                                                type="number"
-                                                min="1"
+                                            <FormattedNumberInput
                                                 value={item.quantity}
-                                                onChange={(e) => updateItemQuantity(idx, Number(e.target.value))}
+                                                onChange={(val) => updateItemQuantity(idx, val)}
                                                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-center shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                                 aria-label="Quantity"
                                             />
                                         </div>
                                         <div className="w-32">
                                             <div className="relative rounded-md shadow-sm">
-                                                <input
-                                                    type="number"
+                                                <FormattedNumberInput
                                                     value={item.unitPrice}
-                                                    onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
+                                                    onChange={(val) => updateItemPrice(idx, val)}
                                                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-right shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-6"
                                                     aria-label="Price"
                                                 />
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                    <span className="text-gray-400 text-[10px]">Rs.</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                             </div>
                                         </div>
                                         <button
@@ -806,53 +803,53 @@ export default function NewDeliveryOrderPage() {
                                             onClick={() => removeItem(idx)}
                                             className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             title="Remove item"
-                                        >
+                                       >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}
-                                <div className="pt-4 border-t flex justify-end items-center gap-4">
-                                    <span className="font-medium text-gray-700">Total Amount:</span>
-                                    <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
-                                </div>
-                            </div>
-                        )}
+                    <div className="pt-4 border-t flex justify-end items-center gap-4">
+                        <span className="font-medium text-gray-700">Total Amount:</span>
+                        <Currency amount={totalAmount} className="text-xl font-bold text-gray-900" />
                     </div>
                 </div>
+                        )}
+        </div>
+                </div>
 
-                {/* Sidebar Actions */}
-                <div className="space-y-4">
-                    <div className="bg-white shadow sm:rounded-lg p-6 sticky top-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Actions</h3>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Save as draft to reserve inventory later.
-                        </p>
-                        <div className="flex flex-col gap-3">
-                            <button
-                                type="submit"
-                                disabled={loading || items.length === 0}
-                                className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save className="w-4 h-4" />
-                                {loading ? "Creating..." : "Create Draft Order"}
-                            </button>
-                            <Link
-                                href="/dashboard/transactions"
-                                className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                            >
-                                Cancel
-                            </Link>
-                        </div>
-                    </div>
+        {/* Sidebar Actions */ }
+        <div className="space-y-4">
+            <div className="bg-white shadow sm:rounded-lg p-6 sticky top-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Actions</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                    Save as draft to reserve inventory later.
+                </p>
+                <div className="flex flex-col gap-3">
+                    <button
+                        type="submit"
+                        disabled={loading || items.length === 0}
+                        className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                        <Save className="w-4 h-4" />
+                        {loading ? "Creating..." : "Create Draft Order"}
+                    </button>
+                    <Link
+                        href="/dashboard/transactions"
+                        className="inline-flex justify-center items-center gap-1.5 w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                   >
+                        Cancel
+                    </Link>
+                </div>
+            </div>
                 </div>
             </form>
 
-            <BulkSerialEntryModal
-                isOpen={isBulkEntryOpen}
-                onClose={() => setIsBulkEntryOpen(false)}
-                onAdd={handleBulkAdd}
-                title="Bulk Add Items to Order"
-            />
+        <BulkSerialEntryModal
+            isOpen={isBulkEntryOpen}
+            onClose={() => setIsBulkEntryOpen(false)}
+            onAdd={handleBulkAdd}
+            title="Bulk Add Items to Order"
+        />
         </div>
     )
 }
