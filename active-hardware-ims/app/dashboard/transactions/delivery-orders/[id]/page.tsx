@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2, Hammer } from "lucide-react"
+import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2, Hammer, RotateCcw } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate } from "@/lib/utils"
 
@@ -227,6 +227,32 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         }
     }
 
+    async function handleReturn(inventoryItemId: string, serialNumber: string) {
+        if (!order) return
+        const notes = prompt(`Reason for returning item ${serialNumber}:`, "Customer return / Item faulty")
+        if (notes === null) return // Cancelled
+
+        setActionLoading(true)
+        try {
+            const res = await fetch(`/api/delivery-orders/${id}/return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inventoryItemId, notes })
+            })
+
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data.error || "Return failed")
+            }
+
+            await fetchOrder() // Refresh UI
+        } catch (e: any) {
+            alert(e.message)
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
     if (loading) return <div className="p-8 text-center text-gray-500">Loading order...</div>
     if (!order) return <div className="p-8 text-center text-red-500">Order not found</div>
 
@@ -389,11 +415,24 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
                                                 {/* Serial Numbers */}
                                                 {item.reservedItems.length > 0 && (
-                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                    <div className="mt-3 space-y-2">
                                                         {item.reservedItems.map(sn => (
-                                                            <span key={sn.id} className="text-xs border border-gray-200 bg-gray-50 px-2 py-1 rounded text-gray-600 font-mono">
-                                                                {sn.serialNumber}
-                                                            </span>
+                                                            <div key={sn.id} className="flex items-center justify-between group">
+                                                                <span className="text-xs border border-gray-200 bg-gray-50 px-2 py-1 rounded text-gray-600 font-mono">
+                                                                    {sn.serialNumber}
+                                                                </span>
+                                                                {isCompleted && order.isActive && (
+                                                                    <button
+                                                                        onClick={() => handleReturn(sn.id, sn.serialNumber)}
+                                                                        disabled={actionLoading}
+                                                                        className="opacity-0 group-hover:opacity-100 p-1 text-xs text-blue-600 hover:bg-blue-50 rounded flex items-center gap-1 transition-all"
+                                                                        title="Return Item to Inventory"
+                                                                    >
+                                                                        <RotateCcw className="w-3 h-3" />
+                                                                        Return
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 )}
