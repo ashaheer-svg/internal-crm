@@ -54,6 +54,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
             })
             if (res.ok) {
                 const newQuote = await res.json()
+                router.refresh()
                 router.push(`/dashboard/crm/projects/${projectId}/quotes/${newQuote.id}`)
             } else {
                 alert('Failed to duplicate quote')
@@ -74,6 +75,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                 method: 'POST'
             })
             if (res.ok) {
+                router.refresh()
                 fetchQuote()
             } else {
                 alert('Failed to confirm quote')

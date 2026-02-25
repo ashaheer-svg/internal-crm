@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Trash2, Save } from "lucide-react"
 import ProductSelector from "../../../transactions/invoices/new/ProductSelector"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type Product = {
     id: string
@@ -286,12 +287,9 @@ export default function NewGRNPage() {
 
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Unit Cost *</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <FormattedNumberInput
                                             value={item.unitCost}
-                                            onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                                            onChange={(val) => updateItem(index, 'unitCost', val)}
                                             className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
                                         />
                                     </div>

@@ -376,7 +376,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     )}
 
                     {activeTab === 'quotes' && (
-                        <CRMQuoteSection projectId={project.id} quotes={project.quotes} />
+                        <CRMQuoteSection projectId={project.id} quotes={project.quotes} onUpdate={fetchProject} />
                     )}
 
                     {activeTab === 'team' && (

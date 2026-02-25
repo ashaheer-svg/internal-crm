@@ -25,9 +25,10 @@ interface Quote {
 interface QuoteSectionProps {
     projectId: string
     quotes: Quote[]
+    onUpdate?: () => void
 }
 
-export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps) {
+export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSectionProps) {
     const router = useRouter()
     const [approvingQuote, setApprovingQuote] = useState<Quote | null>(null)
 
@@ -42,7 +43,11 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
             alert(errorData.error || 'Failed to approve quote')
             throw new Error(errorData.error || 'Failed to approve quote')
         }
-        router.refresh()
+        if (onUpdate) {
+            onUpdate()
+        } else {
+            router.refresh()
+        }
     }
 
     const handleEdit = (quote: Quote) => {
@@ -146,7 +151,8 @@ export default function CRMQuoteSection({ projectId, quotes }: QuoteSectionProps
                                             try {
                                                 const res = await fetch(`/api/crm/quotes/${quote.id}/duplicate`, { method: 'POST' })
                                                 if (res.ok) {
-                                                    router.refresh()
+                                                    if (onUpdate) onUpdate()
+                                                    else router.refresh()
                                                 }
                                             } catch (e) {
                                                 console.error(e)

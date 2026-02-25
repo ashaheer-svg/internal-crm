@@ -6,6 +6,7 @@ import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 // Types
 export interface QuoteItem {
@@ -423,13 +424,10 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                                         <span className="text-gray-500 sm:text-sm">Rs.</span>
                                                     </div>
-                                                    <input
-                                                        type="number"
-                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border text-right focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                                                        min="0"
-                                                        step="0.01"
+                                                    <FormattedNumberInput
                                                         value={item.unitPrice}
-                                                        onChange={(e) => updateItem(item.id, 'unitPrice', Number(e.target.value))}
+                                                        onChange={(val) => updateItem(item.id, 'unitPrice', val)}
+                                                        className="w-full border-gray-300 rounded-md text-sm p-2 pl-10 border text-right focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                                     />
                                                 </div>
                                             </td>

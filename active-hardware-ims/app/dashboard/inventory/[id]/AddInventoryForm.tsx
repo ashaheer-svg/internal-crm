@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, RefreshCw, FileText, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type Props = {
     productId: string
@@ -341,15 +342,12 @@ export default function AddInventoryForm({ productId, locations, poId }: Props) 
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost *</label>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
+                <FormattedNumberInput
+                    value={Number(unitCost) || 0}
+                    onChange={(val) => setUnitCost(val.toString())}
                     className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     placeholder="0.00"
-                    value={unitCost}
-                    onChange={(e) => setUnitCost(e.target.value)}
+                    required
                 />
                 <p className="mt-1 text-xs text-gray-500">Cost per unit (applies to all items)</p>
             </div>

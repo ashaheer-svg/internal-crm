@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Trash2, Save } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import ProductSelector from "../../invoices/new/ProductSelector"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type Product = {
     id: string
@@ -268,12 +269,9 @@ export default function NewPurchaseOrderPage() {
                                     </div>
 
                                     <div className="w-32">
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                        <FormattedNumberInput
                                             value={item.unitCost}
-                                            onChange={(e) => updateItem(index, 'unitCost', Number(e.target.value))}
+                                            onChange={(val) => updateItem(index, 'unitCost', val)}
                                             className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-right"
                                             aria-label="Unit Cost"
                                         />

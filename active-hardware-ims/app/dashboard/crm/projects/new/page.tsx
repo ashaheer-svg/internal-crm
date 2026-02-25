@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BackButton from '@/components/BackButton'
+import FormattedNumberInput from '@/components/FormattedNumberInput'
 
 interface Customer {
     id: string
@@ -205,11 +206,10 @@ export default function NewProjectPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Expected Value</label>
-                        <input
-                            type="number"
+                        <FormattedNumberInput
+                            value={Number(formData.expectedValue) || 0}
+                            onChange={val => setFormData({ ...formData, expectedValue: val.toString() })}
                             className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                            value={formData.expectedValue}
-                            onChange={e => setFormData({ ...formData, expectedValue: e.target.value })}
                         />
                     </div>
                     <div>

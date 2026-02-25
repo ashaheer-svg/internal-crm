@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Plus, Trash2, Download, Save, ChevronLeft, AlertCircle, CheckCircle, FileJson, Users, Package } from "lucide-react"
 import Link from "next/link"
 import BackButton from "@/components/BackButton"
+import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type LegacyItem = {
     id: string
@@ -287,10 +288,9 @@ export default function LegacyDataEntryPage() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Total Sales Value</label>
-                                    <input
-                                        type="number"
+                                    <FormattedNumberInput
                                         value={activeOrder.invoiceValue}
-                                        onChange={(e) => updateOrder(activeOrder.id, { invoiceValue: parseFloat(e.target.value) || 0 })}
+                                        onChange={(val) => updateOrder(activeOrder.id, { invoiceValue: val })}
                                         className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
@@ -341,19 +341,17 @@ export default function LegacyDataEntryPage() {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Unit Cost</label>
-                                                    <input
-                                                        type="number"
+                                                    <FormattedNumberInput
                                                         value={item.unitCost}
-                                                        onChange={(e) => updateItem(activeOrder.id, item.id, { unitCost: parseFloat(e.target.value) || 0 })}
+                                                        onChange={(val) => updateItem(activeOrder.id, item.id, { unitCost: val })}
                                                         className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Selling Price</label>
-                                                    <input
-                                                        type="number"
+                                                    <FormattedNumberInput
                                                         value={item.sellingPrice}
-                                                        onChange={(e) => updateItem(activeOrder.id, item.id, { sellingPrice: parseFloat(e.target.value) || 0 })}
+                                                        onChange={(val) => updateItem(activeOrder.id, item.id, { sellingPrice: val })}
                                                         className="w-full px-2 py-1.5 rounded border border-gray-200 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
