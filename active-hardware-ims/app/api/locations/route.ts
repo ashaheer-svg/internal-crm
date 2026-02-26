@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requirePermission } from '@/lib/auth'
 
 export async function GET() {
     try {
+        await requirePermission('locations:read')
         const locations = await prisma.location.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
@@ -19,6 +21,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        await requirePermission('locations:manage')
         const body = await request.json()
         const { name, type, address } = body
 

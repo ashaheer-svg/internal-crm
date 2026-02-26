@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
     try {
-        await requirePermission('warranty_lookup:read');
+        await requirePermission('general_lookup:read');
         const { searchParams } = new URL(request.url);
         const serial = searchParams.get('serial');
 

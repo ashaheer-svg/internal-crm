@@ -9,7 +9,7 @@ const DEFAULT_ROLES = [
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'warranty_lookup',
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations',
     'reports:inventory-valuation', 'reports:stock-movement', 'reports:sales', 'reports:purchase', 'reports:warranty', 'reports:location', 'reports:backorder', 'reports:profitability'
 ]
 
@@ -107,11 +107,15 @@ async function main() {
                 { action: 'read', resource: 'quotes' },
                 { action: 'create', resource: 'quotes' },
                 { action: 'update', resource: 'quotes' },
+                { action: 'read', resource: 'general_lookup' },
+                { action: 'read', resource: 'locations' },
+                { action: 'read', resource: 'reports:sales' },
+                { action: 'read', resource: 'reports:warranty' },
+                { action: 'read', resource: 'reports:backorder' },
             ],
             VIEWER: [
                 { action: 'read', resource: 'reports' },
-                // Warranty Lookup only (read-only)
-                { action: 'read', resource: 'warranty_lookup' },
+                { action: 'read', resource: 'general_lookup' },
                 { action: 'read', resource: 'inventory' },
                 { action: 'read', resource: 'customers' },
                 { action: 'read', resource: 'invoices' },
@@ -119,6 +123,14 @@ async function main() {
                 { action: 'read', resource: 'purchase_orders' },
                 { action: 'read', resource: 'projects' },
                 { action: 'read', resource: 'quotes' },
+                { action: 'read', resource: 'locations' },
+                { action: 'read', resource: 'reports:inventory-valuation' },
+                { action: 'read', resource: 'reports:stock-movement' },
+                { action: 'read', resource: 'reports:sales' },
+                { action: 'read', resource: 'reports:purchase' },
+                { action: 'read', resource: 'reports:warranty' },
+                { action: 'read', resource: 'reports:location' },
+                { action: 'read', resource: 'reports:backorder' },
             ],
         }
 
