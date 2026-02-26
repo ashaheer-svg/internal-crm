@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('delivery_orders:update')
         const { inventoryItemId, notes } = await request.json()
 
         if (!inventoryItemId) {
