@@ -5,6 +5,7 @@ const prisma = new PrismaClient()
 const DEFAULT_ROLES = [
     { name: 'ADMIN', description: 'System Administrator with full access to all features.', isSystemDefault: true },
     { name: 'SALES', description: 'Sales Representative with access to CRM, Quotes, and Customers.', isSystemDefault: false },
+    { name: 'SALES-MGR', description: 'Sales Manager with unrestricted CRM project access.', isSystemDefault: false },
     { name: 'VIEWER', description: 'Read-only access to standard reports and lists.', isSystemDefault: true }
 ]
 
@@ -112,6 +113,21 @@ async function main() {
                 { action: 'read', resource: 'reports:sales' },
                 { action: 'read', resource: 'reports:warranty' },
                 { action: 'read', resource: 'reports:backorder' },
+            ],
+            'SALES-MGR': [
+                { action: 'read', resource: 'projects' },
+                { action: 'view_all', resource: 'projects' },
+                { action: 'create', resource: 'projects' },
+                { action: 'update', resource: 'projects' },
+                { action: 'read', resource: 'quotes' },
+                { action: 'create', resource: 'quotes' },
+                { action: 'update', resource: 'quotes' },
+                { action: 'read', resource: 'customers' },
+                { action: 'create', resource: 'customers' },
+                { action: 'update', resource: 'customers' },
+                { action: 'read', resource: 'reports' },
+                { action: 'read', resource: 'reports:sales' },
+                { action: 'read', resource: 'general_lookup' },
             ],
             VIEWER: [
                 { action: 'read', resource: 'reports' },

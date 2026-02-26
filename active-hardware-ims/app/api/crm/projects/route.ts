@@ -35,8 +35,15 @@ export async function GET(request: Request) {
 
         // Scope: restrict to own projects unless they have view_all permission
         if (!canViewAll || scope === 'mine') {
-            where.members = {
-                some: { userId: user.id }
+            // Priority 1: If user is linked to a SalesRep record, filter by that SalesRep
+            const u = user as any
+            if (u.salesRepId) {
+                where.salesRepId = u.salesRepId
+            } else {
+                // Fallback: Use explicit project membership
+                where.members = {
+                    some: { userId: user.id }
+                }
             }
         }
 

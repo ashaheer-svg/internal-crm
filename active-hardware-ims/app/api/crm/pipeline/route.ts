@@ -27,7 +27,14 @@ export async function GET(request: Request) {
         // Build the project filter based on scope
         const projectWhere: any = { isDeleted: false }
         if (!canViewAll || scope === 'mine') {
-            projectWhere.members = { some: { userId: user.id } }
+            // Priority 1: If user is linked to a SalesRep record, filter projects by that SalesRep
+            const u = user as any
+            if (u.salesRepId) {
+                projectWhere.salesRepId = u.salesRepId
+            } else {
+                // Fallback: Use explicit project membership
+                projectWhere.members = { some: { userId: user.id } }
+            }
         }
 
         if (hideWon) {
