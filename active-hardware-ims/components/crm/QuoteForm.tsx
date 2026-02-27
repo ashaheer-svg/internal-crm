@@ -355,6 +355,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                 <ProductSelector
                                     onProductSelect={handleProductSelect}
                                     excludeProductIds={[]}
+                                    type="all"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Search DB for products to add</p>
                             </div>

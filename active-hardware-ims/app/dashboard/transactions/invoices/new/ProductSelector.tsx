@@ -15,9 +15,14 @@ type Product = {
 type ProductSelectorProps = {
     onProductSelect: (product: Product) => void
     excludeProductIds?: string[]
+    type?: 'product' | 'service' | 'all'
 }
 
-export default function ProductSelector({ onProductSelect, excludeProductIds = [] }: ProductSelectorProps) {
+export default function ProductSelector({
+    onProductSelect,
+    excludeProductIds = [],
+    type = 'product'
+}: ProductSelectorProps) {
     const [products, setProducts] = useState<Product[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [isOpen, setIsOpen] = useState(false)
@@ -25,12 +30,12 @@ export default function ProductSelector({ onProductSelect, excludeProductIds = [
 
     useEffect(() => {
         fetchProducts()
-    }, [])
+    }, [type])
 
     async function fetchProducts() {
         setLoading(true)
         try {
-            const res = await fetch('/api/products')
+            const res = await fetch(`/api/products?type=${type}`)
 
             if (!res.ok) throw new Error('Failed to fetch products')
 
