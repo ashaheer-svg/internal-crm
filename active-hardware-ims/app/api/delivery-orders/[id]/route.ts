@@ -285,17 +285,28 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
                     for (const item of finalItems) {
                         if (item.product?.serviceDefinition) {
+                            console.log(`[SERVICE_ACTIVATION] Starting activation for DO ${currentOrder.orderNumber}, Product: ${item.product.sku}`);
                             // ACTIVATE SERVICE CONTRACT
                             const { activateServiceContract } = await import('@/lib/service-manager')
-                            await activateServiceContract({
-                                customerId: currentOrder.customerId!,
-                                productId: item.productId!,
-                                startDate: (item as any).serviceStartDate!,
-                                description: `Fulfilled via Delivery Order ${currentOrder.orderNumber}`,
-                                contractValue: item.unitPrice,
-                                invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
-                                salesRepId: currentOrder.salesRepId || undefined
-                            })
+                            try {
+                                await activateServiceContract({
+                                    customerId: currentOrder.customerId!,
+                                    productId: item.productId!,
+                                    startDate: (item as any).serviceStartDate!,
+                                    description: `Fulfilled via Delivery Order ${currentOrder.orderNumber}`,
+                                    contractValue: item.unitPrice,
+                                    invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
+                                    salesRepId: currentOrder.salesRepId || undefined
+                                })
+                                console.log(`[SERVICE_ACTIVATION] Successfully activated contract for ${item.product.sku}`);
+                            } catch (error: any) {
+                                console.error(`[SERVICE_ACTIVATION] FAILED for ${item.product.sku}:`, error.message);
+                                // We don't throw here to avoid rolling back hardware fulfillment if one service fails, 
+                                // although in a transaction it might still roll back if not caught or depending on tx logic.
+                                // But since activateServiceContract uses a separate 'db' instance, it won't automagically roll back the 'tx'
+                                // unless we re-throw.
+                                throw error; // Re-throw to ensure transaction integrity
+                            }
 
                             // Log Transaction as ISSUE (Revenue recognized)
                             await tx.transactionLog.create({

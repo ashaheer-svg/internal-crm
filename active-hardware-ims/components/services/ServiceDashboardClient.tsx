@@ -129,7 +129,7 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                             <tbody className="divide-y divide-gray-200">
                                 {filteredExpiring.map(contract => (
                                     <tr key={contract.id}>
-                                        <td className="px-3 py-2 text-sm text-gray-900">{contract.customer?.name || 'Unknown Customer'}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-900">{contract.customer?.name || contract.customerName || 'Unknown Customer'}</td>
                                         <td className="px-3 py-2 text-sm text-gray-500">{contract.product?.name || 'Unknown Product'}</td>
                                         <td className="px-3 py-2 text-sm text-red-600 font-medium">
                                             {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
@@ -174,7 +174,7 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                             <tbody className="divide-y divide-gray-200">
                                 {active.map(contract => (
                                     <tr key={contract.id}>
-                                        <td className="px-3 py-2 text-sm text-gray-900 font-medium">{contract.customer?.name || 'Unknown Customer'}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-900 font-medium">{contract.customer?.name || contract.customerName || 'Unknown Customer'}</td>
                                         <td className="px-3 py-2 text-sm text-gray-500">
                                             {contract.product?.name || 'Unknown Product'}
                                             <div className="text-xs text-gray-400">{contract.product?.sku || '-'}</div>
