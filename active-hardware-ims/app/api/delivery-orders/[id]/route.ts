@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { sendDeliveryShippedAlert, sendLowStockAlert } from '@/lib/whatsapp'
+import { activateServiceContract } from '@/lib/service-manager'
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -287,7 +288,6 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         if (item.product?.serviceDefinition) {
                             console.log(`[SERVICE_ACTIVATION] Starting activation for DO ${currentOrder.orderNumber}, Product: ${item.product.sku}`);
                             // ACTIVATE SERVICE CONTRACT
-                            const { activateServiceContract } = await import('@/lib/service-manager')
                             try {
                                 await activateServiceContract({
                                     customerId: currentOrder.customerId!,
@@ -297,7 +297,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                     contractValue: item.unitPrice,
                                     invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
                                     salesRepId: currentOrder.salesRepId || undefined
-                                })
+                                }, tx)
                                 console.log(`[SERVICE_ACTIVATION] Successfully activated contract for ${item.product.sku}`);
                             } catch (error: any) {
                                 console.error(`[SERVICE_ACTIVATION] FAILED for ${item.product.sku}:`, error.message);
@@ -349,6 +349,9 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         where: { id: params.id },
                         data: { status: 'COMPLETED' }
                     })
+                }, {
+                    maxWait: 10000, // 10 seconds to acquire connection
+                    timeout: 60000  // 60 seconds total execution time for complex orders
                 })
 
                 // --- WhatsApp Alerts ---

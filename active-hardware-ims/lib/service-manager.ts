@@ -85,9 +85,10 @@ export async function activateServiceContract(data: {
     contractValue?: number;
     invoiceReference?: string;
     salesRepId?: string;
-}) {
+}, tx?: any) {
+    const client = tx || db;
     // Fetch definition to get defaults
-    const def = await db.serviceDefinition.findUnique({
+    const def = await client.serviceDefinition.findUnique({
         where: { productId: data.productId }
     });
 
@@ -99,7 +100,7 @@ export async function activateServiceContract(data: {
 
     const endDate = calculateEndDate(startDate, durationValue, durationUnit);
 
-    return db.serviceContract.create({
+    return client.serviceContract.create({
         data: {
             customerId: data.customerId,
             productId: data.productId,
