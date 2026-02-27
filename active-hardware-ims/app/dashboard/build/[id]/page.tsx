@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle, AlertTriangle, Hammer, X, Save, AlertCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, AlertTriangle, Hammer, X, Save, AlertCircle, Package } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface BuildOrder {
@@ -20,12 +20,19 @@ interface BuildOrder {
             name: string
             brand: string
             model: string
+            serviceDefinition?: {
+                type: string
+                durationValue: number
+                durationUnit: string
+            } | null
         }
         reservedItems: {
             id: string
             serialNumber: string
             location?: { name: string } | null
         }[]
+        serviceStartDate?: string | null
+        serviceEndDate?: string | null
     }[]
 }
 
@@ -120,8 +127,22 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     if (loading) return <div className="p-8 text-center text-gray-500">Loading build details...</div>
     if (!order) return <div className="p-8 text-center text-red-500">Order not found</div>
 
-    const totalAllocated = order.items.reduce((sum: number, item) => sum + (item.reservedItems?.length || 0), 0)
-    const allVerified = totalAllocated > 0 && totalAllocated === Object.values(verifyingSerials).filter(v => v).length
+    const totalPhysicalToVerify = order.items.reduce((sum: number, item) => {
+        if (item.product.serviceDefinition) return sum
+        return sum + (item.reservedItems?.length || 0)
+    }, 0)
+
+    const physicalVerifiedCount = Object.values(verifyingSerials).filter(v => v).length
+    const servicesFulfilled = order.items.filter(item =>
+        item.product.serviceDefinition && item.serviceStartDate && item.serviceEndDate
+    ).length
+    const totalServices = order.items.filter(item => !!item.product.serviceDefinition).length
+
+    const allVerified = (totalPhysicalToVerify === 0 || totalPhysicalToVerify === physicalVerifiedCount) &&
+        (servicesFulfilled === totalServices)
+
+    // Ensure there is actually something to finalize (order not empty and items are correct)
+    const canFinalize = order.items.length > 0 && allVerified
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -149,7 +170,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                             <h2 className="font-bold text-gray-900">Serial Number Verification</h2>
                             <span className="text-xs font-medium text-gray-500">
-                                Verified: {Object.values(verifyingSerials).filter(v => v).length} / {totalAllocated}
+                                Verified: {physicalVerifiedCount} / {totalPhysicalToVerify} Physical
+                                {totalServices > 0 && ` · ${servicesFulfilled} / ${totalServices} Services`}
                             </span>
                         </div>
                         <div className="divide-y divide-gray-200">
@@ -160,7 +182,21 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                         <p className="text-xs text-gray-500">{item.product.brand} {item.product.model} · Qty: {item.quantity}</p>
                                     </div>
 
-                                    {!item.reservedItems || item.reservedItems.length === 0 ? (
+                                    {item.product?.serviceDefinition ? (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
+                                                ${(item.serviceStartDate && item.serviceEndDate) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
+                                            `}>
+                                                {item.serviceStartDate ? <CheckCircle className="w-3 h-3" /> : <Package className="w-3 h-3" />}
+                                                {item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending'}
+                                            </span>
+                                            {item.serviceStartDate && (
+                                                <span className="text-[10px] text-gray-500 font-mono">
+                                                    Period: {formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : !item.reservedItems || item.reservedItems.length === 0 ? (
                                         <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded border border-amber-100 text-xs italic">
                                             <AlertCircle className="w-4 h-4" />
                                             No items allocated yet for this product.
@@ -223,12 +259,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                             {!allVerified && (
                                 <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-3 rounded text-xs border border-amber-100">
                                     <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                    <span>Please verify ALL allocated serial numbers before finalizing the build.</span>
+                                    <span>Please verify ALL allocated serial numbers and ensure all services have been fulfilled before finalizing.</span>
                                 </div>
                             )}
                             <button
                                 onClick={handleCompleteBuild}
-                                disabled={actionLoading || !allVerified}
+                                disabled={actionLoading || !canFinalize}
                                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                             >
                                 <Hammer className="w-5 h-5" />
