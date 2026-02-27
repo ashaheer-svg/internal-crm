@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 /**
- * PRODUCTION SYSTEM REPAIR & SYNC UTILITY
+ * PRODUCTION SYSTEM REPAIR & SYNC UTILITY (EVOLVED)
  * 
  * 1. Schema Sync: Adds missing columns that Prisma might have missed in production.
  * 2. Service Definition Fix: Ensures products in service categories have the correct definition records.
@@ -60,14 +60,29 @@ async function main() {
         // --- PHASE 2: PRODUCT DEFINITION FIX ---
         console.log("\n🏷️  Phase 2: Service Definition Sync...");
 
+        // Diagnostic: List all categories and count products
+        const stats = await prisma.product.groupBy({
+            by: ['category'],
+            _count: { _all: true }
+        });
+        console.log("  Database stats (Categories):", stats.map(s => `${s.category || 'No Category'} (${s._count._all})`).join(', '));
+
         // Find products that are likely services but missing definitions
         const candidateProducts = await prisma.product.findMany({
             where: {
                 OR: [
                     { category: { contains: 'Service' } },
                     { category: { contains: 'Rental' } },
+                    { category: { contains: 'Support' } },
+                    { category: { contains: 'Maintenance' } },
+                    { category: { contains: 'AMC' } },
                     { name: { contains: 'AMC' } },
-                    { sku: { contains: 'AMC' } }
+                    { name: { contains: 'Service' } },
+                    { name: { contains: 'Rental' } },
+                    { sku: { contains: 'AMC' } },
+                    { sku: { contains: 'SRV' } },
+                    { description: { contains: 'AMC' } },
+                    { description: { contains: 'Service' } }
                 ],
                 serviceDefinition: null
             },
@@ -76,9 +91,9 @@ async function main() {
 
         console.log(`  Found ${candidateProducts.length} candidate service products missing definitions.`);
         for (const p of candidateProducts) {
-            const isRental = p.category.toLowerCase().includes('rental') || p.name.toLowerCase().includes('rental');
+            const isRental = (p.category || '').toLowerCase().includes('rental') || p.name.toLowerCase().includes('rental');
             const type = isRental ? 'RENTAL' : 'AMC';
-            console.log(`  ⚠️  Creating ${type} definition for: ${p.sku} (${p.name})`);
+            console.log(`  ⚠️  Creating ${type} definition for: ${p.sku} (${p.name}) [Cat: ${p.category}]`);
             if (!isDryRun) {
                 await prisma.serviceDefinition.create({
                     data: {
@@ -92,6 +107,13 @@ async function main() {
         // --- PHASE 3: RETROACTIVE ACTIVATION ---
         console.log("\n📜 Phase 3: Retroactive Contract Activation...");
 
+        // Diagnostic: Count orders by status
+        const orderStats = await prisma.deliveryOrder.groupBy({
+            by: ['status'],
+            _count: { _all: true }
+        });
+        console.log("  Delivery Order Stats:", orderStats.map(s => `${s.status} (${s._count._all})`).join(', '));
+
         // 1. Get all completed orders with service items
         const orders = await prisma.deliveryOrder.findMany({
             where: { status: 'COMPLETED' },
@@ -104,12 +126,19 @@ async function main() {
             }
         });
 
+        console.log(`  Checking ${orders.length} COMPLETED orders for missing service contracts...`);
+
         let activatedCount = 0;
         for (const order of orders) {
             for (const item of order.items) {
-                if (item.product?.serviceDefinition) {
+                // We check AGAINST the broad criteria OR if it already has a definition
+                const isServiceProduct = !!item.product?.serviceDefinition ||
+                    (item.product?.category || '').toLowerCase().includes('service') ||
+                    (item.product?.category || '').toLowerCase().includes('amc') ||
+                    item.product?.name.toLowerCase().includes('amc');
+
+                if (isServiceProduct) {
                     // Check if a contract already exists for this order item
-                    // (Assuming 1 contract per order item, we can check by description or customer/product/dates)
                     const existing = await prisma.serviceContract.findFirst({
                         where: {
                             customerId: order.customerId!,
@@ -123,6 +152,16 @@ async function main() {
                         console.log(`  🚀  Activating missing contract for DO ${order.orderNumber}: ${item.product.sku}`);
                         activatedCount++;
                         if (!isDryRun) {
+                            // Ensure the product has a definition first if it was missing
+                            if (!item.product.serviceDefinition) {
+                                await prisma.serviceDefinition.create({
+                                    data: {
+                                        productId: item.productId,
+                                        type: (item.product.category || '').toLowerCase().includes('rental') ? 'RENTAL' : 'AMC'
+                                    }
+                                });
+                            }
+
                             const { activateServiceContract } = await import('./lib/service-manager');
                             await activateServiceContract({
                                 customerId: order.customerId!,
