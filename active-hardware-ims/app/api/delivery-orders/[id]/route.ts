@@ -285,43 +285,92 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     })
 
                     for (const item of finalItems) {
-                        if (item.product?.serviceDefinition) {
-                            console.log(`[SERVICE_ACTIVATION] Starting activation for DO ${currentOrder.orderNumber}, Product: ${item.product.sku}`);
-                            // ACTIVATE SERVICE CONTRACT
+                        const serviceType = item.product?.serviceDefinition?.type;
+                        const isService = !!serviceType;
+                        const isRental = serviceType === 'RENTAL';
+
+                        if (isService) {
+                            console.log(`[SERVICE_ACTIVATION] Starting activation for DO ${currentOrder.orderNumber}, Product: ${item.product.sku} (Type: ${serviceType})`);
+
+                            // 1. Activate Service Contract / Rental Agreement
                             try {
-                                await activateServiceContract({
+                                const contract = await activateServiceContract({
                                     customerId: currentOrder.customerId!,
                                     productId: item.productId!,
                                     startDate: (item as any).serviceStartDate!,
-                                    description: `Fulfilled via Delivery Order ${currentOrder.orderNumber}`,
+                                    description: `${isRental ? 'Rental' : 'Service'} fulfilled via Delivery Order ${currentOrder.orderNumber}`,
                                     contractValue: item.unitPrice,
                                     invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
                                     salesRepId: currentOrder.salesRepId || undefined
                                 }, tx)
-                                console.log(`[SERVICE_ACTIVATION] Successfully activated contract for ${item.product.sku}`);
+
+                                console.log(`[SERVICE_ACTIVATION] Successfully activated ${serviceType} contract for ${item.product.sku}`);
+
+                                // 2. If physical items are allocated to this service/rental
+                                if (item.reservedItems.length > 0) {
+                                    for (const reserved of item.reservedItems) {
+                                        // Update Inventory Status
+                                        await tx.inventoryItem.update({
+                                            where: { id: reserved.id },
+                                            data: { status: isRental ? 'LOANED' : 'SOLD' }
+                                        })
+
+                                        // If RENTAL, link to RentalAsset dashboard
+                                        if (isRental) {
+                                            await tx.rentalAsset.upsert({
+                                                where: { serialNumber: reserved.serialNumber },
+                                                create: {
+                                                    name: item.product.name,
+                                                    serialNumber: reserved.serialNumber,
+                                                    productId: item.productId,
+                                                    status: 'RENTED',
+                                                    currentContractId: contract.id
+                                                },
+                                                update: {
+                                                    status: 'RENTED',
+                                                    currentContractId: contract.id,
+                                                    productId: item.productId,
+                                                    isDeleted: false
+                                                }
+                                            })
+                                        }
+
+                                        // Log physical transaction
+                                        await tx.transactionLog.create({
+                                            data: {
+                                                type: 'ISSUE',
+                                                referenceType: 'DELIVERY_ORDER',
+                                                referenceId: currentOrder.id,
+                                                productId: item.productId,
+                                                serialNumber: reserved.serialNumber,
+                                                quantity: 1,
+                                                unitCost: item.unitPrice,
+                                                notes: `${isRental ? 'Rental asset loaned' : 'Service hardware sold'} via DO ${currentOrder.orderNumber}`
+                                            }
+                                        })
+                                    }
+                                } else {
+                                    // Log pure service transaction (no physical asset)
+                                    await tx.transactionLog.create({
+                                        data: {
+                                            type: 'ISSUE',
+                                            referenceType: 'DELIVERY_ORDER',
+                                            referenceId: currentOrder.id,
+                                            productId: item.productId,
+                                            serialNumber: isRental ? 'RENTAL-VIRTUAL' : 'SERVICE',
+                                            quantity: item.quantity,
+                                            unitCost: item.unitPrice,
+                                            notes: `${serviceType} fulfilled via DO ${currentOrder.orderNumber}`
+                                        }
+                                    })
+                                }
+
                             } catch (error: any) {
                                 console.error(`[SERVICE_ACTIVATION] FAILED for ${item.product.sku}:`, error.message);
-                                // We don't throw here to avoid rolling back hardware fulfillment if one service fails, 
-                                // although in a transaction it might still roll back if not caught or depending on tx logic.
-                                // But since activateServiceContract uses a separate 'db' instance, it won't automagically roll back the 'tx'
-                                // unless we re-throw.
                                 throw error; // Re-throw to ensure transaction integrity
                             }
-
-                            // Log Transaction as ISSUE (Revenue recognized)
-                            await tx.transactionLog.create({
-                                data: {
-                                    type: 'ISSUE',
-                                    referenceType: 'DELIVERY_ORDER',
-                                    referenceId: currentOrder.id,
-                                    productId: item.productId,
-                                    serialNumber: 'SERVICE', // Identifier for non-serialized
-                                    quantity: item.quantity,
-                                    unitCost: item.unitPrice,
-                                    notes: `Service fulfilled via DO ${currentOrder.orderNumber}`
-                                }
-                            })
                         } else if (item.reservedItems.length > 0) {
+                            // Standard hardware sale
                             await tx.inventoryItem.updateMany({
                                 where: { deliveryOrderItemId: item.id },
                                 data: { status: 'SOLD' }
