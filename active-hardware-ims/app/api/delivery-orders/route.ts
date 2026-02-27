@@ -21,7 +21,15 @@ export async function GET(request: Request) {
                 // _count: {
                 //    select: { items: true }
                 // }
-                items: true,
+                items: {
+                    include: {
+                        product: {
+                            include: {
+                                serviceDefinition: true
+                            }
+                        }
+                    }
+                },
                 salesRep: true
             }
         })
@@ -108,7 +116,15 @@ export async function POST(request: Request) {
                     }
                 },
                 include: {
-                    items: true
+                    items: {
+                        include: {
+                            product: {
+                                include: {
+                                    serviceDefinition: true
+                                }
+                            }
+                        }
+                    }
                 }
             })
 

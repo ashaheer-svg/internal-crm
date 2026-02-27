@@ -12,7 +12,11 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
             include: {
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: {
+                                serviceDefinition: true
+                            }
+                        },
                         reservedItems: true // Include reserved serials
                     }
                 },
