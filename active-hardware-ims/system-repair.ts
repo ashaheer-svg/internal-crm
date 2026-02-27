@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 /**
- * PRODUCTION SYSTEM REPAIR & SYNC UTILITY (EVOLVED)
+ * PRODUCTION SYSTEM REPAIR & SYNC UTILITY (DIAGNOSTIC VERSION)
  * 
  * 1. Schema Sync: Adds missing columns that Prisma might have missed in production.
  * 2. Service Definition Fix: Ensures products in service categories have the correct definition records.
@@ -76,11 +76,14 @@ async function main() {
                     { category: { contains: 'Support' } },
                     { category: { contains: 'Maintenance' } },
                     { category: { contains: 'AMC' } },
+                    { category: { contains: 'License' } }, // Expanded
                     { name: { contains: 'AMC' } },
                     { name: { contains: 'Service' } },
                     { name: { contains: 'Rental' } },
+                    { name: { contains: 'License' } }, // Expanded
                     { sku: { contains: 'AMC' } },
                     { sku: { contains: 'SRV' } },
+                    { sku: { contains: 'LIC' } }, // Expanded
                     { description: { contains: 'AMC' } },
                     { description: { contains: 'Service' } }
                 ],
@@ -130,14 +133,20 @@ async function main() {
 
         let activatedCount = 0;
         for (const order of orders) {
+            console.log(`\n  --- Analyzing DO ${order.orderNumber} ---`);
             for (const item of order.items) {
+                console.log(`  Item: ${item.product.sku} - ${item.product.name} (Cat: ${item.product.category || 'N/A'})`);
+
                 // We check AGAINST the broad criteria OR if it already has a definition
                 const isServiceProduct = !!item.product?.serviceDefinition ||
                     (item.product?.category || '').toLowerCase().includes('service') ||
                     (item.product?.category || '').toLowerCase().includes('amc') ||
-                    item.product?.name.toLowerCase().includes('amc');
+                    (item.product?.category || '').toLowerCase().includes('license') || // Expanded
+                    item.product?.name.toLowerCase().includes('amc') ||
+                    item.product?.name.toLowerCase().includes('license'); // Expanded
 
                 if (isServiceProduct) {
+                    console.log(`  👉 Path recognized as service item.`);
                     // Check if a contract already exists for this order item
                     const existing = await prisma.serviceContract.findFirst({
                         where: {
@@ -173,11 +182,13 @@ async function main() {
                                 salesRepId: order.salesRepId || undefined
                             });
                         }
+                    } else {
+                        console.log(`  ✅ Contract already exists for this item.`);
                     }
                 }
             }
         }
-        console.log(`  Finished. Activated ${activatedCount} skipped contracts.`);
+        console.log(`\n  Finished. Activated ${activatedCount} skipped contracts.`);
 
     } catch (error: any) {
         console.error("\n❌ ERROR DURING REPAIR:", error.message);
