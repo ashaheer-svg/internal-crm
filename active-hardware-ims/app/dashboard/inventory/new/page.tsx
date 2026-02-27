@@ -14,6 +14,14 @@ export default function NewProductPage() {
     const [minStock, setMinStock] = useState(0)
     const [warrantyMonths, setWarrantyMonths] = useState(0)
 
+    // Service State
+    const [isService, setIsService] = useState(false)
+    const [serviceType, setServiceType] = useState("ONE_TIME")
+    const [durationValue, setDurationValue] = useState(1)
+    const [durationUnit, setDurationUnit] = useState("YEAR")
+    const [billingCycle, setBillingCycle] = useState("")
+    const [isMetered, setIsMetered] = useState(false)
+
     useEffect(() => {
         fetch("/api/categories")
             .then(res => res.json())
@@ -36,6 +44,13 @@ export default function NewProductPage() {
             description: formData.get("description"),
             minStock: minStock,
             warrantyMonths: warrantyMonths,
+            // Service data
+            isService,
+            serviceType,
+            durationValue,
+            durationUnit,
+            billingCycle,
+            isMetered
         }
 
         try {
@@ -205,6 +220,99 @@ export default function NewProductPage() {
                             />
                         </div>
                         <p className="mt-1 text-xs text-gray-500">Enter warranty period in months (e.g., 12 for 1 year, 24 for 2 years)</p>
+                    </div>
+
+                    {/* Service Configuration Section */}
+                    <div className="sm:col-span-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-900">Service Configuration</h3>
+                                <p className="text-xs text-gray-500">Enable this if the product is a service (e.g. License, Subscription)</p>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="isService"
+                                    name="isService"
+                                    type="checkbox"
+                                    checked={isService}
+                                    onChange={(e) => setIsService(e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="isService" className="ml-2 block text-sm text-gray-900">
+                                    Is Service Product?
+                                </label>
+                            </div>
+                        </div>
+
+                        {isService && (
+                            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 border-t border-gray-200 pt-4">
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="serviceType" className="block text-sm font-medium text-gray-700">Service Type</label>
+                                    <select
+                                        id="serviceType"
+                                        value={serviceType}
+                                        onChange={(e) => setServiceType(e.target.value)}
+                                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                        <option value="ONE_TIME">One Time</option>
+                                        <option value="SUBSCRIPTION">Subscription</option>
+                                        <option value="CONTRACT">Contract (AMC)</option>
+                                        <option value="RENTAL">Rental</option>
+                                        <option value="LICENSE">License</option>
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700">Default Duration</label>
+                                    <div className="mt-1 flex rounded-md shadow-sm">
+                                        <FormattedNumberInput
+                                            value={durationValue}
+                                            onChange={setDurationValue}
+                                            className="block w-full min-w-0 flex-1 rounded-none rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        />
+                                        <select
+                                            value={durationUnit}
+                                            onChange={(e) => setDurationUnit(e.target.value)}
+                                            className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm border-l"
+                                        >
+                                            <option value="DAY">Days</option>
+                                            <option value="WEEK">Weeks</option>
+                                            <option value="MONTH">Months</option>
+                                            <option value="YEAR">Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="billingCycle" className="block text-sm font-medium text-gray-700">Billing Cycle</label>
+                                    <select
+                                        id="billingCycle"
+                                        value={billingCycle}
+                                        onChange={(e) => setBillingCycle(e.target.value)}
+                                        className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                        <option value="">None / Manual</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                    </select>
+                                </div>
+
+                                <div className="sm:col-span-3 flex items-end pb-2">
+                                    <div className="flex items-center">
+                                        <input
+                                            id="isMetered"
+                                            name="isMetered"
+                                            type="checkbox"
+                                            checked={isMetered}
+                                            onChange={(e) => setIsMetered(e.target.checked)}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="isMetered" className="ml-2 block text-sm text-gray-900">
+                                            Is Metered Service?
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
