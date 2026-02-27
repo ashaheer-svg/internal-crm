@@ -511,6 +511,11 @@ model DeliveryOrderItem {
   // Backorder link (to track original backorder source)
   backorderItemId String?
   backorderItem   BackorderItem? @relation(fields: [backorderItemId], references: [id])
+
+  // Service provisioning details
+  serviceStartDate DateTime?
+  serviceEndDate   DateTime?
+  unitCost         Float?
 }
 
 // Enums removed for SQLite compatibility. Using String types.

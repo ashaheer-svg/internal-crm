@@ -108,10 +108,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
             include: {
-                items: { include: { reservedItems: true } },
+                items: {
+                    include: {
+                        reservedItems: true,
+                        product: { include: { serviceDefinition: true } }
+                    }
+                },
                 quotes: true
             }
-
         })
 
         if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
@@ -147,7 +151,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     // Refresh order data within transaction to ensure we have latest items
                     const currentOrder = await tx.deliveryOrder.findUnique({
                         where: { id: params.id },
-                        include: { items: { include: { reservedItems: true } } }
+                        include: {
+                            items: {
+                                include: {
+                                    reservedItems: true,
+                                    product: { include: { serviceDefinition: true } }
+                                }
+                            }
+                        }
                     })
 
                     if (!currentOrder) throw new Error("Order not found during completion")
@@ -159,6 +170,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     let totalBackorderValue = 0
 
                     for (const item of currentOrder.items) {
+                        const isService = !!item.product?.serviceDefinition
+
+                        if (isService) {
+                            // Service Validation: Must have dates set if we are completing
+                            if (!(item as any).serviceStartDate || !(item as any).serviceEndDate) {
+                                throw new Error(`Service item "${item.product!.name}" is not fulfilled. Please provide the service period.`)
+                            }
+                            // Services are considered fully fulfilled if dates are set
+                            continue
+                        }
+
                         const reservedCount = item.reservedItems.length
                         const missingQty = item.quantity - reservedCount
 
@@ -251,11 +273,40 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     // 3. Mark allocated items as SOLD and log transactions
                     const finalItems = await tx.deliveryOrderItem.findMany({
                         where: { deliveryOrderId: params.id },
-                        include: { reservedItems: true }
+                        include: {
+                            reservedItems: true,
+                            product: { include: { serviceDefinition: true } }
+                        }
                     })
 
                     for (const item of finalItems) {
-                        if (item.reservedItems.length > 0) {
+                        if (item.product?.serviceDefinition) {
+                            // ACTIVATE SERVICE CONTRACT
+                            const { activateServiceContract } = await import('@/lib/service-manager')
+                            await activateServiceContract({
+                                customerId: currentOrder.customerId!,
+                                productId: item.productId!,
+                                startDate: (item as any).serviceStartDate!,
+                                description: `Fulfilled via Delivery Order ${currentOrder.orderNumber}`,
+                                contractValue: item.unitPrice,
+                                invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
+                                salesRepId: currentOrder.salesRepId || undefined
+                            })
+
+                            // Log Transaction as ISSUE (Revenue recognized)
+                            await tx.transactionLog.create({
+                                data: {
+                                    type: 'ISSUE',
+                                    referenceType: 'DELIVERY_ORDER',
+                                    referenceId: currentOrder.id,
+                                    productId: item.productId,
+                                    serialNumber: 'SERVICE', // Identifier for non-serialized
+                                    quantity: item.quantity,
+                                    unitCost: item.unitPrice,
+                                    notes: `Service fulfilled via DO ${currentOrder.orderNumber}`
+                                }
+                            })
+                        } else if (item.reservedItems.length > 0) {
                             await tx.inventoryItem.updateMany({
                                 where: { deliveryOrderItemId: item.id },
                                 data: { status: 'SOLD' }
@@ -267,7 +318,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                         type: 'ISSUE',
                                         referenceType: 'DELIVERY_ORDER',
                                         referenceId: currentOrder.id,
-                                        productId: item.productId,
+                                        productId: item.productId!,
                                         serialNumber: reserved.serialNumber,
                                         quantity: 1,
                                         unitCost: item.unitPrice,

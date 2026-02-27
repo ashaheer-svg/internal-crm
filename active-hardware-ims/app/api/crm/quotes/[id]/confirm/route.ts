@@ -105,7 +105,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                             customerId: quote.project.customerId,
                             customerName: quote.project.customer?.name || 'Unknown',
                             saleType: quote.saleType || 'DIRECT',
-                            invoiceValue: quote.totalAmount,
+                            invoiceValue: quote.subTotal, // Use Sub-total for revenue reporting
                             notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,
                             quoteReference: quote.id,
                             status: 'DRAFT',
@@ -143,7 +143,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                         }
                     })
 
-                    // C2. Update Project status to WON
+                    // C2. Update Project status to WON and set expectedValue to subTotal
                     const wonStage = await (tx as any).cRMStage.findFirst({
                         where: {
                             pipelineId: updatedQuote.project.pipelineId,
@@ -155,6 +155,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                         where: { id: updatedQuote.projectId },
                         data: {
                             status: 'WON',
+                            expectedValue: quote.subTotal, // Set to tax-exclusive value for reporting
                             closedAt: new Date(),
                             ...(wonStage ? { stageId: wonStage.id } : {})
                         }

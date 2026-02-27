@@ -28,6 +28,7 @@ export type AuditEntityType =
     | 'DELIVERY_ORDER_BUILD'
     | 'DELIVERY_ORDER_BUILD_REJECT'
     | 'DELIVERY_ORDER_RETURN'
+    | 'DELIVERY_ORDER_ITEM'
 
 interface AuditLogParams {
     action: AuditAction

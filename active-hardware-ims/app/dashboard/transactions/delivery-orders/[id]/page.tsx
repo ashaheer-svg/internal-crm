@@ -27,10 +27,17 @@ type DeliveryOrderItem = {
         name: string
         brand: string
         model: string
+        serviceDefinition?: {
+            type: string
+            durationValue: number
+            durationUnit: string
+        } | null
     }
     quantity: number
     unitPrice: number
     isBackorder: boolean
+    serviceStartDate?: string | null
+    serviceEndDate?: string | null
     reservedItems: InventoryItem[]
 }
 
@@ -75,6 +82,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     // Location Filter State
     const [locations, setLocations] = useState<any[]>([])
     const [selectedLocation, setSelectedLocation] = useState<string>("")
+
+    // Service Fulfillment Modal State
+    const [fulfillingItem, setFulfillingItem] = useState<DeliveryOrderItem | null>(null)
+    const [serviceStartDate, setServiceStartDate] = useState("")
+    const [serviceEndDate, setServiceEndDate] = useState("")
+    const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
 
     useEffect(() => {
         fetchOrder()
@@ -141,6 +154,49 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             if (allocatingItem && selectedSerials.length < allocatingItem.quantity) {
                 setSelectedSerials([...selectedSerials, inventoryItemId])
             }
+        }
+    }
+
+    async function saveServiceFulfillment() {
+        if (!fulfillingItem || !serviceStartDate || !serviceEndDate) return
+        setActionLoading(true)
+        try {
+            const res = await fetch(`/api/delivery-orders/${id}/items/${fulfillingItem.id}/fulfill-service`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    startDate: serviceStartDate,
+                    endDate: serviceEndDate,
+                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined
+                })
+            })
+
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || "Failed to fulfill service")
+            }
+
+            setFulfillingItem(null)
+            fetchOrder()
+        } catch (e: any) {
+            alert(e.message)
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
+    async function handleOpenServiceFulfill(item: DeliveryOrderItem) {
+        setFulfillingItem(item)
+        setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
+        setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
+
+        // Default end date (e.g. +1 year) if not set
+        if (item.serviceEndDate) {
+            setServiceEndDate(item.serviceEndDate.split('T')[0])
+        } else {
+            const end = new Date()
+            end.setFullYear(end.getFullYear() + 1)
+            setServiceEndDate(end.toISOString().split('T')[0])
         }
     }
 
@@ -264,6 +320,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const isCompleted = order.status === 'COMPLETED'
     const isCancelled = order.status === 'CANCELLED'
 
+    const isAllFulfilled = order.items.every(item => {
+        if (item.product?.serviceDefinition) {
+            return !!(item.serviceStartDate && item.serviceEndDate)
+        }
+        return item.reservedItems.length >= item.quantity
+    })
+
     return (
         <div className="max-w-6xl mx-auto space-y-6">
             {/* Header */}
@@ -344,8 +407,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             {isBuilt && (
                                 <button
                                     onClick={() => handleStatusChange('COMPLETED')}
-                                    disabled={actionLoading}
+                                    disabled={actionLoading || !isAllFulfilled}
                                     className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    title={!isAllFulfilled ? "Please fulfill all items before completing" : ""}
                                 >
                                     <Truck className="w-4 h-4" />
                                     Ship & Complete
@@ -386,35 +450,56 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                 <h3 className="text-sm font-medium text-gray-900">{item.product.brand} {item.product.name}</h3>
                                                 <p className="text-xs text-gray-500 mb-2">{item.product.model}</p>
 
-                                                {/* Allocation Status */}
+                                                {/* Allocation / Fulfillment Status */}
                                                 <div className="flex items-center gap-2 mt-2">
-                                                    <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
-                                                        ${isFullyAllocated ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}
-                                                    `}>
-                                                        {isFullyAllocated ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                                                        Allocated: {allocatedCount} / {item.quantity}
-                                                    </span>
-                                                    {/* Allow allocation for Draft AND Confirmed (Partial) orders */}
-                                                    {(order.status === 'DRAFT' || order.status === 'CONFIRMED') && !isFullyAllocated && (
-                                                        <button
-                                                            onClick={() => handleOpenAllocate(item)}
-                                                            className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
-                                                        >
-                                                            Alloc / Fulfill
-                                                        </button>
-                                                    )}
-                                                    {(order.status === 'DRAFT' || order.status === 'CONFIRMED') && isFullyAllocated && (
-                                                        <button
-                                                            onClick={() => handleOpenAllocate(item)}
-                                                            className="text-xs text-gray-500 hover:text-gray-700 underline"
-                                                        >
-                                                            Edit Allocation
-                                                        </button>
+                                                    {item.product?.serviceDefinition ? (
+                                                        <>
+                                                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
+                                                                ${(item.serviceStartDate && item.serviceEndDate) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
+                                                            `}>
+                                                                {item.serviceStartDate ? <CheckCircle className="w-3 h-3" /> : <Package className="w-3 h-3" />}
+                                                                {item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending'}
+                                                            </span>
+                                                            {order.isActive && (order.status === 'READY_FOR_BUILD' || order.status === 'BUILDING') && (
+                                                                <button
+                                                                    onClick={() => handleOpenServiceFulfill(item)}
+                                                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                                                                >
+                                                                    {item.serviceStartDate ? 'Edit Service Period' : 'Fulfill Service'}
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
+                                                                ${isFullyAllocated ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}
+                                                            `}>
+                                                                {isFullyAllocated ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                                                                Allocated: {allocatedCount} / {item.quantity}
+                                                            </span>
+                                                            {/* Allow allocation for Draft AND Confirmed (Partial) orders */}
+                                                            {(order.status === 'DRAFT' || order.status === 'CONFIRMED' || order.status === 'READY_FOR_BUILD' || order.status === 'BUILDING') && !isFullyAllocated && (
+                                                                <button
+                                                                    onClick={() => handleOpenAllocate(item)}
+                                                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                                                                >
+                                                                    Alloc / Fulfill
+                                                                </button>
+                                                            )}
+                                                            {(order.status === 'DRAFT' || order.status === 'CONFIRMED' || order.status === 'READY_FOR_BUILD' || order.status === 'BUILDING') && isFullyAllocated && (
+                                                                <button
+                                                                    onClick={() => handleOpenAllocate(item)}
+                                                                    className="text-xs text-gray-500 hover:text-gray-700 underline"
+                                                                >
+                                                                    Edit Allocation
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
 
-                                                {/* Serial Numbers */}
-                                                {item.reservedItems.length > 0 && (
+                                                {/* Serial Numbers or Service Dates */}
+                                                {item.reservedItems.length > 0 && !item.product?.serviceDefinition && (
                                                     <div className="mt-3 space-y-2">
                                                         {item.reservedItems.map(sn => (
                                                             <div key={sn.id} className="flex items-center justify-between group">
@@ -434,6 +519,15 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                                 )}
                                                             </div>
                                                         ))}
+                                                    </div>
+                                                )}
+
+                                                {item.product?.serviceDefinition && item.serviceStartDate && (
+                                                    <div className="mt-3 text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-100">
+                                                        <div className="flex justify-between">
+                                                            <span>Service Period:</span>
+                                                            <span className="font-medium">{formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}</span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -506,8 +600,10 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         {(() => {
                             const cogs = order.items.reduce((sum, item) => {
                                 // Sum cost of allocated items
-                                const itemCogs = item.reservedItems.reduce((s, r) => s + (r.unitCost || 0), 0)
-                                return sum + itemCogs
+                                const physicalCogs = item.reservedItems.reduce((s, r) => s + (r.unitCost || 0), 0)
+                                // Add cost for service items (if fulfilled)
+                                const serviceCogs = (item.product?.serviceDefinition && (item as any).unitCost) ? ((item as any).unitCost * item.quantity) : 0
+                                return sum + physicalCogs + serviceCogs
                             }, 0)
                             const overhead = order.additionalCosts || 0
                             const totalCost = cogs + overhead
@@ -647,6 +743,74 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {actionLoading ? 'Saving...' : 'Confirm Allocation'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Service Fulfillment Modal */}
+            {fulfillingItem && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                            <div>
+                                <h3 className="font-bold text-gray-900">Fulfill Service</h3>
+                                <p className="text-xs text-gray-500">{fulfillingItem.product.name}</p>
+                            </div>
+                            <button onClick={() => setFulfillingItem(null)}><XCircle className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Service Start Date</label>
+                                <input
+                                    type="date"
+                                    value={serviceStartDate}
+                                    onChange={(e) => setServiceStartDate(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Service End Date</label>
+                                <input
+                                    type="date"
+                                    value={serviceEndDate}
+                                    onChange={(e) => setServiceEndDate(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                />
+                                <p className="mt-1 text-[10px] text-gray-500 italic">This period will be used to generate the Service Contract.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (Excl. Tax)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        value={serviceUnitCost}
+                                        onChange={(e) => setServiceUnitCost(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10 p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <p className="mt-1 text-[10px] text-gray-500 italic">Actual procurement cost for this service.</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => setFulfillingItem(null)}
+                                className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={saveServiceFulfillment}
+                                disabled={actionLoading || !serviceStartDate || !serviceEndDate}
+                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {actionLoading ? 'Saving...' : 'Mark as Procured'}
                             </button>
                         </div>
                     </div>
