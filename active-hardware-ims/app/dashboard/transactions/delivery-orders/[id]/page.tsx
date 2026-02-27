@@ -218,8 +218,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
             await fetchOrder() // Refresh
             setAllocatingItem(null)
-        } catch (e) {
-            alert("Failed to allocate items")
+        } catch (e: any) {
+            alert(e.message || "Failed to allocate items")
         } finally {
             setActionLoading(false)
         }
@@ -251,10 +251,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 body: JSON.stringify({ status: newStatus, createBackorder })
             })
 
-            if (!res.ok) throw new Error("Update failed")
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data.error || "Update failed")
+            }
             await fetchOrder()
-        } catch (e) {
-            alert("Failed to update status")
+        } catch (e: any) {
+            alert(e.message || "Failed to update status")
         } finally {
             setActionLoading(false)
         }
