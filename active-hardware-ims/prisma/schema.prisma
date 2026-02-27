@@ -574,6 +574,7 @@ model ServiceContract {
   // Agreement Details
   contractNumber   String? @unique
   contractValue    Float   @default(0)
+  unitCost         Float   @default(0)
   invoiceReference String?
 
   partnerId String?

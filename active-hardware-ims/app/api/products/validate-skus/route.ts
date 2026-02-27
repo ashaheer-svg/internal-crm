@@ -19,16 +19,16 @@ export async function POST(request: Request) {
             where: {
                 sku: { in: uniqueSkus }
             },
-            select: {
-                sku: true
+            include: {
+                serviceDefinition: true
             }
         })
 
-        const foundSkus = new Set(existingProducts.map(p => p.sku))
+        const foundSkus = new Map(existingProducts.map(p => [p.sku, !!p.serviceDefinition]))
         const results = uniqueSkus.reduce((acc, sku) => {
-            acc[sku] = foundSkus.has(sku)
+            acc[sku] = foundSkus.has(sku) ? { valid: true, isService: foundSkus.get(sku) } : { valid: false, isService: false }
             return acc
-        }, {} as Record<string, boolean>)
+        }, {} as Record<string, { valid: boolean, isService: boolean }>)
 
         return NextResponse.json({
             results,

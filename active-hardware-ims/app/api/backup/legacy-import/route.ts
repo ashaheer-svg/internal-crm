@@ -101,7 +101,8 @@ export async function POST(req: Request) {
                         for (const item of orderData.items) {
                             // Find product
                             const product = await tx.product.findUnique({
-                                where: { sku: item.sku }
+                                where: { sku: item.sku },
+                                include: { serviceDefinition: true }
                             })
 
                             if (!product) {
@@ -116,12 +117,29 @@ export async function POST(req: Request) {
                                     quantity: item.quantity || 1,
                                     quantityFulfilled: item.quantity || 1,
                                     unitPrice: item.sellingPrice || 0,
+                                    unitCost: item.unitCost || 0, // Store cost for GP reporting
+                                    serviceStartDate: item.startDate ? new Date(item.startDate) : null,
+                                    serviceEndDate: item.endDate ? new Date(item.endDate) : null,
                                     createdAt: deliveryOrder.createdAt
                                 }
                             })
 
-                            // Create Sold Inventory Item
-                            if (item.serialNumber) {
+                            // Create Sold Inventory Item OR Service Contract
+                            if (product.serviceDefinition) {
+                                // Create Service Contract
+                                await tx.serviceContract.create({
+                                    data: {
+                                        productId: product.id,
+                                        customerId: customer.id,
+                                        startDate: item.startDate ? new Date(item.startDate) : deliveryOrder.createdAt,
+                                        endDate: item.endDate ? new Date(item.endDate) : null,
+                                        status: 'ACTIVE',
+                                        unitCost: item.unitCost || 0,
+                                        contractValue: item.sellingPrice || 0,
+                                        description: `Legacy Import. DO: ${deliveryOrder.orderNumber}`
+                                    }
+                                });
+                            } else if (item.serialNumber) {
                                 await tx.inventoryItem.create({
                                     data: {
                                         serialNumber: item.serialNumber,

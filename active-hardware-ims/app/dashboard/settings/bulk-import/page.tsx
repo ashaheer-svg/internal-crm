@@ -366,6 +366,7 @@ export default function BulkImportPage() {
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty</th>
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Low ($)</th>
                                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Reseller ($)</th>
+                                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -383,6 +384,15 @@ export default function BulkImportPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.warrantyMonths}m</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.lowResellerPrice}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.resellerPrice}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                            {item.serviceDefinition ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                    YES ({item.serviceDefinition.create?.type || 'LICENSE'})
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -466,6 +476,8 @@ export default function BulkImportPage() {
                             <li><code className="bg-gray-100 px-1 rounded">warrantyMonths</code> - Warranty period in months (number, default: 0)</li>
                             <li><code className="bg-gray-100 px-1 rounded">lowResellerPrice</code> - Low reseller price (number, default: 0)</li>
                             <li><code className="bg-gray-100 px-1 rounded">resellerPrice</code> - Standard reseller price (number, default: 0)</li>
+                            <li><code className="bg-gray-100 px-1 rounded">isService</code> - Mark as service (true/false)</li>
+                            <li><code className="bg-gray-100 px-1 rounded">serviceType</code> - LICENSE, AMC, RENTAL, or LABOR (default: LICENSE)</li>
                         </ul>
                     </div>
 
@@ -484,9 +496,9 @@ export default function BulkImportPage() {
                     <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Example CSV Format</h3>
                         <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto">
-                            {`sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
-SKU001,Product A,Brand X,Electronics,Model 1,High quality,10,12,45.00,50.00
-SKU002,Product B,Brand Y,Model 2,Durable,5,24,90.00,100.00`}
+                            {`sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice,isService,serviceType
+SKU001,Product A,Brand X,Electronics,Model 1,High quality,10,12,45.00,50.00,false,
+SKU002,AMC 1 Year,Brand Y,Services,Model 2,Durable,0,0,90.00,100.00,true,AMC`}
                         </pre>
                     </div>
                 </div>

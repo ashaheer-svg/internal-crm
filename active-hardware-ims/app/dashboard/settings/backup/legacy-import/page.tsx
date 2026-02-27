@@ -13,6 +13,8 @@ type LegacyItem = {
     unitCost: number
     sellingPrice: number
     quantity: number
+    startDate?: string
+    endDate?: string
 }
 
 type LegacyOrder = {
@@ -33,7 +35,7 @@ export default function LegacyDataEntryPage() {
     const [status, setStatus] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null)
     const [verifying, setVerifying] = useState(false)
     const [importing, setImporting] = useState(false)
-    const [validatedSkus, setValidatedSkus] = useState<Record<string, boolean>>({})
+    const [validatedSkus, setValidatedSkus] = useState<Record<string, { valid: boolean, isService: boolean }>>({})
     const [validatedNames, setValidatedNames] = useState<Record<string, boolean>>({})
     const [showBulkPaste, setShowBulkPaste] = useState(false)
     const [bulkPasteText, setBulkPasteText] = useState("")
@@ -58,7 +60,7 @@ export default function LegacyDataEntryPage() {
             orders.forEach(o => {
                 if (o.customerName) names.add(o.customerName)
                 if (o.endCustomerName) names.add(o.endCustomerName)
-                if (o.salesRepName) names.add(o.salesRepName) // Verify Sales Reps too?
+                if (o.salesRepName) names.add(o.salesRepName)
                 o.items.forEach(i => {
                     if (i.sku) skus.add(i.sku)
                 })
@@ -153,7 +155,7 @@ export default function LegacyDataEntryPage() {
 
         const newItems: LegacyItem[] = serials.map(sn => ({
             id: generateId(),
-            sku: "", // User will fill this in or paste logic will need to handle it
+            sku: "",
             serialNumber: sn,
             unitCost: 0,
             sellingPrice: 0,
@@ -471,7 +473,7 @@ export default function LegacyDataEntryPage() {
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {activeOrder.items.map((item, idx) => (
+                                        {activeOrder.items.map((item) => (
                                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-6 gap-3 p-4 bg-gray-50 rounded-lg relative group">
                                                 <div className="md:col-span-2 space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">SKU</label>
@@ -479,10 +481,10 @@ export default function LegacyDataEntryPage() {
                                                         type="text"
                                                         value={item.sku}
                                                         onChange={(e) => updateItem(activeOrder.id, item.id, { sku: e.target.value })}
-                                                        className={`w-full px-2 py-1.5 rounded border text-xs focus:ring-1 outline-none ${item.sku && validatedSkus[item.sku] === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
+                                                        className={`w-full px-2 py-1.5 rounded border text-xs focus:ring-1 outline-none ${item.sku && validatedSkus[item.sku]?.valid === false ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                                                         placeholder="Product SKU"
                                                     />
-                                                    {item.sku && validatedSkus[item.sku] === false && (
+                                                    {item.sku && validatedSkus[item.sku]?.valid === false && (
                                                         <p className="text-[10px] text-red-600">SKU not in system</p>
                                                     )}
                                                 </div>
@@ -518,6 +520,28 @@ export default function LegacyDataEntryPage() {
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
+                                                {item.sku && validatedSkus[item.sku]?.isService && (
+                                                    <div className="md:col-span-6 grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-gray-100">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Service Start Date</label>
+                                                            <input
+                                                                type="date"
+                                                                value={item.startDate || ""}
+                                                                onChange={(e) => updateItem(activeOrder.id, item.id, { startDate: e.target.value })}
+                                                                className="w-full px-2 py-1.5 rounded border border-purple-200 text-xs focus:ring-1 focus:ring-purple-500 outline-none bg-purple-50"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Service End Date</label>
+                                                            <input
+                                                                type="date"
+                                                                value={item.endDate || ""}
+                                                                onChange={(e) => updateItem(activeOrder.id, item.id, { endDate: e.target.value })}
+                                                                className="w-full px-2 py-1.5 rounded border border-purple-200 text-xs focus:ring-1 focus:ring-purple-500 outline-none bg-purple-50"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

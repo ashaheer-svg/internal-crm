@@ -38,7 +38,8 @@ export async function POST(request: Request) {
                 try {
                     // Find product by SKU
                     const product = await prisma.product.findUnique({
-                        where: { sku: item.sku }
+                        where: { sku: item.sku },
+                        include: { serviceDefinition: true }
                     });
 
                     if (!product) {
@@ -118,7 +119,15 @@ export async function POST(request: Request) {
         }
 
         // Pre-fetch all products and existing serials to optimize validation
-        const products = await prisma.product.findMany({ select: { id: true, sku: true, warrantyMonths: true, resellerPrice: true } });
+        const products = await prisma.product.findMany({
+            select: {
+                id: true,
+                sku: true,
+                warrantyMonths: true,
+                resellerPrice: true,
+                serviceDefinition: true
+            }
+        });
         const productMap = new Map(products.map(p => [p.sku, p]));
 
         // For serial check, we can't easily fetch all if dataset is huge, but for import batch it's okay to check locally or one update query? 
@@ -197,41 +206,64 @@ export async function POST(request: Request) {
                         warrantyExpiry: warrantyExpiry.toISOString().split('T')[0],
                         invoiceNumber: invoicenumber || '',
                         notes: notes || '',
-                        status: 'Valid'
+                        status: 'Valid',
+                        isService: !!product.serviceDefinition
                     });
                     results.success++;
                 } else {
                     // 4. Create Transaction (DB Write)
                     await prisma.$transaction(async (tx) => {
-                        // Create Item
-                        const newItem = await tx.inventoryItem.create({
-                            data: {
-                                serialNumber: serialnumber,
-                                productId: product.id,
-                                locationId: defaultLocation.id,
-                                status: 'SOLD',
-                                warrantyExpiry: warrantyExpiry,
-                                createdAt: saleDate, // Backdate creation to sold date
-                                unitCost: product.resellerPrice * 0.7 // Approximate cost if unknown
+                        if (product.serviceDefinition) {
+                            // Find or create customer for contract
+                            let customer = await tx.customer.findFirst({ where: { name: customername } });
+                            if (!customer) {
+                                customer = await tx.customer.create({ data: { name: customername, isCustomer: true } });
                             }
-                        });
 
-                        // Create History Log
-                        await tx.transactionLog.create({
-                            data: {
-                                type: 'IMPORT_HISTORY',
-                                referenceType: 'LEGACY_IMPORT',
-                                referenceId: newItem.id,
-                                productId: product.id,
-                                serialNumber: serialnumber,
-                                quantity: 1,
-                                fromLocation: defaultLocation.name,
-                                toLocation: 'CUSTOMER',
-                                performedBy: 'SYSTEM_IMPORT',
-                                notes: logNotes,
-                                createdAt: saleDate // Backdate log
-                            }
-                        });
+                            // Create Service Contract
+                            await tx.serviceContract.create({
+                                data: {
+                                    productId: product.id,
+                                    customerId: customer.id,
+                                    startDate: saleDate,
+                                    endDate: warrantyExpiry,
+                                    status: 'ACTIVE',
+                                    unitCost: product.resellerPrice * 0.7, // Approximate cost
+                                    contractValue: product.resellerPrice,
+                                    description: logNotes
+                                }
+                            });
+                        } else {
+                            // Create Physical Item
+                            const newItem = await tx.inventoryItem.create({
+                                data: {
+                                    serialNumber: serialnumber,
+                                    productId: product.id,
+                                    locationId: defaultLocation.id,
+                                    status: 'SOLD',
+                                    warrantyExpiry: warrantyExpiry,
+                                    createdAt: saleDate,
+                                    unitCost: product.resellerPrice * 0.7
+                                }
+                            });
+
+                            // Create History Log
+                            await tx.transactionLog.create({
+                                data: {
+                                    type: 'IMPORT_HISTORY',
+                                    referenceType: 'LEGACY_IMPORT',
+                                    referenceId: newItem.id,
+                                    productId: product.id,
+                                    serialNumber: serialnumber,
+                                    quantity: 1,
+                                    fromLocation: defaultLocation.name,
+                                    toLocation: 'CUSTOMER',
+                                    performedBy: 'SYSTEM_IMPORT',
+                                    notes: logNotes,
+                                    createdAt: saleDate
+                                }
+                            });
+                        }
                     });
                     results.success++;
                 }

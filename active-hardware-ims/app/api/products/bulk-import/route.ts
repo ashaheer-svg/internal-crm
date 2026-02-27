@@ -90,7 +90,12 @@ export async function POST(request: Request) {
                             minStock: item.minStock,
                             warrantyMonths: item.warrantyMonths,
                             lowResellerPrice: item.lowResellerPrice,
-                            resellerPrice: item.resellerPrice
+                            resellerPrice: item.resellerPrice,
+                            serviceDefinition: item.isService ? {
+                                create: {
+                                    type: item.serviceType || 'LICENSE'
+                                }
+                            } : undefined
                         }
                     })
                     successCount++
@@ -132,6 +137,7 @@ export async function POST(request: Request) {
 
         // Validate required columns
         const requiredColumns = ['sku', 'name', 'brand', 'model']
+        // isService and serviceType are optional but supported
         const firstRow = rows[0]
         const missingColumns = requiredColumns.filter(col => !(col in firstRow))
 
@@ -200,6 +206,8 @@ export async function POST(request: Request) {
                 const warrantyMonths = row.warrantymonths ? parseInt(row.warrantymonths) : 0
                 const lowResellerPrice = row.lowresellerprice ? parseFloat(row.lowresellerprice) : 0
                 const resellerPrice = row.resellerprice ? parseFloat(row.resellerprice) : 0
+                const isService = row.isservice ? (row.isservice.toLowerCase() === 'true' || row.isservice === '1' || row.isservice.toLowerCase() === 'yes') : false
+                const serviceType = row.servicetype ? row.servicetype.toUpperCase() : 'LICENSE'
 
                 // Validate numeric fields
                 if (isNaN(minStock) || minStock < 0) {
@@ -225,7 +233,12 @@ export async function POST(request: Request) {
                     minStock,
                     warrantyMonths,
                     lowResellerPrice,
-                    resellerPrice
+                    resellerPrice,
+                    serviceDefinition: isService ? {
+                        create: {
+                            type: serviceType as any // LICENSE, AMC, RENTAL, LABOR
+                        }
+                    } : undefined
                 };
 
                 if (isPreview) {
@@ -284,10 +297,10 @@ export async function GET() {
     try {
         await requirePermission('inventory:create')
 
-        const template = `sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice
-SAMPLE001,Sample Product 1,Brand A,Electronics,Model X,High quality product,10,12,45.00,50.00
-SAMPLE002,Sample Product 2,Brand B,General,Model Y,Durable hardware,5,24,90.00,100.00
-SAMPLE003,Sample Product 3,Brand C,General,Model Z,Premium item,15,36,180.00,200.00`
+        const template = `sku,name,brand,category,model,description,minStock,warrantyMonths,lowResellerPrice,resellerPrice,isService,serviceType
+SAMPLE001,Sample Product 1,Brand A,Electronics,Model X,High quality product,10,12,45.00,50.00,false,
+SAMPLE002,Sample Service,Brand B,Services,Model S,Annual Maintenance,0,0,900.00,1000.00,true,AMC
+SAMPLE003,Software License,Brand C,Licenses,Model L,Active 1 Year,0,0,180.00,200.00,true,LICENSE`
 
         return new NextResponse(template, {
             headers: {
