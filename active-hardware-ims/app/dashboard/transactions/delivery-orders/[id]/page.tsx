@@ -231,7 +231,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         let createBackorder = false
 
         if (newStatus === 'COMPLETED') {
-            const isPartial = order.items.some(i => i.reservedItems.length < i.quantity && !i.isBackorder)
+            const isPartial = order.items.some(i => !i.product.serviceDefinition && i.reservedItems.length < i.quantity && !i.isBackorder)
             if (isPartial) {
                 const proceed = confirm("This order is NOT fully allocated.\n\nClick OK to ship available items and CREATE A BACKORDER for the remaining items.\nClick Cancel to abort.")
                 if (!proceed) return
