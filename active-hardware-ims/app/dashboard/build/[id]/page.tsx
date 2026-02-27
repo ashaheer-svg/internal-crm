@@ -46,6 +46,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const [buildNotes, setBuildNotes] = useState("")
     const [verifyingSerials, setVerifyingSerials] = useState<Record<string, boolean>>({})
 
+    // Service Fulfillment Modal State
+    const [fulfillingItem, setFulfillingItem] = useState<any | null>(null)
+    const [serviceStartDate, setServiceStartDate] = useState("")
+    const [serviceEndDate, setServiceEndDate] = useState("")
+    const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
+
     useEffect(() => {
         fetchOrder()
     }, [id])
@@ -100,6 +106,48 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             await fetchOrder()
         } catch (e) {
             alert("Failed to reject item")
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
+    const handleOpenServiceFulfill = (item: any) => {
+        setFulfillingItem(item)
+        setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
+        setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
+
+        if (item.serviceEndDate) {
+            setServiceEndDate(item.serviceEndDate.split('T')[0])
+        } else {
+            const end = new Date()
+            end.setFullYear(end.getFullYear() + 1)
+            setServiceEndDate(end.toISOString().split('T')[0])
+        }
+    }
+
+    const saveServiceFulfillment = async () => {
+        if (!fulfillingItem || !serviceStartDate || !serviceEndDate) return
+        setActionLoading(true)
+        try {
+            const res = await fetch(`/api/delivery-orders/${id}/items/${fulfillingItem.id}/fulfill-service`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    startDate: serviceStartDate,
+                    endDate: serviceEndDate,
+                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined
+                })
+            })
+
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || "Failed to fulfill service")
+            }
+
+            setFulfillingItem(null)
+            await fetchOrder()
+        } catch (e: any) {
+            alert(e.message)
         } finally {
             setActionLoading(false)
         }
@@ -184,17 +232,29 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
                                     {item.product?.serviceDefinition ? (
                                         <div className="flex items-center gap-2 mt-2">
-                                            <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1
                                                 ${(item.serviceStartDate && item.serviceEndDate) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
                                             `}>
                                                 {item.serviceStartDate ? <CheckCircle className="w-3 h-3" /> : <Package className="w-3 h-3" />}
-                                                {item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending'}
+                                                {item.product.serviceDefinition?.type === 'RENTAL'
+                                                    ? (item.serviceStartDate ? 'Rental Ready' : 'Rental Fulfillment Pending')
+                                                    : (item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending')
+                                                }
                                             </span>
                                             {item.serviceStartDate && (
                                                 <span className="text-[10px] text-gray-500 font-mono">
                                                     Period: {formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}
                                                 </span>
                                             )}
+                                            <button
+                                                onClick={() => handleOpenServiceFulfill(item)}
+                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                                            >
+                                                {item.serviceStartDate
+                                                    ? (item.product.serviceDefinition?.type === 'RENTAL' ? 'Edit Rental' : 'Edit Service')
+                                                    : (item.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service')
+                                                }
+                                            </button>
                                         </div>
                                     ) : !item.reservedItems || item.reservedItems.length === 0 ? (
                                         <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded border border-amber-100 text-xs italic">
@@ -277,6 +337,81 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                 </div>
             </div>
+
+            {/* Service Fulfillment Modal */}
+            {fulfillingItem && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                            <div>
+                                <h3 className="font-bold text-gray-900">
+                                    {fulfillingItem.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service'}
+                                </h3>
+                                <p className="text-xs text-gray-500">{fulfillingItem.product.name}</p>
+                            </div>
+                            <button onClick={() => setFulfillingItem(null)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Service Start Date</label>
+                                <input
+                                    type="date"
+                                    value={serviceStartDate}
+                                    onChange={(e) => setServiceStartDate(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Service End Date</label>
+                                <input
+                                    type="date"
+                                    value={serviceEndDate}
+                                    onChange={(e) => setServiceEndDate(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                />
+                                <p className="mt-1 text-[10px] text-gray-500 italic">
+                                    {fulfillingItem.product.serviceDefinition?.type === 'RENTAL'
+                                        ? 'This period will be used to track the Rental agreement.'
+                                        : 'This period will be used to generate the Service Contract.'}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (Excl. Tax)</label>
+                                <div className="relative mt-1 rounded-md shadow-sm">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        value={serviceUnitCost}
+                                        onChange={(e) => setServiceUnitCost(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-10 p-2 border"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <p className="mt-1 text-[10px] text-gray-500 italic">Actual procurement cost for this service.</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => setFulfillingItem(null)}
+                                className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={saveServiceFulfillment}
+                                disabled={actionLoading || !serviceStartDate || !serviceEndDate}
+                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {actionLoading ? 'Saving...' : 'Mark as Procured'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

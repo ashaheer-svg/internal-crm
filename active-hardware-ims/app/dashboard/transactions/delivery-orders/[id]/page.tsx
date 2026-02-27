@@ -458,14 +458,20 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                                 ${(item.serviceStartDate && item.serviceEndDate) ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
                                                             `}>
                                                                 {item.serviceStartDate ? <CheckCircle className="w-3 h-3" /> : <Package className="w-3 h-3" />}
-                                                                {item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending'}
+                                                                {item.product.serviceDefinition?.type === 'RENTAL'
+                                                                    ? (item.serviceStartDate ? 'Rental Ready' : 'Rental Fulfillment Pending')
+                                                                    : (item.serviceStartDate ? 'Service Ready' : 'Service Fulfillment Pending')
+                                                                }
                                                             </span>
-                                                            {order.isActive && (order.status === 'READY_FOR_BUILD' || order.status === 'BUILDING') && (
+                                                            {order.isActive && (order.status === 'DRAFT' || order.status === 'CONFIRMED' || order.status === 'READY_FOR_BUILD' || order.status === 'BUILDING') && (
                                                                 <button
                                                                     onClick={() => handleOpenServiceFulfill(item)}
                                                                     className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
                                                                 >
-                                                                    {item.serviceStartDate ? 'Edit Service Period' : 'Fulfill Service'}
+                                                                    {item.serviceStartDate
+                                                                        ? (item.product.serviceDefinition?.type === 'RENTAL' ? 'Edit Rental Period' : 'Edit Service Period')
+                                                                        : (item.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service')
+                                                                    }
                                                                 </button>
                                                             )}
                                                         </>
@@ -525,7 +531,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                 {item.product?.serviceDefinition && item.serviceStartDate && (
                                                     <div className="mt-3 text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-100">
                                                         <div className="flex justify-between">
-                                                            <span>Service Period:</span>
+                                                            <span>{item.product.serviceDefinition?.type === 'RENTAL' ? 'Rental Period:' : 'Service Period:'}</span>
                                                             <span className="font-medium">{formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}</span>
                                                         </div>
                                                     </div>
@@ -754,7 +760,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
                         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
                             <div>
-                                <h3 className="font-bold text-gray-900">Fulfill Service</h3>
+                                <h3 className="font-bold text-gray-900">
+                                    {fulfillingItem.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service'}
+                                </h3>
                                 <p className="text-xs text-gray-500">{fulfillingItem.product.name}</p>
                             </div>
                             <button onClick={() => setFulfillingItem(null)}><XCircle className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
@@ -778,7 +786,11 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                     onChange={(e) => setServiceEndDate(e.target.value)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                                 />
-                                <p className="mt-1 text-[10px] text-gray-500 italic">This period will be used to generate the Service Contract.</p>
+                                <p className="mt-1 text-[10px] text-gray-500 italic">
+                                    {fulfillingItem.product.serviceDefinition?.type === 'RENTAL'
+                                        ? 'This period will be used to track the Rental agreement.'
+                                        : 'This period will be used to generate the Service Contract.'}
+                                </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (Excl. Tax)</label>
