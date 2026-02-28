@@ -15,6 +15,7 @@ export async function GET(request: Request) {
         const status = searchParams.get('status')
         const salesRepId = searchParams.get('salesRepId')
         const scope = searchParams.get('scope') || 'all'
+        const doStatus = searchParams.get('doStatus') || null
 
         // New filters
         const hideWon = searchParams.get('hideWon') === 'true'
@@ -91,6 +92,17 @@ export async function GET(request: Request) {
                     }
                 }
             ]
+        }
+
+        // Filter by a specific DO status — only show projects with a quote whose DO is at this stage
+        if (doStatus) {
+            where.quotes = {
+                some: {
+                    deliveryOrder: {
+                        status: doStatus
+                    }
+                }
+            }
         }
 
         const [projects, total] = await prisma.$transaction([

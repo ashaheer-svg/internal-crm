@@ -44,13 +44,15 @@ export default function ListView({
     onCanViewAllLoaded,
     hideWon = false,
     hideApproved = false,
-    hideShipped = false
+    hideShipped = false,
+    doStatus = null
 }: {
     scope?: 'all' | 'mine'
     onCanViewAllLoaded?: (val: boolean) => void
     hideWon?: boolean
     hideApproved?: boolean
     hideShipped?: boolean
+    doStatus?: string | null
 }) {
     const router = useRouter()
     const [projects, setProjects] = useState<Project[]>([])
@@ -82,7 +84,7 @@ export default function ListView({
 
     useEffect(() => {
         fetchProjects(1)
-    }, [debouncedSearch, status, salesRepId, scope, hideWon, hideApproved, hideShipped])
+    }, [debouncedSearch, status, salesRepId, scope, hideWon, hideApproved, hideShipped, doStatus])
 
     async function fetchProjects(page: number) {
         setLoading(true)
@@ -96,7 +98,8 @@ export default function ListView({
                 scope: scope,
                 hideWon: hideWon.toString(),
                 hideApproved: hideApproved.toString(),
-                hideShipped: hideShipped.toString()
+                hideShipped: hideShipped.toString(),
+                ...(doStatus ? { doStatus } : {})
             })
 
             const res = await fetch(`/api/crm/projects?${params}`)
