@@ -109,7 +109,7 @@ export async function GET(request: Request) {
                             id: true,
                             status: true,
                             deliveryOrder: {
-                                select: { status: true }
+                                select: { status: true, orderNumber: true }
                             }
                         }
                     }

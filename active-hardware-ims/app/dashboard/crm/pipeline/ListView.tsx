@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronLeft, ChevronRight, Filter, CheckCircle2 } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Filter, CheckCircle2, Truck, Hammer, Package } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 
 interface Project {
@@ -20,7 +20,10 @@ interface Project {
     quotes?: {
         id: string;
         status: string;
-        deliveryOrder?: { status: string } | null
+        deliveryOrder?: {
+            orderNumber?: string;
+            status: string;
+        } | null
     }[]
 }
 
@@ -227,26 +230,70 @@ export default function ListView({
                                     <td className="px-3 py-2 whitespace-nowrap">
                                         {(() => {
                                             const quotes = project.quotes || []
-                                            const isShipped = quotes.some(q => q.deliveryOrder?.status === 'COMPLETED')
-                                            const isApproved = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
 
-                                            let label = project.stage?.name || 'Unknown'
-                                            let color = project.stage?.color || '#1f2937'
-
-                                            if (isShipped) {
-                                                label = 'SHIPPED'
-                                                color = '#10b981'
-                                            } else if (isApproved) {
-                                                label = 'APPROVED'
-                                                color = '#6366f1'
+                                            // Find the delivery order with the most advanced status
+                                            const doStatusPriority: Record<string, number> = {
+                                                COMPLETED: 6,
+                                                BUILDING: 5,
+                                                READY_FOR_BUILD: 4,
+                                                CONFIRMED: 3,
+                                                DRAFT: 2,
+                                                CANCELLED: 0
                                             }
 
+                                            const allDOs = quotes
+                                                .map(q => q.deliveryOrder)
+                                                .filter(Boolean) as { orderNumber?: string; status: string }[]
+
+                                            const activeDO = allDOs
+                                                .filter(d => d.status !== 'CANCELLED')
+                                                .sort((a, b) => (doStatusPriority[b.status] ?? 0) - (doStatusPriority[a.status] ?? 0))[0]
+
+                                            const hasAccepted = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
+
+                                            if (activeDO) {
+                                                // Show DO progress
+                                                const s = activeDO.status
+                                                const cfg: Record<string, { label: string; icon: any; cls: string }> = {
+                                                    DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-600' },
+                                                    CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-100 text-blue-700' },
+                                                    READY_FOR_BUILD: { label: 'Ready to Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700' },
+                                                    BUILDING: { label: 'Building', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 animate-pulse' },
+                                                    COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-green-100 text-green-700' },
+                                                    CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 line-through' },
+                                                }
+                                                const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
+
+                                                return (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cls}`}>
+                                                            <Icon className="w-2.5 h-2.5 flex-shrink-0" />
+                                                            {label}
+                                                        </span>
+                                                        {activeDO.orderNumber && (
+                                                            <span className="text-[9px] text-gray-400 pl-1">{activeDO.orderNumber}</span>
+                                                        )}
+                                                    </div>
+                                                )
+                                            }
+
+                                            if (hasAccepted) {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700">
+                                                        <CheckCircle2 className="w-2.5 h-2.5" />
+                                                        Approved
+                                                    </span>
+                                                )
+                                            }
+
+                                            // Fall back to pipeline stage
+                                            const color = project.stage?.color || '#1f2937'
                                             return (
                                                 <span
                                                     className="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full uppercase tracking-wider"
-                                                    style={{ backgroundColor: `${color}15`, color: color }}
+                                                    style={{ backgroundColor: `${color}15`, color }}
                                                 >
-                                                    {label}
+                                                    {project.stage?.name || 'Unknown'}
                                                 </span>
                                             )
                                         })()}
