@@ -10,7 +10,6 @@ import {
     MapPin,
     ClipboardList,
     Settings,
-    LogOut,
     ScanBarcode,
     Receipt,
     ArrowRightLeft,
@@ -74,9 +73,7 @@ type User = {
 
 export function Sidebar() {
     const pathname = usePathname()
-    const router = useRouter()
     const [user, setUser] = useState<User | null>(null)
-    const [loggingOut, setLoggingOut] = useState(false)
     const [collapsed, setCollapsed] = useState(false)
     const [unreadCount, setUnreadCount] = useState(0)
     const [expandedMenus, setExpandedMenus] = useState<string[]>([])
@@ -127,18 +124,6 @@ export function Sidebar() {
             }
         } catch (error) {
             console.error('Failed to fetch user:', error)
-        }
-    }
-
-    async function handleLogout() {
-        setLoggingOut(true)
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' })
-            router.push('/login')
-        } catch (error) {
-            console.error('Logout failed:', error)
-        } finally {
-            setLoggingOut(false)
         }
     }
 
@@ -310,33 +295,6 @@ export function Sidebar() {
                 </nav>
             </div>
 
-            {/* User Info & Logout */}
-            <div className="border-t border-gray-800">
-                {user && !collapsed && (
-                    <div className="px-4 py-3 border-b border-gray-800">
-                        <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                        <p className="text-xs text-blue-400 mt-1">{user.role}</p>
-                    </div>
-                )}
-                <div className="p-4">
-                    <button
-                        onClick={handleLogout}
-                        disabled={loggingOut}
-                        className={cn(
-                            "group flex w-full items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md hover:bg-gray-800 disabled:opacity-50",
-                            collapsed && "justify-center"
-                        )}
-                        title={collapsed ? "Sign Out" : undefined}
-                    >
-                        <LogOut className={cn(
-                            "h-5 w-5 text-gray-400 group-hover:text-white",
-                            !collapsed && "mr-3"
-                        )} />
-                        {!collapsed && (loggingOut ? 'Signing Out...' : 'Sign Out')}
-                    </button>
-                </div>
-            </div>
         </div>
     )
 }
