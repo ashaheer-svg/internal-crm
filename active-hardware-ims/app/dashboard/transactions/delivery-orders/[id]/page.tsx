@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2, Hammer, RotateCcw } from "lucide-react"
 import { Currency } from "@/components/Currency"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatStatus } from "@/lib/utils"
 
 // Types
 type InventoryItem = {
@@ -349,7 +349,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 ${order.status === 'COMPLETED' ? 'bg-green-100 border-green-200 text-green-700' : ''}
                                 ${order.status === 'CANCELLED' ? 'bg-red-100 border-red-200 text-red-700' : ''}
                             `}>
-                                {order.status.replace(/_/g, ' ')}
+                                {formatStatus(order.status)}
                             </span>
                         </h1>
                         <p className="text-sm text-gray-500">Created on {formatDate(order.createdAt)} for {order.customerName}</p>

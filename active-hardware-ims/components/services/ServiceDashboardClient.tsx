@@ -51,12 +51,33 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                 body: JSON.stringify({ status: 'COMPLETED' })
             })
 
-            if (!res.ok) throw new Error("Failed to update status")
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || "Failed to update status")
 
             router.refresh()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to complete contract", error)
-            alert("Failed to mark as completed")
+            alert(error.message || "Failed to mark as completed")
+        }
+    }
+
+    const handleReturnRental = async (assetId: string, assetName: string) => {
+        if (!confirm(`Return "${assetName}" to inventory? This will mark the rental contract as COMPLETED.`)) return
+
+        try {
+            const res = await fetch(`/api/rentals/${assetId}/return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: 'Returned via Service Dashboard' })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || "Failed to process return")
+
+            router.refresh()
+        } catch (error: any) {
+            console.error("Rental return failed", error)
+            alert(error.message || "Failed to return asset")
         }
     }
 
@@ -176,7 +197,7 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                                     <tr key={contract.id}>
                                         <td className="px-3 py-2 text-sm text-gray-900 font-medium">{contract.customer?.name || contract.customerName || 'Unknown Customer'}</td>
                                         <td className="px-3 py-2 text-sm text-gray-500">
-                                            {contract.product?.name || 'Unknown Product'}
+                                            {contract.product?.name || <span className="italic text-gray-400">[Discontinued Product]</span>}
                                             <div className="text-xs text-gray-400">{contract.product?.sku || '-'}</div>
                                         </td>
                                         <td className="px-3 py-2 text-sm text-gray-500">
@@ -250,13 +271,23 @@ export default function ServiceDashboardClient({ expiring, active, rentals }: Se
                                             </td>
                                             <td className="px-3 py-2 text-sm">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${asset.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                                                    asset.status === 'RENTED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                        asset.status === 'RENTED' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {asset.status}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2 text-sm text-gray-500">
                                                 {asset.currentContract?.customer?.name || '-'}
+                                            </td>
+                                            <td className="px-3 py-2 text-sm">
+                                                {asset.status === 'RENTED' && (
+                                                    <button
+                                                        onClick={() => handleReturnRental(asset.id, asset.name)}
+                                                        className="inline-flex items-center px-2 py-1 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 text-xs font-medium transition-colors"
+                                                    >
+                                                        ↩ Return
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

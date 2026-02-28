@@ -127,6 +127,16 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
         // 1. Status Change Logic
         if (status && status !== order.status) {
+            // Pre-flight validation when moving past DRAFT
+            if (status === 'CONFIRMED' || status === 'READY_FOR_BUILD') {
+                if (!order.customerId) {
+                    return NextResponse.json({ error: 'Cannot confirm: Order must have a customer assigned.' }, { status: 400 })
+                }
+                if (order.items.length === 0) {
+                    return NextResponse.json({ error: 'Cannot confirm: Order must have at least one item.' }, { status: 400 })
+                }
+            }
+
             // If cancelling, release all stock
             if (status === 'CANCELLED') {
                 await prisma.$transaction(async (tx) => {
@@ -409,23 +419,37 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     if (order.customerId) {
                         const customer = await prisma.customer.findUnique({ where: { id: order.customerId } })
                         if (customer?.phone) {
-                            sendDeliveryShippedAlert(customer.phone, order.orderNumber).catch(console.error)
+                            sendDeliveryShippedAlert(customer.phone, order.orderNumber).catch(async (err) => {
+                                console.error('[WhatsApp] Shipment alert failed:', err)
+                                // Log failure so it's traceable in Audit Logs
+                                const { logCreate: logError } = await import('@/lib/audit')
+                                await logError('DELIVERY_ORDER', params.id, user.id, user.name, {
+                                    event: 'WHATSAPP_ALERT_FAILED',
+                                    alertType: 'SHIPMENT',
+                                    error: err?.message || String(err)
+                                }).catch(console.error)
+                            })
                         }
                     }
 
-                    // 2. Low Stock Alerts
-                    const finalItems = await prisma.deliveryOrderItem.findMany({
-                        where: { deliveryOrderId: params.id }
+                    // 2. Low Stock Alerts — batch all products in one query
+                    const doItems = await prisma.deliveryOrderItem.findMany({
+                        where: { deliveryOrderId: params.id },
+                        select: { productId: true }
                     })
+                    const productIds = doItems.map(i => i.productId).filter(Boolean) as string[]
 
-                    for (const item of finalItems) {
-                        const product = await prisma.product.findUnique({ where: { id: item.productId } })
-                        if (product && product.minStock && product.minStock > 0) {
-                            const availableCount = await prisma.inventoryItem.count({
-                                where: { productId: product.id, status: 'AVAILABLE' }
-                            })
-                            if (availableCount < product.minStock) {
-                                sendLowStockAlert(product.name, availableCount, product.minStock).catch(console.error)
+                    if (productIds.length > 0) {
+                        const products = await prisma.product.findMany({
+                            where: { id: { in: productIds }, minStock: { gt: 0 } },
+                            select: { id: true, name: true, minStock: true, _count: { select: { inventory: { where: { status: 'AVAILABLE' } } } } }
+                        })
+
+                        for (const product of products) {
+                            if (product._count.inventory < (product.minStock ?? 0)) {
+                                sendLowStockAlert(product.name, product._count.inventory, product.minStock!).catch(async (err) => {
+                                    console.error('[WhatsApp] Low-stock alert failed:', err)
+                                })
                             }
                         }
                     }

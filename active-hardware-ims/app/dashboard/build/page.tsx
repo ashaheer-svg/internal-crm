@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Package, Search, ChevronRight, Clock, Hammer } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { Package, Search, ChevronRight, Clock, Hammer, Wrench } from "lucide-react"
+import { formatDate, formatStatus } from "@/lib/utils"
 
 interface BuildQueueOrder {
     id: string
@@ -14,20 +14,25 @@ interface BuildQueueOrder {
     _count: {
         items: number
     }
+    // Indicates if any item is a service/rental
+    hasServiceItem?: boolean
 }
+
+type TabFilter = 'ALL' | 'HARDWARE' | 'SERVICE'
 
 export default function BuildListingPage() {
     const [orders, setOrders] = useState<BuildQueueOrder[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+    const [activeTab, setActiveTab] = useState<TabFilter>('ALL')
 
     useEffect(() => {
         fetchOrders()
     }, [])
 
     const fetchOrders = async () => {
+        setLoading(true)
         try {
-            // Fetch both READY_FOR_BUILD and BUILDING orders
             const [readyRes, buildingRes] = await Promise.all([
                 fetch('/api/delivery-orders?status=READY_FOR_BUILD'),
                 fetch('/api/delivery-orders?status=BUILDING')
@@ -46,10 +51,25 @@ export default function BuildListingPage() {
         }
     }
 
-    const filteredOrders = orders.filter(order =>
-        order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = (
+            order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        if (!matchesSearch) return false
+        if (activeTab === 'SERVICE') return !!order.hasServiceItem
+        if (activeTab === 'HARDWARE') return !order.hasServiceItem
+        return true
+    })
+
+    const hardwareCount = orders.filter(o => !o.hasServiceItem).length
+    const serviceCount = orders.filter(o => !!o.hasServiceItem).length
+
+    const tabs: { key: TabFilter; label: string; count: number }[] = [
+        { key: 'ALL', label: 'All', count: orders.length },
+        { key: 'HARDWARE', label: 'Hardware', count: hardwareCount },
+        { key: 'SERVICE', label: 'Service / Rental', count: serviceCount },
+    ]
 
     return (
         <div className="space-y-6">
@@ -59,6 +79,26 @@ export default function BuildListingPage() {
                     Technical Build Queue
                 </h1>
                 <p className="text-sm text-gray-500">{filteredOrders.length} orders waiting for technical verification</p>
+            </div>
+
+            {/* Tab Filter */}
+            <div className="flex border-b border-gray-200">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === tab.key
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                    >
+                        {tab.label}
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {tab.count}
+                        </span>
+                    </button>
+                ))}
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex gap-4">
@@ -86,7 +126,11 @@ export default function BuildListingPage() {
                 <div className="bg-white rounded-lg border border-dashed border-gray-300 py-12 text-center">
                     <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900">Queue is empty</h3>
-                    <p className="text-gray-500">There are no orders currently waiting for technical build.</p>
+                    <p className="text-gray-500">
+                        {activeTab === 'ALL'
+                            ? 'There are no orders currently waiting for technical build.'
+                            : `No ${activeTab.toLowerCase()} orders in queue.`}
+                    </p>
                 </div>
             ) : (
                 <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
@@ -96,8 +140,13 @@ export default function BuildListingPage() {
                                 <Link href={`/dashboard/build/${order.id}`} className="block p-4 sm:px-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-full ${order.status === 'BUILDING' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                <Hammer className="w-5 h-5" />
+                                            <div className={`p-2 rounded-full ${order.hasServiceItem
+                                                    ? 'bg-purple-100 text-purple-600'
+                                                    : order.status === 'BUILDING'
+                                                        ? 'bg-blue-100 text-blue-600'
+                                                        : 'bg-amber-100 text-amber-600'
+                                                }`}>
+                                                {order.hasServiceItem ? <Wrench className="w-5 h-5" /> : <Hammer className="w-5 h-5" />}
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-bold text-gray-900">{order.orderNumber}</h3>
@@ -115,10 +164,15 @@ export default function BuildListingPage() {
                                                     {order._count.items} Products
                                                 </div>
                                             </div>
+                                            {order.hasServiceItem && (
+                                                <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border bg-purple-50 border-purple-200 text-purple-700">
+                                                    Service
+                                                </span>
+                                            )}
                                             <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border
                                                 ${order.status === 'BUILDING' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-amber-50 border-amber-200 text-amber-700'}
                                             `}>
-                                                {order.status.replace(/_/g, ' ')}
+                                                {formatStatus(order.status)}
                                             </span>
                                             <ChevronRight className="w-5 h-5 text-gray-400" />
                                         </div>

@@ -31,3 +31,15 @@ export function formatBytes(bytes: number, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
+
+/**
+ * Converts a snake_case or UPPER_CASE status string to a human-readable
+ * title-case format. e.g., "READY_FOR_BUILD" -> "Ready For Build"
+ */
+export function formatStatus(status: string | null | undefined): string {
+    if (!status) return 'N/A'
+    return status
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+}

@@ -94,7 +94,7 @@ export async function activateServiceContract(data: {
 
     if (!def) throw new Error("Product is not a service");
 
-    const startDate = data.startDate || new Date();
+    const startDate = data.startDate ? new Date(data.startDate) : new Date();
     const durationValue = data.customDurationValue || def.durationValue;
     const durationUnit = data.customDurationUnit || def.durationUnit;
 
@@ -130,6 +130,7 @@ export async function getExpiringContracts(daysThreshold: number = 30) {
     return db.serviceContract.findMany({
         where: {
             status: ContractStatus.ACTIVE,
+            isDeleted: false,
             endDate: {
                 lte: thresholdDate,
                 gte: new Date() // Not already expired
@@ -158,7 +159,8 @@ export async function getActiveContracts() {
         },
         orderBy: {
             createdAt: 'desc'
-        }
+        },
+        take: 200 // Safety limit — add server-side pagination if list exceeds this
     });
 }
 

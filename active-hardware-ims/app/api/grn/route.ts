@@ -152,6 +152,46 @@ export async function POST(request: Request) {
             itemCount: items.length
         })
 
+        // Check for open backorders on received products and notify
+        try {
+            const receivedProductIds = Array.from(new Set(items.map((item: any) => item.productId))) as string[]
+            const openBackorders = await prisma.backorderItem.findMany({
+                where: {
+                    productId: { in: receivedProductIds },
+                    status: { in: ['PENDING', 'PARTIAL'] }
+                },
+                include: { product: { select: { name: true } } }
+            })
+
+            if (openBackorders.length > 0) {
+                const productNames = [...new Set(openBackorders.map(b => b.product.name))].join(', ')
+                // Find admins/managers to notify (users without a role filter — broadcast to system)
+                const admins = await prisma.user.findMany({
+                    where: { isActive: true },
+                    select: { id: true },
+                    take: 10
+                })
+
+                if (admins.length > 0) {
+                    await prisma.message.create({
+                        data: {
+                            subject: `Stock received for backorder items — GRN ${grnNumber}`,
+                            content: `Stock has been received for: ${productNames}.\n\nThere are ${openBackorders.length} open backorder(s) for these products. Please allocate stock to fulfill pending customer orders.`,
+                            priority: 'HIGH',
+                            category: 'STOCK',
+                            senderId: user.id,
+                            receipts: {
+                                create: admins.map(admin => ({ userId: admin.id }))
+                            }
+                        }
+                    })
+                }
+            }
+        } catch (notificationError) {
+            // Non-critical — do not fail the GRN if notification fails
+            console.error('[GRN] Failed to send backorder notification:', notificationError)
+        }
+
         return NextResponse.json(grn)
     } catch (error: any) {
         console.error(error)

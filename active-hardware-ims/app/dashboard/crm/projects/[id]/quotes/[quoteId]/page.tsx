@@ -120,6 +120,15 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                                     }`}>
                                     {quote.status}
                                 </span>
+                                {quote.quoteType && (
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${quote.quoteType === 'SERVICE' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                                            quote.quoteType === 'RENTAL' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                                quote.quoteType === 'MIXED' ? 'bg-teal-50 border-teal-200 text-teal-700' :
+                                                    'bg-gray-50 border-gray-200 text-gray-600'
+                                        }`}>
+                                        {quote.quoteType}
+                                    </span>
+                                )}
                             </div>
                             <p className="text-sm text-gray-500 mt-1">Version {quote.version} • Created on {format(new Date(quote.createdAt), 'PPP')}</p>
                         </div>

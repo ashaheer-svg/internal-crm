@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect } from "react"
+import { use, useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle, AlertTriangle, Hammer, X, Save, AlertCircle, Package } from "lucide-react"
@@ -45,6 +45,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const [actionLoading, setActionLoading] = useState(false)
     const [buildNotes, setBuildNotes] = useState("")
     const [verifyingSerials, setVerifyingSerials] = useState<Record<string, boolean>>({})
+    const hasTransitionedToBuilding = useRef(false)
 
     // Service Fulfillment Modal State
     const [fulfillingItem, setFulfillingItem] = useState<any | null>(null)
@@ -64,8 +65,9 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             setOrder(data)
             setBuildNotes(data.buildNotes || "")
 
-            // Mark as BUILDING if currently READY_FOR_BUILD
-            if (data.status === 'READY_FOR_BUILD') {
+            // Mark as BUILDING if currently READY_FOR_BUILD — only fires once per mount
+            if (data.status === 'READY_FOR_BUILD' && !hasTransitionedToBuilding.current) {
+                hasTransitionedToBuilding.current = true
                 updateStatus('BUILDING')
             }
         } catch (e) {

@@ -61,26 +61,31 @@ type DashboardStats = {
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [loading, setLoading] = useState(true)
+    const [statsError, setStatsError] = useState<string | null>(null)
 
     useEffect(() => {
         fetchStats()
     }, [])
 
     async function fetchStats() {
+        setStatsError(null)
         try {
             const res = await fetch('/api/dashboard/stats')
-
-            if (!res.ok) throw new Error('Failed to fetch stats')
-
             const data = await res.json()
-            // Basic validation to ensure data has required structure
+
+            if (!res.ok || data?.error) {
+                setStatsError(data?.message || 'Failed to load dashboard data. The database may be unavailable.')
+                return
+            }
+
             if (data && typeof data.totalProducts === 'number') {
                 setStats(data)
             } else {
-                console.error('Invalid stats data:', data)
+                setStatsError('Invalid data received from server.')
             }
         } catch (error) {
             console.error('Failed to fetch stats:', error)
+            setStatsError('A network error occurred. Please check your connection.')
         } finally {
             setLoading(false)
         }
@@ -96,8 +101,9 @@ export default function DashboardPage() {
 
     if (!stats) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <p className="text-gray-500">Failed to load dashboard data</p>
+            <div className="flex flex-col justify-center items-center h-64 gap-4">
+                <p className="text-red-600 font-medium">{statsError || 'Failed to load dashboard data'}</p>
+                <button onClick={fetchStats} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">Retry</button>
             </div>
         )
     }
@@ -121,7 +127,7 @@ export default function DashboardPage() {
         },
         {
             name: 'Stock Value',
-            value: `Rs. ${stats.totalStockValue.toLocaleString()}`,
+            value: '',  // Rendered by <Currency> component below
             icon: DollarSign,
             color: 'text-purple-600',
             bg: 'bg-purple-100',

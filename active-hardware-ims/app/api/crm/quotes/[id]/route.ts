@@ -17,7 +17,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                 },
                 items: {
                     include: {
-                        product: true
+                        product: {
+                            include: { serviceDefinition: true }
+                        }
                     }
                 },
                 createdBy: true
@@ -28,7 +30,23 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
         }
 
-        return NextResponse.json(quote)
+        // Compute quoteType from items - no schema change needed
+        const itemTypes = new Set(
+            quote.items
+                .map(i => (i.product as any)?.serviceDefinition?.type)
+                .filter(Boolean)
+        )
+        const hasHardware = quote.items.some(i => !(i.product as any)?.serviceDefinition)
+        const hasService = itemTypes.has('AMC') || itemTypes.has('WARRANTY') || itemTypes.has('SUPPORT')
+        const hasRental = itemTypes.has('RENTAL')
+
+        let quoteType = 'HARDWARE'
+        const typedItems = [hasHardware, hasService, hasRental].filter(Boolean).length
+        if (typedItems > 1) quoteType = 'MIXED'
+        else if (hasRental) quoteType = 'RENTAL'
+        else if (hasService) quoteType = 'SERVICE'
+
+        return NextResponse.json({ ...quote, quoteType })
 
     } catch (error: any) {
         return NextResponse.json(
