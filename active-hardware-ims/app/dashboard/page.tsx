@@ -17,7 +17,10 @@ import {
     ChevronRight,
     MessageSquare,
     CheckCircle2,
-    User
+    User,
+    BarChart2,
+    ShieldCheck,
+    Layers
 } from "lucide-react"
 import { formatDate, formatDateTime, cn } from "@/lib/utils"
 
@@ -58,13 +61,116 @@ type DashboardStats = {
     }>
 }
 
+// ── Permission helpers ────────────────────────────────────────────────────────
+
+function hasPermission(permissions: string[], required: string | null): boolean {
+    if (!required) return true // no restriction = always show
+    if (permissions.includes('all:manage')) return true
+    return permissions.includes(required)
+}
+
+// ── Card definitions with required permission ─────────────────────────────────
+
+function buildStatCards(stats: DashboardStats) {
+    return [
+        {
+            name: 'Total Products',
+            value: stats.totalProducts.toString(),
+            icon: Package,
+            color: 'text-blue-600',
+            bg: 'bg-blue-100',
+            href: '/dashboard/inventory',
+            permission: 'inventory:read'
+        },
+        {
+            name: 'Available Stock',
+            value: stats.availableStock.toString(),
+            icon: TrendingUp,
+            color: 'text-green-600',
+            bg: 'bg-green-100',
+            href: '/dashboard/inventory',
+            permission: 'inventory:read'
+        },
+        {
+            name: 'Stock Value',
+            value: '',
+            icon: DollarSign,
+            color: 'text-purple-600',
+            bg: 'bg-purple-100',
+            href: '/dashboard/reports',
+            permission: 'reports:inventory-valuation:read'
+        },
+        {
+            name: 'Pending RMAs',
+            value: stats.pendingWarrantyClaims.toString(),
+            icon: Activity,
+            color: 'text-orange-600',
+            bg: 'bg-orange-100',
+            href: '/dashboard/warranty',
+            permission: 'warranty_rma:read'
+        },
+        {
+            name: 'Low Stock Items',
+            value: stats.lowStockCount.toString(),
+            icon: AlertTriangle,
+            color: 'text-red-600',
+            bg: 'bg-red-100',
+            href: '#low-stock',
+            permission: 'inventory:read'
+        },
+        {
+            name: 'Sold Items',
+            value: stats.soldStock.toString(),
+            icon: FileText,
+            color: 'text-indigo-600',
+            bg: 'bg-indigo-100',
+            href: '/dashboard/transactions',
+            permission: 'delivery_orders:read'
+        },
+        {
+            name: 'Total Customers',
+            value: stats.totalCustomers.toString(),
+            icon: Users,
+            color: 'text-pink-600',
+            bg: 'bg-pink-100',
+            href: '/dashboard/customers',
+            permission: 'customers:read'
+        },
+        {
+            name: 'Delivery Orders',
+            value: stats.totalDeliveryOrders.toString(),
+            icon: Truck,
+            color: 'text-teal-600',
+            bg: 'bg-teal-100',
+            href: '/dashboard/transactions',
+            permission: 'delivery_orders:read'
+        },
+    ]
+}
+
+// Quick actions with required permissions
+const QUICK_ACTIONS = [
+    { label: 'Receive Stock', href: '/dashboard/stock-movements/grn/new', permission: 'inventory:create' },
+    { label: 'Create Invoice', href: '/dashboard/transactions/invoices/new', permission: 'invoices:create' },
+    { label: 'New RMA Claim', href: '/dashboard/warranty/new', permission: 'warranty_rma:create' },
+    { label: 'View Inventory', href: '/dashboard/inventory', permission: 'inventory:read' },
+    { label: 'New CRM Project', href: '/dashboard/crm/pipeline', permission: 'projects:create' },
+    { label: 'New Delivery Order', href: '/dashboard/transactions/delivery-orders/new', permission: 'delivery_orders:create' },
+    { label: 'View Reports', href: '/dashboard/reports', permission: 'reports:read' },
+    { label: 'New Purchase Order', href: '/dashboard/transactions/purchase-orders/new', permission: 'purchase_orders:create' },
+]
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [permissions, setPermissions] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
     const [statsError, setStatsError] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchStats()
+        // Fetch stats and permissions in parallel
+        Promise.all([fetchStats(), fetchPermissions()])
     }, [])
 
     async function fetchStats() {
@@ -74,7 +180,7 @@ export default function DashboardPage() {
             const data = await res.json()
 
             if (!res.ok || data?.error) {
-                setStatsError(data?.message || 'Failed to load dashboard data. The database may be unavailable.')
+                setStatsError(data?.message || 'Failed to load dashboard data.')
                 return
             }
 
@@ -90,6 +196,20 @@ export default function DashboardPage() {
             setLoading(false)
         }
     }
+
+    async function fetchPermissions() {
+        try {
+            const res = await fetch('/api/auth/me')
+            if (res.ok) {
+                const data = await res.json()
+                setPermissions(data.permissions ?? [])
+            }
+        } catch {
+            // If permissions can't be loaded, show no restricted cards
+        }
+    }
+
+    const can = (perm: string | null) => hasPermission(permissions, perm)
 
     if (loading) {
         return (
@@ -108,72 +228,12 @@ export default function DashboardPage() {
         )
     }
 
-    const statCards = [
-        {
-            name: 'Total Products',
-            value: stats.totalProducts.toString(),
-            icon: Package,
-            color: 'text-blue-600',
-            bg: 'bg-blue-100',
-            href: '/dashboard/inventory'
-        },
-        {
-            name: 'Available Stock',
-            value: stats.availableStock.toString(),
-            icon: TrendingUp,
-            color: 'text-green-600',
-            bg: 'bg-green-100',
-            href: '/dashboard/inventory'
-        },
-        {
-            name: 'Stock Value',
-            value: '',  // Rendered by <Currency> component below
-            icon: DollarSign,
-            color: 'text-purple-600',
-            bg: 'bg-purple-100',
-            href: '/dashboard/reports'
-        },
-        {
-            name: 'Pending RMAs',
-            value: stats.pendingWarrantyClaims.toString(),
-            icon: Activity,
-            color: 'text-orange-600',
-            bg: 'bg-orange-100',
-            href: '/dashboard/warranty'
-        },
-        {
-            name: 'Low Stock Items',
-            value: stats.lowStockCount.toString(),
-            icon: AlertTriangle,
-            color: 'text-red-600',
-            bg: 'bg-red-100',
-            href: '#low-stock'
-        },
-        {
-            name: 'Sold Items',
-            value: stats.soldStock.toString(),
-            icon: FileText,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-100',
-            href: '/dashboard/transactions'
-        },
-        {
-            name: 'Total Customers',
-            value: stats.totalCustomers.toString(),
-            icon: Users,
-            color: 'text-pink-600',
-            bg: 'bg-pink-100',
-            href: '/dashboard/customers'
-        },
-        {
-            name: 'Delivery Orders',
-            value: stats.totalDeliveryOrders.toString(),
-            icon: Truck,
-            color: 'text-teal-600',
-            bg: 'bg-teal-100',
-            href: '/dashboard/transactions'
-        },
-    ]
+    const visibleStatCards = buildStatCards(stats).filter(c => can(c.permission))
+    const visibleQuickActions = QUICK_ACTIONS.filter(a => can(a.permission))
+
+    // Panel visibility
+    const showInventoryPanels = can('inventory:read')
+    const showActivityPanel = can('delivery_orders:read') || can('inventory:read')
 
     return (
         <div className="space-y-6">
@@ -182,16 +242,18 @@ export default function DashboardPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard Overview</h1>
                     <p className="mt-1 text-sm text-gray-500">Real-time inventory and business metrics</p>
                 </div>
-                <Link
-                    href="/dashboard/reports"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                    <FileText className="w-4 h-4 mr-2" />
-                    View Reports
-                </Link>
+                {can('reports:read') && (
+                    <Link
+                        href="/dashboard/reports"
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View Reports
+                    </Link>
+                )}
             </div>
 
-            {/* Priority Inbox Redesign */}
+            {/* Messaging — always visible to all roles */}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 rounded-2xl bg-gradient-to-br from-white to-gray-50 p-1 shadow-sm border border-gray-100 overflow-hidden group">
                     <div className="bg-white rounded-[calc(1rem-1px)] h-full">
@@ -304,135 +366,140 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {statCards.map((stat) => (
-                    <Link
-                        key={stat.name}
-                        href={stat.href}
-                        className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-md transition-shadow sm:p-6"
-                    >
-                        <div className="flex items-center">
-                            <div className={`flex-shrink-0 rounded-md ${stat.bg} p-3`}>
-                                <stat.icon className={`h-6 w-6 ${stat.color}`} aria-hidden="true" />
+            {/* Stats Grid — filtered by permission */}
+            {visibleStatCards.length > 0 && (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {visibleStatCards.map((stat) => (
+                        <Link
+                            key={stat.name}
+                            href={stat.href}
+                            className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-md transition-shadow sm:p-6"
+                        >
+                            <div className="flex items-center">
+                                <div className={`flex-shrink-0 rounded-md ${stat.bg} p-3`}>
+                                    <stat.icon className={`h-6 w-6 ${stat.color}`} aria-hidden="true" />
+                                </div>
+                                <div className="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt className="truncate text-sm font-medium text-gray-500">{stat.name}</dt>
+                                        <dd>
+                                            <div className="text-lg font-medium text-gray-900">
+                                                {stat.name === 'Stock Value' ? (
+                                                    <Currency amount={stats.totalStockValue} />
+                                                ) : (
+                                                    stat.value
+                                                )}
+                                            </div>
+                                        </dd>
+                                    </dl>
+                                </div>
                             </div>
-                            <div className="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt className="truncate text-sm font-medium text-gray-500">{stat.name}</dt>
-                                    <dd>
-                                        <div className="text-lg font-medium text-gray-900">
-                                            {stat.name === 'Stock Value' ? (
-                                                <Currency amount={stats.totalStockValue} />
-                                            ) : (
-                                                stat.value
+                        </Link>
+                    ))}
+                </div>
+            )}
+
+            {/* Panels — shown based on permission */}
+            {(showActivityPanel || showInventoryPanels) && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Recent Activity */}
+                    {showActivityPanel && (
+                        <div className="rounded-lg bg-white p-6 shadow">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Clock className="w-5 h-5 text-gray-400" />
+                                <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h3>
+                            </div>
+                            {stats.recentActivity.length > 0 ? (
+                                <div className="space-y-3">
+                                    {stats.recentActivity.map((activity) => (
+                                        <div key={activity.id} className="flex items-start justify-between border-b pb-3 last:border-b-0">
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {formatDateTime(activity.date)}
+                                                </p>
+                                            </div>
+                                            {activity.amount && (
+                                                <Currency amount={activity.amount} className="text-sm font-semibold text-gray-900" />
                                             )}
                                         </div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-                {/* Recent Activity */}
-                <div className="rounded-lg bg-white p-6 shadow">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Clock className="w-5 h-5 text-gray-400" />
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h3>
-                    </div>
-                    {stats.recentActivity.length > 0 ? (
-                        <div className="space-y-3">
-                            {stats.recentActivity.map((activity) => (
-                                <div key={activity.id} className="flex items-start justify-between border-b pb-3 last:border-b-0">
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {formatDateTime(activity.date)}
-                                        </p>
-                                    </div>
-                                    {activity.amount && (
-                                        <Currency amount={activity.amount} className="text-sm font-semibold text-gray-900" />
-                                    )}
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-sm text-gray-500">No recent activity</div>
-                    )}
-                </div>
-
-                {/* Low Stock Alerts */}
-                <div id="low-stock" className="rounded-lg bg-white p-6 shadow">
-                    <div className="flex items-center gap-2 mb-4">
-                        <AlertTriangle className="w-5 h-5 text-red-500" />
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Low Stock Alerts</h3>
-                    </div>
-                    {stats.lowStockProducts.length > 0 ? (
-                        <div className="space-y-3">
-                            {stats.lowStockProducts.slice(0, 5).map((product) => (
-                                <Link
-                                    key={product.id}
-                                    href={`/dashboard/inventory/${product.id}`}
-                                    className="flex items-center justify-between border-b pb-3 last:border-b-0 hover:bg-gray-50 -mx-2 px-2 py-2 rounded"
-                                >
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {product.brand} {product.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">SKU: {product.sku}</p>
-                                    </div>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        {product.availableCount} left
-                                    </span>
-                                </Link>
-                            ))}
-                            {stats.lowStockProducts.length > 5 && (
-                                <Link
-                                    href="/dashboard/inventory"
-                                    className="text-sm text-blue-600 hover:text-blue-800 block mt-2"
-                                >
-                                    View all {stats.lowStockProducts.length} low stock items →
-                                </Link>
+                            ) : (
+                                <div className="text-sm text-gray-500">No recent activity</div>
                             )}
                         </div>
-                    ) : (
-                        <div className="text-sm text-gray-500">No low stock alerts</div>
+                    )}
+
+                    {/* Low Stock Alerts — only for those with inventory read */}
+                    {showInventoryPanels && (
+                        <div id="low-stock" className="rounded-lg bg-white p-6 shadow">
+                            <div className="flex items-center gap-2 mb-4">
+                                <AlertTriangle className="w-5 h-5 text-red-500" />
+                                <h3 className="text-lg font-medium leading-6 text-gray-900">Low Stock Alerts</h3>
+                            </div>
+                            {stats.lowStockProducts.length > 0 ? (
+                                <div className="space-y-3">
+                                    {stats.lowStockProducts.slice(0, 5).map((product) => (
+                                        <Link
+                                            key={product.id}
+                                            href={`/dashboard/inventory/${product.id}`}
+                                            className="flex items-center justify-between border-b pb-3 last:border-b-0 hover:bg-gray-50 -mx-2 px-2 py-2 rounded"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {product.brand} {product.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                                            </div>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                {product.availableCount} left
+                                            </span>
+                                        </Link>
+                                    ))}
+                                    {stats.lowStockProducts.length > 5 && (
+                                        <Link
+                                            href="/dashboard/inventory"
+                                            className="text-sm text-blue-600 hover:text-blue-800 block mt-2"
+                                        >
+                                            View all {stats.lowStockProducts.length} low stock items →
+                                        </Link>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-gray-500">No low stock alerts</div>
+                            )}
+                        </div>
                     )}
                 </div>
-            </div>
+            )}
 
-            {/* Quick Actions */}
-            <div className="rounded-lg bg-white p-6 shadow">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Quick Actions</h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Link
-                        href="/dashboard/stock-movements/grn/new"
-                        className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Receive Stock
-                    </Link>
-                    <Link
-                        href="/dashboard/transactions/invoices/new"
-                        className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Create Invoice
-                    </Link>
-                    <Link
-                        href="/dashboard/warranty/new"
-                        className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        New RMA Claim
-                    </Link>
-                    <Link
-                        href="/dashboard/inventory"
-                        className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        View Inventory
-                    </Link>
+            {/* Quick Actions — filtered by permission */}
+            {visibleQuickActions.length > 0 && (
+                <div className="rounded-lg bg-white p-6 shadow">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Quick Actions</h3>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {visibleQuickActions.map((action) => (
+                            <Link
+                                key={action.href}
+                                href={action.href}
+                                className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                {action.label}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Empty state for very restricted roles (VIEWER with no cards) */}
+            {visibleStatCards.length === 0 && visibleQuickActions.length === 0 && !showActivityPanel && !showInventoryPanels && (
+                <div className="rounded-lg bg-white p-12 shadow text-center">
+                    <ShieldCheck className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">Your dashboard is configured by your administrator.</p>
+                    <p className="text-sm text-gray-400 mt-1">Use the sidebar to navigate to your available modules.</p>
+                </div>
+            )}
         </div>
     )
 }
