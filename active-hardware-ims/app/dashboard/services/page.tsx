@@ -18,10 +18,10 @@ async function runExpiryCheck() {
 export default async function ServicesDashboard() {
     // Run expiry check + all data queries in parallel
     const [expiring, active, rentals] = await Promise.all([
-        runExpiryCheck().then(() => getExpiringContracts(60)),
-        getActiveContracts(),
-        getAllRentals()
+        runExpiryCheck().then(() => getExpiringContracts({ daysThreshold: 60, page: 1, limit: 10 })),
+        getActiveContracts({ page: 1, limit: 10 }),
+        getAllRentals({ page: 1, limit: 10 })
     ])
 
-    return <ServiceDashboardClient expiring={expiring} active={active} rentals={rentals} />
+    return <ServiceDashboardClient initialExpiring={expiring} initialActive={active} initialRentals={rentals} />
 }

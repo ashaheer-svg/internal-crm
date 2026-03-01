@@ -137,6 +137,12 @@ export async function GET(req: Request) {
         const user: any = await requireAuth()
         const { searchParams } = new URL(req.url)
         const type = searchParams.get('type') || 'inbox' // inbox, sent, admin
+        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
+        const category = searchParams.get('category')
 
         const where: any = {}
 
@@ -153,36 +159,65 @@ export async function GET(req: Request) {
                 }
             ]
         } else if (type === 'admin') {
-            // Only admin (or manage:all) can see all messages
             if (!user.permissions.includes('all:manage')) {
                 return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
             }
-            // 'admin' type sees everything
-        } else {
-            // Default to inbox logic
+        }
+
+        if (category && category !== 'ALL') {
+            where.category = category
+        }
+
+        if (search) {
             where.OR = [
-                { recipientUserId: user.id },
-                {
-                    AND: [
-                        { recipientRoleId: user.roleId },
-                        { recipientRoleId: { not: null } }
-                    ]
-                }
+                ...(where.OR || []),
+                { subject: { contains: search, mode: 'insensitive' } },
+                { content: { contains: search, mode: 'insensitive' } },
+                { sender: { name: { contains: search, mode: 'insensitive' } } },
             ]
+        }
+
+        const orderBy: any = {}
+        orderBy[sortKey === 'date' ? 'createdAt' : sortKey] = sortDir
+
+        const include = {
+            sender: { select: { name: true, email: true } },
+            recipientUser: { select: { name: true, email: true } },
+            recipientRole: true,
+            attachments: true,
+            receipts: {
+                include: { user: { select: { name: true } } }
+            }
+        }
+
+        if (page && limit) {
+            const skip = (page - 1) * limit
+            const [messages, total] = await Promise.all([
+                prisma.message.findMany({
+                    where,
+                    orderBy,
+                    skip,
+                    take: limit,
+                    include
+                }),
+                prisma.message.count({ where })
+            ])
+
+            return NextResponse.json({
+                messages,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            })
         }
 
         const messages = await prisma.message.findMany({
             where,
-            include: {
-                sender: { select: { name: true, email: true } },
-                recipientUser: { select: { name: true, email: true } },
-                recipientRole: true,
-                attachments: true,
-                receipts: {
-                    include: { user: { select: { name: true } } }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
+            orderBy,
+            include
         })
 
         return NextResponse.json({ messages })

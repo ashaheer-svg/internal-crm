@@ -5,23 +5,58 @@ import { requireAuth } from "@/lib/auth"
 export async function GET(request: Request) {
     try {
         await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '10')
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'status'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'asc'
 
-        const assets = await prisma.rentalAsset.findMany({
-            where: { isDeleted: false },
-            include: {
-                currentContract: {
-                    include: {
-                        customer: true
-                    }
+        const skip = (page - 1) * limit
+        const where: any = { isDeleted: false }
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { serialNumber: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+                { product: { name: { contains: search, mode: 'insensitive' } } },
+                { currentContract: { customer: { name: { contains: search, mode: 'insensitive' } } } }
+            ]
+        }
+
+        const orderBy: any = {}
+        if (sortKey === 'product') orderBy.product = { name: sortDir }
+        else if (sortKey === 'customer') orderBy.currentContract = { customer: { name: sortDir } }
+        else orderBy[sortKey] = sortDir
+
+        const [assets, total] = await Promise.all([
+            prisma.rentalAsset.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    currentContract: {
+                        include: {
+                            customer: true
+                        }
+                    },
+                    product: true
                 },
-                product: true
-            },
-            orderBy: {
-                status: 'asc'
+                orderBy
+            }),
+            prisma.rentalAsset.count({ where })
+        ])
+
+        return NextResponse.json({
+            assets,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             }
         })
-
-        return NextResponse.json(assets)
     } catch (error: any) {
         return NextResponse.json(
             { error: error.message || 'Failed to fetch assets' },

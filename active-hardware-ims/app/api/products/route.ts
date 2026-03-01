@@ -8,48 +8,79 @@ export async function GET(request: Request) {
         await requireAuth()
 
         const { searchParams } = new URL(request.url)
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '20')
+        const skip = (page - 1) * limit
+        const search = searchParams.get('search') || ''
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc'
         const includeInactive = searchParams.get('includeInactive') === 'true'
+        const type = searchParams.get('type') || 'product'
 
-        const type = searchParams.get('type') || 'product' // product, service, or all
-
-        const where: any = {}
-        if (!includeInactive) {
-            where.isActive = true
+        const where: any = {
+            AND: [
+                !includeInactive ? { isActive: true } : {},
+                type === 'product' ? { serviceDefinition: null } : (type === 'service' ? { serviceDefinition: { isNot: null } } : {}),
+                search ? {
+                    OR: [
+                        { sku: { contains: search } },
+                        { name: { contains: search } },
+                        { brand: { contains: search } },
+                        { category: { contains: search } },
+                        { model: { contains: search } }
+                    ]
+                } : {}
+            ]
         }
 
-        if (type === 'product') {
-            where.serviceDefinition = null
-        } else if (type === 'service') {
-            where.serviceDefinition = { isNot: null }
+        // Handle nested sorting for stock
+        let orderBy: any = []
+        if (sortKey === 'stock') {
+            orderBy = [{ inventory: { _count: sortDir } }]
+        } else if (sortKey === 'status') {
+            orderBy = [{ isActive: sortDir }]
+        } else {
+            orderBy = [{ [sortKey]: sortDir }]
         }
 
-        const products = await prisma.product.findMany({
-            where,
-            orderBy: [
-                { accessCount: 'desc' },
-                { createdAt: 'desc' }
-            ],
-            include: {
-                serviceDefinition: true,
-                _count: {
-                    select: {
-                        inventory: {
-                            where: { status: "AVAILABLE" }
+        const [products, total] = await Promise.all([
+            prisma.product.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy,
+                include: {
+                    serviceDefinition: true,
+                    _count: {
+                        select: {
+                            inventory: {
+                                where: { status: "AVAILABLE" }
+                            }
+                        }
+                    },
+                    inventory: {
+                        where: { status: "AVAILABLE" },
+                        select: {
+                            id: true,
+                            serialNumber: true,
+                            status: true,
+                            locationId: true
                         }
                     }
-                },
-                inventory: {
-                    where: { status: "AVAILABLE" },
-                    select: {
-                        id: true,
-                        serialNumber: true,
-                        status: true,
-                        locationId: true
-                    }
                 }
+            }),
+            prisma.product.count({ where })
+        ])
+
+        return NextResponse.json({
+            products,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             }
         })
-        return NextResponse.json(products)
     } catch (error: any) {
         console.error('Error in GET /api/products:', error)
         return NextResponse.json(

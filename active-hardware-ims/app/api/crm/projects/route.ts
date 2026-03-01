@@ -11,6 +11,8 @@ export async function GET(request: Request) {
         const page = Number(searchParams.get('page')) || 1
         const limit = Number(searchParams.get('limit')) || 10
         const search = searchParams.get('search') || ''
+        const sortKey = searchParams.get('sortKey') || 'projectCode'
+        const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc'
         const stageId = searchParams.get('stageId')
         const status = searchParams.get('status')
         const salesRepId = searchParams.get('salesRepId')
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
 
         const skip = (page - 1) * limit
 
-        // Check if user can see all projects
+        // ... existing permission logic ...
         const u = user as any
         const canViewAll = u.permissions?.includes('all:manage') ||
             u.permissions?.includes('projects:manage') ||
@@ -34,14 +36,12 @@ export async function GET(request: Request) {
             isDeleted: false
         }
 
-        // Scope: restrict to own projects unless they have view_all permission
+        // ... existing filter logic ...
         if (!canViewAll || scope === 'mine') {
-            // Priority 1: If user is linked to a SalesRep record, filter by that SalesRep
             const u = user as any
             if (u.salesRepId) {
                 where.salesRepId = u.salesRepId
             } else {
-                // Fallback: Use explicit project membership
                 where.members = {
                     some: { userId: user.id }
                 }
@@ -94,7 +94,6 @@ export async function GET(request: Request) {
             ]
         }
 
-        // Filter by a specific DO status — only show projects with a quote whose DO is at this stage
         if (doStatus) {
             where.quotes = {
                 some: {
@@ -104,6 +103,17 @@ export async function GET(request: Request) {
                 }
             }
         }
+
+        // Construct orderBy
+        let orderBy: any = { [sortKey]: sortDir }
+
+        // Handle relation sorting if needed (Prisma 5+ supports some, but for simplicity let's handle common ones)
+        if (sortKey === 'customer') orderBy = { customer: { name: sortDir } }
+        if (sortKey === 'partner') orderBy = { partner: { name: sortDir } }
+        if (sortKey === 'salesRep') orderBy = { salesRep: { name: sortDir } }
+        if (sortKey === 'stage') orderBy = { stage: { name: sortDir } }
+        if (sortKey === 'value') orderBy = { expectedValue: sortDir }
+        if (sortKey === 'date') orderBy = { updatedAt: sortDir }
 
         const [projects, total] = await prisma.$transaction([
             (prisma as any).cRMProject.findMany({
@@ -128,7 +138,7 @@ export async function GET(request: Request) {
                 },
                 skip,
                 take: limit,
-                orderBy: { projectCode: 'desc' }
+                orderBy
             }),
             prisma.cRMProject.count({ where })
         ])

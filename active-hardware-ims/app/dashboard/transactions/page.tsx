@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Plus, FileText, Package, Receipt, Search, ArrowRight, MapPin, User, DollarSign, Hash, Filter, RefreshCw, Truck, ArrowLeftRight, Wrench, RotateCcw, AlertTriangle, TrendingDown, ShieldCheck, Layers } from "lucide-react"
+import { Plus, FileText, Package, Receipt, Search, ArrowRight, MapPin, User, DollarSign, Hash, Filter, RefreshCw, Truck, ArrowLeftRight, Wrench, RotateCcw, AlertTriangle, TrendingDown, ShieldCheck, Layers, Calendar } from "lucide-react"
 import { Currency } from "@/components/Currency"
-import { formatDate } from "@/lib/utils"
+import { formatDate, cn } from "@/lib/utils"
+import SortIcon from "@/components/SortIcon"
+import PaginationControls from "@/components/PaginationControls"
 
 type PurchaseOrder = {
     id: string
@@ -46,30 +48,29 @@ type TransactionLog = {
     createdAt: string
 }
 
-// ── Type config ──────────────────────────────────────────────────────────────
 const TYPE_CFG: Record<string, { label: string; icon: any; badge: string; dot: string }> = {
-    RECEIPT: { label: 'Stock Receipt', icon: Package, badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500' },
-    IN: { label: 'Inventory In', icon: Package, badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500' },
-    OUT: { label: 'Dispatched', icon: Truck, badge: 'bg-blue-100 text-blue-800 border-blue-200', dot: 'bg-blue-500' },
-    ISSUE: { label: 'Issued', icon: Truck, badge: 'bg-blue-100 text-blue-800 border-blue-200', dot: 'bg-blue-500' },
-    TRANSFER: { label: 'Location Transfer', icon: ArrowLeftRight, badge: 'bg-purple-100 text-purple-800 border-purple-200', dot: 'bg-purple-500' },
-    RETURN: { label: 'Return', icon: RotateCcw, badge: 'bg-amber-100 text-amber-800 border-amber-200', dot: 'bg-amber-500' },
-    RENTAL_OUT: { label: 'Rental Dispatch', icon: Truck, badge: 'bg-indigo-100 text-indigo-800 border-indigo-200', dot: 'bg-indigo-500' },
-    RENTAL_RETURN: { label: 'Rental Return', icon: RotateCcw, badge: 'bg-indigo-100 text-indigo-800 border-indigo-200', dot: 'bg-indigo-400' },
-    SERVICE_OUT: { label: 'Service Dispatch', icon: Wrench, badge: 'bg-violet-100 text-violet-800 border-violet-200', dot: 'bg-violet-500' },
-    WARRANTY_IN: { label: 'Warranty RMA In', icon: ShieldCheck, badge: 'bg-rose-100 text-rose-800 border-rose-200', dot: 'bg-rose-500' },
-    WARRANTY_OUT: { label: 'Warranty Replace', icon: ShieldCheck, badge: 'bg-rose-100 text-rose-800 border-rose-200', dot: 'bg-rose-400' },
-    COST_ADJUSTMENT: { label: 'Cost Recalculation', icon: TrendingDown, badge: 'bg-orange-100 text-orange-800 border-orange-200', dot: 'bg-orange-500' },
-    ADJUSTMENT: { label: 'Cost Adjustment', icon: TrendingDown, badge: 'bg-orange-100 text-orange-800 border-orange-200', dot: 'bg-orange-500' },
-    STATUS_CHANGE: { label: 'Status Change', icon: AlertTriangle, badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', dot: 'bg-yellow-500' },
-    IMPORT: { label: 'Legacy Import', icon: Layers, badge: 'bg-gray-100 text-gray-700 border-gray-200', dot: 'bg-gray-400' },
-    BACKORDER_ALLOC: { label: 'Backorder Alloc.', icon: Package, badge: 'bg-teal-100 text-teal-800 border-teal-200', dot: 'bg-teal-500' },
+    RECEIPT: { label: 'Stock Receipt', icon: Package, badge: 'bg-emerald-100 text-emerald-800 border-emerald-200 shadow-sm', dot: 'bg-emerald-500' },
+    IN: { label: 'Inventory In', icon: Package, badge: 'bg-emerald-100 text-emerald-800 border-emerald-200 shadow-sm', dot: 'bg-emerald-500' },
+    OUT: { label: 'Dispatched', icon: Truck, badge: 'bg-blue-100 text-blue-800 border-blue-200 shadow-sm', dot: 'bg-blue-500' },
+    ISSUE: { label: 'Issued', icon: Truck, badge: 'bg-blue-100 text-blue-800 border-blue-200 shadow-sm', dot: 'bg-blue-500' },
+    TRANSFER: { label: 'Location Transfer', icon: ArrowLeftRight, badge: 'bg-purple-100 text-purple-800 border-purple-200 shadow-sm', dot: 'bg-purple-500' },
+    RETURN: { label: 'Return', icon: RotateCcw, badge: 'bg-amber-100 text-amber-800 border-amber-200 shadow-sm', dot: 'bg-amber-500' },
+    RENTAL_OUT: { label: 'Rental Dispatch', icon: Truck, badge: 'bg-indigo-100 text-indigo-800 border-indigo-200 shadow-sm', dot: 'bg-indigo-500' },
+    RENTAL_RETURN: { label: 'Rental Return', icon: RotateCcw, badge: 'bg-indigo-100 text-indigo-800 border-indigo-200 shadow-sm', dot: 'bg-indigo-400' },
+    SERVICE_OUT: { label: 'Service Dispatch', icon: Wrench, badge: 'bg-violet-100 text-violet-800 border-violet-200 shadow-sm', dot: 'bg-violet-500' },
+    WARRANTY_IN: { label: 'Warranty RMA In', icon: ShieldCheck, badge: 'bg-rose-100 text-rose-800 border-rose-200 shadow-sm', dot: 'bg-rose-500' },
+    WARRANTY_OUT: { label: 'Warranty Replace', icon: ShieldCheck, badge: 'bg-rose-100 text-rose-800 border-rose-200 shadow-sm', dot: 'bg-rose-400' },
+    COST_ADJUSTMENT: { label: 'Cost Recalculation', icon: TrendingDown, badge: 'bg-orange-100 text-orange-800 border-orange-200 shadow-sm', dot: 'bg-orange-500' },
+    ADJUSTMENT: { label: 'Cost Adjustment', icon: TrendingDown, badge: 'bg-orange-100 text-orange-800 border-orange-200 shadow-sm', dot: 'bg-orange-500' },
+    STATUS_CHANGE: { label: 'Status Change', icon: AlertTriangle, badge: 'bg-yellow-100 text-yellow-800 border-yellow-200 shadow-sm', dot: 'bg-yellow-500' },
+    IMPORT: { label: 'Legacy Import', icon: Layers, badge: 'bg-gray-100 text-gray-700 border-gray-200 shadow-sm', dot: 'bg-gray-400' },
+    BACKORDER_ALLOC: { label: 'Backorder Alloc.', icon: Package, badge: 'bg-teal-100 text-teal-800 border-teal-200 shadow-sm', dot: 'bg-teal-500' },
 }
 
 const ALL_TYPES = Object.keys(TYPE_CFG)
 
 function getTypeCfg(type: string) {
-    return TYPE_CFG[type] ?? { label: type, icon: Package, badge: 'bg-gray-100 text-gray-700 border-gray-200', dot: 'bg-gray-400' }
+    return TYPE_CFG[type] ?? { label: type, icon: Package, badge: 'bg-gray-100 text-gray-700 border-gray-200 shadow-sm', dot: 'bg-gray-400' }
 }
 
 export default function TransactionsPage() {
@@ -81,67 +82,118 @@ export default function TransactionsPage() {
     const [logsLoading, setLogsLoading] = useState(false)
     const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
 
-    // Log filters
+    // Filters
     const [logSearch, setLogSearch] = useState('')
     const [logType, setLogType] = useState('ALL')
     const [logDateFrom, setLogDateFrom] = useState('')
     const [logDateTo, setLogDateTo] = useState('')
+    const [poSearch, setPoSearch] = useState('')
+    const [doSearch, setDoSearch] = useState('')
+    const [invSearch, setInvSearch] = useState('')
+
+    // Pagination Meta
+    const [poMeta, setPoMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
+    const [doMeta, setDoMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
+    const [invMeta, setInvMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
+    const [logMeta, setLogMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
+
+    // Sort configs
+    const [poSort, setPoSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+    const [doSort, setDoSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+    const [invSort, setInvSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+    const [logSort, setLogSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
     const [showDeletedDO, setShowDeletedDO] = useState(false)
+    const limit = 25
 
-    useEffect(() => {
-        fetchPurchaseOrders()
-        fetchInvoices()
-        fetchTransactionLogs()
-    }, [])
-
-    useEffect(() => {
-        fetchDeliveryOrders()
-    }, [showDeletedDO])
-
-    // Re-fetch logs whenever filters change (with debounce for search)
-    useEffect(() => {
-        const timer = setTimeout(() => fetchTransactionLogs(), 400)
-        return () => clearTimeout(timer)
-    }, [logSearch, logType, logDateFrom, logDateTo])
-
-    async function fetchPurchaseOrders() {
+    const fetchPurchaseOrders = useCallback(async (page: number = 1) => {
+        setLoading(true)
         try {
-            const res = await fetch('/api/purchase-orders')
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                sortKey: poSort.key,
+                sortDir: poSort.direction,
+            })
+            if (poSearch) params.set('search', poSearch)
+            const res = await fetch(`/api/purchase-orders?${params}`)
             const data = await res.json()
-            setPurchaseOrders(data)
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    async function fetchInvoices() {
-        try {
-            const res = await fetch('/api/invoices')
-            const data = await res.json()
-            setInvoices(data)
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    async function fetchDeliveryOrders() {
-        try {
-            // Pass includeInactive param based on toggle
-            const res = await fetch(`/api/delivery-orders?includeInactive=${showDeletedDO}`)
-            const data = await res.json()
-            setDeliveryOrders(data)
+            if (data.purchaseOrders) {
+                setPurchaseOrders(data.purchaseOrders)
+                setPoMeta(data.meta || { total: data.purchaseOrders.length, page: 1, limit, totalPages: 1 })
+            } else {
+                setPurchaseOrders(data)
+                setPoMeta({ total: data.length, page: 1, limit, totalPages: 1 })
+            }
         } catch (error) {
             console.error(error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [poSort, poSearch])
 
-    async function fetchTransactionLogs() {
+    const fetchInvoices = useCallback(async (page: number = 1) => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                sortKey: invSort.key,
+                sortDir: invSort.direction,
+            })
+            if (invSearch) params.set('search', invSearch)
+            const res = await fetch(`/api/invoices?${params}`)
+            const data = await res.json()
+            if (data.invoices) {
+                setInvoices(data.invoices)
+                setInvMeta(data.meta || { total: data.invoices.length, page: 1, limit, totalPages: 1 })
+            } else {
+                setInvoices(data)
+                setInvMeta({ total: data.length, page: 1, limit, totalPages: 1 })
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoading(false)
+        }
+    }, [invSort, invSearch])
+
+    const fetchDeliveryOrders = useCallback(async (page: number = 1) => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams({
+                includeInactive: showDeletedDO.toString(),
+                page: page.toString(),
+                limit: limit.toString(),
+                sortKey: doSort.key,
+                sortDir: doSort.direction,
+            })
+            if (doSearch) params.set('search', doSearch)
+            const res = await fetch(`/api/delivery-orders?${params}`)
+            const data = await res.json()
+            if (data.deliveryOrders) {
+                setDeliveryOrders(data.deliveryOrders)
+                setDoMeta(data.meta || { total: data.deliveryOrders.length, page: 1, limit, totalPages: 1 })
+            } else {
+                setDeliveryOrders(data)
+                setDoMeta({ total: data.length, page: 1, limit, totalPages: 1 })
+            }
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoading(false)
+        }
+    }, [doSort, doSearch, showDeletedDO])
+
+    const fetchTransactionLogs = useCallback(async (page: number = 1) => {
         setLogsLoading(true)
         try {
-            const params = new URLSearchParams({ limit: '300' })
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                sortKey: logSort.key,
+                sortDir: logSort.direction,
+            })
             if (logType && logType !== 'ALL') params.set('type', logType)
             if (logSearch) params.set('search', logSearch)
             if (logDateFrom) params.set('dateFrom', logDateFrom)
@@ -150,482 +202,577 @@ export default function TransactionsPage() {
             const res = await fetch(`/api/transaction-logs?${params}`)
             if (res.ok) {
                 const data = await res.json()
-                setTransactionLogs(data)
+                if (data.logs) {
+                    setTransactionLogs(data.logs)
+                    setLogMeta(data.meta || { total: data.logs.length, page: 1, limit, totalPages: 1 })
+                } else {
+                    setTransactionLogs(data)
+                    setLogMeta({ total: data.length, page: 1, limit, totalPages: 1 })
+                }
             }
         } catch (error) {
             console.error('Failed to fetch transaction logs:', error)
         } finally {
             setLogsLoading(false)
         }
+    }, [logSort, logSearch, logType, logDateFrom, logDateTo])
+
+    useEffect(() => {
+        const timer = setTimeout(() => fetchPurchaseOrders(1), 400)
+        return () => clearTimeout(timer)
+    }, [fetchPurchaseOrders])
+
+    useEffect(() => {
+        const timer = setTimeout(() => fetchInvoices(1), 400)
+        return () => clearTimeout(timer)
+    }, [fetchInvoices])
+
+    useEffect(() => {
+        const timer = setTimeout(() => fetchDeliveryOrders(1), 400)
+        return () => clearTimeout(timer)
+    }, [fetchDeliveryOrders])
+
+    useEffect(() => {
+        const timer = setTimeout(() => fetchTransactionLogs(1), 400)
+        return () => clearTimeout(timer)
+    }, [fetchTransactionLogs])
+
+    const handleSort = (tab: string, key: string) => {
+        if (tab === 'po') setPoSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
+        if (tab === 'do') setDoSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
+        if (tab === 'inv') setInvSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
+        if (tab === 'log') setLogSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
     }
 
     return (
-        <div className="space-y-6">
-            <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Transactions</h1>
+        <div className="space-y-6 flex flex-col min-h-screen pb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Enterprise Transactions</h1>
+                    <p className="text-sm text-gray-500 font-medium">unified procurement, fulfillment, and movement history</p>
+                </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-8">
+            {/* Premium Tab Navigation */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-1.5 flex gap-1 w-fit">
+                {[
+                    { id: 'po', label: 'Purchase Orders', icon: Package },
+                    { id: 'do', label: 'Delivery Orders', icon: Truck },
+                    { id: 'invoice', label: 'Invoices', icon: Receipt },
+                    { id: 'log', label: 'Transaction Log', icon: History },
+                ].map((tab) => (
                     <button
-                        onClick={() => setActiveTab('po')}
-                        className={`${activeTab === 'po' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                            "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
+                            activeTab === tab.id
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                        )}
                     >
-                        Purchase Orders
+                        {tab.label}
                     </button>
-                    <button
-                        onClick={() => setActiveTab('do')}
-                        className={`${activeTab === 'do' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
-                    >
-                        Delivery Orders
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('invoice')}
-                        className={`${activeTab === 'invoice' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
-                    >
-                        Invoices
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('log')}
-                        className={`${activeTab === 'log' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
-                    >
-                        Transaction Log
-                    </button>
-                </nav>
+                ))}
             </div>
 
             {/* Purchase Orders Tab */}
             {activeTab === 'po' && (
-                <div className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-blue-900 mb-2">How to Manage Purchase Orders</h3>
-                        <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-                            <li>Click <strong>"New Purchase Order"</strong> to initiate a stock receipt from a supplier.</li>
-                            <li>Select a supplier and enter the expected items and their unit costs.</li>
-                            <li>Once items arrive, open the PO and mark them as <strong>"Received"</strong>.</li>
-                            <li>Scanning or manually entering serial numbers is required during receipt to update inventory.</li>
-                        </ul>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Purchase Orders (Stock Receipts)</h2>
-                        <Link
-                            href="/dashboard/transactions/purchase-orders/new"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            New Purchase Order
-                        </Link>
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 mb-1">Stock Receipt Protocol</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">Initiate procurement flows, manage supplier interactions, and reconcile incoming shipments with digital serial tracking.</p>
+                            </div>
+                            <Link
+                                href="/dashboard/transactions/purchase-orders/new"
+                                className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Purchase Order
+                            </Link>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                            <h3 className="text-sm font-bold text-gray-900 mb-3">Search & Filters</h3>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="PO Number, supplier name..."
+                                    className="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all"
+                                    value={poSearch}
+                                    onChange={e => setPoSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                        <ul className="divide-y divide-gray-200">
-                            {purchaseOrders.map((po) => (
-                                <li key={po.id}>
-                                    <Link href={`/dashboard/transactions/purchase-orders/${po.id}`} className="block hover:bg-gray-50">
-                                        <div className="px-4 py-4 sm:px-6">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <FileText className="h-5 w-5 text-gray-400 mr-3" />
-                                                    <p className="text-sm font-medium text-blue-600 truncate">{po.poNumber}</p>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-[500px]">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-100">
+                                <thead className="bg-gray-50/50">
+                                    <tr>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={poSort} column="poNumber" label="Order ID" onSort={(k) => handleSort('po', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={poSort} column="supplier" label="Supplier" onSort={(k) => handleSort('po', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Line Items</th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={poSort} column="status" label="Status" onSort={(k) => handleSort('po', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={poSort} column="amount" label="Valuation" onSort={(k) => handleSort('po', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={poSort} column="date" label="Timestamp" onSort={(k) => handleSort('po', k)} />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {loading ? (
+                                        Array.from({ length: 8 }).map((_, i) => (
+                                            <tr key={i} className="animate-pulse">
+                                                <td colSpan={6} className="px-6 py-4"><div className="h-4 bg-gray-50 rounded-lg w-full" /></td>
+                                            </tr>
+                                        ))
+                                    ) : purchaseOrders.map((po) => (
+                                        <tr key={po.id} className="hover:bg-gray-50/50 transition-all cursor-pointer group" onClick={() => router.push(`/dashboard/transactions/purchase-orders/${po.id}`)}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-600 font-mono tracking-tighter uppercase">{po.poNumber}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-900 uppercase tracking-tight">{po.supplier}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1 max-w-xs">
+                                                    {po.items.slice(0, 2).map((item: any) => (
+                                                        <div key={item.id} className="flex items-center justify-between text-[11px] text-gray-600 font-medium">
+                                                            <span className="truncate mr-3">{item.product?.model || item.product?.name}</span>
+                                                            <span className="bg-gray-100 px-1.5 py-0.5 rounded font-bold text-[9px] flex-shrink-0">
+                                                                {po.status === 'RECEIVED' ? `${item.receivedQty || 0}/${item.quantity}` : item.quantity}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                    {po.items.length > 2 && <span className="text-[10px] text-gray-400 font-bold italic">+{po.items.length - 2} more items</span>}
                                                 </div>
-                                                <div className="ml-2 flex-shrink-0 flex">
-                                                    <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${po.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' : ''}
-                            ${po.status === 'SUBMITTED' ? 'bg-yellow-100 text-yellow-800' : ''}
-                            ${po.status === 'RECEIVED' ? 'bg-green-100 text-green-800' : ''}
-                            ${po.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
-                          `}>
-                                                        {po.status}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-2 sm:flex sm:justify-between">
-                                                <div className="sm:flex">
-                                                    <p className="flex items-center text-sm text-gray-500">
-                                                        <Package className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                                                        {po.supplier}
-                                                    </p>
-                                                    <div className="mt-2 flex flex-col gap-1 text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                                                        {po.items.map((item: any) => (
-                                                            <div key={item.id} className="flex items-center gap-2">
-                                                                <span className="font-medium text-gray-900">{item.product.model || item.product.name}</span>
-                                                                <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                                                    {po.status === 'DRAFT' ?
-                                                                        `Qty: ${item.quantity}` :
-                                                                        `${item.receivedQty.toLocaleString()} / ${item.quantity.toLocaleString()}`
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                                    <p className="font-semibold text-gray-900">
-                                                        <Currency amount={po.totalAmount} />
-                                                    </p>
-                                                    <p className="ml-4 text-xs">
-                                                        {formatDate(po.createdAt)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                            {purchaseOrders.length === 0 && !loading && (
-                                <li className="px-4 py-12 text-center text-gray-500">
-                                    No purchase orders yet. Create your first PO to track stock receipts.
-                                </li>
-                            )}
-                        </ul>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter border",
+                                                    po.status === 'DRAFT' && 'bg-gray-100 text-gray-700 border-gray-200',
+                                                    po.status === 'SUBMITTED' && 'bg-blue-50 text-blue-700 border-blue-200',
+                                                    po.status === 'RECEIVED' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    po.status === 'CANCELLED' && 'bg-rose-50 text-rose-700 border-rose-200'
+                                                )}>
+                                                    {po.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right tabular-nums">
+                                                <Currency amount={po.totalAmount} />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                {formatDate(po.createdAt)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {purchaseOrders.length === 0 && !loading && (
+                                        <tr><td colSpan={6} className="px-6 py-20 text-center"><p className="text-gray-400 font-medium">No procurement records found</p></td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <PaginationControls
+                            currentPage={poMeta.page}
+                            totalPages={poMeta.totalPages}
+                            onPageChange={(p) => fetchPurchaseOrders(p)}
+                            totalResults={poMeta.total}
+                            limit={poMeta.limit}
+                            className="bg-gray-50/50 border-t border-gray-100"
+                        />
                     </div>
                 </div>
             )}
 
-            {/* Delivery Orders Tab (New) */}
+            {/* Delivery Orders Tab */}
             {activeTab === 'do' && (
-                <div className="space-y-4">
-                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-indigo-900 mb-2">How to Manage Delivery Orders</h3>
-                        <ul className="text-sm text-indigo-700 space-y-1 list-disc list-inside">
-                            <li>Create a <strong>Delivery Order</strong> to reserve stock for a customer shipment.</li>
-                            <li>Items added to a Delivery Order are reserved and deducted from "Available" stock.</li>
-                            <li>You can link a Delivery Order to an existing Invoice or track it independently.</li>
-                            <li>Use the <strong>"Print Packing Slip"</strong> feature for physical shipments.</li>
-                        </ul>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Delivery Orders (Main)</h2>
-                        <div className="flex items-center gap-3">
-                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={showDeletedDO}
-                                    onChange={(e) => setShowDeletedDO(e.target.checked)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                Show Deleted
-                            </label>
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 mb-1">Fulfillment Orchestration</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">Reserve stock, generate packing slips, and track dispatch status. Integrated link with sales invoices for seamless revenue recognition.</p>
+                            </div>
                             <Link
                                 href="/dashboard/transactions/delivery-orders/new"
-                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                                className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit"
                             >
                                 <Plus className="w-4 h-4" />
                                 New Delivery Order
                             </Link>
                         </div>
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
+                            <h3 className="text-sm font-bold text-gray-900">Search & Filters</h3>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="DO Number, customer..."
+                                    className="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-indigo-500 shadow-sm transition-all"
+                                    value={doSearch}
+                                    onChange={e => setDoSearch(e.target.value)}
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={showDeletedDO}
+                                    onChange={(e) => setShowDeletedDO(e.target.checked)}
+                                    className="rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                                />
+                                Include Deactivated Records
+                            </label>
+                        </div>
                     </div>
 
-                    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                        <ul className="divide-y divide-gray-200">
-                            {deliveryOrders.filter(o => showDeletedDO || o.isActive !== false).map((order) => (
-                                <li key={order.id} className={order.isActive === false ? 'opacity-60 bg-gray-50' : ''}>
-                                    <Link href={`/dashboard/transactions/delivery-orders/${order.id}`} className="block hover:bg-gray-50">
-                                        <div className="px-4 py-4 sm:px-6">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <Package className="h-5 w-5 text-gray-400 mr-3" />
-                                                    <div className="flex flex-col">
-                                                        <p className={`text-sm font-medium ${order.isActive === false ? 'text-gray-500 line-through' : 'text-blue-600'} truncate`}>
-                                                            {order.orderNumber}
-                                                        </p>
-                                                        {order.isActive === false && (
-                                                            <span className="text-xs text-red-500 font-bold">DELETED</span>
-                                                        )}
-                                                    </div>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-[500px]">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-100">
+                                <thead className="bg-gray-50/50">
+                                    <tr>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={doSort} column="orderNumber" label="Dispatch ID" onSort={(k) => handleSort('do', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={doSort} column="customerName" label="Consignee" onSort={(k) => handleSort('do', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Linked Invoice</th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={doSort} column="status" label="Current Status" onSort={(k) => handleSort('do', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={doSort} column="date" label="Issue Date" onSort={(k) => handleSort('do', k)} />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {loading ? (
+                                        Array.from({ length: 8 }).map((_, i) => (
+                                            <tr key={i} className="animate-pulse">
+                                                <td colSpan={5} className="px-6 py-4"><div className="h-4 bg-gray-50 rounded-lg w-full" /></td>
+                                            </tr>
+                                        ))
+                                    ) : deliveryOrders.map((order) => (
+                                        <tr key={order.id} className={cn("hover:bg-gray-50/50 transition-all cursor-pointer group", !order.isActive && 'bg-gray-50/30')} onClick={() => router.push(`/dashboard/transactions/delivery-orders/${order.id}`)}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <span className={cn("text-sm font-bold font-mono tracking-tighter uppercase", order.isActive === false ? 'text-gray-400 line-through' : 'text-indigo-600')}>
+                                                        {order.orderNumber}
+                                                    </span>
+                                                    {!order.isActive && <span className="text-[9px] text-rose-500 font-bold uppercase tracking-widest">Deactivated</span>}
                                                 </div>
-                                                <div className="ml-2 flex-shrink-0 flex">
-                                                    <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${order.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' : ''}
-                            ${order.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' : ''}
-                            ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : ''}
-                            ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
-                          `}>
-                                                        {order.status}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-2 sm:flex sm:justify-between">
-                                                <div className="sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
-                                                    <p className="flex items-center text-sm text-gray-900 font-medium">
-                                                        {order.customerName}
-                                                    </p>
-                                                    {order.invoiceNumber && (
-                                                        <p className="flex items-center text-sm text-indigo-600 font-medium">
-                                                            Inv: {order.invoiceNumber}
-                                                        </p>
-                                                    )}
-                                                    {order.salesRep?.name && (
-                                                        <p className="flex items-center text-sm text-gray-500">
-                                                            Rep: <span className="ml-1 text-gray-700 font-medium">{order.salesRep.name}</span>
-                                                        </p>
-                                                    )}
-                                                    <p className="flex items-center text-sm text-gray-500">
-                                                        {order._count?.items?.toLocaleString() || 0} item(s)
-                                                    </p>
-                                                </div>
-                                                <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                                    <p className="ml-4 text-xs">
-                                                        {formatDate(order.createdAt)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                            {deliveryOrders.length === 0 && !loading && (
-                                <li className="px-4 py-12 text-center text-gray-500">
-                                    No delivery orders yet. Create one to manage shipments.
-                                </li>
-                            )}
-                        </ul>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-900 uppercase tracking-tight">{order.customerName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-[11px] text-blue-600 font-bold">{order.invoiceNumber || <span className="text-gray-300">-</span>}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter border",
+                                                    order.status === 'DRAFT' && 'bg-gray-100 text-gray-700 border-gray-200',
+                                                    order.status === 'CONFIRMED' && 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                                    order.status === 'COMPLETED' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    order.status === 'CANCELLED' && 'bg-rose-50 text-rose-700 border-rose-200'
+                                                )}>
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                {formatDate(order.createdAt)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {deliveryOrders.length === 0 && !loading && (
+                                        <tr><td colSpan={5} className="px-6 py-20 text-center"><p className="text-gray-400 font-medium">No shipment records found</p></td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <PaginationControls
+                            currentPage={doMeta.page}
+                            totalPages={doMeta.totalPages}
+                            onPageChange={(p) => fetchDeliveryOrders(p)}
+                            totalResults={doMeta.total}
+                            limit={doMeta.limit}
+                            className="bg-gray-50/50 border-t border-gray-100"
+                        />
                     </div>
                 </div>
             )}
 
             {/* Invoices Tab */}
             {activeTab === 'invoice' && (
-                <div className="space-y-4">
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-purple-900 mb-2">How to Manage Invoices</h3>
-                        <ul className="text-sm text-purple-700 space-y-1 list-disc list-inside">
-                            <li>Create an <strong>Invoice</strong> for finalized sales and financial record-keeping.</li>
-                            <li>Saving an invoice automatically marks the selected inventory items as <strong>SOLD</strong>.</li>
-                            <li>Professional invoices can be printed or emailed directly from the invoice details view.</li>
-                            <li>Track payment status (Draft, Issued, Paid, Cancelled) to manage receivables.</li>
-                        </ul>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-medium text-gray-900">Invoices (Financial Documents)</h2>
-                        <Link
-                            href="/dashboard/transactions/invoices/new"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            New Invoice
-                        </Link>
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 mb-1">Financial Settlement</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">Finalize sales records, manage receivables, and generate professional PDF invoices. Integrated inventory reconciliation on issuance.</p>
+                            </div>
+                            <Link
+                                href="/dashboard/transactions/invoices/new"
+                                className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Invoice
+                            </Link>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                            <h3 className="text-sm font-bold text-gray-900 mb-3">Search & Filters</h3>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Invoice #, customer name..."
+                                    className="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-emerald-500 shadow-sm transition-all"
+                                    value={invSearch}
+                                    onChange={e => setInvSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                        <ul className="divide-y divide-gray-200">
-                            {invoices.map((inv) => (
-                                <li key={inv.id}>
-                                    <Link href={`/dashboard/transactions/invoices/${inv.id}`} className="block hover:bg-gray-50">
-                                        <div className="px-4 py-4 sm:px-6">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <Receipt className="h-5 w-5 text-gray-400 mr-3" />
-                                                    <p className="text-sm font-medium text-blue-600 truncate">{inv.invoiceNumber}</p>
-                                                </div>
-                                                <div className="ml-2 flex-shrink-0 flex">
-                                                    <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${inv.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' : ''}
-                            ${inv.status === 'ISSUED' ? 'bg-blue-100 text-blue-800' : ''}
-                            ${inv.status === 'PAID' ? 'bg-green-100 text-green-800' : ''}
-                            ${inv.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
-                          `}>
-                                                        {inv.status}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-2 sm:flex sm:justify-between">
-                                                <div className="sm:flex">
-                                                    <p className="flex items-center text-sm text-gray-500">
-                                                        {inv.customerName}
-                                                    </p>
-                                                    {inv.salesRep?.name && (
-                                                        <p className="flex items-center text-sm text-gray-500 sm:ml-6">
-                                                            Rep: <span className="ml-1 text-gray-700 font-medium">{inv.salesRep.name}</span>
-                                                        </p>
-                                                    )}
-                                                    <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                                                        {inv.items.length.toLocaleString()} item(s)
-                                                    </p>
-                                                </div>
-                                                <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                                    <p className="font-semibold text-gray-900">
-                                                        <Currency amount={inv.totalAmount} />
-                                                    </p>
-                                                    <p className="ml-4 text-xs">
-                                                        {formatDate(inv.createdAt)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                            {invoices.length === 0 && !loading && (
-                                <li className="px-4 py-12 text-center text-gray-500">
-                                    No delivery orders yet. Create your first delivery order to track sales.
-                                </li>
-                            )}
-                        </ul>
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-[500px]">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-100">
+                                <thead className="bg-gray-50/50">
+                                    <tr>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={invSort} column="invoiceNumber" label="Document ID" onSort={(k) => handleSort('inv', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={invSort} column="customerName" label="Debtor" onSort={(k) => handleSort('inv', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={invSort} column="status" label="Collection" onSort={(k) => handleSort('inv', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={invSort} column="amount" label="Billing Total" onSort={(k) => handleSort('inv', k)} />
+                                        </th>
+                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            <SortIcon sort={invSort} column="date" label="Billing Date" onSort={(k) => handleSort('inv', k)} />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {loading ? (
+                                        Array.from({ length: 8 }).map((_, i) => (
+                                            <tr key={i} className="animate-pulse">
+                                                <td colSpan={5} className="px-6 py-4"><div className="h-4 bg-gray-50 rounded-lg w-full" /></td>
+                                            </tr>
+                                        ))
+                                    ) : invoices.map((inv) => (
+                                        <tr key={inv.id} className="hover:bg-gray-50/50 transition-all cursor-pointer group" onClick={() => router.push(`/dashboard/transactions/invoices/${inv.id}`)}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 font-mono tracking-tighter uppercase">{inv.invoiceNumber}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-900 uppercase tracking-tight">{inv.customerName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter border",
+                                                    inv.status === 'DRAFT' && 'bg-gray-100 text-gray-700 border-gray-200',
+                                                    inv.status === 'ISSUED' && 'bg-blue-50 text-blue-700 border-blue-200',
+                                                    inv.status === 'PAID' && 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm',
+                                                    inv.status === 'CANCELLED' && 'bg-rose-50 text-rose-700 border-rose-200'
+                                                )}>
+                                                    {inv.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right tabular-nums">
+                                                <Currency amount={inv.totalAmount} />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                {formatDate(inv.createdAt)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {invoices.length === 0 && !loading && (
+                                        <tr><td colSpan={5} className="px-6 py-20 text-center"><p className="text-gray-400 font-medium">No sales documents found</p></td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <PaginationControls
+                            currentPage={invMeta.page}
+                            totalPages={invMeta.totalPages}
+                            onPageChange={(p) => fetchInvoices(p)}
+                            totalResults={invMeta.total}
+                            limit={invMeta.limit}
+                            className="bg-gray-50/50 border-t border-gray-100"
+                        />
                     </div>
                 </div>
             )}
 
             {/* Transaction Log Tab */}
             {activeTab === 'log' && (
-                <div className="space-y-4">
-                    {/* ── Toolbar ── */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
-                        {/* Search + Date range */}
-                        <div className="flex flex-col sm:flex-row gap-3">
+                <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-4">
+                        <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="Search serial, product, notes, performed by…"
-                                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Serial #, product, notes, performed by…"
+                                    className="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all"
                                     value={logSearch}
                                     onChange={e => setLogSearch(e.target.value)}
                                 />
                             </div>
-                            <div className="flex gap-2 items-center text-sm text-gray-500">
-                                <span className="whitespace-nowrap">From</span>
+                            <div className="flex flex-wrap gap-2 items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <Calendar className="w-3.5 h-3.5" />
                                 <input type="date" value={logDateFrom} onChange={e => setLogDateFrom(e.target.value)}
-                                    className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
-                                <span>to</span>
+                                    className="border border-gray-200 rounded-xl px-2 py-1 text-sm font-medium text-gray-700 focus:ring-blue-500 shadow-sm bg-white" />
+                                <span className="mx-1">→</span>
                                 <input type="date" value={logDateTo} onChange={e => setLogDateTo(e.target.value)}
-                                    className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
+                                    className="border border-gray-200 rounded-xl px-2 py-1 text-sm font-medium text-gray-700 focus:ring-blue-500 shadow-sm bg-white" />
                                 <button onClick={() => { setLogDateFrom(''); setLogDateTo(''); setLogSearch(''); setLogType('ALL') }}
-                                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Clear filters">
+                                    className="ml-2 p-2 rounded-xl hover:bg-gray-100 text-gray-400 group transition-all active:rotate-180" title="Clear filters">
                                     <RefreshCw className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Type filter pills */}
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-50">
                             <button
                                 onClick={() => setLogType('ALL')}
-                                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${logType === 'ALL' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                                    }`}
-                            >All ({transactionLogs.length})</button>
-                            {ALL_TYPES.filter(t => transactionLogs.some(l => l.type === t) || logType === t).map(t => {
+                                className={cn(
+                                    "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all",
+                                    logType === 'ALL' ? "bg-gray-900 text-white border-gray-900 shadow-md" : "bg-white text-gray-400 border-gray-100 hover:border-gray-300"
+                                )}
+                            >
+                                All Movements
+                            </button>
+                            {ALL_TYPES.map(t => {
                                 const cfg = getTypeCfg(t)
-                                const count = transactionLogs.filter(l => l.type === t).length
-                                if (count === 0 && logType !== t) return null
                                 return (
                                     <button
                                         key={t}
                                         onClick={() => setLogType(logType === t ? 'ALL' : t)}
-                                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${logType === t ? cfg.badge + ' shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-                                            }`}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5",
+                                            logType === t ? cfg.badge + " border-current shadow-sm" : "bg-white text-gray-400 border-gray-100 hover:border-gray-300"
+                                        )}
                                     >
-                                        {cfg.label} {count > 0 && `(${count})`}
+                                        <cfg.icon className="w-3 h-3" />
+                                        {cfg.label}
                                     </button>
                                 )
                             })}
                         </div>
                     </div>
 
-                    {/* ── Log list  ── */}
-                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                        {logsLoading && (
-                            <div className="p-8 text-center text-sm text-gray-400">Loading…</div>
-                        )}
-                        {!logsLoading && transactionLogs.length === 0 && (
-                            <div className="p-12 text-center text-gray-400">
-                                <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                                <p className="font-medium">No stock movements found</p>
-                                <p className="text-xs mt-1">Try adjusting your search or filters</p>
-                            </div>
-                        )}
-                        {!logsLoading && transactionLogs.length > 0 && (
-                            <div className="divide-y divide-gray-100">
-                                {transactionLogs.map((log) => {
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+                        <div className="bg-gray-50/50 border-b border-gray-100 px-5 py-3 flex gap-4 overflow-x-auto">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase py-1 whitespace-nowrap">Order Archive:</span>
+                            <SortIcon sort={logSort} column="date" label="Timestamp" onSort={(k) => handleSort('log', k)} />
+                            <SortIcon sort={logSort} column="type" label="Movement Type" onSort={(k) => handleSort('log', k)} />
+                            <SortIcon sort={logSort} column="product" label="Asset" onSort={(k) => handleSort('log', k)} />
+                            <SortIcon sort={logSort} column="quantity" label="Impact" onSort={(k) => handleSort('log', k)} />
+                            <SortIcon sort={logSort} column="performedBy" label="Operator" onSort={(k) => handleSort('log', k)} />
+                        </div>
+
+                        <div className="divide-y divide-gray-50 flex-1">
+                            {logsLoading ? (
+                                Array.from({ length: 10 }).map((_, i) => (
+                                    <div key={i} className="px-6 py-6 animate-pulse bg-white border-b border-gray-100">
+                                        <div className="h-4 bg-gray-50 rounded-lg w-full" />
+                                    </div>
+                                ))
+                            ) : transactionLogs.length === 0 ? (
+                                <div className="p-20 text-center text-gray-400 bg-white">
+                                    <Package className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                                    <p className="font-bold uppercase tracking-widest text-[10px]">No movement logs discovered</p>
+                                </div>
+                            ) : (
+                                transactionLogs.map((log) => {
                                     const cfg = getTypeCfg(log.type)
                                     const Icon = cfg.icon
                                     return (
-                                        <div key={log.id} className="flex gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                                            {/* Colored dot + icon */}
-                                            <div className="flex-shrink-0 mt-1">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${cfg.badge} border`}>
-                                                    <Icon className="w-3.5 h-3.5" />
+                                        <div key={log.id} className="flex gap-4 px-6 py-4 hover:bg-gray-50 transition-all group relative overflow-hidden bg-white">
+                                            <div className={cn("absolute left-0 top-0 bottom-0 w-0.5 transition-all opacity-0 group-hover:opacity-100", cfg.dot.replace('bg-', 'bg-'))} />
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm transition-transform group-hover:scale-110 duration-300", cfg.badge)}>
+                                                    <Icon className="w-5 h-5" />
                                                 </div>
                                             </div>
 
-                                            {/* Main content */}
                                             <div className="flex-1 min-w-0">
-                                                {/* Row 1: type badge + datetime */}
-                                                <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.badge}`}>
+                                                <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+                                                    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-widest", cfg.badge)}>
                                                         {cfg.label}
                                                     </span>
-                                                    <span className="text-xs text-gray-400 flex-shrink-0">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                                         {new Date(log.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
 
-                                                {/* Row 2: product name */}
                                                 {(log.product?.name || log.notes) && (
-                                                    <p className="mt-1 text-sm font-medium text-gray-900 truncate">
-                                                        {log.product?.name ?? ''}
-                                                        {log.product?.sku && <span className="ml-2 text-[10px] font-mono text-gray-400">{log.product.sku}</span>}
+                                                    <p className="text-sm font-bold text-gray-900 mb-1.5 flex items-center gap-2">
+                                                        <span className="truncate">{log.product?.name ?? ''}</span>
+                                                        {log.product?.sku && <span className="px-1.5 bg-gray-100 rounded text-[9px] font-bold text-gray-400 font-mono">#{log.product.sku}</span>}
                                                     </p>
                                                 )}
 
-                                                {/* Row 3: key facts inline */}
-                                                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                                                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-bold uppercase tracking-tight text-gray-500">
                                                     {log.serialNumber && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Hash className="w-3 h-3 text-gray-400" />
-                                                            <span className="font-mono text-gray-700">{log.serialNumber}</span>
+                                                        <span className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
+                                                            <Hash className="w-3 h-3" />
+                                                            <span className="font-mono">{log.serialNumber}</span>
                                                         </span>
                                                     )}
                                                     {log.quantity > 0 && (
-                                                        <span className="flex items-center gap-1">
+                                                        <span className="flex items-center gap-1.5">
                                                             <Layers className="w-3 h-3 text-gray-400" />
-                                                            Qty: <strong>{log.quantity}</strong>
-                                                        </span>
-                                                    )}
-                                                    {log.unitCost != null && log.unitCost > 0 && (
-                                                        <span className="flex items-center gap-1">
-                                                            <DollarSign className="w-3 h-3 text-gray-400" />
-                                                            <Currency amount={log.unitCost} className="text-xs font-medium text-gray-700" />
+                                                            Qty <span className="text-gray-900 font-extrabold">{log.quantity}</span>
                                                         </span>
                                                     )}
                                                     {(log.fromLocation || log.toLocation) && (
-                                                        <span className="flex items-center gap-1">
+                                                        <span className="flex items-center gap-1.5">
                                                             <MapPin className="w-3 h-3 text-gray-400" />
-                                                            {log.fromLocation && <span className="text-gray-600">{log.fromLocation}</span>}
-                                                            {log.fromLocation && log.toLocation && <ArrowRight className="w-3 h-3 text-gray-400" />}
-                                                            {log.toLocation && <span className="font-medium text-gray-700">{log.toLocation}</span>}
+                                                            <span className="text-gray-400">{log.fromLocation || 'Outside'}</span>
+                                                            <ArrowRight className="w-3 h-3 text-gray-300" />
+                                                            <span className="text-gray-900 font-extrabold">{log.toLocation || 'Removed'}</span>
                                                         </span>
                                                     )}
-                                                    {log.referenceType && log.referenceId && (
-                                                        <span className="flex items-center gap-1 text-gray-400">
-                                                            Ref: <span className="font-mono">{log.referenceType}:{log.referenceId.slice(-8).toUpperCase()}</span>
+                                                    {log.referenceId && (
+                                                        <span className="flex items-center gap-1.5 text-gray-400 truncate max-w-[150px]">
+                                                            <FileText className="w-3 h-3" />
+                                                            {log.referenceType}:{log.referenceId.slice(-6).toUpperCase()}
                                                         </span>
                                                     )}
                                                     {log.performedBy && (
-                                                        <span className="flex items-center gap-1">
+                                                        <span className="flex items-center gap-1.5 text-gray-900">
                                                             <User className="w-3 h-3 text-gray-400" />
                                                             {log.performedBy}
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                {/* Row 4: notes (if any, gray, small) */}
                                                 {log.notes && (
-                                                    <p className="mt-1.5 text-xs text-gray-400 italic leading-snug line-clamp-2">{log.notes}</p>
+                                                    <div className="mt-2 text-[10px] text-gray-400 italic bg-gray-50/50 p-2 rounded-xl border border-gray-100/50 line-clamp-1 group-hover:line-clamp-none transition-all">
+                                                        "{log.notes}"
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
                                     )
-                                })}
-                            </div>
-                        )}
-                        {/* Footer */}
-                        {!logsLoading && transactionLogs.length >= 300 && (
-                            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-400 text-center">
-                                Showing most recent 300 entries. Use filters to narrow results.
-                            </div>
-                        )}
+                                })
+                            )}
+                        </div>
+
+                        <PaginationControls
+                            currentPage={logMeta.page}
+                            totalPages={logMeta.totalPages}
+                            onPageChange={(p) => fetchTransactionLogs(p)}
+                            totalResults={logMeta.total}
+                            limit={logMeta.limit}
+                            className="bg-gray-50/50 border-t border-gray-100"
+                        />
                     </div>
                 </div>
             )}

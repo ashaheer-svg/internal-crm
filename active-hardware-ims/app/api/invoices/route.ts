@@ -3,16 +3,63 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await requireAuth() // Require authentication
+        const { searchParams } = new URL(request.url)
+        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
+
+        const where: any = {}
+        if (search) {
+            where.OR = [
+                { invoiceNumber: { contains: search, mode: 'insensitive' } },
+                { customerName: { contains: search, mode: 'insensitive' } },
+                { customerEmail: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+
+        const orderBy: any = {}
+        if (sortKey === 'date') orderBy.createdAt = sortDir
+        else if (sortKey === 'amount') orderBy.totalAmount = sortDir
+        else orderBy[sortKey] = sortDir
+
+        const include = {
+            items: true,
+            salesRep: true
+        }
+
+        if (page && limit) {
+            const skip = (page - 1) * limit
+            const [invoices, total] = await Promise.all([
+                prisma.invoice.findMany({
+                    where,
+                    orderBy,
+                    skip,
+                    take: limit,
+                    include
+                }),
+                prisma.invoice.count({ where })
+            ])
+            return NextResponse.json({
+                invoices,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            })
+        }
 
         const invoices = await prisma.invoice.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: {
-                items: true,
-                salesRep: true
-            }
+            where,
+            orderBy,
+            include
         })
         return NextResponse.json(invoices)
     } catch (error: any) {

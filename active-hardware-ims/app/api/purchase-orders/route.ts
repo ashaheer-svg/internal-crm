@@ -7,6 +7,11 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const productId = searchParams.get('productId')
         const status = searchParams.get('status')
+        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
 
         const where: any = {}
         if (productId) {
@@ -17,17 +22,54 @@ export async function GET(request: Request) {
         if (status) {
             where.status = { in: status.split(',') }
         }
+        if (search) {
+            where.OR = [
+                { poNumber: { contains: search, mode: 'insensitive' } },
+                { supplier: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+
+        const orderBy: any = {}
+        if (sortKey === 'date') orderBy.createdAt = sortDir
+        else if (sortKey === 'amount') orderBy.totalAmount = sortDir
+        else orderBy[sortKey] = sortDir
+
+        const include = {
+            items: {
+                include: {
+                    product: true
+                }
+            }
+        }
+
+        if (page && limit) {
+            const skip = (page - 1) * limit
+            const [purchaseOrders, total] = await Promise.all([
+                prisma.purchaseOrder.findMany({
+                    where,
+                    orderBy,
+                    skip,
+                    take: limit,
+                    include
+                }),
+                prisma.purchaseOrder.count({ where })
+            ])
+            return NextResponse.json({
+                purchaseOrders,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            })
+        }
 
         const purchaseOrders = await prisma.purchaseOrder.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                items: {
-                    include: {
-                        product: true
-                    }
-                }
-            }
+            orderBy,
+            include
         })
         return NextResponse.json(purchaseOrders)
     } catch (error) {

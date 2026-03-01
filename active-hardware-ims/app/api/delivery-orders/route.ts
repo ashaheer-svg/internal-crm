@@ -8,42 +8,114 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status')
         const includeInactive = searchParams.get('includeInactive') === 'true'
+        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
+        const buildType = searchParams.get('buildType') // 'ALL', 'HARDWARE', 'SERVICE'
 
         const where: any = includeInactive ? {} : { isActive: true }
+
         if (status) {
-            where.status = status
+            if (status.includes(',')) {
+                where.status = { in: status.split(',') }
+            } else {
+                where.status = status
+            }
+        }
+
+        if (buildType === 'SERVICE') {
+            where.items = {
+                some: {
+                    product: {
+                        serviceDefinitionId: { not: null }
+                    }
+                }
+            }
+        } else if (buildType === 'HARDWARE') {
+            where.items = {
+                none: {
+                    product: {
+                        serviceDefinitionId: { not: null }
+                    }
+                }
+            }
+        }
+
+        if (search) {
+            where.OR = [
+                { orderNumber: { contains: search, mode: 'insensitive' } },
+                { customerName: { contains: search, mode: 'insensitive' } },
+                { endCustomerName: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+            ]
+        }
+
+        const orderBy: any = {}
+        if (sortKey === 'date') orderBy.createdAt = sortDir
+        else if (sortKey === 'amount') orderBy.invoiceValue = sortDir
+        else orderBy[sortKey] = sortDir
+
+        const include = {
+            items: {
+                include: {
+                    product: {
+                        include: {
+                            serviceDefinition: true
+                        }
+                    }
+                }
+            },
+            salesRep: true
+        }
+
+        // Always include count if pagination is requested or if it's the build queue
+        if (page && limit) {
+            const skip = (page - 1) * limit
+            const [orders, total] = await Promise.all([
+                prisma.deliveryOrder.findMany({
+                    where,
+                    orderBy,
+                    skip,
+                    take: limit,
+                    include
+                }),
+                prisma.deliveryOrder.count({ where })
+            ])
+
+            const safeOrders = orders.map((order: any) => ({
+                ...order,
+                hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinitionId),
+                _count: { items: order.items?.length || 0 }
+            }))
+
+            return NextResponse.json({
+                deliveryOrders: safeOrders,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            })
         }
 
         const orders = await prisma.deliveryOrder.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                // _count: {
-                //    select: { items: true }
-                // }
-                items: {
-                    include: {
-                        product: {
-                            include: {
-                                serviceDefinition: true
-                            }
-                        }
-                    }
-                },
-                salesRep: true
-            }
+            orderBy,
+            include
         })
 
-        // Manual map to safe structure
         const safeOrders = orders.map((order: any) => ({
             ...order,
+            hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinitionId),
             _count: { items: order.items?.length || 0 }
         }))
 
         return NextResponse.json(safeOrders)
     } catch (error: any) {
         console.error("Error fetching Delivery Orders:", error)
-        console.error("Error Stack:", error.stack)
         return NextResponse.json(
             { error: error.message || 'Failed to fetch delivery orders' },
             { status: 500 }

@@ -123,64 +123,127 @@ export async function activateServiceContract(data: {
 }
 
 // 3. Expiration Logic
-export async function getExpiringContracts(daysThreshold: number = 30) {
+export async function getExpiringContracts(options?: { daysThreshold?: number, page?: number, limit?: number }) {
+    const daysThreshold = options?.daysThreshold || 30;
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const skip = (page - 1) * limit;
+
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
 
-    return db.serviceContract.findMany({
-        where: {
-            status: ContractStatus.ACTIVE,
-            isDeleted: false,
-            endDate: {
-                lte: thresholdDate,
-                gte: new Date() // Not already expired
-            }
-        },
-        include: {
-            customer: true,
-            product: true
-        },
-        orderBy: {
-            endDate: 'asc'
+    const where = {
+        status: ContractStatus.ACTIVE,
+        isDeleted: false,
+        endDate: {
+            lte: thresholdDate,
+            gte: new Date() // Not already expired
         }
-    });
+    };
+
+    const [contracts, total] = await Promise.all([
+        db.serviceContract.findMany({
+            where,
+            include: {
+                customer: true,
+                product: true
+            },
+            orderBy: {
+                endDate: 'asc'
+            },
+            skip,
+            take: limit
+        }),
+        db.serviceContract.count({ where })
+    ]);
+
+    return {
+        contracts,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    };
 }
 
-export async function getActiveContracts() {
-    return db.serviceContract.findMany({
-        where: {
-            status: ContractStatus.ACTIVE,
-            isDeleted: false
-        },
-        include: {
-            customer: true,
-            product: true,
-            partner: true
-        },
-        orderBy: {
-            createdAt: 'desc'
-        },
-        take: 200 // Safety limit — add server-side pagination if list exceeds this
-    });
+export async function getActiveContracts(options?: { page?: number, limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const where = {
+        status: ContractStatus.ACTIVE,
+        isDeleted: false
+    };
+
+    const [contracts, total] = await Promise.all([
+        db.serviceContract.findMany({
+            where,
+            include: {
+                customer: true,
+                product: true,
+                partner: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            },
+            skip,
+            take: limit
+        }),
+        db.serviceContract.count({ where })
+    ]);
+
+    return {
+        contracts,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    };
 }
 
-export async function getAllRentals() {
-    return db.rentalAsset.findMany({
-        where: {
-            isDeleted: false
-        },
-        include: {
-            product: true,
-            currentContract: {
-                include: {
-                    customer: true
+export async function getAllRentals(options?: { page?: number, limit?: number }) {
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const where = {
+        isDeleted: false
+    };
+
+    const [assets, total] = await Promise.all([
+        db.rentalAsset.findMany({
+            where,
+            include: {
+                product: true,
+                currentContract: {
+                    include: {
+                        customer: true
+                    }
                 }
-            }
-        },
-        orderBy: {
-            status: 'asc' // AVAILABLE first
+            },
+            orderBy: {
+                status: 'asc' // AVAILABLE first
+            },
+            skip,
+            take: limit
+        }),
+        db.rentalAsset.count({ where })
+    ]);
+
+    return {
+        assets,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
         }
-    });
+    };
 }
 
 // 4. Renewal Workflow

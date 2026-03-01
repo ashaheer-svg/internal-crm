@@ -4,6 +4,79 @@ import { requireAuth } from '@/lib/auth'
 import { activateServiceContract } from '@/lib/service-manager'
 import { logCreate } from '@/lib/audit'
 
+export async function GET(request: Request) {
+    try {
+        await requireAuth()
+        const { searchParams } = new URL(request.url)
+        const type = searchParams.get('type') // 'expiring' or 'active'
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '10')
+        const search = searchParams.get('search')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
+        const daysThreshold = parseInt(searchParams.get('daysThreshold') || '60')
+
+        const skip = (page - 1) * limit
+        const where: any = { isDeleted: false, status: 'ACTIVE' }
+
+        if (type === 'expiring') {
+            const thresholdDate = new Date()
+            thresholdDate.setDate(thresholdDate.getDate() + daysThreshold)
+            where.endDate = {
+                lte: thresholdDate,
+                gte: new Date()
+            }
+        }
+
+        if (search) {
+            where.OR = [
+                { contractNumber: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { customer: { name: { contains: search, mode: 'insensitive' } } },
+                { partner: { name: { contains: search, mode: 'insensitive' } } },
+                { product: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+        }
+
+        const orderBy: any = {}
+        if (sortKey === 'customer') orderBy.customer = { name: sortDir }
+        else if (sortKey === 'product') orderBy.product = { name: sortDir }
+        else if (sortKey === 'expiry') orderBy.endDate = sortDir
+        else orderBy[sortKey] = sortDir
+
+        const [contracts, total] = await Promise.all([
+            prisma.serviceContract.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    customer: true,
+                    product: true,
+                    partner: true
+                },
+                orderBy
+            }),
+            prisma.serviceContract.count({ where })
+        ])
+
+        return NextResponse.json({
+            contracts,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        })
+    } catch (error: any) {
+        console.error('Error fetching service contracts:', error)
+        return NextResponse.json(
+            { error: error.message || 'Failed to fetch service contracts' },
+            { status: 500 }
+        )
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const user = await requireAuth()

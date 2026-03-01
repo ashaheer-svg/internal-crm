@@ -6,9 +6,12 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const type = searchParams.get('type') || null
         const search = searchParams.get('search') || ''
+        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
         const limit = Number(searchParams.get('limit')) || 200
         const dateFrom = searchParams.get('dateFrom')
         const dateTo = searchParams.get('dateTo')
+        const sortKey = searchParams.get('sortKey') || 'createdAt'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
 
         const where: any = {}
 
@@ -18,11 +21,11 @@ export async function GET(request: Request) {
 
         if (search) {
             where.OR = [
-                { serialNumber: { contains: search } },
-                { performedBy: { contains: search } },
-                { notes: { contains: search } },
-                { referenceId: { contains: search } },
-                { referenceType: { contains: search } },
+                { serialNumber: { contains: search, mode: 'insensitive' } },
+                { performedBy: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+                { referenceId: { contains: search, mode: 'insensitive' } },
+                { referenceType: { contains: search, mode: 'insensitive' } },
             ]
         }
 
@@ -33,11 +36,34 @@ export async function GET(request: Request) {
             }
         }
 
-        const logs = await prisma.transactionLog.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-        })
+        const orderBy: any = {}
+        if (sortKey === 'date') orderBy.createdAt = sortDir
+        else if (sortKey === 'quantity') orderBy.quantity = sortDir
+        else orderBy[sortKey] = sortDir
+
+        let logs;
+        let total = 0;
+
+        if (page && limit) {
+            const skip = (page - 1) * limit
+            const [results, count] = await Promise.all([
+                prisma.transactionLog.findMany({
+                    where,
+                    orderBy,
+                    skip,
+                    take: limit,
+                }),
+                prisma.transactionLog.count({ where })
+            ])
+            logs = results
+            total = count
+        } else {
+            logs = await prisma.transactionLog.findMany({
+                where,
+                orderBy,
+                take: limit,
+            })
+        }
 
         // Enrich with product names — TransactionLog has productId as a plain string (no Prisma relation)
         const productIds = [...new Set(logs.map(l => l.productId).filter(Boolean))] as string[]
@@ -55,6 +81,18 @@ export async function GET(request: Request) {
             ...log,
             product: log.productId ? (productMap[log.productId] ?? null) : null
         }))
+
+        if (page && limit) {
+            return NextResponse.json({
+                logs: enriched,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            })
+        }
 
         return NextResponse.json(enriched)
     } catch (error) {

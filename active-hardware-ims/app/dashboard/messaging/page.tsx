@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Mail,
     Send,
@@ -17,10 +17,13 @@ import {
     Users as UsersIcon,
     Calendar,
     ChevronRight,
-    MessageSquare
+    MessageSquare,
+    ChevronUp,
+    ChevronDown
 } from "lucide-react"
-import { formatDateTime } from "@/lib/utils"
-import { cn } from "@/lib/utils"
+import { formatDateTime, cn } from "@/lib/utils"
+import SortIcon from "@/components/SortIcon"
+import PaginationControls from "@/components/PaginationControls"
 
 type Message = {
     id: string
@@ -52,14 +55,17 @@ type Message = {
 
 export default function MessagingPage() {
     const [messages, setMessages] = useState<Message[]>([])
+    const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 10, totalPages: 0 })
     const [loading, setLoading] = useState(true)
     const [tab, setTab] = useState<'inbox' | 'sent' | 'admin'>('inbox')
     const [searchQuery, setSearchQuery] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('ALL')
     const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false)
     const [currentUser, setCurrentUser] = useState<any>(null)
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+    const [sort, setSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
     // Resolution state
     const [resolutionComment, setResolutionComment] = useState('')
@@ -76,24 +82,40 @@ export default function MessagingPage() {
         fetchCurrentUser()
     }, [])
 
+    // Debounce search
     useEffect(() => {
-        fetchMessages()
-    }, [tab])
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async (page: number = 1) => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/messaging?type=${tab}`)
+            const params = new URLSearchParams({
+                type: tab,
+                page: page.toString(),
+                limit: '10',
+                search: debouncedSearch,
+                sortKey: sort.key,
+                sortDir: sort.direction,
+                category: categoryFilter
+            })
+            const res = await fetch(`/api/messaging?${params}`)
             if (res.ok) {
                 const data = await res.json()
                 setMessages(data.messages)
+                setMeta(data.meta || { total: data.messages.length, page: 1, limit: 10, totalPages: 1 })
             }
         } catch (error) {
             console.error('Failed to fetch messages:', error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [tab, debouncedSearch, sort, categoryFilter])
+
+    useEffect(() => {
+        fetchMessages()
+    }, [fetchMessages])
 
     const handleReadMessage = async (messageId: string) => {
         try {
@@ -157,12 +179,9 @@ export default function MessagingPage() {
         }
     }
 
-    const counts = {
-        total: messages.length,
-        unread: messages.filter(m => tab === 'inbox' && !m.receipts.find(r => r.userId === currentUser?.id)?.viewedAt).length,
-        urgent: messages.filter(m => m.priority === 'URGENT').length,
-        tasks: messages.filter(m => m.category === 'TASK').length
-    }
+    const unreadCount = messages.filter(m => tab === 'inbox' && !m.receipts.find((r: any) => r.userId === currentUser?.id)?.viewedAt).length
+    const urgentCount = messages.filter(m => m.priority === 'URGENT').length
+    const taskCount = messages.filter(m => m.category === 'TASK').length
 
     const toggleExpand = (id: string, isUnread: boolean) => {
         const newExpanded = new Set(expandedIds)
@@ -175,17 +194,12 @@ export default function MessagingPage() {
         setExpandedIds(newExpanded)
     }
 
-    const sortedMessages = [...messages].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-
-    const filteredMessages = sortedMessages.filter(m => {
-        const matchesSearch = m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            m.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (m.sender?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = categoryFilter === 'ALL' || m.category === categoryFilter
-        return matchesSearch && matchesCategory
-    })
+    const handleSort = (key: string) => {
+        setSort(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }))
+    }
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -231,10 +245,10 @@ export default function MessagingPage() {
             {/* Summary Bar */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Messages', count: counts.total, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Unread', count: counts.unread, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: 'Urgent', count: counts.urgent, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-                    { label: 'Tasks', count: counts.tasks, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { label: 'Total Messages', count: meta.total, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50' },
+                    { label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+                    { label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((stat, idx) => (
                     <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
                         <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
@@ -274,6 +288,12 @@ export default function MessagingPage() {
                         )}
                     </div>
 
+                    <div className="flex gap-1">
+                        <SortIcon sort={sort} column="date" label="Date" onSort={handleSort} />
+                        <SortIcon sort={sort} column="priority" label="Priority" onSort={handleSort} />
+                        <SortIcon sort={sort} column="category" label="Type" onSort={handleSort} />
+                    </div>
+
                     <div className="flex flex-col md:flex-row gap-3">
                         <select
                             value={categoryFilter}
@@ -306,7 +326,7 @@ export default function MessagingPage() {
                             <Clock className="w-8 h-8 animate-spin text-blue-500" />
                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Hydrating Inbox...</p>
                         </div>
-                    ) : filteredMessages.length === 0 ? (
+                    ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center p-20 text-center">
                             <div className="p-4 bg-gray-50 rounded-full mb-3">
                                 <MessageSquare className="w-8 h-8 text-gray-300" />
@@ -315,8 +335,8 @@ export default function MessagingPage() {
                             <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or search terms</p>
                         </div>
                     ) : (
-                        filteredMessages.map((m) => {
-                            const userReceipt = m.receipts.find(r => r.userId === currentUser?.id)
+                        messages.map((m: any) => {
+                            const userReceipt = m.receipts.find((r: any) => r.userId === currentUser?.id)
                             const isUnread = tab === 'inbox' && !userReceipt?.viewedAt
                             const isDone = userReceipt?.isDone
                             const isExpanded = expandedIds.has(m.id)
@@ -391,7 +411,7 @@ export default function MessagingPage() {
                                                             Files & Attachments
                                                         </h4>
                                                         <div className="flex flex-wrap gap-3">
-                                                            {m.attachments.map(att => (
+                                                            {m.attachments.map((att: any) => (
                                                                 <a
                                                                     key={att.id}
                                                                     href={att.filePath}
@@ -419,7 +439,7 @@ export default function MessagingPage() {
                                                         Recipient Progress
                                                     </h4>
                                                     <div className="space-y-3">
-                                                        {m.receipts.map(receipt => (
+                                                        {m.receipts.map((receipt: any) => (
                                                             <div key={receipt.userId} className="flex items-start gap-4 text-sm bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
                                                                 <div className="p-2 bg-white rounded-xl border border-gray-100 shadow-sm">
                                                                     <User className="w-4 h-4 text-gray-400" />
@@ -483,6 +503,14 @@ export default function MessagingPage() {
                         })
                     )}
                 </div>
+                <PaginationControls
+                    currentPage={meta.page}
+                    totalPages={meta.totalPages}
+                    onPageChange={(p) => fetchMessages(p)}
+                    totalResults={meta.total}
+                    limit={meta.limit}
+                    className="bg-gray-50/50 border-t border-gray-100"
+                />
             </div>
 
             {isNewMessageModalOpen && (
@@ -503,7 +531,6 @@ export default function MessagingPage() {
         </div>
     )
 }
-
 
 function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
     const [users, setUsers] = useState<any[]>([])

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, ChevronUp, ChevronDown } from "lucide-react"
 import BackButton from "@/components/BackButton"
 
 type ServiceProduct = {
@@ -28,6 +28,7 @@ export default function ServiceCatalogPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [showInactive, setShowInactive] = useState(false)
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'sku', direction: 'asc' })
     const itemsPerPage = 20
 
     useEffect(() => {
@@ -41,10 +42,44 @@ export default function ServiceCatalogPage() {
             product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        ).sort((a, b) => {
+            if (!sortConfig) return 0
+            const aValue = getSortValue(a, sortConfig.key)
+            const bValue = getSortValue(b, sortConfig.key)
+            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
+            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+            return 0
+        })
         setFilteredProducts(filtered)
         setCurrentPage(1)
-    }, [searchTerm, products])
+    }, [searchTerm, products, sortConfig])
+
+    function getSortValue(product: ServiceProduct, key: string) {
+        switch (key) {
+            case 'sku': return product.sku.toLowerCase()
+            case 'name': return product.name.toLowerCase()
+            case 'type': return (product.serviceDefinition?.type || 'SERVICE').toLowerCase()
+            case 'duration': return product.serviceDefinition?.durationValue || 0
+            case 'billing': return (product.serviceDefinition?.billingCycle || 'Manual').toLowerCase()
+            case 'status': return product.isActive ? 1 : 0
+            default: return 0
+        }
+    }
+
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc'
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc'
+        }
+        setSortConfig({ key, direction })
+    }
+
+    const SortIcon = ({ column }: { column: string }) => {
+        if (!sortConfig || sortConfig.key !== column) return <div className="w-4 h-4 ml-1 inline-block" />
+        return sortConfig.direction === 'asc'
+            ? <ChevronUp className="w-4 h-4 ml-1 inline-block text-blue-600" />
+            : <ChevronDown className="w-4 h-4 ml-1 inline-block text-blue-600" />
+    }
 
     async function fetchProducts() {
         try {
@@ -136,12 +171,54 @@ export default function ServiceCatalogPage() {
                             <table className="min-w-full divide-y divide-gray-300">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">SKU</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Package Name</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Duration</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Billing</th>
-                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                        <th
+                                            scope="col"
+                                            className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('sku')}
+                                        >
+                                            SKU
+                                            <SortIcon column="sku" />
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('name')}
+                                        >
+                                            Package Name
+                                            <SortIcon column="name" />
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('type')}
+                                        >
+                                            Type
+                                            <SortIcon column="type" />
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('duration')}
+                                        >
+                                            Duration
+                                            <SortIcon column="duration" />
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('billing')}
+                                        >
+                                            Billing
+                                            <SortIcon column="billing" />
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('status')}
+                                        >
+                                            Status
+                                            <SortIcon column="status" />
+                                        </th>
                                         <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                             <span className="sr-only">Edit</span>
                                         </th>
