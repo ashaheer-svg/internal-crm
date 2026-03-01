@@ -15,6 +15,7 @@ import {
     Truck,
     AlertCircle
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
 import CRMActivityFeed from '@/components/crm/CRMActivityFeed'
 import CRMTaskSection from '@/components/crm/CRMTaskSection'
@@ -48,6 +49,8 @@ interface ProjectData {
     activities: any[]
     quotes: any[]
     tasks: any[]
+    estimatedGP?: number
+    estimatedMargin?: number
 }
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -158,6 +161,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 <Calendar className="w-4 h-4 mr-1" />
                                 Target: {project.targetDate ? new Date(project.targetDate).toLocaleDateString() : 'N/A'}
                             </span>
+                            {project.estimatedGP !== undefined && (
+                                <span className={cn(
+                                    "flex items-center text-sm px-2 py-0.5 rounded-full border border-opacity-50 font-bold",
+                                    project.estimatedGP >= 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+                                )}>
+                                    GP: {formatCurrency(project.estimatedGP, project.currency)} ({project.estimatedMargin?.toFixed(1)}%)
+                                </span>
+                            )}
                             {project.expectedCloseDate && (
                                 <span className="flex items-center text-sm text-blue-600 font-medium">
                                     <Clock className="w-4 h-4 mr-1" />
