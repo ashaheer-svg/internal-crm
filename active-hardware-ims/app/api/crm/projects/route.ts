@@ -150,33 +150,62 @@ export async function GET(request: Request) {
             prisma.cRMProject.count({ where })
         ])
 
-        // Calculate Estimated GP for projects with approved quotes
-        const projects = await Promise.all(projectsRaw.map(async (project: any) => {
+        // 1. Collect all unique Product IDs from all projects on the page
+        const uniqueProductIds = new Set<string>()
+        projectsRaw.forEach((p: any) => {
+            const q = p.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED' || q.deliveryOrder)
+            q?.items.forEach((i: any) => {
+                if (i.productId) uniqueProductIds.add(i.productId)
+            })
+        })
+
+        const productIds = Array.from(uniqueProductIds)
+        const costLookup: Record<string, number> = {}
+
+        if (productIds.length > 0) {
+            // 2. Batch Fetch Average Inventory Costs
+            const avgInventoryCosts = await prisma.inventoryItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds }, status: 'AVAILABLE' },
+                _avg: { unitCost: true }
+            })
+
+            avgInventoryCosts.forEach(c => {
+                if (c.productId && c._avg.unitCost !== null) {
+                    costLookup[c.productId] = c._avg.unitCost
+                }
+            })
+
+            // 3. Batch Fetch Latest PO Costs for products not in inventory lookup
+            const missingCostProductIds = productIds.filter(id => costLookup[id] === undefined)
+            if (missingCostProductIds.length > 0) {
+                // Fetch latest PO item for each missing product
+                // Note: Prisma findMany distinct/orderBy has limitations, so we use Promise.all for these specific IDs
+                // On a single page, this is usually a small number of lookups
+                const latestPOCosts = await Promise.all(missingCostProductIds.map(async (productId) => {
+                    const lastPOItem = await prisma.purchaseOrderItem.findFirst({
+                        where: { productId },
+                        orderBy: { createdAt: 'desc' },
+                        select: { productId: true, unitCost: true }
+                    })
+                    return lastPOItem
+                }))
+
+                latestPOCosts.forEach(p => {
+                    if (p) costLookup[p.productId] = p.unitCost
+                })
+            }
+        }
+
+        // 4. Calculate Estimated GP for projects using the costLookup map
+        const projects = projectsRaw.map((project: any) => {
             const acceptedQuote = project.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED' || q.deliveryOrder)
             if (!acceptedQuote || !acceptedQuote.items.length) return project
 
             let totalEstimatedCost = 0
             for (const item of acceptedQuote.items) {
                 if (!item.productId) continue
-
-                // 1. Try average cost from inventory
-                const avgInventoryCost = await prisma.inventoryItem.aggregate({
-                    where: { productId: item.productId, status: 'AVAILABLE' },
-                    _avg: { unitCost: true }
-                })
-
-                let unitCost = avgInventoryCost._avg.unitCost
-
-                // 2. Fallback to latest purchase order cost
-                if (!unitCost) {
-                    const lastPOItem = await prisma.purchaseOrderItem.findFirst({
-                        where: { productId: item.productId },
-                        orderBy: { createdAt: 'desc' },
-                        select: { unitCost: true }
-                    })
-                    unitCost = lastPOItem?.unitCost || 0
-                }
-
+                const unitCost = costLookup[item.productId] || 0
                 totalEstimatedCost += (unitCost * item.quantity)
             }
 
@@ -188,7 +217,7 @@ export async function GET(request: Request) {
                 estimatedGP,
                 estimatedMargin
             }
-        }))
+        })
 
         return NextResponse.json({
             projects,

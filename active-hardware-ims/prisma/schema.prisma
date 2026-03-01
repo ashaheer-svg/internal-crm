@@ -261,9 +261,10 @@ model InventoryItem {
   warrantyClaims WarrantyClaim[]
   reservations   Reservation[]
 
-  // Delivery Order Reservation
   deliveryOrderItemId String?
   deliveryOrderItem   DeliveryOrderItem? @relation(fields: [deliveryOrderItemId], references: [id])
+
+  @@index([productId, status])
 }
 
 model Reservation {
@@ -349,6 +350,8 @@ model PurchaseOrderItem {
   totalCost       Float
   receivedQty     Int           @default(0)
   createdAt       DateTime      @default(now())
+
+  @@index([productId, createdAt])
 }
 
 model Invoice {
