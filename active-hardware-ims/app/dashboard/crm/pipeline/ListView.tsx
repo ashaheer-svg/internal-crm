@@ -199,8 +199,17 @@ export default function ListView({
                 {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="p-6 space-y-3 animate-pulse">
-                            <div className="h-4 bg-gray-50 rounded w-1/4"></div>
-                            <div className="h-4 bg-gray-50 rounded w-1/2"></div>
+                            <div className="grid grid-cols-12 gap-4">
+                                <div className="col-span-8 h-4 bg-gray-50 rounded"></div>
+                                <div className="col-span-2 h-4 bg-gray-50 rounded"></div>
+                                <div className="col-span-2 h-4 bg-gray-50 rounded"></div>
+                            </div>
+                            <div className="grid grid-cols-12 gap-4">
+                                <div className="col-span-4 h-3 bg-gray-50 rounded"></div>
+                                <div className="col-span-3 h-3 bg-gray-50 rounded"></div>
+                                <div className="col-span-3 h-3 bg-gray-50 rounded"></div>
+                                <div className="col-span-2 h-3 bg-gray-50 rounded"></div>
+                            </div>
                         </div>
                     ))
                 ) : projects.length === 0 ? (
@@ -213,15 +222,16 @@ export default function ListView({
                         <div
                             key={project.id}
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
-                            className="p-4 sm:p-6 hover:bg-gray-50 transition-all cursor-pointer group flex flex-col gap-3"
+                            className="p-4 sm:px-6 sm:py-5 hover:bg-gray-50 transition-all cursor-pointer group flex flex-col gap-4"
                         >
-                            {/* Line 1: Identity & Transactional Info */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <span className="text-xs font-bold text-gray-400 font-mono tracking-tight flex-shrink-0 bg-gray-50 px-2 py-1 rounded">
+                            {/* Row 1: Primary Identity & Transactional Info (Grid) */}
+                            <div className="grid grid-cols-12 gap-4 items-center">
+                                {/* Code & Title - Col 1-8 */}
+                                <div className="col-span-12 lg:col-span-8 flex items-center gap-3 min-w-0">
+                                    <span className="text-xs font-bold text-gray-400 font-mono tracking-tight flex-shrink-0 bg-gray-50 px-2 py-1 rounded border border-gray-100">
                                         {project.projectCode}
                                     </span>
-                                    <div className="flex items-center gap-2 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
                                         <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={project.title}>
                                             {project.title}
                                         </h3>
@@ -231,91 +241,100 @@ export default function ListView({
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4 flex-shrink-0 justify-between sm:justify-end">
-                                    <div className="text-right">
-                                        <div className="text-sm font-bold text-gray-900 tabular-nums">
-                                            {formatCurrency(project.expectedValue, project.currency)}
-                                        </div>
+                                {/* Financials - Col 9-10 */}
+                                <div className="col-span-6 lg:col-span-2 lg:text-right">
+                                    <div className="text-sm font-bold text-gray-900 tabular-nums">
+                                        {formatCurrency(project.expectedValue, project.currency)}
                                     </div>
+                                    <div className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none mt-1">Expected Value</div>
+                                </div>
 
-                                    {/* Stage / Status Label */}
-                                    <div className="w-[120px] sm:w-[140px] flex justify-end">
-                                        {(() => {
-                                            const quotes = project.quotes || []
-                                            const doStatusPriority: Record<string, number> = {
-                                                COMPLETED: 6,
-                                                BUILDING: 5,
-                                                READY_FOR_BUILD: 4,
-                                                CONFIRMED: 3,
-                                                DRAFT: 2,
-                                                CANCELLED: 0
-                                            }
-                                            const allDOs = quotes.map(q => q.deliveryOrder).filter(Boolean) as { orderNumber?: string; status: string }[]
-                                            const activeDO = allDOs.filter(d => d.status !== 'CANCELLED').sort((a, b) => (doStatusPriority[b.status] ?? 0) - (doStatusPriority[a.status] ?? 0))[0]
-                                            const hasAccepted = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
+                                {/* Stage / Status - Col 11-12 */}
+                                <div className="col-span-6 lg:col-span-2 flex justify-end">
+                                    {(() => {
+                                        const quotes = project.quotes || []
+                                        const doStatusPriority: Record<string, number> = {
+                                            COMPLETED: 6,
+                                            BUILDING: 5,
+                                            READY_FOR_BUILD: 4,
+                                            CONFIRMED: 3,
+                                            DRAFT: 2,
+                                            CANCELLED: 0
+                                        }
+                                        const allDOs = quotes.map(q => q.deliveryOrder).filter(Boolean) as { orderNumber?: string; status: string }[]
+                                        const activeDO = allDOs.filter(d => d.status !== 'CANCELLED').sort((a, b) => (doStatusPriority[b.status] ?? 0) - (doStatusPriority[a.status] ?? 0))[0]
+                                        const hasAccepted = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
 
-                                            if (activeDO) {
-                                                const s = activeDO.status
-                                                const cfg: Record<string, { label: string; icon: any; cls: string }> = {
-                                                    DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-                                                    CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-100 text-blue-700 border-blue-200' },
-                                                    READY_FOR_BUILD: { label: 'Ready: Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-                                                    BUILDING: { label: 'Building...', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse' },
-                                                    COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-                                                    CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 border-red-200 opacity-50' },
-                                                }
-                                                const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
-                                                return (
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", cls)}>
-                                                            <Icon className="w-3 h-3 flex-shrink-0" />
-                                                            {label}
-                                                        </span>
-                                                        {activeDO.orderNumber && <span className="text-[10px] text-gray-400 font-mono">#{activeDO.orderNumber}</span>}
-                                                    </div>
-                                                )
+                                        if (activeDO) {
+                                            const s = activeDO.status
+                                            const cfg: Record<string, { label: string; icon: any; cls: string }> = {
+                                                DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-600 border-gray-200' },
+                                                CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+                                                READY_FOR_BUILD: { label: 'Ready: Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+                                                BUILDING: { label: 'Building...', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse' },
+                                                COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+                                                CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 border-red-200 opacity-50' },
                                             }
-                                            if (hasAccepted) {
-                                                return (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-100 uppercase tracking-wider">
-                                                        <CheckCircle2 className="w-3 h-3" />
-                                                        Approved
-                                                    </span>
-                                                )
-                                            }
-                                            const color = project.stage?.color || '#1f2937'
+                                            const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
                                             return (
-                                                <span className="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
-                                                    {project.stage?.name || 'Unknown'}
+                                                <div className="flex flex-col items-end gap-1.5">
+                                                    <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", cls)}>
+                                                        <Icon className="w-3 h-3 flex-shrink-0" />
+                                                        {label}
+                                                    </span>
+                                                    {activeDO.orderNumber && <span className="text-[10px] text-gray-400 font-mono tracking-tighter">#{activeDO.orderNumber}</span>}
+                                                </div>
+                                            )
+                                        }
+                                        if (hasAccepted) {
+                                            return (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-100 uppercase tracking-wider">
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                    Approved
                                                 </span>
                                             )
-                                        })()}
-                                    </div>
+                                        }
+                                        const color = project.stage?.color || '#1f2937'
+                                        return (
+                                            <span className="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
+                                                {project.stage?.name || 'Unknown'}
+                                            </span>
+                                        )
+                                    })()}
                                 </div>
                             </div>
 
-                            {/* Line 2: Relationship & Operational Context */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                <div className="flex items-center gap-3 text-gray-400 font-medium flex-wrap overflow-hidden">
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Customer:</span>
-                                        <span className="text-gray-900 font-bold truncate max-w-[200px]">{project.customer?.name}</span>
-                                    </div>
-                                    <span className="hidden sm:inline text-gray-200">/</span>
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Partner:</span>
-                                        <span className="text-gray-600 font-bold truncate max-w-[200px]">{project.partner?.name || 'DIRECT'}</span>
-                                    </div>
-                                    <span className="hidden sm:inline text-gray-200">/</span>
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Rep:</span>
-                                        <span className="text-blue-600 font-bold truncate">{project.salesRep?.name || '-'}</span>
-                                    </div>
+                            {/* Row 2: Secondary Metadata Columns (Grid) */}
+                            <div className="grid grid-cols-12 gap-4 items-center pt-2 border-t border-gray-100">
+                                {/* Customer Column */}
+                                <div className="col-span-12 md:col-span-4 flex flex-col gap-0.5 min-w-0">
+                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Customer</span>
+                                    <span className="text-xs text-gray-900 font-bold truncate" title={project.customer?.name}>
+                                        {project.customer?.name}
+                                    </span>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
-                                    <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">Last Activity</span>
-                                    <span className="text-gray-400 font-bold uppercase tracking-tighter">
-                                        {new Date(project.updatedAt).toLocaleDateString()}
+
+                                {/* Partner Column */}
+                                <div className="col-span-12 md:col-span-3 flex flex-col gap-0.5 min-w-0">
+                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Partner</span>
+                                    <span className="text-xs text-gray-600 font-bold truncate" title={project.partner?.name}>
+                                        {project.partner?.name || 'DIRECT'}
+                                    </span>
+                                </div>
+
+                                {/* Sales Rep Column */}
+                                <div className="col-span-12 md:col-span-3 flex flex-col gap-0.5 min-w-0">
+                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Sales Representative</span>
+                                    <span className="text-xs text-blue-600 font-bold truncate" title={project.salesRep?.name}>
+                                        {project.salesRep?.name || '-'}
+                                    </span>
+                                </div>
+
+                                {/* Last Activity Column */}
+                                <div className="col-span-12 lg:col-span-2 flex flex-col gap-0.5 lg:items-end min-w-0">
+                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Last Updated</span>
+                                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tighter">
+                                        {new Date(project.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </span>
                                 </div>
                             </div>
