@@ -21,7 +21,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
         currency: 'Rs.',
         expectedCloseDate: '',
         targetDate: '',
-        salesRepId: ''
+        salesRepId: '',
+        brand: ''
     })
 
     useEffect(() => {
@@ -39,7 +40,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
                 currency: project.currency || 'Rs.',
                 expectedCloseDate: project.expectedCloseDate ? project.expectedCloseDate.substring(0, 10) : '',
                 targetDate: project.targetDate ? project.targetDate.substring(0, 10) : '',
-                salesRepId: project.salesRepId || ''
+                salesRepId: project.salesRepId || '',
+                brand: project.brand || ''
             })
         }
     }, [project, isOpen])
@@ -106,6 +108,17 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
                             className="mt-1 block w-full rounded-md border border-gray-300 p-2"
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Brand</label>
+                        <input
+                            type="text"
+                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                            value={formData.brand}
+                            onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                            placeholder="e.g. Cisco, HP, Dell"
                         />
                     </div>
 

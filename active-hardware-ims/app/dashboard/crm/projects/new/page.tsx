@@ -40,6 +40,7 @@ export default function NewProjectPage() {
         expectedValue: '',
         currency: 'Rs.',
         expectedCloseDate: '',
+        brand: '',
         description: ''
     })
 
@@ -156,6 +157,17 @@ export default function NewProjectPage() {
                         value={formData.title}
                         onChange={e => setFormData({ ...formData, title: e.target.value })}
                         placeholder="e.g. Acme Corp Network Upgrade"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Brand</label>
+                    <input
+                        type="text"
+                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                        value={formData.brand}
+                        onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                        placeholder="e.g. Cisco, HP, Dell"
                     />
                 </div>
 

@@ -13,7 +13,8 @@ import {
     Plus,
     CheckCircle,
     Truck,
-    AlertCircle
+    AlertCircle,
+    Tag
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
@@ -42,6 +43,7 @@ interface ProjectData {
     customer: { id: string, name: string }
     partner?: { id: string, name: string }
     salesRep?: { id: string, name: string }
+    brand?: string
     stage: { id: string, name: string, color: string }
     pipeline: { stages: { id: string, name: string }[] }
 
@@ -141,6 +143,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 <User className="w-4 h-4 mr-1" />
                                 {project.customer.name}
                             </span>
+                            {project.brand && (
+                                <span className="flex items-center text-sm px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full border border-gray-200">
+                                    <Tag className="w-3.5 h-3.5 mr-1" />
+                                    {project.brand}
+                                </span>
+                            )}
                             {project.partner && (
                                 <span className="flex items-center text-sm px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100">
                                     <Users className="w-4 h-4 mr-1" />

@@ -645,6 +645,7 @@ model CRMProject {
   id          String  @id @default(uuid())
   projectCode String  @unique
   title       String
+  brand       String?
   description String?
 
   // Financials

@@ -238,7 +238,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId, expectedCloseDate, projectCode } = body
+        const { title, customerId, partnerId, salesRepId, expectedValue, currency, description, pipelineId, expectedCloseDate, projectCode, brand } = body
 
         if (!title || !customerId || !pipelineId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -269,6 +269,7 @@ export async function POST(request: Request) {
             data: {
                 projectCode: finalProjectCode,
                 title,
+                brand: brand || null,
                 customerId,
                 partnerId: partnerId || null,
                 salesRepId: salesRepId || null,
