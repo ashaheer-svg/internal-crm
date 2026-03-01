@@ -21,6 +21,9 @@ import { useRouter } from "next/navigation"
 import BackButton from "@/components/BackButton"
 import FormattedNumberInput from "@/components/FormattedNumberInput"
 import { cn } from "@/lib/utils"
+import Papa from "papaparse"
+import * as XLSX from "xlsx"
+import { useRef } from "react"
 
 type LegacyProjectRow = {
     id: string
@@ -44,6 +47,7 @@ export default function ProjectImportPage() {
     const [pipelines, setPipelines] = useState<any[]>([])
     const [selectedPipelineId, setSelectedPipelineId] = useState("")
     const [defaultValue, setDefaultValue] = useState(0)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         fetchPipelines()
@@ -72,15 +76,22 @@ export default function ProjectImportPage() {
     function handleParse() {
         if (!pasteText.trim()) return
 
-        const lines = pasteText.trim().split('\n')
+        const rows = parseDataString(pasteText)
+        if (rows.length > 0) {
+            setRows(prev => [...prev, ...rows])
+            setPasteText("")
+            setStatus({ type: 'success', message: `Parsed ${rows.length} projects from clipboard.` })
+        }
+    }
+
+    function parseDataString(text: string): LegacyProjectRow[] {
+        const lines = text.trim().split('\n')
         const newRows: LegacyProjectRow[] = []
 
         lines.forEach(line => {
-            // Support both CSV and TSV
             const parts = line.includes('\t') ? line.split('\t') : line.split(',')
             if (parts.length < 2) return
 
-            // Expected order: Date, Customer Name, Partner Name, Brand, Sales Rep, Stage, Value
             const [date, customer, partner, brand, rep, stage, val] = parts.map(p => p.trim())
 
             newRows.push({
@@ -95,12 +106,79 @@ export default function ProjectImportPage() {
                 approved: true
             })
         })
+        return newRows
+    }
 
-        if (newRows.length > 0) {
-            setRows([...rows, ...newRows])
-            setPasteText("")
-            setStatus({ type: 'success', message: `Parsed ${newRows.length} projects from clipboard.` })
+    function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setStatus({ type: 'info', message: `Reading ${file.name}...` })
+        const reader = new FileReader()
+
+        if (file.name.endsWith('.csv')) {
+            Papa.parse(file, {
+                header: false,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const parsedRows = results.data.map((parts: any) => {
+                        const [date, customer, partner, brand, rep, stage, val] = parts.map((p: any) => String(p || "").trim())
+                        return {
+                            id: generateId(),
+                            date: date || new Date().toISOString().split('T')[0],
+                            customerName: customer || "",
+                            partnerName: partner || "",
+                            brand: brand || "",
+                            salesRepName: rep || "",
+                            stage: (stage || "Lead").toUpperCase(),
+                            value: parseFloat(val) || defaultValue,
+                            approved: true
+                        }
+                    })
+                    setRows(prev => [...prev, ...parsedRows])
+                    setStatus({ type: 'success', message: `Successfully imported ${parsedRows.length} rows from ${file.name}` })
+                },
+                error: (err) => {
+                    setStatus({ type: 'error', message: `Failed to parse CSV: ${err.message}` })
+                }
+            })
+        } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            reader.onload = (evt) => {
+                try {
+                    const bstr = evt.target?.result
+                    const wb = XLSX.read(bstr, { type: 'binary' })
+                    const wsname = wb.SheetNames[0]
+                    const ws = wb.Sheets[wsname]
+                    const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
+
+                    const parsedRows = data.filter(r => r.length >= 2).map(parts => {
+                        const [date, customer, partner, brand, rep, stage, val] = parts.map(p => String(p || "").trim())
+                        return {
+                            id: generateId(),
+                            date: date || new Date().toISOString().split('T')[0],
+                            customerName: customer || "",
+                            partnerName: partner || "",
+                            brand: brand || "",
+                            salesRepName: rep || "",
+                            stage: (stage || "Lead").toUpperCase(),
+                            value: parseFloat(val) || defaultValue,
+                            approved: true
+                        }
+                    })
+
+                    setRows(prev => [...prev, ...parsedRows])
+                    setStatus({ type: 'success', message: `Successfully imported ${parsedRows.length} rows from ${file.name}` })
+                } catch (err: any) {
+                    setStatus({ type: 'error', message: `Failed to parse Excel: ${err.message}` })
+                }
+            }
+            reader.readAsBinaryString(file)
+        } else {
+            setStatus({ type: 'error', message: "Unsupported file format. Please use CSV or Excel (.xlsx, .xls)." })
         }
+
+        // Reset file input
+        if (fileInputRef.current) fileInputRef.current.value = ""
     }
 
     async function handleImport() {
@@ -209,6 +287,32 @@ export default function ProjectImportPage() {
                                 <FileText className="w-5 h-5" />
                             </div>
                             <h2 className="text-lg font-black text-gray-900 tracking-tight">Paste Data</h2>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/30 transition-all group"
+                            >
+                                <Upload className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+                                <span className="text-sm font-black text-gray-500 group-hover:text-blue-600">Upload CSV or Excel</span>
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept=".csv,.xlsx,.xls"
+                                onChange={handleFileUpload}
+                            />
+                        </div>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-gray-100" />
+                            </div>
+                            <div className="relative flex justify-center text-[10px] uppercase font-black text-gray-300">
+                                <span className="bg-white px-3">Or Paste below</span>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
