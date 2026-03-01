@@ -13,21 +13,25 @@ export default function SortIcon({ sort, column, label, onSort }: SortIconProps)
     const isActive = sort?.key === column
 
     return (
-        <div
+        <button
             onClick={() => onSort?.(column)}
-            className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${onSort ? "cursor-pointer hover:bg-gray-100" : ""
-                } ${isActive ? "text-blue-600 font-semibold" : "text-gray-500"}`}
+            type="button"
+            className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all text-[11px] font-bold uppercase tracking-wider shadow-sm",
+                onSort ? "cursor-pointer" : "cursor-default",
+                isActive
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:border-gray-300"
+            )}
         >
-            {label && <span className="text-xs uppercase tracking-wider">{label}</span>}
-            {isActive ? (
+            {label && <span>{label}</span>}
+            {isActive && (
                 sort.direction === "asc" ? (
                     <ChevronUp className="w-3.5 h-3.5" />
                 ) : (
                     <ChevronDown className="w-3.5 h-3.5" />
                 )
-            ) : (
-                <div className="w-3.5 h-3.5" />
             )}
-        </div>
+        </button>
     )
 }

@@ -9,26 +9,35 @@ const globalForPrisma = globalThis as unknown as {
 // This matches the logic that worked in our debug script
 const getDatabaseUrl = () => {
   const envUrl = process.env.DATABASE_URL
+  const isProd = process.env.NODE_ENV === 'production'
 
   // Only override if we are in production and it's a RELATIVE file url (starts with file:.)
-  if (process.env.NODE_ENV === 'production' && envUrl?.startsWith('file:.') && !envUrl.startsWith('file:/')) {
+  if (isProd && envUrl?.startsWith('file:.') && !envUrl.startsWith('file:/')) {
     try {
-      // Construct absolute path based on CWD
-      // This assumes the app is run from the project root where prisma folder is
-      const dbPath = path.join(process.cwd(), 'prisma', 'prod.db')
+      const dbPath = path.resolve(process.cwd(), 'prisma', 'prod.db')
       const absoluteUrl = `file:${dbPath}`
-      console.log('--- DB PATH FIX APPLIED ---')
-      console.log('Original URL:', envUrl)
-      console.log('CWD:', process.cwd())
-      console.log('Forced Absolute URL:', absoluteUrl)
+      console.log('--- [DB] PRODUCTION FORCED ABSOLUTE URL ---')
+      console.log('Original:', envUrl)
+      console.log('Resolved:', absoluteUrl)
       return absoluteUrl
     } catch (e) {
       console.error('Failed to construct absolute path:', e)
       return envUrl
     }
   }
-  console.log('--- USING CONFIG DB URL ---')
-  console.log('URL:', envUrl)
+
+  // LOG ABSOLUTE PATH EVEN IN DEV
+  if (envUrl?.startsWith('file:')) {
+    const relPath = envUrl.replace('file:', '')
+    const absPath = path.resolve(process.cwd(), 'prisma', relPath.replace(/^\.\//, ''))
+    console.log(`--- [DB] ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} CONFIG URL ---`)
+    console.log('Original:', envUrl)
+    console.log('Resolved Absolute:', absPath)
+  } else {
+    console.log('--- [DB] NON-FILE URL DETECTED ---')
+    console.log('URL:', envUrl)
+  }
+
   return envUrl
 }
 
