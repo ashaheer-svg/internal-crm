@@ -175,84 +175,71 @@ export default function ListView({
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto min-h-[400px]">
-                <table className="min-w-full divide-y divide-gray-100">
-                    <thead className="bg-gray-50/30">
-                        <tr>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="projectCode" label="Code" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="title" label="Project Title" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="partner" label="Partner" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="customer" label="Customer" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="salesRep" label="Rep" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="value" label="Expected Value" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                <SortIcon sort={sort} column="stage" label="Current Stage" onSort={handleSort} />
-                            </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">Updated</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-50">
-                        {loading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <tr key={i} className="animate-pulse">
-                                    <td colSpan={8} className="px-3 py-4">
-                                        <div className="h-4 bg-gray-50 rounded-lg w-full"></div>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : projects.length === 0 ? (
-                            <tr>
-                                <td colSpan={8} className="px-6 py-20 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <Package className="h-10 w-10 text-gray-200" />
-                                        <p className="text-gray-400 font-medium">No pipeline records discovered</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : (
-                            projects.map((project) => (
-                                <tr
-                                    key={project.id}
-                                    className="hover:bg-gray-50/50 cursor-pointer transition-colors group"
-                                    onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
-                                >
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-bold text-gray-900 font-mono tracking-tight">
+            {/* Header / Column Sorter Bar */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/50 border-b border-gray-100 items-center">
+                <div className="col-span-1">
+                    <SortIcon sort={sort} column="projectCode" label="Code" onSort={handleSort} />
+                </div>
+                <div className="col-span-5">
+                    <SortIcon sort={sort} column="title" label="Project / Identification" onSort={handleSort} />
+                </div>
+                <div className="col-span-2">
+                    <SortIcon sort={sort} column="value" label="Expected Value" onSort={handleSort} />
+                </div>
+                <div className="col-span-2">
+                    <SortIcon sort={sort} column="stage" label="Status" onSort={handleSort} />
+                </div>
+                <div className="col-span-2 text-right">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Last Updated</span>
+                </div>
+            </div>
+
+            {/* List View Container */}
+            <div className="flex-1 overflow-y-auto min-h-[500px] divide-y divide-gray-100">
+                {loading ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="p-6 space-y-3 animate-pulse">
+                            <div className="h-4 bg-gray-50 rounded w-1/4"></div>
+                            <div className="h-4 bg-gray-50 rounded w-1/2"></div>
+                        </div>
+                    ))
+                ) : projects.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-20 gap-3">
+                        <Package className="h-10 w-10 text-gray-200" />
+                        <p className="text-gray-400 font-medium tracking-tight">No pipeline records discovered</p>
+                    </div>
+                ) : (
+                    projects.map((project) => (
+                        <div
+                            key={project.id}
+                            onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
+                            className="p-4 sm:p-6 hover:bg-gray-50 transition-all cursor-pointer group flex flex-col gap-3"
+                        >
+                            {/* Line 1: Identity & Transactional Info */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <span className="text-xs font-bold text-gray-400 font-mono tracking-tight flex-shrink-0 bg-gray-50 px-2 py-1 rounded">
                                         {project.projectCode}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium" title={project.title}>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="truncate max-w-[200px]">{project.title}</span>
-                                            {project.quotes && project.quotes.length > 0 && (
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                            )}
+                                    </span>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={project.title}>
+                                            {project.title}
+                                        </h3>
+                                        {project.quotes && project.quotes.length > 0 && (
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 flex-shrink-0 justify-between sm:justify-end">
+                                    <div className="text-right">
+                                        <div className="text-sm font-bold text-gray-900 tabular-nums">
+                                            {formatCurrency(project.expectedValue, project.currency)}
                                         </div>
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-medium text-gray-500 truncate max-w-[120px]" title={project.partner?.name}>
-                                        {project.partner?.name || '-'}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600 font-medium truncate max-w-[120px]" title={project.customer?.name}>
-                                        {project.customer?.name || 'Unknown'}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-blue-600 font-semibold truncate max-w-[80px]" title={project.salesRep?.name}>
-                                        {project.salesRep?.name || '-'}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold text-right tabular-nums">
-                                        {formatCurrency(project.expectedValue, project.currency)}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
+                                    </div>
+
+                                    {/* Stage / Status Label */}
+                                    <div className="w-[120px] sm:w-[140px] flex justify-end">
                                         {(() => {
                                             const quotes = project.quotes || []
                                             const doStatusPriority: Record<string, number> = {
@@ -272,25 +259,25 @@ export default function ListView({
                                                 const cfg: Record<string, { label: string; icon: any; cls: string }> = {
                                                     DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-600 border-gray-200' },
                                                     CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-100 text-blue-700 border-blue-200' },
-                                                    READY_FOR_BUILD: { label: 'Ready to Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-                                                    BUILDING: { label: 'Building', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse' },
+                                                    READY_FOR_BUILD: { label: 'Ready: Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+                                                    BUILDING: { label: 'Building...', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse' },
                                                     COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
                                                     CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 border-red-200 opacity-50' },
                                                 }
                                                 const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
                                                 return (
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tight", cls)}>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", cls)}>
                                                             <Icon className="w-3 h-3 flex-shrink-0" />
                                                             {label}
                                                         </span>
-                                                        {activeDO.orderNumber && <span className="text-[8px] text-gray-400 pl-1 font-mono">#{activeDO.orderNumber}</span>}
+                                                        {activeDO.orderNumber && <span className="text-[10px] text-gray-400 font-mono">#{activeDO.orderNumber}</span>}
                                                     </div>
                                                 )
                                             }
                                             if (hasAccepted) {
                                                 return (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700 border border-violet-200 uppercase tracking-tight">
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-100 uppercase tracking-wider">
                                                         <CheckCircle2 className="w-3 h-3" />
                                                         Approved
                                                     </span>
@@ -298,20 +285,43 @@ export default function ListView({
                                             }
                                             const color = project.stage?.color || '#1f2937'
                                             return (
-                                                <span className="px-2 py-0.5 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
+                                                <span className="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
                                                     {project.stage?.name || 'Unknown'}
                                                 </span>
                                             )
                                         })()}
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Line 2: Relationship & Operational Context */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                <div className="flex items-center gap-3 text-gray-400 font-medium flex-wrap overflow-hidden">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Customer:</span>
+                                        <span className="text-gray-900 font-bold truncate max-w-[200px]">{project.customer?.name}</span>
+                                    </div>
+                                    <span className="hidden sm:inline text-gray-200">/</span>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Partner:</span>
+                                        <span className="text-gray-600 font-bold truncate max-w-[200px]">{project.partner?.name || 'DIRECT'}</span>
+                                    </div>
+                                    <span className="hidden sm:inline text-gray-200">/</span>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter">Rep:</span>
+                                        <span className="text-blue-600 font-bold truncate">{project.salesRep?.name || '-'}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                                    <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">Last Activity</span>
+                                    <span className="text-gray-400 font-bold uppercase tracking-tighter">
                                         {new Date(project.updatedAt).toLocaleDateString()}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             <PaginationControls
