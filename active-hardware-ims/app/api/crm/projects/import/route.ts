@@ -108,7 +108,12 @@ export async function POST(req: Request) {
                             customerId: customer.id,
                             partnerId,
                             salesRepId,
-                            createdById: user.id
+                            members: {
+                                create: {
+                                    userId: user.id,
+                                    role: 'OWNER'
+                                }
+                            }
                         }
                     })
 
