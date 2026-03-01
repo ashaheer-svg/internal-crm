@@ -152,7 +152,7 @@ export async function GET(request: Request) {
 
         // Calculate Estimated GP for projects with approved quotes
         const projects = await Promise.all(projectsRaw.map(async (project: any) => {
-            const acceptedQuote = project.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED')
+            const acceptedQuote = project.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED' || q.deliveryOrder)
             if (!acceptedQuote || !acceptedQuote.items.length) return project
 
             let totalEstimatedCost = 0

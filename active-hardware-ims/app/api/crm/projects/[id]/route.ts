@@ -61,7 +61,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         }
 
         // Calculate Estimated GP
-        const acceptedQuote = projectRaw.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED')
+        const acceptedQuote = projectRaw.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED' || q.deliveryOrder)
         let estimatedGP = undefined
         let estimatedMargin = undefined
 
