@@ -107,6 +107,7 @@ export default function TopBar() {
     const router = useRouter()
 
     const [user, setUser] = useState<TopBarUser | null>(null)
+    const [permissions, setPermissions] = useState<string[]>([])
     const [unread, setUnread] = useState(0)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -133,6 +134,7 @@ export default function TopBar() {
             if (res.ok) {
                 const data = await res.json()
                 setUser(data.user)
+                setPermissions(data.permissions ?? [])
             }
         } catch { /* silent */ }
     }
@@ -173,8 +175,8 @@ export default function TopBar() {
                             <button
                                 onClick={() => router.push(crumb.href)}
                                 className={`text-sm font-medium truncate max-w-[180px] transition-colors ${idx === visibleCrumbs.length - 1
-                                        ? "text-gray-900 cursor-default"
-                                        : "text-gray-400 hover:text-gray-600"
+                                    ? "text-gray-900 cursor-default"
+                                    : "text-gray-400 hover:text-gray-600"
                                     } ${crumb.isId ? "font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded" : ""}`}
                             >
                                 {crumb.label}
@@ -244,13 +246,16 @@ export default function TopBar() {
 
                             {/* Actions */}
                             <div className="py-1">
-                                <button
-                                    onClick={() => { setDropdownOpen(false); router.push("/dashboard/settings") }}
-                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                >
-                                    <User className="w-4 h-4 text-gray-400" />
-                                    Profile & Settings
-                                </button>
+                                {/* Settings — only shown if user has settings:manage permission */}
+                                {(permissions.includes('all:manage') || permissions.includes('settings:manage')) && (
+                                    <button
+                                        onClick={() => { setDropdownOpen(false); router.push("/dashboard/settings") }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        <User className="w-4 h-4 text-gray-400" />
+                                        Profile &amp; Settings
+                                    </button>
+                                )}
                                 <div className="border-t border-gray-100 mt-1 pt-1">
                                     <button
                                         onClick={handleSignOut}
