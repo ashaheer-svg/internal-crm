@@ -20,6 +20,8 @@ export async function GET(request: Request) {
         const type = searchParams.get('type') // 'CUSTOMER', 'SUPPLIER', 'PARTNER' or 'ALL'
         const roles = searchParams.get('roles')?.split(',').filter(Boolean) || []
         const showInactive = searchParams.get('showInactive') === 'true'
+        const sortKey = searchParams.get('sortKey') || 'name'
+        const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'asc'
 
         // If type is provided, map it to roles
         if (type && type !== 'ALL') {
@@ -41,10 +43,10 @@ export async function GET(request: Request) {
                 ...(where.AND || []),
                 {
                     OR: [
-                        { name: { contains: search } },
-                        { email: { contains: search } },
-                        { contactName: { contains: search } },
-                        { phone: { contains: search } }
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } },
+                        { contactName: { contains: search, mode: 'insensitive' } },
+                        { phone: { contains: search, mode: 'insensitive' } }
                     ]
                 }
             ]
@@ -52,10 +54,14 @@ export async function GET(request: Request) {
 
         if (!showInactive) where.isActive = true
 
+        const orderBy: any = {}
+        if (sortKey === 'rep') orderBy.salesRep = { name: sortDir }
+        else orderBy[sortKey] = sortDir
+
         const [customers, totalCount] = await Promise.all([
             prisma.customer.findMany({
                 where,
-                orderBy: { name: 'asc' },
+                orderBy,
                 skip,
                 take: limit,
                 include: {

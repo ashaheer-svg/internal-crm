@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Plus, FileText, Package, Receipt, Search, ArrowRight, MapPin, User, DollarSign, Hash, Filter, RefreshCw, Truck, ArrowLeftRight, Wrench, RotateCcw, AlertTriangle, TrendingDown, ShieldCheck, Layers, Calendar } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Plus, FileText, Package, Receipt, Search, ArrowRight, MapPin, User, DollarSign, Hash, Filter, RefreshCw, Truck, ArrowLeftRight, Wrench, RotateCcw, AlertTriangle, TrendingDown, ShieldCheck, Layers, Calendar, History } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate, cn } from "@/lib/utils"
 import SortIcon from "@/components/SortIcon"
@@ -74,6 +75,7 @@ function getTypeCfg(type: string) {
 }
 
 export default function TransactionsPage() {
+    const router = useRouter()
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [deliveryOrders, setDeliveryOrders] = useState<any[]>([])
