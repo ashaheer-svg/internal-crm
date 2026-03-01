@@ -46,10 +46,11 @@ export default function PriceListPage() {
 
   async function fetchProducts() {
     try {
-      const res = await fetch('/api/products')
+      const res = await fetch('/api/products?limit=1000')
       if (!res.ok) throw new Error('Failed to fetch products')
       const data = await res.json()
-      setProducts(Array.isArray(data) ? data : [])
+      const prods = data.products || (Array.isArray(data) ? data : [])
+      setProducts(prods)
     } catch (error) {
       console.error('Failed to fetch products:', error)
       setProducts([])

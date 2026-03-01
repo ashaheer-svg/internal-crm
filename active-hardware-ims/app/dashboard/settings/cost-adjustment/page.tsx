@@ -82,7 +82,8 @@ export default function CostAdjustmentPage() {
             }
             if (prodRes.ok) {
                 const prodData = await prodRes.json()
-                setProducts(prodData)
+                // The API returns { products: [], meta: {} }, but the page expects an array
+                setProducts(prodData.products || (Array.isArray(prodData) ? prodData : []))
             }
         } catch (e) {
             console.error("Failed to load initial data", e)

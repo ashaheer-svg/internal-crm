@@ -58,6 +58,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json(inventoryItems)
     } catch (error: any) {
+        console.error('[API/COST_ADJUSTMENT] GET error:', error)
         return NextResponse.json(
             { error: error.message || 'Failed to fetch items' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(results)
     } catch (error: any) {
+        console.error('[API/COST_ADJUSTMENT] POST error:', error)
         return NextResponse.json(
             { error: error.message || 'Failed to update costs' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }

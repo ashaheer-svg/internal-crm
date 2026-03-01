@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { Plus, Search, Archive, RefreshCw, Trash2, Edit } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
+import PaginationControls from "@/components/PaginationControls"
 
 type Product = {
     id: string
@@ -22,50 +23,46 @@ type Product = {
 
 export default function ProductManagementPage() {
     const [products, setProducts] = useState<Product[]>([])
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+    const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 20, totalPages: 0 })
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+    const [debouncedSearch, setDebouncedSearch] = useState("")
     const [showInactive, setShowInactive] = useState(true) // Default to showing inactive
     const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+    // Debounce search
     useEffect(() => {
-        fetchProducts()
-    }, [showInactive])
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500)
+        return () => clearTimeout(timer)
+    }, [searchTerm])
 
-    useEffect(() => {
-        const filtered = products.filter(product =>
-            product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        setFilteredProducts(filtered)
-    }, [searchTerm, products])
-
-    async function fetchProducts() {
+    const fetchProducts = useCallback(async (page: number = 1) => {
         setLoading(true)
         try {
-            const url = showInactive ? '/api/products?includeInactive=true' : '/api/products'
-            const res = await fetch(url)
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: '20',
+                search: debouncedSearch,
+                includeInactive: showInactive.toString()
+            })
+            const res = await fetch(`/api/products?${params}`)
 
             if (!res.ok) throw new Error('Failed to fetch products')
 
             const data = await res.json()
-            if (Array.isArray(data)) {
-                setProducts(data)
-                setFilteredProducts(data)
-            } else {
-                setProducts([])
-                console.error('Invalid products data:', data)
-            }
+            setProducts(data.products || [])
+            setMeta(data.meta || { total: data.products?.length || 0, page: 1, limit: 20, totalPages: 1 })
         } catch (error) {
             console.error('Failed to fetch products:', error)
             setProducts([])
         } finally {
             setLoading(false)
         }
-    }
+    }, [debouncedSearch, showInactive])
+
+    useEffect(() => {
+        fetchProducts()
+    }, [fetchProducts])
 
     async function handleStatusChange(productId: string, newStatus: boolean) {
         if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this product?`)) return
@@ -157,91 +154,108 @@ export default function ProductManagementPage() {
                         placeholder="Search products..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     />
+                </div>
+                <div className="mt-2 text-xs text-gray-400 font-medium px-1 flex justify-between">
+                    <span>
+                        Showing {products.length} of {meta.total} products
+                        {debouncedSearch && ` (filtered)`}
+                    </span>
+                    <span>Page {meta.page} of {meta.totalPages}</span>
                 </div>
             </div>
 
-            <div className="bg-white shadow sm:rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-300">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Product</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
-                            <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                <span className="sr-only">Actions</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                        {filteredProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-gray-50">
-                                <td className="py-4 pl-4 pr-3 text-sm sm:pl-6">
-                                    <div className="font-medium text-gray-900">{product.name}</div>
-                                    <div className="text-gray-500">{product.sku}</div>
-                                </td>
-                                <td className="px-3 py-4 text-sm text-gray-500">
-                                    <div>{product.brand}</div>
-                                    <div>{product.category} / {product.model}</div>
-                                </td>
-                                <td className="px-3 py-4 text-sm text-gray-500">
-                                    {formatDate(product.createdAt)}
-                                </td>
-                                <td className="px-3 py-4 text-sm">
-                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${product.isActive
-                                        ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
-                                        : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
-                                        }`}>
-                                        {product.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                </td>
-                                <td className="px-3 py-4 text-sm text-gray-500">
-                                    {product._count.inventory} units
-                                </td>
-                                <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                    <div className="flex justify-end gap-2">
-                                        <Link href={`/dashboard/inventory/${product.id}/edit`} className="text-blue-600 hover:text-blue-900 p-1" title="Edit">
-                                            <Edit className="w-4 h-4" />
-                                        </Link>
-
-                                        {product.isActive ? (
-                                            <button
-                                                onClick={() => handleStatusChange(product.id, false)}
-                                                className="text-amber-600 hover:text-amber-900 p-1"
-                                                title="Deactivate"
-                                                disabled={actionLoading === product.id}
-                                            >
-                                                <Archive className="w-4 h-4" />
-                                            </button>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={() => handleStatusChange(product.id, true)}
-                                                    className="text-green-600 hover:text-green-900 p-1"
-                                                    title="Activate"
-                                                    disabled={actionLoading === product.id}
-                                                >
-                                                    <RefreshCw className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(product.id)}
-                                                    className="text-red-600 hover:text-red-900 p-1"
-                                                    title="Delete Permanently"
-                                                    disabled={actionLoading === product.id}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
+            <div className="bg-white shadow sm:rounded-2xl border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-[400px]">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-300">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Product</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
+                                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                    <span className="sr-only">Actions</span>
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 bg-white">
+                            {products.map((product) => (
+                                <tr key={product.id} className="hover:bg-gray-50">
+                                    <td className="py-4 pl-4 pr-3 text-sm sm:pl-6">
+                                        <div className="font-medium text-gray-900">{product.name}</div>
+                                        <div className="text-gray-500">{product.sku}</div>
+                                    </td>
+                                    <td className="px-3 py-4 text-sm text-gray-500">
+                                        <div>{product.brand}</div>
+                                        <div>{product.category} / {product.model}</div>
+                                    </td>
+                                    <td className="px-3 py-4 text-sm text-gray-500">
+                                        {formatDate(product.createdAt)}
+                                    </td>
+                                    <td className="px-3 py-4 text-sm">
+                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter ${product.isActive
+                                            ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
+                                            : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
+                                            }`}>
+                                            {product.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td className="px-3 py-4 text-sm text-gray-500">
+                                        {product._count.inventory} units
+                                    </td>
+                                    <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                        <div className="flex justify-end gap-2">
+                                            <Link href={`/dashboard/inventory/${product.id}/edit`} className="text-blue-600 hover:text-blue-900 p-1" title="Edit">
+                                                <Edit className="w-4 h-4" />
+                                            </Link>
+
+                                            {product.isActive ? (
+                                                <button
+                                                    onClick={() => handleStatusChange(product.id, false)}
+                                                    className="text-amber-600 hover:text-amber-900 p-1"
+                                                    title="Deactivate"
+                                                    disabled={actionLoading === product.id}
+                                                >
+                                                    <Archive className="w-4 h-4" />
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleStatusChange(product.id, true)}
+                                                        className="text-green-600 hover:text-green-900 p-1"
+                                                        title="Activate"
+                                                        disabled={actionLoading === product.id}
+                                                    >
+                                                        <RefreshCw className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product.id)}
+                                                        className="text-red-600 hover:text-red-900 p-1"
+                                                        title="Delete Permanently"
+                                                        disabled={actionLoading === product.id}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <PaginationControls
+                    currentPage={meta.page}
+                    totalPages={meta.totalPages}
+                    onPageChange={fetchProducts}
+                    totalResults={meta.total}
+                    limit={meta.limit}
+                    className="bg-gray-50/50 border-t border-gray-100"
+                />
             </div>
         </div>
     )

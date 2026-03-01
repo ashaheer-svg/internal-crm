@@ -32,12 +32,8 @@ export default function StockMovementsPage() {
             if (!res.ok) throw new Error('Failed to fetch products')
 
             const data = await res.json()
-            if (Array.isArray(data)) {
-                setProducts(data)
-            } else {
-                setProducts([])
-                console.error('Invalid products data:', data)
-            }
+            const prods = data.products || (Array.isArray(data) ? data : [])
+            setProducts(prods)
         } catch (error) {
             console.error(error)
             setProducts([])

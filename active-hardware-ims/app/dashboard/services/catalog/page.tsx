@@ -84,8 +84,8 @@ export default function ServiceCatalogPage() {
     async function fetchProducts() {
         try {
             const url = showInactive
-                ? '/api/products?type=service&includeInactive=true'
-                : '/api/products?type=service'
+                ? '/api/products?type=service&includeInactive=true&limit=100'
+                : '/api/products?type=service&limit=100'
             const res = await fetch(url)
 
             if (!res.ok) {
@@ -93,8 +93,9 @@ export default function ServiceCatalogPage() {
             }
 
             const data = await res.json()
-            setProducts(data)
-            setFilteredProducts(data)
+            const prods = data.products || (Array.isArray(data) ? data : [])
+            setProducts(prods)
+            setFilteredProducts(prods)
         } catch (error) {
             console.error('Failed to fetch services:', error)
         } finally {

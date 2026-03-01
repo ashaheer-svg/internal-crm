@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Search, X } from "lucide-react"
 
 type Product = {
@@ -28,42 +28,39 @@ export default function ProductSelector({
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
-    useEffect(() => {
-        fetchProducts()
-    }, [type])
-
-    async function fetchProducts() {
+    const fetchProducts = useCallback(async (search: string = "") => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/products?type=${type}`)
+            const params = new URLSearchParams({
+                type,
+                search,
+                limit: '50' // Show up to 50 matches in the dropdown
+            })
+            const res = await fetch(`/api/products?${params}`)
 
             if (!res.ok) throw new Error('Failed to fetch products')
 
             const data = await res.json()
-            if (Array.isArray(data)) {
-                setProducts(data)
-            } else {
-                setProducts([])
-                console.error('Invalid products data:', data)
-            }
+            const prods = data.products || (Array.isArray(data) ? data : [])
+            setProducts(prods)
         } catch (error) {
             console.error('Failed to fetch products:', error)
             setProducts([])
         } finally {
             setLoading(false)
         }
-    }
+    }, [type])
 
-    const filteredProducts = products
-        .filter(p => !excludeProductIds.includes(p.id))
-        .filter(p =>
-            searchTerm === "" ||
-            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.model.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isOpen) {
+                fetchProducts(searchTerm)
+            }
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [searchTerm, isOpen, fetchProducts])
+
+    const filteredProducts = products.filter(p => !excludeProductIds.includes(p.id))
 
     function handleSelect(product: Product) {
         onProductSelect(product)

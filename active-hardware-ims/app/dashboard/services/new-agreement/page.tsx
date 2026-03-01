@@ -69,15 +69,21 @@ export default function NewServiceAgreementPage() {
             .catch(err => console.error("Failed to fetch customers", err))
 
         // Fetch Service Products
-        fetch("/api/products?type=service")
+        fetch("/api/products?type=service&limit=100")
             .then(res => res.json())
-            .then(data => setProducts(data))
+            .then(data => {
+                const prods = data.products || (Array.isArray(data) ? data : [])
+                setProducts(prods)
+            })
             .catch(err => console.error("Failed to fetch services", err))
 
         // Fetch Sales Reps
         fetch("/api/sales-reps")
             .then(res => res.json())
-            .then(data => setSalesReps(data))
+            .then(data => {
+                const reps = data.salesReps || (Array.isArray(data) ? data : [])
+                setSalesReps(reps)
+            })
             .catch(err => console.error("Failed to fetch sales reps", err))
     }, [])
 

@@ -141,3 +141,27 @@ export async function POST(req: Request) {
         )
     }
 }
+
+// GET - Download CSV template
+export async function GET() {
+    try {
+        await requirePermission('crm:manage')
+
+        const template = `date,customerName,partnerName,brand,salesRepName,stage,value
+2024-01-15,Acme Corp,Global Solutions,Cisco,John Doe,WON,15000
+2024-02-10,Beta Industries,Direct,Dell,Jane Smith,LEAD,5000
+2024-03-05,Charlie LLC,Partner X,HP,Bob Wilson,WON,25000`
+
+        return new NextResponse(template, {
+            headers: {
+                'Content-Type': 'text/csv',
+                'Content-Disposition': 'attachment; filename="legacy_project_import_template.csv"'
+            }
+        })
+    } catch (error: any) {
+        return NextResponse.json(
+            { error: error.message || 'Failed to download template' },
+            { status: error.message === 'Forbidden' ? 403 : 500 }
+        )
+    }
+}
