@@ -62,12 +62,7 @@ const settingsLinks = [
         icon: FileText,
         description: "Manage product categories"
     },
-    {
-        name: "Sales Representatives",
-        href: "/dashboard/settings/sales-reps",
-        icon: Users,
-        description: "Manage sales representatives"
-    },
+
     {
         name: "Cost Adjustment",
         href: "/dashboard/settings/cost-adjustment",
