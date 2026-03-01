@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Filter, CheckCircle2, Truck, Hammer, Package } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/format'
 import SortIcon from '@/components/SortIcon'
 import PaginationControls from '@/components/PaginationControls'
@@ -302,7 +303,7 @@ export default function ListView({
                                                 </span>
                                             )
                                         })()}
-                                    </th>
+                                    </td>
                                     <td className="px-3 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                         {new Date(project.updatedAt).toLocaleDateString()}
                                     </td>
