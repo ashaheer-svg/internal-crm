@@ -66,28 +66,45 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         let estimatedMargin = undefined
 
         if (acceptedQuote && acceptedQuote.items.length) {
-            let totalEstimatedCost = 0
-            for (const item of acceptedQuote.items) {
-                if (!item.productId) continue
+            const productIds = Array.from(new Set(acceptedQuote.items.map((i: any) => i.productId).filter(Boolean))) as string[]
+            const costLookup: Record<string, number> = {}
 
-                // 1. Try average cost from inventory
-                const avgInventoryCost = await prisma.inventoryItem.aggregate({
-                    where: { productId: item.productId, status: 'AVAILABLE' },
+            if (productIds.length > 0) {
+                // 1. Batch Fetch Average Inventory Costs
+                const avgInventoryCosts = await prisma.inventoryItem.groupBy({
+                    by: ['productId'],
+                    where: { productId: { in: productIds }, status: 'AVAILABLE' },
                     _avg: { unitCost: true }
                 })
 
-                let unitCost = avgInventoryCost._avg.unitCost
+                avgInventoryCosts.forEach(c => {
+                    if (c.productId && c._avg.unitCost !== null) {
+                        costLookup[c.productId] = c._avg.unitCost
+                    }
+                })
 
-                // 2. Fallback to latest purchase order cost
-                if (!unitCost) {
-                    const lastPOItem = await prisma.purchaseOrderItem.findFirst({
-                        where: { productId: item.productId },
-                        orderBy: { createdAt: 'desc' },
-                        select: { unitCost: true }
+                // 2. Batch Fetch Latest PO Costs for missing ones
+                const missingCostProductIds = productIds.filter(id => costLookup[id] === undefined)
+                if (missingCostProductIds.length > 0) {
+                    const latestPOCosts = await Promise.all(missingCostProductIds.map(async (productId) => {
+                        const lastPOItem = await prisma.purchaseOrderItem.findFirst({
+                            where: { productId },
+                            orderBy: { createdAt: 'desc' },
+                            select: { productId: true, unitCost: true }
+                        })
+                        return lastPOItem
+                    }))
+
+                    latestPOCosts.forEach(p => {
+                        if (p) costLookup[p.productId] = p.unitCost
                     })
-                    unitCost = lastPOItem?.unitCost || 0
                 }
+            }
 
+            let totalEstimatedCost = 0
+            for (const item of acceptedQuote.items) {
+                if (!item.productId) continue
+                const unitCost = costLookup[item.productId] || 0
                 totalEstimatedCost += (unitCost * item.quantity)
             }
 
