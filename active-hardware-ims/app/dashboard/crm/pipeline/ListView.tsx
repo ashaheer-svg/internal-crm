@@ -180,28 +180,28 @@ export default function ListView({
                 <table className="min-w-full divide-y divide-gray-100">
                     <thead className="bg-gray-50/30">
                         <tr>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="projectCode" label="Code" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="title" label="Project Title" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="partner" label="Partner" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="customer" label="Customer" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="salesRep" label="Rep" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="value" label="Expected Value" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
                                 <SortIcon sort={sort} column="stage" label="Current Stage" onSort={handleSort} />
                             </th>
-                            <th scope="col" className="px-3 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Updated</th>
+                            <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">Updated</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-50">
@@ -229,27 +229,27 @@ export default function ListView({
                                     className="hover:bg-gray-50/50 cursor-pointer transition-colors group"
                                     onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
                                 >
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-bold text-gray-900 font-mono tracking-tighter">
+                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-bold text-gray-900 font-mono tracking-tight">
                                         {project.projectCode}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-900 font-semibold" title={project.title}>
+                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium" title={project.title}>
                                         <div className="flex items-center gap-1.5">
                                             <span className="truncate max-w-[200px]">{project.title}</span>
                                             {project.quotes && project.quotes.length > 0 && (
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-[10px] font-bold text-gray-500 truncate max-w-[120px] uppercase tracking-tighter" title={project.partner?.name}>
+                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-medium text-gray-500 truncate max-w-[120px]" title={project.partner?.name}>
                                         {project.partner?.name || '-'}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-600 font-medium truncate max-w-[120px]" title={project.customer?.name}>
+                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600 font-medium truncate max-w-[120px]" title={project.customer?.name}>
                                         {project.customer?.name || 'Unknown'}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-blue-600 font-bold truncate max-w-[80px]" title={project.salesRep?.name}>
+                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-blue-600 font-semibold truncate max-w-[80px]" title={project.salesRep?.name}>
                                         {project.salesRep?.name || '-'}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-900 font-bold text-right tabular-nums">
+                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold text-right tabular-nums">
                                         {formatCurrency(project.expectedValue, project.currency)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
@@ -280,8 +280,8 @@ export default function ListView({
                                                 const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
                                                 return (
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-tight", cls)}>
-                                                            <Icon className="w-2.5 h-2.5 flex-shrink-0" />
+                                                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tight", cls)}>
+                                                            <Icon className="w-3 h-3 flex-shrink-0" />
                                                             {label}
                                                         </span>
                                                         {activeDO.orderNumber && <span className="text-[8px] text-gray-400 pl-1 font-mono">#{activeDO.orderNumber}</span>}
@@ -290,21 +290,21 @@ export default function ListView({
                                             }
                                             if (hasAccepted) {
                                                 return (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-violet-100 text-violet-700 border border-violet-200 uppercase tracking-tight">
-                                                        <CheckCircle2 className="w-2.5 h-2.5" />
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700 border border-violet-200 uppercase tracking-tight">
+                                                        <CheckCircle2 className="w-3 h-3" />
                                                         Approved
                                                     </span>
                                                 )
                                             }
                                             const color = project.stage?.color || '#1f2937'
                                             return (
-                                                <span className="px-2 py-0.5 inline-flex text-[9px] font-bold rounded-full uppercase tracking-widest border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
+                                                <span className="px-2 py-0.5 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
                                                     {project.stage?.name || 'Unknown'}
                                                 </span>
                                             )
                                         })()}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    <td className="px-3 py-4 whitespace-nowrap text-xs font-medium text-gray-400 uppercase tracking-wider">
                                         {new Date(project.updatedAt).toLocaleDateString()}
                                     </td>
                                 </tr>
