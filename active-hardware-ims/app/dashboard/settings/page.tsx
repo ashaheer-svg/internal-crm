@@ -90,6 +90,13 @@ const settingsLinks = [
         adminOnly: true
     },
     {
+        name: "Legacy Project Import",
+        href: "/dashboard/settings/backup/project-import",
+        icon: Upload,
+        description: "Import historical CRM projects with individual approval",
+        adminOnly: true
+    },
+    {
         name: "Integrations",
         href: "/dashboard/settings/integrations",
         icon: MessageSquare,

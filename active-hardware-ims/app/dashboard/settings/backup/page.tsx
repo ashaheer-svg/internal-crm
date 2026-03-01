@@ -488,9 +488,22 @@ export default function BackupPage() {
                         </Link>
                     </div>
 
+                    {/* Project Migration Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">2. Legacy Project Migration</h3>
+                        <p className="text-xs text-gray-500">Bulk import historical CRM projects with individual row approval.</p>
+                        <Link
+                            href="/dashboard/settings/backup/project-import"
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors shadow-sm"
+                        >
+                            <Upload className="h-4 w-4" />
+                            Open Legacy Project Importer
+                        </Link>
+                    </div>
+
                     {/* Import Section */}
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">2. Import Legacy File</h3>
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-2">3. Import Legacy JSON File</h3>
                         <p className="text-xs text-gray-500">Upload the generated legacy_migration.json file to ingest historical records.</p>
 
                         <div className="flex flex-col gap-3">
