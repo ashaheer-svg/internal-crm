@@ -195,20 +195,19 @@ export default function ListView({
             </div>
 
             {/* List View Container */}
-            <div className="flex-1 overflow-y-auto min-h-[500px] divide-y divide-gray-100">
+            <div className="flex-1 overflow-y-auto min-h-[500px] p-4 sm:p-6 bg-gray-50/30">
                 {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="p-6 space-y-3 animate-pulse">
-                            <div className="grid grid-cols-12 gap-4">
-                                <div className="col-span-8 h-4 bg-gray-50 rounded"></div>
-                                <div className="col-span-2 h-4 bg-gray-50 rounded"></div>
-                                <div className="col-span-2 h-4 bg-gray-50 rounded"></div>
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="mb-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="h-8 bg-gray-50 rounded w-1/2"></div>
+                                <div className="h-8 bg-gray-50 rounded w-1/4"></div>
                             </div>
-                            <div className="grid grid-cols-12 gap-4">
-                                <div className="col-span-4 h-3 bg-gray-50 rounded"></div>
-                                <div className="col-span-3 h-3 bg-gray-50 rounded"></div>
-                                <div className="col-span-3 h-3 bg-gray-50 rounded"></div>
-                                <div className="col-span-2 h-3 bg-gray-50 rounded"></div>
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="h-10 bg-gray-50 rounded"></div>
+                                <div className="h-10 bg-gray-50 rounded"></div>
+                                <div className="h-10 bg-gray-50 rounded"></div>
+                                <div className="h-10 bg-gray-50 rounded"></div>
                             </div>
                         </div>
                     ))
@@ -218,128 +217,145 @@ export default function ListView({
                         <p className="text-gray-400 font-medium tracking-tight">No pipeline records discovered</p>
                     </div>
                 ) : (
-                    projects.map((project) => (
-                        <div
-                            key={project.id}
-                            onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
-                            className="p-4 sm:px-6 sm:py-5 hover:bg-gray-50 transition-all cursor-pointer group flex flex-col gap-4"
-                        >
-                            {/* Row 1: Primary Identity & Transactional Info (Grid) */}
-                            <div className="grid grid-cols-12 gap-4 items-center">
-                                {/* Code & Title - Col 1-8 */}
-                                <div className="col-span-12 lg:col-span-8 flex items-center gap-3 min-w-0">
-                                    <span className="text-xs font-bold text-gray-400 font-mono tracking-tight flex-shrink-0 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                                        {project.projectCode}
-                                    </span>
-                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                        <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={project.title}>
-                                            {project.title}
-                                        </h3>
+                    <div className="space-y-4 max-w-7xl mx-auto">
+                        {projects.map((project) => (
+                            <div
+                                key={project.id}
+                                onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
+                                className="group relative bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200/50 transition-all cursor-pointer flex flex-col gap-6"
+                            >
+                                {/* Row 1: High Prominence identity & Financials */}
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 min-w-0">
+                                        <div className="flex items-baseline gap-3 min-w-0">
+                                            <span className="text-xl font-extrabold text-gray-900 tracking-tight font-mono whitespace-nowrap">
+                                                {project.projectCode}
+                                            </span>
+                                            <span className="text-gray-200 text-2xl font-light">|</span>
+                                            <h3 className="text-lg font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors" title={project.title}>
+                                                {project.title}
+                                            </h3>
+                                        </div>
                                         {project.quotes && project.quotes.length > 0 && (
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                                         )}
                                     </div>
-                                </div>
 
-                                {/* Financials - Col 9-10 */}
-                                <div className="col-span-6 lg:col-span-2 lg:text-right">
-                                    <div className="text-sm font-bold text-gray-900 tabular-nums">
-                                        {formatCurrency(project.expectedValue, project.currency)}
-                                    </div>
-                                    <div className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none mt-1">Expected Value</div>
-                                </div>
+                                    <div className="flex items-center gap-6 flex-shrink-0">
+                                        <div className="text-right">
+                                            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1">Expected Value</div>
+                                            <div className="text-2xl font-black text-gray-900 tabular-nums tracking-tighter">
+                                                {formatCurrency(project.expectedValue, project.currency)}
+                                            </div>
+                                        </div>
 
-                                {/* Stage / Status - Col 11-12 */}
-                                <div className="col-span-6 lg:col-span-2 flex justify-end">
-                                    {(() => {
-                                        const quotes = project.quotes || []
-                                        const doStatusPriority: Record<string, number> = {
-                                            COMPLETED: 6,
-                                            BUILDING: 5,
-                                            READY_FOR_BUILD: 4,
-                                            CONFIRMED: 3,
-                                            DRAFT: 2,
-                                            CANCELLED: 0
-                                        }
-                                        const allDOs = quotes.map(q => q.deliveryOrder).filter(Boolean) as { orderNumber?: string; status: string }[]
-                                        const activeDO = allDOs.filter(d => d.status !== 'CANCELLED').sort((a, b) => (doStatusPriority[b.status] ?? 0) - (doStatusPriority[a.status] ?? 0))[0]
-                                        const hasAccepted = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
+                                        {/* Status Badge */}
+                                        <div className="min-w-[120px] flex justify-end">
+                                            {(() => {
+                                                const quotes = project.quotes || []
+                                                const doStatusPriority: Record<string, number> = {
+                                                    COMPLETED: 6,
+                                                    BUILDING: 5,
+                                                    READY_FOR_BUILD: 4,
+                                                    CONFIRMED: 3,
+                                                    DRAFT: 2,
+                                                    CANCELLED: 0
+                                                }
+                                                const allDOs = quotes.map(q => q.deliveryOrder).filter(Boolean) as { orderNumber?: string; status: string }[]
+                                                const activeDO = allDOs.filter(d => d.status !== 'CANCELLED').sort((a, b) => (doStatusPriority[b.status] ?? 0) - (doStatusPriority[a.status] ?? 0))[0]
+                                                const hasAccepted = quotes.some(q => q.status === 'APPROVED' || q.status === 'ACCEPTED')
 
-                                        if (activeDO) {
-                                            const s = activeDO.status
-                                            const cfg: Record<string, { label: string; icon: any; cls: string }> = {
-                                                DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-                                                CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-100 text-blue-700 border-blue-200' },
-                                                READY_FOR_BUILD: { label: 'Ready: Build', icon: Hammer, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
-                                                BUILDING: { label: 'Building...', icon: Hammer, cls: 'bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse' },
-                                                COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-                                                CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 border-red-200 opacity-50' },
-                                            }
-                                            const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-600' }
-                                            return (
-                                                <div className="flex flex-col items-end gap-1.5">
-                                                    <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", cls)}>
-                                                        <Icon className="w-3 h-3 flex-shrink-0" />
-                                                        {label}
+                                                if (activeDO) {
+                                                    const s = activeDO.status
+                                                    const cfg: Record<string, { label: string; icon: any; cls: string }> = {
+                                                        DRAFT: { label: 'DO: Draft', icon: Package, cls: 'bg-gray-100 text-gray-700 border-gray-200' },
+                                                        CONFIRMED: { label: 'DO: Confirmed', icon: CheckCircle2, cls: 'bg-blue-50 text-blue-700 border-blue-100' },
+                                                        READY_FOR_BUILD: { label: 'Ready: Build', icon: Hammer, cls: 'bg-amber-50 text-amber-700 border-amber-100' },
+                                                        BUILDING: { label: 'Building...', icon: Hammer, cls: 'bg-indigo-50 text-indigo-700 border-indigo-100 animate-pulse' },
+                                                        COMPLETED: { label: 'Shipped ✓', icon: Truck, cls: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+                                                        CANCELLED: { label: 'DO Cancelled', icon: Package, cls: 'bg-red-100 text-red-500 border-red-200 opacity-50' },
+                                                    }
+                                                    const { label, icon: Icon, cls } = cfg[s] ?? { label: s, icon: Truck, cls: 'bg-gray-100 text-gray-700' }
+                                                    return (
+                                                        <span className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border uppercase tracking-wider shadow-sm", cls)}>
+                                                            <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                                            {label}
+                                                        </span>
+                                                    )
+                                                }
+                                                if (hasAccepted) {
+                                                    return (
+                                                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-violet-50 text-violet-700 border border-violet-100 shadow-sm uppercase tracking-wider">
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                            Approved
+                                                        </span>
+                                                    )
+                                                }
+                                                const color = project.stage?.color || '#1f2937'
+                                                return (
+                                                    <span className="px-4 py-2 inline-flex text-xs font-bold rounded-xl shadow-sm uppercase tracking-wider border" style={{ backgroundColor: `${color}15`, color, borderColor: `${color}30` }}>
+                                                        {project.stage?.name || 'Unknown'}
                                                     </span>
-                                                    {activeDO.orderNumber && <span className="text-[10px] text-gray-400 font-mono tracking-tighter">#{activeDO.orderNumber}</span>}
-                                                </div>
-                                            )
-                                        }
-                                        if (hasAccepted) {
-                                            return (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-100 uppercase tracking-wider">
-                                                    <CheckCircle2 className="w-3 h-3" />
-                                                    Approved
-                                                </span>
-                                            )
-                                        }
-                                        const color = project.stage?.color || '#1f2937'
-                                        return (
-                                            <span className="px-3 py-1 inline-flex text-[10px] font-bold rounded-full uppercase tracking-wider border" style={{ backgroundColor: `${color}10`, color, borderColor: `${color}30` }}>
-                                                {project.stage?.name || 'Unknown'}
+                                                )
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Row 2: Structured Metadata with Identifiers */}
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end pt-5 border-t border-gray-50 mt-1">
+                                    {/* Customer */}
+                                    <div className="flex items-center gap-4 min-w-0 relative">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 shadow-inner">
+                                            {project.customer?.name?.charAt(0) || 'C'}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Customer Name</span>
+                                            <span className="text-sm text-gray-900 font-bold truncate" title={project.customer?.name}>
+                                                {project.customer?.name}
                                             </span>
-                                        )
-                                    })()}
+                                        </div>
+                                        <div className="hidden md:block absolute -right-3 top-0 bottom-0 w-px bg-gray-100" />
+                                    </div>
+
+                                    {/* Partner */}
+                                    <div className="flex items-center gap-4 min-w-0 relative sm:pl-4">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm flex-shrink-0 shadow-inner">
+                                            {project.partner?.name?.charAt(0) || project.customer?.name?.charAt(0) || 'P'}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Partner Name</span>
+                                            <span className="text-sm text-gray-700 font-bold truncate" title={project.partner?.name}>
+                                                {project.partner?.name || 'DIRECT'}
+                                            </span>
+                                        </div>
+                                        <div className="hidden md:block absolute -right-3 top-0 bottom-0 w-px bg-gray-100" />
+                                    </div>
+
+                                    {/* Sales Rep */}
+                                    <div className="flex items-center gap-4 min-w-0 relative sm:pl-4">
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm flex-shrink-0 shadow-inner">
+                                            {project.salesRep?.name?.charAt(0) || 'S'}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Sales Rep</span>
+                                            <span className="text-sm text-gray-700 font-bold truncate" title={project.salesRep?.name}>
+                                                {project.salesRep?.name || '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Timestamp */}
+                                    <div className="flex flex-col items-end gap-1 ml-auto">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Last Updated</span>
+                                        <span className="text-xs text-gray-400 font-bold uppercase tracking-tight">
+                                            {new Date(project.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            {/* Row 2: Secondary Metadata Columns (Grid) */}
-                            <div className="grid grid-cols-12 gap-4 items-center pt-2 border-t border-gray-100">
-                                {/* Customer Column */}
-                                <div className="col-span-12 md:col-span-4 flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Customer</span>
-                                    <span className="text-xs text-gray-900 font-bold truncate" title={project.customer?.name}>
-                                        {project.customer?.name}
-                                    </span>
-                                </div>
-
-                                {/* Partner Column */}
-                                <div className="col-span-12 md:col-span-3 flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Partner</span>
-                                    <span className="text-xs text-gray-600 font-bold truncate" title={project.partner?.name}>
-                                        {project.partner?.name || 'DIRECT'}
-                                    </span>
-                                </div>
-
-                                {/* Sales Rep Column */}
-                                <div className="col-span-12 md:col-span-3 flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Sales Representative</span>
-                                    <span className="text-xs text-blue-600 font-bold truncate" title={project.salesRep?.name}>
-                                        {project.salesRep?.name || '-'}
-                                    </span>
-                                </div>
-
-                                {/* Last Activity Column */}
-                                <div className="col-span-12 lg:col-span-2 flex flex-col gap-0.5 lg:items-end min-w-0">
-                                    <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest leading-none">Last Updated</span>
-                                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tighter">
-                                        {new Date(project.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 )}
             </div>
 
@@ -349,7 +365,7 @@ export default function ListView({
                 onPageChange={fetchProjects}
                 totalResults={meta.total}
                 limit={meta.limit}
-                className="bg-gray-50/50 border-t border-gray-100"
+                className="bg-white border-t border-gray-100"
             />
         </div>
     )
