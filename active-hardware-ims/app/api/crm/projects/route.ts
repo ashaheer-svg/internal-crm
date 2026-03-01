@@ -115,7 +115,7 @@ export async function GET(request: Request) {
         if (sortKey === 'value') orderBy = { expectedValue: sortDir }
         if (sortKey === 'date') orderBy = { updatedAt: sortDir }
 
-        const [projects, total] = await prisma.$transaction([
+        const [projectsRaw, total] = await prisma.$transaction([
             (prisma as any).cRMProject.findMany({
                 where,
                 include: {
@@ -130,6 +130,13 @@ export async function GET(request: Request) {
                         select: {
                             id: true,
                             status: true,
+                            subTotal: true,
+                            items: {
+                                select: {
+                                    productId: true,
+                                    quantity: true
+                                }
+                            },
                             deliveryOrder: {
                                 select: { status: true, orderNumber: true }
                             }
@@ -142,6 +149,46 @@ export async function GET(request: Request) {
             }),
             prisma.cRMProject.count({ where })
         ])
+
+        // Calculate Estimated GP for projects with approved quotes
+        const projects = await Promise.all(projectsRaw.map(async (project: any) => {
+            const acceptedQuote = project.quotes.find((q: any) => q.status === 'ACCEPTED' || q.status === 'APPROVED')
+            if (!acceptedQuote || !acceptedQuote.items.length) return project
+
+            let totalEstimatedCost = 0
+            for (const item of acceptedQuote.items) {
+                if (!item.productId) continue
+
+                // 1. Try average cost from inventory
+                const avgInventoryCost = await prisma.inventoryItem.aggregate({
+                    where: { productId: item.productId, status: 'AVAILABLE' },
+                    _avg: { unitCost: true }
+                })
+
+                let unitCost = avgInventoryCost._avg.unitCost
+
+                // 2. Fallback to latest purchase order cost
+                if (!unitCost) {
+                    const lastPOItem = await prisma.purchaseOrderItem.findFirst({
+                        where: { productId: item.productId },
+                        orderBy: { createdAt: 'desc' },
+                        select: { unitCost: true }
+                    })
+                    unitCost = lastPOItem?.unitCost || 0
+                }
+
+                totalEstimatedCost += (unitCost * item.quantity)
+            }
+
+            const estimatedGP = acceptedQuote.subTotal - totalEstimatedCost
+            const estimatedMargin = acceptedQuote.subTotal > 0 ? (estimatedGP / acceptedQuote.subTotal) * 100 : 0
+
+            return {
+                ...project,
+                estimatedGP,
+                estimatedMargin
+            }
+        }))
 
         return NextResponse.json({
             projects,

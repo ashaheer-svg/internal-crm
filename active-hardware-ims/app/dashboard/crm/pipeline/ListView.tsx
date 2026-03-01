@@ -20,6 +20,8 @@ interface Project {
     salesRep: { name: string } | null
     stage: { name: string; color: string }
     updatedAt: string
+    estimatedGP?: number
+    estimatedMargin?: number
     quotes?: {
         id: string;
         status: string;
@@ -214,7 +216,7 @@ export default function ListView({
                             <div
                                 key={project.id}
                                 onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
-                                className="group relative bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200/50 transition-all cursor-pointer flex flex-col gap-4"
+                                className="group relative bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200/50 transition-all cursor-pointer flex flex-col gap-2"
                             >
                                 {/* Row 1: High Prominence identity & Financials */}
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -239,6 +241,23 @@ export default function ListView({
                                             <div className="text-xl font-black text-gray-900 tabular-nums tracking-tighter">
                                                 {formatCurrency(project.expectedValue, project.currency)}
                                             </div>
+                                            {project.estimatedGP !== undefined && (
+                                                <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Est. GP:</span>
+                                                    <span className={cn(
+                                                        "text-[10px] font-black tabular-nums",
+                                                        project.estimatedGP >= 0 ? "text-emerald-600" : "text-red-500"
+                                                    )}>
+                                                        {formatCurrency(project.estimatedGP, project.currency)}
+                                                    </span>
+                                                    <span className={cn(
+                                                        "text-[9px] font-black px-1.5 py-0.5 rounded-md border tabular-nums",
+                                                        project.estimatedGP >= 0 ? "bg-emerald-50 text-emerald-700 border-emerald-100/50" : "bg-red-50 text-red-700 border-red-100/50"
+                                                    )}>
+                                                        {project.estimatedMargin?.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Status Badge */}
@@ -295,42 +314,42 @@ export default function ListView({
                                 </div>
 
                                 {/* Row 2: Structured Metadata with Identifiers */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end pt-4 border-t border-gray-50 mt-0.5">
+                                <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1fr_auto] gap-x-8 gap-y-2 items-center pt-2 border-t border-gray-50 mt-1">
                                     {/* Customer */}
                                     <div className="flex items-center gap-3 min-w-0 relative">
-                                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 shadow-inner border border-blue-100/30">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[11px] flex-shrink-0 shadow-inner border border-blue-100/30">
                                             {project.customer?.name?.charAt(0) || 'C'}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Customer Name</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Customer</span>
                                             <span className="text-[13px] text-gray-900 font-bold truncate" title={project.customer?.name}>
                                                 {project.customer?.name}
                                             </span>
                                         </div>
-                                        <div className="hidden md:block absolute -right-2 top-0 bottom-0 w-px bg-gray-100/80" />
+                                        <div className="hidden md:block absolute -right-4 top-1 bottom-1 w-px bg-gray-100/80" />
                                     </div>
 
                                     {/* Partner */}
-                                    <div className="flex items-center gap-3 min-w-0 relative sm:pl-2">
-                                        <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-xs flex-shrink-0 shadow-inner border border-purple-100/30">
+                                    <div className="flex items-center gap-3 min-w-0 relative">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-[11px] flex-shrink-0 shadow-inner border border-purple-100/30">
                                             {project.partner?.name?.charAt(0) || project.customer?.name?.charAt(0) || 'P'}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Partner Name</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Partner</span>
                                             <span className="text-[13px] text-gray-700 font-bold truncate" title={project.partner?.name}>
                                                 {project.partner?.name || 'DIRECT'}
                                             </span>
                                         </div>
-                                        <div className="hidden md:block absolute -right-2 top-0 bottom-0 w-px bg-gray-100/80" />
+                                        <div className="hidden md:block absolute -right-4 top-1 bottom-1 w-px bg-gray-100/80" />
                                     </div>
 
                                     {/* Sales Rep */}
-                                    <div className="flex items-center gap-3 min-w-0 relative sm:pl-2">
-                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xs flex-shrink-0 shadow-inner border border-emerald-100/30">
+                                    <div className="flex items-center gap-3 min-w-0 relative">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-[11px] flex-shrink-0 shadow-inner border border-emerald-100/30">
                                             {project.salesRep?.name?.charAt(0) || 'S'}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Sales Rep</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Rep</span>
                                             <span className="text-[13px] text-gray-700 font-bold truncate" title={project.salesRep?.name}>
                                                 {project.salesRep?.name || '-'}
                                             </span>
@@ -339,7 +358,7 @@ export default function ListView({
 
                                     {/* Timestamp */}
                                     <div className="flex flex-col items-end gap-1 ml-auto">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Last Updated</span>
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Updated</span>
                                         <span className="text-[11px] text-gray-400 font-bold uppercase tracking-tighter">
                                             {new Date(project.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </span>
