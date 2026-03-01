@@ -216,7 +216,7 @@ export default function ListView({
                             <div
                                 key={project.id}
                                 onClick={() => router.push(`/dashboard/crm/projects/${project.id}`)}
-                                className="group relative bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200/50 transition-all cursor-pointer flex flex-col gap-2"
+                                className="group relative bg-white rounded-2xl p-3 sm:p-3.5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200/50 transition-all cursor-pointer flex flex-col gap-1"
                             >
                                 {/* Row 1: High Prominence identity & Financials */}
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -236,22 +236,20 @@ export default function ListView({
                                     </div>
 
                                     <div className="flex items-center gap-5 flex-shrink-0">
-                                        <div className="text-right">
-                                            <div className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1">Expected Value</div>
-                                            <div className="text-xl font-black text-gray-900 tabular-nums tracking-tighter">
+                                        <div className="text-right flex flex-col justify-center">
+                                            <div className="text-lg font-black text-gray-900 tabular-nums tracking-tighter leading-none">
                                                 {formatCurrency(project.expectedValue, project.currency)}
                                             </div>
                                             {project.estimatedGP !== undefined && (
-                                                <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Est. GP:</span>
+                                                <div className="flex items-center justify-end gap-1.5 mt-1">
                                                     <span className={cn(
-                                                        "text-[10px] font-black tabular-nums",
+                                                        "text-[10px] font-black tabular-nums leading-none",
                                                         project.estimatedGP >= 0 ? "text-emerald-600" : "text-red-500"
                                                     )}>
-                                                        {formatCurrency(project.estimatedGP, project.currency)}
+                                                        GP: {formatCurrency(project.estimatedGP, project.currency)}
                                                     </span>
                                                     <span className={cn(
-                                                        "text-[9px] font-black px-1.5 py-0.5 rounded-md border tabular-nums",
+                                                        "text-[9px] font-black px-1.5 py-0.5 rounded-md border tabular-nums leading-none",
                                                         project.estimatedGP >= 0 ? "bg-emerald-50 text-emerald-700 border-emerald-100/50" : "bg-red-50 text-red-700 border-red-100/50"
                                                     )}>
                                                         {project.estimatedMargin?.toFixed(1)}%
@@ -314,7 +312,7 @@ export default function ListView({
                                 </div>
 
                                 {/* Row 2: Structured Metadata with Identifiers */}
-                                <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1fr_auto] gap-x-8 gap-y-2 items-center pt-2 border-t border-gray-50 mt-1">
+                                <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1fr_auto] gap-x-8 gap-y-1.5 items-center pt-1.5 border-t border-gray-50 mt-0.5">
                                     {/* Customer */}
                                     <div className="flex items-center gap-3 min-w-0 relative">
                                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[11px] flex-shrink-0 shadow-inner border border-blue-100/30">
