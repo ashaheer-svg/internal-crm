@@ -133,24 +133,26 @@ export default function ListView({
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
-            {/* Toolbar */}
-            <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-gray-50/50">
-                <div className="relative w-full md:w-80">
+            {/* Unified Toolbar: Search, Filters, and Sorts */}
+            <div className="p-3 border-b border-gray-100 flex flex-wrap items-center gap-4 bg-gray-50/50">
+                {/* Search - Left */}
+                <div className="relative w-full md:w-72">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                         type="text"
-                        placeholder="Search projects, customers, partners..."
-                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+                        placeholder="Search projects..."
+                        className="w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                {/* Filters - Middle */}
+                <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rep</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Rep</span>
                         <select
-                            className="text-xs font-bold border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:ring-blue-500"
+                            className="text-[11px] font-bold border-gray-200 rounded-xl px-2.5 py-1.5 bg-white shadow-sm focus:ring-blue-500"
                             value={salesRepId}
                             onChange={(e) => setSalesRepId(e.target.value)}
                         >
@@ -164,7 +166,7 @@ export default function ListView({
                     <div className="flex items-center gap-2">
                         <Filter className="w-3.5 h-3.5 text-gray-400" />
                         <select
-                            className="text-xs font-bold border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:ring-blue-500"
+                            className="text-[11px] font-bold border-gray-200 rounded-xl px-2.5 py-1.5 bg-white shadow-sm focus:ring-blue-500"
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
                         >
@@ -175,16 +177,21 @@ export default function ListView({
                         </select>
                     </div>
                 </div>
-            </div>
 
-            {/* Header / Column Sorter Bar - Styled as active buttons */}
-            <div className="hidden lg:flex items-center gap-2 px-6 py-4 bg-gray-50/20 border-b border-gray-100 overflow-x-auto">
-                <SortIcon sort={sort} column="projectCode" label="Code" onSort={handleSort} />
-                <SortIcon sort={sort} column="title" label="Project / Identification" onSort={handleSort} />
-                <SortIcon sort={sort} column="value" label="Expected Value" onSort={handleSort} />
-                <SortIcon sort={sort} column="stage" label="Status" onSort={handleSort} />
-                <div className="ml-auto pr-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Last Updated</span>
+                {/* Vertical Divider */}
+                <div className="hidden lg:block w-px h-6 bg-gray-200 mx-1" />
+
+                {/* Sorts - Right */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+                    <SortIcon sort={sort} column="projectCode" label="Code" onSort={handleSort} />
+                    <SortIcon sort={sort} column="title" label="Project" onSort={handleSort} />
+                    <SortIcon sort={sort} column="value" label="Value" onSort={handleSort} />
+                    <SortIcon sort={sort} column="stage" label="Status" onSort={handleSort} />
+                </div>
+
+                {/* Meta Info */}
+                <div className="hidden xl:block ml-auto pr-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Sorted By: {sort.key} ({sort.direction})</span>
                 </div>
             </div>
 
