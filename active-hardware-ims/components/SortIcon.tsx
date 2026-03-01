@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronUp, ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface SortIconProps {
     sort: { key: string; direction: "asc" | "desc" } | null
