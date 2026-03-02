@@ -5,7 +5,7 @@ import { requirePermission } from '@/lib/auth'
 export async function POST(req: Request) {
     try {
         const user = await requirePermission('crm:manage')
-        const { projects, pipelineId } = await req.json()
+        const { projects, pipelineId, entityMap } = await req.json()
 
         if (!projects || !Array.isArray(projects)) {
             return NextResponse.json({ error: 'Invalid projects data' }, { status: 400 })
@@ -35,35 +35,42 @@ export async function POST(req: Request) {
             for (const item of projects) {
                 try {
                     // Find or create Customer
-                    let customer = await tx.customer.findFirst({
-                        where: { name: item.customerName }
-                    })
-
-                    if (!customer) {
-                        customer = await tx.customer.create({
-                            data: {
-                                name: item.customerName,
-                                isCustomer: true
-                            }
+                    let customerId = entityMap?.[item.customerName]
+                    if (!customerId) {
+                        let customer = await tx.customer.findFirst({
+                            where: { name: item.customerName }
                         })
+
+                        if (!customer) {
+                            customer = await tx.customer.create({
+                                data: {
+                                    name: item.customerName,
+                                    isCustomer: true
+                                }
+                            })
+                        }
+                        customerId = customer.id
                     }
 
                     // Find or create Partner (if provided)
                     let partnerId = null
                     if (item.partnerName) {
-                        let partner = await tx.customer.findFirst({
-                            where: { name: item.partnerName }
-                        })
-
-                        if (!partner) {
-                            partner = await tx.customer.create({
-                                data: {
-                                    name: item.partnerName,
-                                    isPartner: true
-                                }
+                        partnerId = entityMap?.[item.partnerName]
+                        if (!partnerId) {
+                            let partner = await tx.customer.findFirst({
+                                where: { name: item.partnerName }
                             })
+
+                            if (!partner) {
+                                partner = await tx.customer.create({
+                                    data: {
+                                        name: item.partnerName,
+                                        isPartner: true
+                                    }
+                                })
+                            }
+                            partnerId = partner.id
                         }
-                        partnerId = partner.id
                     }
 
                     // Find or create Sales Rep
@@ -96,7 +103,7 @@ export async function POST(req: Request) {
                         data: {
                             projectCode,
                             title: `Legacy Import: ${item.customerName}`,
-                            brand: item.brand,
+                            brand: item.brand || null,
                             status,
                             probability,
                             expectedValue: item.value || 0,
@@ -105,7 +112,7 @@ export async function POST(req: Request) {
                             closedAt,
                             stageId: stage.id,
                             pipelineId,
-                            customerId: customer.id,
+                            customerId,
                             partnerId,
                             salesRepId,
                             members: {
@@ -124,7 +131,7 @@ export async function POST(req: Request) {
                 }
             }
         }, {
-            timeout: 30000 // Increase timeout for bulk import
+            timeout: 120000 // Increase timeout to 120s for large bulk imports (4000+ rows)
         })
 
         return NextResponse.json({
