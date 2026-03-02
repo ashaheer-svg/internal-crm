@@ -59,6 +59,12 @@ const navigation: NavItem[] = [
         ]
     },
     { name: "Audit Logs", href: "/dashboard/audit-logs", icon: ClipboardList, permission: 'audit_logs:read' },
+    {
+        name: "Solution Engineering", href: "#", icon: Hammer,
+        submenu: [
+            { name: "NAS Configurator", href: "/dashboard/tools/nas-configurator", icon: FileText },
+        ]
+    },
     { name: "Messaging", href: "/dashboard/messaging", icon: Mail },
     { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: 'settings:manage' },
 ]
