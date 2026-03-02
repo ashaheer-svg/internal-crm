@@ -63,6 +63,7 @@ const navigation: NavItem[] = [
         name: "Solution Engineering", href: "#", icon: Hammer,
         submenu: [
             { name: "NAS Configurator", href: "/dashboard/tools/nas-configurator", icon: FileText },
+            { name: "NAS Hardware Specs", href: "/dashboard/settings/nas-features", icon: Settings, permission: 'settings:manage' },
         ]
     },
     { name: "Messaging", href: "/dashboard/messaging", icon: Mail },
