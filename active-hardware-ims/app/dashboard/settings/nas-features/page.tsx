@@ -156,45 +156,98 @@ export default function NASFeaturesPage() {
                 />
             </div>
 
-            {/* ── Model List ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredModels.map(model => (
-                    <div key={model.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-400 transition-all group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-tight">{model.modelName}</h3>
-                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">{model.series || 'Standard'} Series</p>
-                            </div>
-                            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setFormData(model); setIsEditing(model.id); }} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"><Edit2 className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(model.id)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-100"><Trash2 className="w-4 h-4" /></button>
-                            </div>
+            {/* ── Model List (Table View) ── */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-200">
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Model & Series</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Bays (Inc. Exp.)</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">RAM Capacity</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Form & Power</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Compatibility</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredModels.map(model => (
+                                <tr key={model.id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-gray-900 leading-none uppercase">{model.modelName}</span>
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">{model.series || 'Standard'} Series</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
+                                            <Box className="w-3.5 h-3.5 text-blue-500" />
+                                            <span className="text-sm font-semibold text-gray-900">{model.bays}</span>
+                                            {model.maxExpansionUnitsSupported > 0 && (
+                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                    + {model.maxExpansionUnitsSupported * model.expansionBaysPerUnit}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
+                                            <Cpu className="w-3.5 h-3.5 text-amber-500" />
+                                            <span className="text-sm font-semibold text-gray-900">{model.defaultRamGB}G</span>
+                                            <span className="text-[10px] text-gray-400 font-medium ml-1">Max {model.maxRamGB}G</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded text-[9px] font-bold uppercase",
+                                                    model.formFactor === 'Rackmount' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                )}>
+                                                    {model.formFactor}
+                                                </span>
+                                                <span className="text-[10px] font-medium text-gray-500">{model.powerType}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
+                                            <span className={cn("px-2 py-0.5 border rounded text-[9px] font-bold uppercase tracking-tight", model.supportsSATA ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-gray-50 text-gray-300 border-gray-200")}>SATA</span>
+                                            <span className={cn("px-2 py-0.5 border rounded text-[9px] font-bold uppercase tracking-tight font-black", model.supportsSAS ? "bg-purple-50 text-purple-600 border-purple-100 shadow-sm" : "bg-gray-50 text-gray-300 border-gray-200 opacity-50")}>SAS</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => { setFormData(model); setIsEditing(model.id); }}
+                                                className="p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
+                                                title="Edit Model"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(model.id)}
+                                                className="p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all"
+                                                title="Delete Model"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {filteredModels.length === 0 && (
+                    <div className="p-12 text-center">
+                        <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
+                            <AlertCircle className="w-8 h-8 text-gray-300" />
                         </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase block tracking-tight">Total Bays</span>
-                                <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5 mt-1">
-                                    <Box className="w-3.5 h-3.5 text-blue-500" />
-                                    {model.bays} + ({model.maxExpansionUnitsSupported} × {model.expansionBaysPerUnit})
-                                </div>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase block tracking-tight">RAM Capacity</span>
-                                <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5 mt-1">
-                                    <Cpu className="w-3.5 h-3.5 text-amber-500" />
-                                    {model.defaultRamGB}G / {model.maxRamGB}G
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-1.5">
-                            <span className={cn("px-2.5 py-1 rounded-md text-[9px] font-bold uppercase", model.formFactor === 'Rackmount' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100')}>{model.formFactor}</span>
-                            <span className="px-2.5 py-1 bg-gray-50 text-gray-500 border border-gray-200 rounded-md text-[9px] font-bold uppercase">{model.powerType} Power</span>
-                            {model.supportsSAS && <span className="px-2.5 py-1 bg-purple-50 text-purple-600 border border-purple-100 rounded-md text-[9px] font-bold uppercase font-black">SAS</span>}
-                        </div>
+                        <h3 className="text-gray-900 font-bold">No models found</h3>
+                        <p className="text-gray-500 text-sm mt-1">Try adjusting your search or add a new configuration.</p>
                     </div>
-                ))}
+                )}
             </div>
 
             {/* ── Edit Modal ── */}
