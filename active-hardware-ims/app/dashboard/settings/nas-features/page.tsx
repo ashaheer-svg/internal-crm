@@ -24,18 +24,42 @@ interface NASModel {
     networkPorts: string | null
     series: string | null
     targetMarket: string | null
+    productId?: string | null // Linked product ID
+}
+
+interface Product {
+    id: string
+    model: string
+    name: string
+    sku: string
+    brand: string
+    category: string
 }
 
 export default function NASFeaturesPage() {
     const [models, setModels] = useState<NASModel[]>([])
+    const [inventory, setInventory] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
-    const [isEditing, setIsEditing] = useState<string | null>(null) // ID or 'NEW'
+    const [isEditing, setIsEditing] = useState<string | null>(null)
     const [formData, setFormData] = useState<Partial<NASModel>>({})
 
     useEffect(() => {
         fetchModels()
+        fetchInventory()
     }, [])
+
+    async function fetchInventory() {
+        try {
+            const res = await fetch('/api/crm/nas-models/inventory')
+            if (res.ok) {
+                const data = await res.json()
+                setInventory(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch inventory")
+        }
+    }
 
     async function fetchModels() {
         try {
@@ -92,80 +116,82 @@ export default function NASFeaturesPage() {
     if (loading) return <div className="p-10 text-center animate-pulse text-gray-400">Loading configurations...</div>
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500 pb-20 px-6">
+        <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4">
 
             {/* ── Header ── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-6">
-                    <div className="p-4 bg-gray-900 rounded-3xl shadow-xl"><Database className="w-10 h-10 text-white" /></div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-600 rounded-lg shadow-sm"><Database className="w-8 h-8 text-white" /></div>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">NAS Feature Management</h1>
-                        <p className="text-xs text-blue-600 font-black uppercase tracking-[.3em] mt-1">Configure Hardware Specifications</p>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">NAS Feature Management</h1>
+                        <p className="text-sm text-gray-500 font-medium">Configure Hardware Specifications for Solutions</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => {
-                        setFormData({
-                            modelName: "", bays: 2, expansionBaysPerUnit: 0, maxExpansionUnitsSupported: 0,
-                            defaultRamGB: 2, maxRamGB: 32, supportsSATA: true, supportsSAS: false,
-                            formFactor: "Desktop", powerType: "Standard"
-                        })
-                        setIsEditing('NEW')
-                    }}
-                    className="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100"
-                >
-                    <Plus className="w-5 h-5" /> Add New Model
-                </button>
+                <div className="flex gap-3 w-full md:w-auto">
+                    <button
+                        onClick={() => {
+                            setFormData({
+                                modelName: "", bays: 2, expansionBaysPerUnit: 0, maxExpansionUnitsSupported: 0,
+                                defaultRamGB: 2, maxRamGB: 32, supportsSATA: true, supportsSAS: false,
+                                formFactor: "Desktop", powerType: "Standard"
+                            })
+                            setIsEditing('NEW')
+                        }}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" /> Add Model
+                    </button>
+                </div>
             </div>
 
             {/* ── Search & Filter ── */}
-            <div className="relative">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                     type="text"
                     placeholder="Search Synology models (e.g. DS1821+, RS2423...)"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-16 pr-6 py-6 bg-white rounded-[2rem] border border-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                    className="w-full pl-11 pr-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-medium transition-all"
                 />
             </div>
 
             {/* ── Model List ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredModels.map(model => (
-                    <div key={model.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-blue-200 transition-all group">
-                        <div className="flex justify-between items-start mb-6">
+                    <div key={model.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-400 transition-all group">
+                        <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{model.modelName}</h3>
-                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{model.series || 'Standard'} Series</p>
+                                <h3 className="text-xl font-bold text-gray-900 uppercase tracking-tight">{model.modelName}</h3>
+                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">{model.series || 'Standard'} Series</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setFormData(model); setIsEditing(model.id); }} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all"><Edit2 className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(model.id)} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
+                            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => { setFormData(model); setIsEditing(model.id); }} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"><Edit2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(model.id)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-100"><Trash2 className="w-4 h-4" /></button>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-gray-50 rounded-2xl space-y-1">
-                                <span className="text-[9px] font-black text-gray-400 uppercase block tracking-tighter">Bays (Int + Exp)</span>
-                                <div className="text-sm font-black text-gray-900 flex items-center gap-2">
-                                    <Box className="w-4 h-4 text-blue-500" />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase block tracking-tight">Total Bays</span>
+                                <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5 mt-1">
+                                    <Box className="w-3.5 h-3.5 text-blue-500" />
                                     {model.bays} + ({model.maxExpansionUnitsSupported} × {model.expansionBaysPerUnit})
                                 </div>
                             </div>
-                            <div className="p-4 bg-gray-50 rounded-2xl space-y-1">
-                                <span className="text-[9px] font-black text-gray-400 uppercase block tracking-tighter">RAM (Def / Max)</span>
-                                <div className="text-sm font-black text-gray-900 flex items-center gap-2">
-                                    <Cpu className="w-4 h-4 text-amber-500" />
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase block tracking-tight">RAM Capacity</span>
+                                <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5 mt-1">
+                                    <Cpu className="w-3.5 h-3.5 text-amber-500" />
                                     {model.defaultRamGB}G / {model.maxRamGB}G
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-6 flex flex-wrap gap-2">
-                            <span className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black uppercase", model.formFactor === 'Rackmount' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600')}>{model.formFactor}</span>
-                            <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-[10px] font-black uppercase">{model.powerType} Power</span>
-                            {model.supportsSAS && <span className="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black uppercase">SAS Support</span>}
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                            <span className={cn("px-2.5 py-1 rounded-md text-[9px] font-bold uppercase", model.formFactor === 'Rackmount' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100')}>{model.formFactor}</span>
+                            <span className="px-2.5 py-1 bg-gray-50 text-gray-500 border border-gray-200 rounded-md text-[9px] font-bold uppercase">{model.powerType} Power</span>
+                            {model.supportsSAS && <span className="px-2.5 py-1 bg-purple-50 text-purple-600 border border-purple-100 rounded-md text-[9px] font-bold uppercase font-black">SAS</span>}
                         </div>
                     </div>
                 ))}
@@ -173,119 +199,118 @@ export default function NASFeaturesPage() {
 
             {/* ── Edit Modal ── */}
             {isEditing && (
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 sm:p-10 overflow-y-auto">
-                    <div className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl relative animate-in zoom-in-95 duration-200 p-10 max-h-[90vh] overflow-y-auto">
-                        <button onClick={() => setIsEditing(null)} className="absolute top-8 right-8 p-3 bg-gray-100 text-gray-400 rounded-2xl hover:bg-gray-200 transition-all"><X className="w-6 h-6" /></button>
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 p-8 max-h-[90vh] overflow-y-auto">
+                        <button onClick={() => setIsEditing(null)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 transition-colors"><X className="w-5 h-5" /></button>
 
-                        <div className="mb-10 flex items-center gap-4">
-                            <div className="p-3 bg-blue-600 rounded-2xl"><Plus className="w-6 h-6 text-white" /></div>
-                            <div>
-                                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{formData.id ? 'Edit Model' : 'New NAS Model'}</h2>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Specify detailed hardware capabilities</p>
-                            </div>
+                        <div className="mb-8">
+                            <h2 className="text-xl font-bold text-gray-900">{formData.id ? 'Edit NAS Model' : 'New NAS Model'}</h2>
+                            <p className="text-sm text-gray-500 mt-1">Specify detailed hardware capabilities for engineering solutions.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* Basic Info */}
-                            <div className="space-y-6">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[.3em] mb-4">Identification</h3>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Model Name</label>
-                                    <input value={formData.modelName} onChange={e => setFormData({ ...formData, modelName: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none ring-2 ring-transparent focus:ring-blue-500 transition-all uppercase" placeholder="DS1821+" />
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Identification</h3>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-gray-700">Link to Inventory (Optional)</label>
+                                    <select
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        onChange={(e) => {
+                                            const p = inventory.find(i => i.id === e.target.value);
+                                            if (p) setFormData({ ...formData, modelName: p.model || p.name });
+                                        }}
+                                    >
+                                        <option value="">-- Select Synology Product --</option>
+                                        {inventory.map(prod => (
+                                            <option key={prod.id} value={prod.id}>{prod.model || prod.name} ({prod.sku})</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-gray-700">Model Name</label>
+                                    <input value={formData.modelName} onChange={e => setFormData({ ...formData, modelName: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase" placeholder="DS1821+" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Form Factor</label>
-                                        <select value={formData.formFactor} onChange={e => setFormData({ ...formData, formFactor: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Form Factor</label>
+                                        <select value={formData.formFactor} onChange={e => setFormData({ ...formData, formFactor: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium">
                                             <option value="Desktop">Desktop</option>
                                             <option value="Rackmount">Rackmount</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Power Supply</label>
-                                        <select value={formData.powerType} onChange={e => setFormData({ ...formData, powerType: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Power Supply</label>
+                                        <select value={formData.powerType} onChange={e => setFormData({ ...formData, powerType: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium">
                                             <option value="Standard">Standard</option>
                                             <option value="Redundant">Redundant</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Series Line</label>
-                                    <input value={formData.series || ''} onChange={e => setFormData({ ...formData, series: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" placeholder="Plus, XS+, SA..." />
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-gray-700">Series Line</label>
+                                    <input value={formData.series || ''} onChange={e => setFormData({ ...formData, series: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium uppercase" placeholder="Plus, XS+, SA..." />
                                 </div>
                             </div>
 
                             {/* Storage & Expansion */}
-                            <div className="space-y-6">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[.3em] mb-4">Storage & Expansion</h3>
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Storage & Expansion</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Internal Bays</label>
-                                        <input type="number" value={formData.bays} onChange={e => setFormData({ ...formData, bays: parseInt(e.target.value) })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Internal Bays</label>
+                                        <input type="number" value={formData.bays} onChange={e => setFormData({ ...formData, bays: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Exp. Unit Model</label>
-                                        <input value={formData.expansionUnitModel || ''} onChange={e => setFormData({ ...formData, expansionUnitModel: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" placeholder="DX517, RX1223..." />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Exp. Unit Model</label>
+                                        <input value={formData.expansionUnitModel || ''} onChange={e => setFormData({ ...formData, expansionUnitModel: e.target.value })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium uppercase" placeholder="DX517, RX1223..." />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Bays Per Unit</label>
-                                        <input type="number" value={formData.expansionBaysPerUnit} onChange={e => setFormData({ ...formData, expansionBaysPerUnit: parseInt(e.target.value) })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Bays Per Unit</label>
+                                        <input type="number" value={formData.expansionBaysPerUnit} onChange={e => setFormData({ ...formData, expansionBaysPerUnit: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Max Expansion Units</label>
-                                        <input type="number" value={formData.maxExpansionUnitsSupported} onChange={e => setFormData({ ...formData, maxExpansionUnitsSupported: parseInt(e.target.value) })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Max Units</label>
+                                        <input type="number" value={formData.maxExpansionUnitsSupported} onChange={e => setFormData({ ...formData, maxExpansionUnitsSupported: parseInt(e.target.value) })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Performance */}
-                            <div className="space-y-6">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[.3em] mb-4">Performance & Memory</h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Default RAM (GB)</label>
-                                        <input type="number" value={formData.defaultRamGB} onChange={e => setFormData({ ...formData, defaultRamGB: parseFloat(e.target.value) })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Default RAM</label>
+                                        <input type="number" value={formData.defaultRamGB} onChange={e => setFormData({ ...formData, defaultRamGB: parseFloat(e.target.value) })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Max RAM (GB)</label>
-                                        <input type="number" value={formData.maxRamGB} onChange={e => setFormData({ ...formData, maxRamGB: parseFloat(e.target.value) })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-gray-700">Max RAM</label>
+                                        <input type="number" value={formData.maxRamGB} onChange={e => setFormData({ ...formData, maxRamGB: parseFloat(e.target.value) })} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium" />
                                     </div>
-                                </div>
-                                <div className="flex gap-6 mt-4">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={formData.supportsSATA} onChange={e => setFormData({ ...formData, supportsSATA: e.target.checked })} className="w-5 h-5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                        <span className="text-[11px] font-black text-gray-600 uppercase group-hover:text-gray-900 transition-colors">SATA Support</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <input type="checkbox" checked={formData.supportsSAS} onChange={e => setFormData({ ...formData, supportsSAS: e.target.checked })} className="w-5 h-5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                        <span className="text-[11px] font-black text-gray-600 uppercase group-hover:text-gray-900 transition-colors">SAS Support</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Connectivity */}
-                            <div className="space-y-6">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[.3em] mb-4">Connectivity</h3>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Network Port Layout</label>
-                                    <input value={formData.networkPorts || ''} onChange={e => setFormData({ ...formData, networkPorts: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" placeholder="e.g. 1GbE x4, 10GbE SFP+ x2" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-1">Target Market / Use Case</label>
-                                    <input value={formData.targetMarket || ''} onChange={e => setFormData({ ...formData, targetMarket: e.target.value })} className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold" placeholder="e.g. Enterprise Storage, 4K Video Editing..." />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-12 flex gap-4">
-                            <button onClick={handleSave} className="flex-1 py-5 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2">
-                                <Save className="w-5 h-5" /> Save Configuration
-                            </button>
-                            <button onClick={() => setIsEditing(null)} className="px-10 py-5 bg-gray-100 text-gray-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">
-                                Cancel
-                            </button>
+                        <div className="mt-8 flex flex-wrap gap-4 items-center justify-between border-t pt-6">
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input type="checkbox" checked={formData.supportsSATA} onChange={e => setFormData({ ...formData, supportsSATA: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">SATA Support</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input type="checkbox" checked={formData.supportsSAS} onChange={e => setFormData({ ...formData, supportsSAS: e.target.checked })} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900">SAS Support</span>
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button onClick={() => setIsEditing(null)} className="px-6 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors">
+                                    Cancel
+                                </button>
+                                <button onClick={handleSave} className="px-8 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2">
+                                    <Save className="w-4 h-4" /> Save Model
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

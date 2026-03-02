@@ -23,7 +23,23 @@ export async function POST(req: Request) {
         if (id) {
             const model = await prisma.nasModel.update({
                 where: { id },
-                data: rest
+                data: {
+                    modelName: rest.modelName,
+                    bays: rest.bays,
+                    expansionUnitModel: rest.expansionUnitModel,
+                    expansionBaysPerUnit: rest.expansionBaysPerUnit,
+                    maxExpansionUnitsSupported: rest.maxExpansionUnitsSupported,
+                    defaultRamGB: rest.defaultRamGB,
+                    maxRamGB: rest.maxRamGB,
+                    supportsSATA: rest.supportsSATA,
+                    supportsSAS: rest.supportsSAS,
+                    formFactor: rest.formFactor,
+                    powerType: rest.powerType,
+                    networkPorts: rest.networkPorts,
+                    series: rest.series,
+                    targetMarket: rest.targetMarket,
+                    productId: rest.productId,
+                }
             })
             return NextResponse.json(model)
         } else {

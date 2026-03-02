@@ -925,6 +925,7 @@ model NasModel {
   networkPorts                  String?  // e.g. "1GbE x2, 10GbE x2"
   series                        String?  // Plus, XS+, SA, FS
   targetMarket                  String?
+  productId                     String?
   isActive                      Boolean  @default(true)
   createdAt                     DateTime @default(now())
   updatedAt                     DateTime @updatedAt

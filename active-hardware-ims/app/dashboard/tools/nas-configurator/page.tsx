@@ -147,25 +147,25 @@ export default function RAIDConfiguratorPage() {
     if (loading) return <div className="p-20 text-center text-gray-400 font-black uppercase tracking-widest animate-pulse">Initializing Engine...</div>
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500 pb-20 px-6">
+        <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4">
 
             {/* ── Header ── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-6">
-                    <div className="p-4 bg-blue-600 rounded-3xl shadow-xl shadow-blue-100"><Calculator className="w-10 h-10 text-white" /></div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-600 rounded-lg shadow-sm"><Calculator className="w-8 h-8 text-white" /></div>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Enterprise Solution Configurator</h1>
-                        <p className="text-xs text-blue-600 font-black uppercase tracking-[.3em] mt-1">RAID & Hardware Engineering v2</p>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Enterprise Solution Configurator</h1>
+                        <p className="text-sm text-gray-500 font-medium tracking-tight">RAID & Hardware Engineering v2</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
-                    <div className="px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100 text-center min-w-[100px]">
-                        <span className="text-[10px] font-black text-gray-400 uppercase block mb-0.5">Total Raw</span>
-                        <span className="text-sm font-black text-gray-900">{driveCount * driveCapacity} TB</span>
+                <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                    <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Total Raw</span>
+                        <span className="text-xs font-bold text-gray-900">{driveCount * driveCapacity} TB</span>
                     </div>
-                    <div className="px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100 text-center min-w-[100px]">
-                        <span className="text-[10px] font-black text-gray-400 uppercase block mb-0.5">Net Usable</span>
-                        <span className="text-sm font-black text-blue-600">~{results.usable.toFixed(1)} TB</span>
+                    <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Net Usable</span>
+                        <span className="text-xs font-bold text-blue-600">~{results.usable.toFixed(1)} TB</span>
                     </div>
                 </div>
             </div>
@@ -173,47 +173,47 @@ export default function RAIDConfiguratorPage() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
 
                 {/* ── Drive & RAID Config ── */}
-                <div className="xl:col-span-2 space-y-8">
-                    <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-10">
+                <div className="xl:col-span-2 space-y-6">
+                    <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm space-y-8">
                         <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3"><HardDrive className="w-6 h-6 text-blue-600" /><h2 className="text-xl font-black text-gray-900">Storage Parameters</h2></div>
-                            <div className="flex bg-gray-100 p-1.5 rounded-2xl gap-2">
-                                <button onClick={() => setDriveType("SATA")} className={cn("px-6 py-2 rounded-xl text-[10px] font-black transition-all", driveType === "SATA" ? "bg-white text-blue-600 shadow-md" : "text-gray-400")}>SATA</button>
-                                <button onClick={() => setDriveType("SAS")} className={cn("px-6 py-2 rounded-xl text-[10px] font-black transition-all", driveType === "SAS" ? "bg-white text-purple-600 shadow-md" : "text-gray-400")}>SAS/DualPort</button>
+                            <div className="flex items-center gap-3"><HardDrive className="w-6 h-6 text-blue-600" /><h2 className="text-lg font-bold text-gray-900">Storage Parameters</h2></div>
+                            <div className="flex bg-gray-100 p-1 rounded-lg gap-1.5">
+                                <button onClick={() => setDriveType("SATA")} className={cn("px-5 py-1.5 rounded-md text-[10px] font-bold transition-all", driveType === "SATA" ? "bg-white text-blue-600 shadow-sm border border-gray-200" : "text-gray-400 border border-transparent")}>SATA</button>
+                                <button onClick={() => setDriveType("SAS")} className={cn("px-5 py-1.5 rounded-md text-[10px] font-bold transition-all", driveType === "SAS" ? "bg-white text-purple-600 shadow-sm border border-gray-200" : "text-gray-400 border border-transparent")}>SAS/DualPort</button>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* Drive Count */}
-                            <div className="space-y-6">
-                                <label className="flex justify-between items-end mb-2">
-                                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Number of Drives</span>
-                                    <span className="text-2xl font-black text-blue-600">{driveCount} Disks</span>
+                            <div className="space-y-4">
+                                <label className="flex justify-between items-end mb-1">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Number of Drives</span>
+                                    <span className="text-xl font-bold text-blue-600">{driveCount} Disks</span>
                                 </label>
-                                <input type="range" min="1" max="100" step="1" value={driveCount} onChange={(e) => setDriveCount(parseInt(e.target.value))} className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                                <div className="flex flex-wrap gap-2">
-                                    {[2, 4, 8, 12, 16, 24, 36, 60].map(b => (
-                                        <button key={b} onClick={() => setDriveCount(b)} className={cn("px-4 py-1.5 rounded-full text-[10px] font-black transition-all", driveCount === b ? "bg-blue-600 text-white shadow-lg" : "bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors")}>{b}D</button>
+                                <input type="range" min="1" max="100" step="1" value={driveCount} onChange={(e) => setDriveCount(parseInt(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[2, 4, 8, 12, 16, 24, 36].map(b => (
+                                        <button key={b} onClick={() => setDriveCount(b)} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", driveCount === b ? "bg-blue-600 text-white shadow-sm" : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-200")}>{b}D</button>
                                     ))}
                                 </div>
                             </div>
 
                             {/* Drive Capacity */}
-                            <div className="space-y-6">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-4">Drive Capacity</label>
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Drive Capacity</label>
                                 <div className="grid grid-cols-4 gap-2">
                                     {HDD_CAPACITIES.map(c => (
-                                        <button key={c} onClick={() => setDriveCapacity(c)} className={cn("py-2.5 rounded-xl text-[11px] font-black border transition-all", driveCapacity === c ? "bg-gray-900 text-white border-gray-900 shadow-lg" : "bg-white text-gray-500 border-gray-100 hover:border-gray-300")}>{c}TB</button>
+                                        <button key={c} onClick={() => setDriveCapacity(c)} className={cn("py-2 rounded-lg text-[10px] font-bold border transition-all", driveCapacity === c ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-900")}>{c}TB</button>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="pt-6 border-t border-gray-50">
-                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-4">Select RAID Level</label>
-                            <div className="flex flex-wrap gap-3">
+                        <div className="pt-6 border-t border-gray-100">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">RAID Configuration</label>
+                            <div className="flex flex-wrap gap-2">
                                 {RAID_LEVELS.map(r => (
-                                    <button key={r} onClick={() => setSelectedRAID(r)} className={cn("px-6 py-3 rounded-2xl text-[11px] font-black transition-all flex items-center gap-2", selectedRAID === r ? "bg-blue-600 text-white shadow-xl shadow-blue-100" : "bg-white border border-gray-100 text-gray-400 hover:border-blue-200")}>
+                                    <button key={r} onClick={() => setSelectedRAID(r)} className={cn("px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border", selectedRAID === r ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600")}>
                                         {selectedRAID === r && <Check className="w-3.5 h-3.5" />}
                                         {r}
                                     </button>
@@ -223,13 +223,13 @@ export default function RAIDConfiguratorPage() {
                     </div>
 
                     {/* RAID Visualization */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-center min-h-[400px]">
-                            <h3 className="text-sm font-black text-gray-900 mb-6 flex items-center gap-2"><PieIcon className="w-4 h-4 text-emerald-500" /> Space Distribution</h3>
-                            <div className="h-[250px] w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[350px]">
+                            <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center gap-2 tracking-tight"><PieIcon className="w-4 h-4 text-emerald-500" /> Space Distribution</h3>
+                            <div className="h-[220px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
-                                        <Pie data={chartData} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                        <Pie data={chartData} innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
                                             {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />)}
                                         </Pie>
                                         <RechartsTooltip />
@@ -238,31 +238,31 @@ export default function RAIDConfiguratorPage() {
                             </div>
                         </div>
 
-                        <div className="bg-gray-900 text-white p-10 rounded-[2.5rem] shadow-xl space-y-8 flex flex-col justify-between">
+                        <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg space-y-6 flex flex-col justify-between">
                             <div>
-                                <h3 className="text-xl font-black mb-1">Architecture Summary</h3>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Storage Efficiency & Protection</p>
+                                <h3 className="text-lg font-bold mb-0.5">Architecture Summary</h3>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Efficiency & Protection</p>
                             </div>
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
-                                    <div className="flex items-center gap-3"><Zap className="w-5 h-5 text-amber-400" /> <span className="text-xs font-bold text-gray-300">Failure Tolerance</span></div>
-                                    <span className="text-xs font-black text-white">
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
+                                    <div className="flex items-center gap-2.5"><Zap className="w-4 h-4 text-amber-400" /> <span className="text-xs font-semibold text-gray-300">Failure Tolerance</span></div>
+                                    <span className="text-xs font-bold text-white">
                                         {selectedRAID === 'RAID 6' || selectedRAID === 'SHR-2' ? '2 Disks' : (selectedRAID === 'RAID 0' ? 'None' : '1 Disk')}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
-                                    <div className="flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-blue-400" /> <span className="text-xs font-bold text-gray-300">Max Vol Capacity</span></div>
-                                    <span className="text-xs font-black text-white">{requiresHighRam ? 'Requires 32GB RAM Upgrade' : 'Standard (2-4GB)'}</span>
+                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
+                                    <div className="flex items-center gap-2.5"><ShieldCheck className="w-4 h-4 text-blue-400" /> <span className="text-xs font-semibold text-gray-300">Volume Memory</span></div>
+                                    <span className="text-xs font-bold text-white tracking-tight">{requiresHighRam ? 'Requires 32GB RAM' : 'Standard 2GB+'}</span>
                                 </div>
-                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
-                                    <div className="flex items-center gap-3"><ArrowRight className="w-5 h-5 text-emerald-400" /> <span className="text-xs font-bold text-gray-300">Usable Total</span></div>
-                                    <span className="text-2xl font-black text-emerald-400">{results.usable.toFixed(1)} TB</span>
+                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
+                                    <div className="flex items-center gap-2.5"><ArrowRight className="w-4 h-4 text-emerald-400" /> <span className="text-xs font-semibold text-gray-300">Usable Space</span></div>
+                                    <span className="text-xl font-bold text-emerald-400">{results.usable.toFixed(1)} TB</span>
                                 </div>
                             </div>
                             {requiresHighRam && (
-                                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex gap-3">
-                                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
-                                    <p className="text-[10px] font-bold text-amber-500 leading-tight uppercase">Volumes exceeding 108TB require at least 32GB of RAM for optimal performance.</p>
+                                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-2.5">
+                                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                                    <p className="text-[10px] font-semibold text-amber-500 uppercase leading-tight">Volumes &gt; 108TB require 32GB RAM upgrade.</p>
                                 </div>
                             )}
                         </div>
@@ -270,27 +270,27 @@ export default function RAIDConfiguratorPage() {
                 </div>
 
                 {/* ── Hardware Configurator Sidebar ── */}
-                <div className="space-y-8">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-                        <div className="flex items-center gap-3"><Settings className="w-5 h-5 text-gray-400" /><h2 className="text-lg font-black text-gray-900">Hardware Filters</h2></div>
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+                        <div className="flex items-center gap-2.5"><Settings className="w-4 h-4 text-gray-400" /><h2 className="text-md font-bold text-gray-900 tracking-tight">Filtering Options</h2></div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-5">
                             {/* Form Factor */}
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Form Factor</label>
-                                <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block ml-0.5">Form Factor</label>
+                                <div className="grid grid-cols-3 gap-1.5">
                                     {["Any", "Desktop", "Rackmount"].map(f => (
-                                        <button key={f} onClick={() => setFormFactor(f as any)} className={cn("py-2 rounded-xl text-[10px] font-black border transition-all", formFactor === f ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-200 transition-colors")}>{f}</button>
+                                        <button key={f} onClick={() => setFormFactor(f as any)} className={cn("py-1.5 rounded-lg text-[10px] font-bold border transition-all", formFactor === f ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>{f}</button>
                                     ))}
                                 </div>
                             </div>
 
                             {/* Power */}
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Power Supply</label>
-                                <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block ml-0.5">Power Supply</label>
+                                <div className="grid grid-cols-3 gap-1.5">
                                     {["Any", "Standard", "Redundant"].map(p => (
-                                        <button key={p} onClick={() => setPowerType(p as any)} className={cn("py-2 rounded-xl text-[10px] font-black border transition-all", powerType === p ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-200 transition-colors")}>{p}</button>
+                                        <button key={p} onClick={() => setPowerType(p as any)} className={cn("py-1.5 rounded-lg text-[10px] font-bold border transition-all", powerType === p ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>{p}</button>
                                     ))}
                                 </div>
                             </div>
@@ -298,66 +298,66 @@ export default function RAIDConfiguratorPage() {
                     </div>
 
                     {/* Recommendations */}
-                    <div className="space-y-4">
-                        <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[.3em] px-4">Suggested HW Scenarios</h3>
+                    <div className="space-y-3">
+                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[.25em] px-2">Hardware Suggestions</h3>
                         {suggestedModels.length > 0 ? suggestedModels.map((m, idx) => {
                             const expansionsNeeded = Math.ceil(Math.max(0, driveCount - m.bays) / (m.expansionBaysPerUnit || 1));
                             const ramDeficit = requiresHighRam && m.maxRamGB < 32;
 
                             return (
-                                <div key={m.id} className={cn("bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all group animate-in slide-in-from-right-4 duration-300", ramDeficit ? "opacity-50 grayscale pointer-events-none" : "hover:border-blue-300")} style={{ animationDelay: `${idx * 100}ms` }}>
-                                    <div className="flex justify-between items-start mb-4">
+                                <div key={m.id} className={cn("bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-all group animate-in slide-in-from-right-4 duration-300", ramDeficit ? "opacity-50 grayscale pointer-events-none" : "hover:border-blue-400")} style={{ animationDelay: `${idx * 100}ms` }}>
+                                    <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <h4 className="text-lg font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase">{m.modelName}</h4>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.series} Series • Base {m.bays} Bays</p>
+                                            <h4 className="text-md font-bold text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{m.modelName}</h4>
+                                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.series} Series • Base {m.bays} Bays</p>
                                         </div>
-                                        <div className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all"><ChevronRight className="w-5 h-5" /></div>
+                                        <div className="p-1.5 bg-gray-50 text-gray-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all border border-gray-100"><ChevronRight className="w-4 h-4" /></div>
                                     </div>
 
                                     {expansionsNeeded > 0 && (
-                                        <div className="mb-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center gap-2">
-                                            <PlusCircle className="w-4 h-4 text-blue-600" />
-                                            <span className="text-[10px] font-black text-blue-700 uppercase tracking-tight">Requires {expansionsNeeded}× {m.expansionUnitModel} Units</span>
+                                        <div className="mb-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100 flex items-center gap-1.5">
+                                            <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                                            <span className="text-[9px] font-bold text-blue-700 uppercase">Requires {expansionsNeeded}× {m.expansionUnitModel} Units</span>
                                         </div>
                                     )}
 
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="px-2.5 py-1 bg-gray-50 rounded-lg text-[9px] font-black text-gray-500 uppercase flex items-center gap-1.5"><Box className="w-3 h-3" /> {m.formFactor}</span>
-                                        <span className="px-2.5 py-1 bg-gray-50 rounded-lg text-[9px] font-black text-gray-500 uppercase flex items-center gap-1.5"><Cpu className="w-3 h-3" /> {m.defaultRamGB}-{m.maxRamGB}G RAM</span>
-                                        <span className="px-2.5 py-1 bg-gray-50 rounded-lg text-[9px] font-black text-gray-500 uppercase flex items-center gap-1.5"><Network className="w-3 h-3" /> {m.networkPorts || 'Dual Lan'}</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1"><Box className="w-2.5 h-2.5" /> {m.formFactor}</span>
+                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1"><Cpu className="w-2.5 h-2.5" /> {m.defaultRamGB}-{m.maxRamGB}G RAM</span>
+                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1 font-black"><Network className="w-2.5 h-2.5" /> {m.networkPorts?.split(',')[0]}</span>
                                     </div>
 
                                     {ramDeficit && (
-                                        <div className="mt-3 flex items-center gap-2 text-red-500">
-                                            <AlertTriangle className="w-3.5 h-3.5" />
-                                            <span className="text-[9px] font-black uppercase tracking-tight">Does not support 32GB RAM (Required)</span>
+                                        <div className="mt-2 flex items-center gap-1.5 text-red-500">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            <span className="text-[8px] font-bold uppercase">RAM Limit Reached (32GB Required)</span>
                                         </div>
                                     )}
 
-                                    <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
+                                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
                                             <Activity className="w-3 h-3 text-emerald-500" />
-                                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Target: {m.targetMarket}</span>
+                                            <span className="text-[8px] font-bold text-emerald-600 uppercase">Tier: {m.targetMarket}</span>
                                         </div>
-                                        {m.supportsSAS && <span className="text-[9px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase">Dual-Port SAS</span>}
+                                        {m.supportsSAS && <span className="text-[8px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 uppercase">SAS</span>}
                                     </div>
                                 </div>
                             )
                         }) : (
-                            <div className="bg-white/50 border border-dashed border-gray-200 rounded-[2rem] p-10 text-center">
-                                <AlertTriangle className="w-6 h-6 text-gray-300 mx-auto mb-3" />
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">No matching hardware supports this specific disk/raid configuration.</p>
+                            <div className="bg-white/50 border border-dashed border-gray-300 rounded-2xl p-8 text-center">
+                                <AlertTriangle className="w-5 h-5 text-gray-300 mx-auto mb-2" />
+                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">No matching hardware scenarios found for this configuration.</p>
                             </div>
                         )}
                     </div>
 
                     {/* Add-ons Advice */}
-                    <div className="bg-blue-600 p-8 rounded-[2rem] shadow-xl text-white space-y-4">
-                        <div className="flex items-center gap-3"><ShieldCheck className="w-6 h-6" /> <h4 className="text-lg font-black leading-tight">Sync Recommended Drives</h4></div>
-                        <p className="text-xs font-medium text-blue-100 leading-relaxed uppercase tracking-tight">Match your {driveType} selection with:</p>
+                    <div className="bg-gray-900 p-6 rounded-xl shadow-lg text-white space-y-4 border border-gray-800">
+                        <div className="flex items-center gap-2.5"><ShieldCheck className="w-5 h-5 text-blue-400" /> <h4 className="text-md font-bold leading-tight">Recommended Drives</h4></div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sync your {driveType} selection with:</p>
                         <ul className="space-y-2">
-                            <li className="flex items-center gap-2 text-[10px] font-black"><Check className="w-4 h-4 text-emerald-300" /> {driveType === 'SATA' ? 'NAS SPEC: Synology Plus HAT3300' : 'ENTERPRISE: Synology HAS5300 SAS'}</li>
-                            <li className="flex items-center gap-2 text-[10px] font-black"><Check className="w-4 h-4 text-emerald-300" /> {driveType === 'SATA' ? 'ENT SPEC: Synology Enterprise HAT5300' : 'DUAL PORT: For SA/UC Series Compatibility'}</li>
+                            <li className="flex items-center gap-2 text-[10px] font-bold"><Check className="w-3.5 h-3.5 text-emerald-400" /> {driveType === 'SATA' ? 'Plus HAT3300' : 'Enterprise HAS5300'}</li>
+                            <li className="flex items-center gap-2 text-[10px] font-bold"><Check className="w-3.5 h-3.5 text-emerald-400" /> {driveType === 'SATA' ? 'HAT5300 Enterprise' : 'High-Density SAS Spec'}</li>
                         </ul>
                     </div>
                 </div>
