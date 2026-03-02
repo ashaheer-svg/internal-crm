@@ -3,10 +3,6 @@ import { prisma } from '../lib/db'
 
 async function main() {
     const products = await prisma.product.findMany({
-        where: {
-            brand: 'SYNOLOGY',
-            category: 'NAS'
-        },
         select: {
             model: true,
             name: true,
@@ -15,7 +11,14 @@ async function main() {
             category: true
         }
     })
-    console.log(JSON.stringify(products, null, 2))
+
+    // Filter manually for Synology NAS (case-insensitive)
+    const filtered = products.filter(p =>
+        p.brand?.toUpperCase() === 'SYNOLOGY' &&
+        p.category?.toUpperCase() === 'NAS'
+    )
+
+    console.log(JSON.stringify(filtered, null, 2))
 }
 
 main()
