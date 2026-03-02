@@ -4,11 +4,12 @@ import { prisma } from '@/lib/db'
 // GET /api/crm/nas-models/[id]/compatibility
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const compatibility = await prisma.nasCompatibility.findMany({
-            where: { nasModelId: params.id },
+            where: { nasModelId: id },
             include: {
                 product: {
                     select: {
@@ -32,9 +33,10 @@ export async function GET(
 // POST /api/crm/nas-models/[id]/compatibility
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const body = await request.json()
         const { productId, category, notes } = body
 
@@ -45,7 +47,7 @@ export async function POST(
         const item = await prisma.nasCompatibility.upsert({
             where: {
                 nasModelId_productId: {
-                    nasModelId: params.id,
+                    nasModelId: id,
                     productId: productId
                 }
             },
@@ -54,7 +56,7 @@ export async function POST(
                 notes
             },
             create: {
-                nasModelId: params.id,
+                nasModelId: id,
                 productId,
                 category,
                 notes
@@ -71,8 +73,9 @@ export async function POST(
 // DELETE /api/crm/nas-models/[id]/compatibility
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const productId = searchParams.get('productId')
 
@@ -84,7 +87,7 @@ export async function DELETE(
         await prisma.nasCompatibility.delete({
             where: {
                 nasModelId_productId: {
-                    nasModelId: params.id,
+                    nasModelId: id,
                     productId: productId
                 }
             }
