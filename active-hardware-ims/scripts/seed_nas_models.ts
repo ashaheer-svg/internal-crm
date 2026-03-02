@@ -18,7 +18,7 @@ const INITIAL_MODELS = [
 async function main() {
     console.log('Seeding NAS Models...')
     for (const model of INITIAL_MODELS) {
-        await prisma.nASModel.upsert({
+        await (prisma as any).nasModel.upsert({
             where: { modelName: model.modelName },
             update: model,
             create: model
