@@ -34,111 +34,75 @@ export async function POST(req: Request) {
         await prisma.$transaction(async (tx) => {
             for (const item of projects) {
                 try {
-                    // Find or create Customer
+                    // ── Customer resolution ─────────────────────────────────────
+                    // entityMap entries now carry real DB IDs (pre-created in wizard)
                     const resolvedCustomer = entityMap?.[item.customerName]
                     let customerId = resolvedCustomer?.id
-                    const customerName = resolvedCustomer?.customName || item.customerName
 
-                    if (!customerId) {
-                        let customer = await tx.customer.findFirst({
-                            where: { name: customerName }
-                        })
-
+                    if (!customerId || customerId === 'NEW' || customerId === 'SKIP') {
+                        // Safety fallback: find by name or create
+                        let customer = await tx.customer.findFirst({ where: { name: item.customerName } })
                         if (!customer) {
-                            customer = await tx.customer.create({
-                                data: {
-                                    name: customerName,
-                                    isCustomer: true
-                                }
-                            })
+                            customer = await tx.customer.create({ data: { name: item.customerName, isCustomer: true } })
                         }
                         customerId = customer.id
                     }
 
-                    // Find or create Partner (if provided)
-                    let partnerId = null
+                    // ── Partner resolution ──────────────────────────────────────
+                    let partnerId: string | null = null
                     if (item.partnerName) {
                         const resolvedPartner = entityMap?.[item.partnerName]
-                        partnerId = resolvedPartner?.id
-                        const partnerName = resolvedPartner?.customName || item.partnerName
+                        partnerId = resolvedPartner?.id || null
 
-                        if (!partnerId) {
-                            let partner = await tx.customer.findFirst({
-                                where: { name: partnerName }
-                            })
-
+                        if (!partnerId || partnerId === 'NEW' || partnerId === 'SKIP') {
+                            let partner = await tx.customer.findFirst({ where: { name: item.partnerName } })
                             if (!partner) {
-                                partner = await tx.customer.create({
-                                    data: {
-                                        name: partnerName,
-                                        isPartner: true
-                                    }
-                                })
+                                partner = await tx.customer.create({ data: { name: item.partnerName, isPartner: true } })
                             }
                             partnerId = partner.id
                         }
                     }
 
-                    // Find or create Sales Rep
+                    // ── Sales Rep ───────────────────────────────────────────────
                     let salesRepId = null
                     if (item.salesRepName) {
-                        let salesRep = await tx.salesRep.findFirst({
-                            where: { name: item.salesRepName }
-                        })
-
-                        if (!salesRep) {
-                            salesRep = await tx.salesRep.create({
-                                data: { name: item.salesRepName }
-                            })
-                        }
+                        let salesRep = await tx.salesRep.findFirst({ where: { name: item.salesRepName } })
+                        if (!salesRep) salesRep = await tx.salesRep.create({ data: { name: item.salesRepName } })
                         salesRepId = salesRep.id
                     }
 
-                    // Determine Stage and Status
+                    // ── Stage + Status ──────────────────────────────────────────
                     const isWon = item.stage.toUpperCase() === 'WON'
                     const stage = isWon ? wonStage : leadStage
                     const status = isWon ? 'WON' : 'OPEN'
                     const probability = isWon ? 100 : 10
                     const closedAt = isWon ? new Date(item.date) : null
-
-                    // Generate Unique Project Code (P-LEGACY-XXXX)
                     const projectCode = `${item.stage.charAt(0)}-LEG-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+                    const customerName = resolvedCustomer?.name || item.customerName
 
-                    // Create Project
                     await tx.cRMProject.create({
                         data: {
                             projectCode,
                             title: `Legacy Import: ${customerName}`,
                             brand: item.brand || null,
-                            status,
-                            probability,
+                            status, probability,
                             expectedValue: item.value || 0,
                             startDate: new Date(item.date),
                             expectedCloseDate: new Date(item.date),
-                            closedAt,
-                            stageId: stage.id,
-                            pipelineId,
-                            customerId,
-                            partnerId,
-                            salesRepId,
-                            members: {
-                                create: {
-                                    userId: user.id,
-                                    role: 'OWNER'
-                                }
-                            }
-                        }
+                            closedAt, stageId: stage.id, pipelineId,
+                            customerId, partnerId, salesRepId,
+                            members: { create: { userId: user.id, role: 'OWNER' } }
+                        } as any
                     })
 
                     results.created++
                 } catch (err) {
-                    console.error("Failed to import individual project:", err)
+                    console.error("Failed to import project row:", err)
                     throw err
                 }
             }
-        }, {
-            timeout: 120000
-        })
+        }, { timeout: 120000 })
+
 
         return NextResponse.json({
             success: true,
