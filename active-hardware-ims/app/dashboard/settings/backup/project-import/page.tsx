@@ -35,7 +35,7 @@ type UnresolvedEntity = {
 }
 
 type ResolvedEntity = {
-    id: string | 'NEW'
+    id: string | 'NEW' | 'SKIP'
     customName?: string
     name: string
     type: 'CUSTOMER' | 'PARTNER'
@@ -254,23 +254,31 @@ export default function ProjectImportPage() {
         setResolutionMap(prev => ({ ...prev, [currentEntity.input]: resolution }))
     }
 
-    function handleWizardNext() {
-        // Move to next unresolved or skip to next
-        let next = wizardIndex + 1
-        setWizardIndex(next)
+    function resetWizardPanel() {
         setWizardMode('suggest')
         setWizardSearchQuery("")
         setWizardSearchResults([])
         setCustomNameInput("")
     }
 
+    function handleWizardNext() {
+        setWizardIndex(prev => prev + 1)
+        resetWizardPanel()
+    }
+
     function handleWizardBack() {
         if (wizardIndex > 0) {
-            setWizardIndex(wizardIndex - 1)
-            setWizardMode('suggest')
-            setWizardSearchQuery("")
-            setWizardSearchResults([])
-            setCustomNameInput("")
+            setWizardIndex(prev => prev - 1)
+            resetWizardPanel()
+        }
+    }
+
+    function handleWizardSkip() {
+        // Mark as SKIP — will be created as-is with original name during import
+        resolveCurrentAs({ id: 'SKIP', name: currentEntity.input, type: currentEntity.type })
+        if (wizardIndex < totalEntities - 1) {
+            setWizardIndex(prev => prev + 1)
+            resetWizardPanel()
         }
     }
 
@@ -386,15 +394,19 @@ export default function ProjectImportPage() {
                         <div className="flex flex-wrap gap-1.5 mt-4">
                             {unresolvedEntities.map((e, idx) => {
                                 const res = resolutionMap[e.input]
+                                const isSkipped = res?.id === 'SKIP'
                                 return (
-                                    <button key={idx} onClick={() => { setWizardIndex(idx); setWizardMode('suggest'); setWizardSearchQuery(""); setWizardSearchResults([]) }}
+                                    <button key={idx} onClick={() => { setWizardIndex(idx); resetWizardPanel() }}
                                         title={e.input}
                                         className={cn(
                                             "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter border transition-all max-w-[130px] truncate",
                                             wizardIndex === idx ? "border-blue-500 bg-blue-50 text-blue-700" :
-                                                res ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-gray-100 bg-white text-gray-500 hover:border-gray-300"
+                                                isSkipped ? "border-gray-200 bg-gray-50 text-gray-400" :
+                                                    res ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-gray-100 bg-white text-gray-500 hover:border-gray-300"
                                         )}>
-                                        {res ? <Check className="w-2.5 h-2.5 shrink-0" /> : (e.type === 'PARTNER' ? <Briefcase className="w-2.5 h-2.5 shrink-0" /> : <Users className="w-2.5 h-2.5 shrink-0" />)}
+                                        {isSkipped ? <ArrowRight className="w-2.5 h-2.5 shrink-0 opacity-50" /> :
+                                            res ? <Check className="w-2.5 h-2.5 shrink-0" /> :
+                                                (e.type === 'PARTNER' ? <Briefcase className="w-2.5 h-2.5 shrink-0" /> : <Users className="w-2.5 h-2.5 shrink-0" />)}
                                         <span className="truncate">{e.input}</span>
                                     </button>
                                 )
@@ -570,13 +582,22 @@ export default function ProjectImportPage() {
                                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-gray-500 hover:bg-white hover:shadow-sm transition-all disabled:opacity-30">
                                     <ArrowLeft className="w-4 h-4" /> Previous
                                 </button>
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{wizardIndex + 1} / {totalEntities}</span>
-                                <button onClick={handleWizardNext} disabled={wizardIndex >= totalEntities - 1}
-                                    className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all",
-                                        currentResolution ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                    )}>
-                                    {wizardIndex >= totalEntities - 1 ? 'Done' : 'Next'} <ArrowRight className="w-4 h-4" />
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={handleWizardSkip}
+                                        title="Skip — will import this entry using its original name as-is"
+                                        className="px-4 py-2 rounded-xl text-[10px] font-black text-gray-400 border border-dashed border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all uppercase tracking-widest"
+                                    >
+                                        Skip
+                                    </button>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{wizardIndex + 1} / {totalEntities}</span>
+                                    <button onClick={handleWizardNext} disabled={wizardIndex >= totalEntities - 1}
+                                        className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all",
+                                            currentResolution ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        )}>
+                                        {wizardIndex >= totalEntities - 1 ? 'Done' : 'Next'} <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

@@ -43,10 +43,10 @@ export async function GET(request: Request) {
                 ...(where.AND || []),
                 {
                     OR: [
-                        { name: { contains: search, mode: 'insensitive' } },
-                        { email: { contains: search, mode: 'insensitive' } },
-                        { contactName: { contains: search, mode: 'insensitive' } },
-                        { phone: { contains: search, mode: 'insensitive' } }
+                        { name: { contains: search } },
+                        { email: { contains: search } },
+                        { contactName: { contains: search } },
+                        { phone: { contains: search } }
                     ]
                 }
             ]
