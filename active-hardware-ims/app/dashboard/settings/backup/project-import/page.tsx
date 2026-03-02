@@ -20,7 +20,9 @@ import {
     ArrowRight,
     Globe,
     ExternalLink,
-    RefreshCw
+    RefreshCw,
+    Edit2,
+    CheckSquare
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import BackButton from "@/components/BackButton"
@@ -42,10 +44,10 @@ type LegacyProjectRow = {
 }
 
 type ResolvedEntity = {
-    id: string | 'NEW'
+    id?: string | 'NEW'
+    customName?: string
     name: string
     type: 'CUSTOMER' | 'PARTNER'
-    matchScore?: number
 }
 
 type ResolutionState = Record<string, ResolvedEntity>
@@ -150,6 +152,10 @@ export default function ProjectImportPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [unresolvedEntities, setUnresolvedEntities] = useState<any[]>([])
     const [resolutionMap, setResolutionMap] = useState<ResolutionState>({})
+    const [editingEntity, setEditingEntity] = useState<string | null>(null)
+    const [manualSearchQuery, setManualSearchQuery] = useState("")
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchResults, setSearchResults] = useState<any[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -352,14 +358,6 @@ export default function ProjectImportPage() {
         if (approvedRows.length === 0) return
         setImporting(true)
 
-        // Convert resolution map to flat entityMap for backend
-        const entityMap: Record<string, string> = {}
-        Object.entries(resolutionMap).forEach(([name, res]) => {
-            if (res.id !== 'NEW') {
-                entityMap[name] = res.id
-            }
-        })
-
         try {
             const res = await fetch('/api/crm/projects/import', {
                 method: 'POST',
@@ -367,7 +365,7 @@ export default function ProjectImportPage() {
                 body: JSON.stringify({
                     projects: approvedRows,
                     pipelineId: selectedPipelineId,
-                    entityMap
+                    entityMap: resolutionMap
                 })
             })
             const result = await res.json()
@@ -379,6 +377,22 @@ export default function ProjectImportPage() {
             setStatus({ type: 'error', message: error.message })
         } finally {
             setImporting(false)
+        }
+    }
+
+    async function handleManualSearch(query: string) {
+        if (!query || query.length < 2) return
+        setSearchLoading(true)
+        try {
+            const res = await fetch(`/api/customers?query=${encodeURIComponent(query)}&limit=10`)
+            if (res.ok) {
+                const data = await res.json()
+                setSearchResults(data.data || [])
+            }
+        } catch (e) {
+            console.error("Search failed", e)
+        } finally {
+            setSearchLoading(false)
         }
     }
 
@@ -553,23 +567,31 @@ export default function ProjectImportPage() {
                         <div className="flex-1 overflow-auto divide-y divide-gray-50">
                             {unresolvedEntities.map((entity, idx) => {
                                 const resolved = resolutionMap[entity.input]
+                                const isEditing = editingEntity === entity.input
+
                                 return (
                                     <div key={idx} className={cn(
                                         "p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-all",
                                         resolved ? "bg-white" : "bg-gray-50/50"
                                     )}>
-                                        <div className="flex items-start gap-4 flex-1">
-                                            <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                                            <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm shrink-0">
                                                 {entity.type === 'PARTNER' ? <Briefcase className="w-5 h-5 text-blue-500" /> : <Users className="w-5 h-5 text-gray-500" />}
                                             </div>
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-1">
-                                                    <h3 className="text-sm font-black text-gray-900">{entity.input}</h3>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-3 mb-1 flex-wrap">
+                                                    <h3 className="text-sm font-black text-gray-900 truncate">{entity.input}</h3>
+                                                    {resolved?.id === 'NEW' && resolved.customName && (
+                                                        <div className="flex items-center gap-2 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+                                                            <ArrowRight className="w-3 h-3 text-purple-600" />
+                                                            <span className="text-[10px] font-black text-purple-700 uppercase">{resolved.customName}</span>
+                                                        </div>
+                                                    )}
                                                     <span className="bg-gray-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter">
                                                         {entity.count} Rows
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex flex-wrap items-center gap-3">
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{entity.type}</span>
                                                     <a
                                                         href={`https://www.google.com/search?q=site:eroc.drc.gov.lk+"${encodeURIComponent(entity.input)}"`}
@@ -580,52 +602,133 @@ export default function ProjectImportPage() {
                                                         Verify via eROC SL
                                                         <ExternalLink className="w-2.5 h-2.5" />
                                                     </a>
+                                                    {!resolved && !isEditing && (
+                                                        <button
+                                                            onClick={() => setEditingEntity(entity.input)}
+                                                            className="flex items-center gap-1 text-[10px] font-black text-blue-600 hover:underline uppercase tracking-tighter"
+                                                        >
+                                                            <Search className="w-3 h-3" />
+                                                            Manual Lookup
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                                            <div className="flex-1 lg:flex-none">
-                                                <select
-                                                    className={cn(
-                                                        "w-full sm:w-[320px] px-4 py-3 rounded-xl border text-xs font-black transition-all outline-none",
-                                                        resolved ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-gray-200 bg-white text-gray-600 focus:border-blue-500"
-                                                    )}
-                                                    value={resolved ? (resolved.id === 'NEW' ? 'NEW' : resolved.id) : ""}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value
-                                                        if (val === 'NEW') {
-                                                            setResolutionMap(prev => ({ ...prev, [entity.input]: { id: 'NEW', name: entity.input, type: entity.type } }))
-                                                        } else if (val) {
-                                                            const match = entity.suggestions.find((s: any) => s.id === val) || (entity.match?.id === val ? entity.match : null)
-                                                            setResolutionMap(prev => ({ ...prev, [entity.input]: { id: val, name: match.name, type: entity.type } }))
-                                                        } else {
-                                                            const newMap = { ...resolutionMap }
-                                                            delete newMap[entity.input]
-                                                            setResolutionMap(newMap)
-                                                        }
-                                                    }}
-                                                >
-                                                    <option value="">- SELECT ACTION -</option>
-                                                    <option value="NEW">+ CREATE AS NEW {entity.type}</option>
-                                                    {entity.match && (
-                                                        <optgroup label="PROBABLE MATCH">
-                                                            <option value={entity.match.id}>{entity.match.name} ({Math.round(entity.match.score * 100)}% Match)</option>
-                                                        </optgroup>
-                                                    )}
-                                                    {entity.suggestions.length > 0 && (
-                                                        <optgroup label="OTHER SUGGESTIONS">
-                                                            {entity.suggestions.map((s: any) => (
-                                                                <option key={s.id} value={s.id}>{s.name} ({Math.round(s.score * 100)}%)</option>
-                                                            ))}
-                                                        </optgroup>
-                                                    )}
-                                                </select>
-                                            </div>
-                                            {resolved && (
-                                                <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
-                                                    <Check className="w-5 h-5" />
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-2 bg-white border border-blue-200 p-1 rounded-xl shadow-lg relative">
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            autoFocus
+                                                            placeholder="Search or Type Custom Name..."
+                                                            className="px-3 py-2 text-xs font-black outline-none w-[280px]"
+                                                            value={manualSearchQuery}
+                                                            onChange={(e) => {
+                                                                setManualSearchQuery(e.target.value)
+                                                                handleManualSearch(e.target.value)
+                                                            }}
+                                                        />
+                                                        {manualSearchQuery && (
+                                                            <div className="absolute top-full left-0 right-0 bg-white border border-gray-100 shadow-2xl rounded-xl mt-2 z-50 overflow-hidden min-w-[300px]">
+                                                                <div className="p-2 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                                                    <span className="text-[9px] font-black text-gray-400 uppercase">Existing Matches</span>
+                                                                    {searchLoading && <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />}
+                                                                </div>
+                                                                <div className="max-h-[200px] overflow-auto">
+                                                                    {searchResults.map(s => (
+                                                                        <button
+                                                                            key={s.id}
+                                                                            onClick={() => {
+                                                                                setResolutionMap(prev => ({ ...prev, [entity.input]: { id: s.id, name: s.name, type: entity.type } }))
+                                                                                setEditingEntity(null)
+                                                                                setManualSearchQuery("")
+                                                                            }}
+                                                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-50 transition-colors flex justify-between items-center group"
+                                                                        >
+                                                                            <div>
+                                                                                <p className="text-xs font-black text-gray-900 group-hover:text-blue-700">{s.name}</p>
+                                                                                <p className="text-[9px] font-bold text-gray-400 uppercase">{s.isPartner ? 'Partner' : 'Customer'}</p>
+                                                                            </div>
+                                                                            <CheckSquare className="w-3.5 h-3.5 text-gray-200 group-hover:text-blue-500" />
+                                                                        </button>
+                                                                    ))}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setResolutionMap(prev => ({ ...prev, [entity.input]: { id: 'NEW', customName: manualSearchQuery, name: manualSearchQuery, type: entity.type } }))
+                                                                            setEditingEntity(null)
+                                                                            setManualSearchQuery("")
+                                                                        }}
+                                                                        className="w-full text-left px-4 py-3 hover:bg-purple-50 group transition-colors"
+                                                                    >
+                                                                        <p className="text-xs font-black text-purple-700">Create as "{manualSearchQuery}"</p>
+                                                                        <p className="text-[9px] font-bold text-purple-400 uppercase">Use this name for a new {entity.type}</p>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => { setEditingEntity(null); setManualSearchQuery(""); }}
+                                                        className="p-2 text-gray-400 hover:text-red-500 rounded-lg"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
                                                 </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex-1 lg:flex-none">
+                                                        <select
+                                                            className={cn(
+                                                                "w-full sm:w-[320px] px-4 py-3 rounded-xl border text-xs font-black transition-all outline-none",
+                                                                resolved ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-gray-200 bg-white text-gray-600 focus:border-blue-500"
+                                                            )}
+                                                            value={resolved ? (resolved.id === 'NEW' ? 'NEW' : resolved.id) : ""}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value
+                                                                if (val === 'NEW') {
+                                                                    setResolutionMap(prev => ({ ...prev, [entity.input]: { id: 'NEW', name: entity.input, type: entity.type } }))
+                                                                } else if (val) {
+                                                                    const match = entity.suggestions.find((s: any) => s.id === val) || (entity.match?.id === val ? entity.match : null)
+                                                                    setResolutionMap(prev => ({ ...prev, [entity.input]: { id: val, name: match.name, type: entity.type } }))
+                                                                } else {
+                                                                    const newMap = { ...resolutionMap }
+                                                                    delete newMap[entity.input]
+                                                                    setResolutionMap(newMap)
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="">- SELECT ACTION -</option>
+                                                            <option value="NEW">+ CREATE AS NEW {entity.type}</option>
+                                                            {entity.match && (
+                                                                <optgroup label="PROBABLE MATCH">
+                                                                    <option value={entity.match.id}>{entity.match.name} ({Math.round(entity.match.score * 100)}% Match)</option>
+                                                                </optgroup>
+                                                            )}
+                                                            {entity.suggestions.length > 0 && (
+                                                                <optgroup label="OTHER SUGGESTIONS">
+                                                                    {entity.suggestions.map((s: any) => (
+                                                                        <option key={s.id} value={s.id}>{s.name} ({Math.round(s.score * 100)}%)</option>
+                                                                    ))}
+                                                                </optgroup>
+                                                            )}
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => setEditingEntity(entity.input)}
+                                                            className="p-3 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 text-gray-400 hover:text-blue-600 shadow-sm transition-all"
+                                                        >
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </button>
+                                                        {resolved && (
+                                                            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-100 animate-in zoom-in">
+                                                                <Check className="w-5 h-5" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </div>

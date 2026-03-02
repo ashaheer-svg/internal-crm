@@ -35,16 +35,19 @@ export async function POST(req: Request) {
             for (const item of projects) {
                 try {
                     // Find or create Customer
-                    let customerId = entityMap?.[item.customerName]
+                    const resolvedCustomer = entityMap?.[item.customerName]
+                    let customerId = resolvedCustomer?.id
+                    const customerName = resolvedCustomer?.customName || item.customerName
+
                     if (!customerId) {
                         let customer = await tx.customer.findFirst({
-                            where: { name: item.customerName }
+                            where: { name: customerName }
                         })
 
                         if (!customer) {
                             customer = await tx.customer.create({
                                 data: {
-                                    name: item.customerName,
+                                    name: customerName,
                                     isCustomer: true
                                 }
                             })
@@ -55,16 +58,19 @@ export async function POST(req: Request) {
                     // Find or create Partner (if provided)
                     let partnerId = null
                     if (item.partnerName) {
-                        partnerId = entityMap?.[item.partnerName]
+                        const resolvedPartner = entityMap?.[item.partnerName]
+                        partnerId = resolvedPartner?.id
+                        const partnerName = resolvedPartner?.customName || item.partnerName
+
                         if (!partnerId) {
                             let partner = await tx.customer.findFirst({
-                                where: { name: item.partnerName }
+                                where: { name: partnerName }
                             })
 
                             if (!partner) {
                                 partner = await tx.customer.create({
                                     data: {
-                                        name: item.partnerName,
+                                        name: partnerName,
                                         isPartner: true
                                     }
                                 })
@@ -102,13 +108,13 @@ export async function POST(req: Request) {
                     await tx.cRMProject.create({
                         data: {
                             projectCode,
-                            title: `Legacy Import: ${item.customerName}`,
+                            title: `Legacy Import: ${customerName}`,
                             brand: item.brand || null,
                             status,
                             probability,
                             expectedValue: item.value || 0,
                             startDate: new Date(item.date),
-                            expectedCloseDate: new Date(item.date), // Fallback to provided date
+                            expectedCloseDate: new Date(item.date),
                             closedAt,
                             stageId: stage.id,
                             pipelineId,
@@ -127,11 +133,11 @@ export async function POST(req: Request) {
                     results.created++
                 } catch (err) {
                     console.error("Failed to import individual project:", err)
-                    throw err // Rollback
+                    throw err
                 }
             }
         }, {
-            timeout: 120000 // Increase timeout to 120s for large bulk imports (4000+ rows)
+            timeout: 120000
         })
 
         return NextResponse.json({
