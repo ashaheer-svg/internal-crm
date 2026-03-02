@@ -156,6 +156,8 @@ export default function ProjectImportPage() {
     const [manualSearchQuery, setManualSearchQuery] = useState("")
     const [searchLoading, setSearchLoading] = useState(false)
     const [searchResults, setSearchResults] = useState<any[]>([])
+    const [sortKey, setSortKey] = useState<'date' | 'customerName' | 'value'>('date')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -187,6 +189,15 @@ export default function ProjectImportPage() {
     const removeRow = useCallback((id: string) => {
         setRows(prev => prev.filter(r => r.id !== id))
     }, [])
+
+    const toggleSort = (key: 'date' | 'customerName' | 'value') => {
+        if (sortKey === key) {
+            setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortKey(key)
+            setSortDir('desc')
+        }
+    }
 
     async function handleDownloadTemplate() {
         try {
@@ -384,10 +395,10 @@ export default function ProjectImportPage() {
         if (!query || query.length < 2) return
         setSearchLoading(true)
         try {
-            const res = await fetch(`/api/customers?query=${encodeURIComponent(query)}&limit=10`)
+            const res = await fetch(`/api/customers?search=${encodeURIComponent(query)}&limit=10`)
             if (res.ok) {
                 const data = await res.json()
-                setSearchResults(data.data || [])
+                setSearchResults(data.customers || [])
             }
         } catch (e) {
             console.error("Search failed", e)
@@ -397,14 +408,28 @@ export default function ProjectImportPage() {
     }
 
     const filteredRows = useMemo(() => {
-        if (!searchQuery) return rows
-        const low = searchQuery.toLowerCase()
-        return rows.filter(r =>
-            r.customerName.toLowerCase().includes(low) ||
-            r.brand?.toLowerCase().includes(low) ||
-            r.salesRepName?.toLowerCase().includes(low)
-        )
-    }, [rows, searchQuery])
+        let result = rows
+        if (searchQuery) {
+            const low = searchQuery.toLowerCase()
+            result = rows.filter(r =>
+                r.customerName.toLowerCase().includes(low) ||
+                r.brand?.toLowerCase().includes(low) ||
+                r.salesRepName?.toLowerCase().includes(low)
+            )
+        }
+
+        return [...result].sort((a, b) => {
+            let valA = a[sortKey]
+            let valB = b[sortKey]
+
+            if (typeof valA === 'string') valA = valA.toLowerCase()
+            if (typeof valB === 'string') valB = valB.toLowerCase()
+
+            if (valA < valB) return sortDir === 'asc' ? -1 : 1
+            if (valA > valB) return sortDir === 'asc' ? 1 : -1
+            return 0
+        })
+    }, [rows, searchQuery, sortKey, sortDir])
 
     const stats = useMemo(() => {
         const approvedOnly = rows.filter(r => r.approved)
@@ -594,12 +619,12 @@ export default function ProjectImportPage() {
                                                 <div className="flex flex-wrap items-center gap-3">
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{entity.type}</span>
                                                     <a
-                                                        href={`https://www.google.com/search?q=site:eroc.drc.gov.lk+"${encodeURIComponent(entity.input)}"`}
+                                                        href={`https://www.google.com/search?q=${encodeURIComponent(entity.input + " Sri Lanka Registrar of Companies search")}`}
                                                         target="_blank"
                                                         className="flex items-center gap-1 text-[10px] font-black text-emerald-600 hover:underline uppercase tracking-tighter"
                                                     >
                                                         <Globe className="w-3 h-3" />
-                                                        Verify via eROC SL
+                                                        Verify via Google (SL)
                                                         <ExternalLink className="w-2.5 h-2.5" />
                                                     </a>
                                                     {!resolved && !isEditing && (
@@ -807,12 +832,28 @@ export default function ProjectImportPage() {
                                 <thead className="sticky top-0 bg-white shadow-sm z-10">
                                     <tr className="bg-white">
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Approve</th>
-                                        <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Customer / Date</th>
+                                        <th
+                                            className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white cursor-pointer hover:bg-gray-50 group/th"
+                                            onClick={() => toggleSort('customerName')}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                Customer / Date
+                                                <ListFilter className={cn("w-2.5 h-2.5 transition-all opacity-0 group-hover/th:opacity-100", sortKey === 'customerName' && "opacity-100 text-blue-500", sortDir === 'asc' && "rotate-180")} />
+                                            </div>
+                                        </th>
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Stage</th>
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Sales Rep</th>
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Partner</th>
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white">Brand</th>
-                                        <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white text-right">Value</th>
+                                        <th
+                                            className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white text-right cursor-pointer hover:bg-gray-50 group/th"
+                                            onClick={() => toggleSort('value')}
+                                        >
+                                            <div className="flex items-center justify-end gap-1">
+                                                Value
+                                                <ListFilter className={cn("w-2.5 h-2.5 transition-all opacity-0 group-hover/th:opacity-100", sortKey === 'value' && "opacity-100 text-blue-500", sortDir === 'asc' && "rotate-180")} />
+                                            </div>
+                                        </th>
                                         <th className="px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-50 bg-white text-center">X</th>
                                     </tr>
                                 </thead>
