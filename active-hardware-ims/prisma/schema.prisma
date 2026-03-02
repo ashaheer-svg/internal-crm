@@ -238,6 +238,9 @@ model Product {
 
   // CRM Relations
   quoteItems CRMQuoteItem[]
+
+  // NAS Compatibility
+  nasCompatibility NasCompatibility[]
 }
 
 model Location {
@@ -929,4 +932,24 @@ model NasModel {
   isActive                      Boolean  @default(true)
   createdAt                     DateTime @default(now())
   updatedAt                     DateTime @updatedAt
+
+  // Relations
+  compabilityItems              NasCompatibility[]
+}
+
+model NasCompatibility {
+  id          String   @id @default(uuid())
+  nasModelId  String
+  nasModel    NasModel @relation(fields: [nasModelId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  category    String   // DRIVE, RAM, NETWORK, EXPANSION
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([nasModelId, productId])
 }

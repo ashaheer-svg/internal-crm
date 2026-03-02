@@ -28,7 +28,7 @@ interface NASModel {
     targetMarket: string | null
 }
 
-const HDD_CAPACITIES = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+const HDD_CAPACITIES = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
 const RAID_LEVELS = ["RAID 0", "RAID 1", "RAID 5", "RAID 6", "RAID 10", "SHR", "SHR-2"]
 
 // ── Utility: RAID Calculations ─────────────────────────────────────────────
@@ -83,6 +83,7 @@ function calculateRAID(level: string, count: number, capacity: number) {
 export default function RAIDConfiguratorPage() {
     // Model Data State
     const [nasModels, setNasModels] = useState<NASModel[]>([])
+    const [compatibilityMap, setCompatibilityMap] = useState<Record<string, any[]>>({})
     const [loading, setLoading] = useState(true)
 
     // Config State
@@ -126,10 +127,10 @@ export default function RAIDConfiguratorPage() {
         { name: "Unused", value: results.unallocated, color: "#f1f5f9" }
     ].filter(d => d.value > 0)
 
-    // Recommendations Logic
+    // Recommendations Logic & Compatibility Fetching
     const suggestedModels = useMemo(() => {
         if (!Array.isArray(nasModels)) return [];
-        return nasModels.filter(m => {
+        const filtered = nasModels.filter(m => {
             const totalMaxBays = m.bays + (m.maxExpansionUnitsSupported * m.expansionBaysPerUnit);
             const matchesBays = totalMaxBays >= driveCount;
             const matchesForm = formFactor === "Any" || m.formFactor === formFactor;
@@ -139,7 +140,23 @@ export default function RAIDConfiguratorPage() {
 
             return matchesBays && matchesForm && matchesPower && matchesEth && matchesDriveType;
         }).sort((a, b) => a.bays - b.bays).slice(0, 4);
+
+        return filtered;
     }, [nasModels, driveCount, formFactor, powerType, ethernetSpeed, driveType])
+
+    // Fetch compatibility for suggestions
+    useEffect(() => {
+        suggestedModels.forEach(m => {
+            if (!compatibilityMap[m.id]) {
+                fetch(`/api/crm/nas-models/${m.id}/compatibility`)
+                    .then(res => res.json())
+                    .then(data => {
+                        setCompatibilityMap(prev => ({ ...prev, [m.id]: data }))
+                    })
+                    .catch(() => { })
+            }
+        })
+    }, [suggestedModels])
 
     // RAM Logic
     const requiresHighRam = results.usable > 108;
@@ -183,38 +200,39 @@ export default function RAIDConfiguratorPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
                             {/* Drive Count */}
-                            <div className="space-y-4">
-                                <label className="flex justify-between items-end mb-1">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Number of Drives</span>
-                                    <span className="text-xl font-bold text-blue-600">{driveCount} Disks</span>
+                            <div className="md:col-span-2 space-y-3">
+                                <label className="flex justify-between items-end">
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Quantity</span>
+                                    <span className="text-lg font-bold text-blue-600">{driveCount} Bays</span>
                                 </label>
-                                <input type="range" min="1" max="100" step="1" value={driveCount} onChange={(e) => setDriveCount(parseInt(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                                <div className="flex flex-wrap gap-1.5">
-                                    {[2, 4, 8, 12, 16, 24, 36].map(b => (
-                                        <button key={b} onClick={() => setDriveCount(b)} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", driveCount === b ? "bg-blue-600 text-white shadow-sm" : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-200")}>{b}D</button>
-                                    ))}
+                                <div className="flex items-center gap-4">
+                                    <input type="range" min="1" max="100" step="1" value={driveCount} onChange={(e) => setDriveCount(parseInt(e.target.value))} className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                    <div className="flex gap-1">
+                                        {[2, 4, 8, 12, 16, 24].map(b => (
+                                            <button key={b} onClick={() => setDriveCount(b)} className={cn("px-2 py-0.5 rounded text-[8px] font-bold transition-all border", driveCount === b ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-500 border-gray-200")}>{b}</button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Drive Capacity */}
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Drive Capacity</label>
-                                <div className="grid grid-cols-4 gap-2">
+                            <div className="md:col-span-2 space-y-1">
+                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Disk Size</label>
+                                <div className="grid grid-cols-6 gap-1.5">
                                     {HDD_CAPACITIES.map(c => (
-                                        <button key={c} onClick={() => setDriveCapacity(c)} className={cn("py-2 rounded-lg text-[10px] font-bold border transition-all", driveCapacity === c ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-900")}>{c}TB</button>
+                                        <button key={c} onClick={() => setDriveCapacity(c)} className={cn("py-1 rounded-md text-[9px] font-bold border transition-all", driveCapacity === c ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:border-gray-400")}>{c}T</button>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="pt-6 border-t border-gray-100">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">RAID Configuration</label>
-                            <div className="flex flex-wrap gap-2">
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest shrink-0">RAID Mode</label>
+                            <div className="flex flex-wrap gap-1.5 justify-end">
                                 {RAID_LEVELS.map(r => (
-                                    <button key={r} onClick={() => setSelectedRAID(r)} className={cn("px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border", selectedRAID === r ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600")}>
-                                        {selectedRAID === r && <Check className="w-3.5 h-3.5" />}
+                                    <button key={r} onClick={() => setSelectedRAID(r)} className={cn("px-3 py-1 rounded-md text-[9px] font-bold transition-all border", selectedRAID === r ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white border-gray-200 text-gray-500 hover:border-blue-400")}>
                                         {r}
                                     </button>
                                 ))}
@@ -334,12 +352,29 @@ export default function RAIDConfiguratorPage() {
                                         </div>
                                     )}
 
-                                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-                                        <div className="flex items-center gap-1.5">
-                                            <Activity className="w-3 h-3 text-emerald-500" />
-                                            <span className="text-[8px] font-bold text-emerald-600 uppercase">Tier: {m.targetMarket}</span>
+                                    <div className="mt-3 pt-3 border-t border-gray-50 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5">
+                                                <Activity className="w-3 h-3 text-emerald-500" />
+                                                <span className="text-[8px] font-bold text-emerald-600 uppercase">Tier: {m.targetMarket}</span>
+                                            </div>
+                                            {m.supportsSAS && <span className="text-[8px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 uppercase">SAS</span>}
                                         </div>
-                                        {m.supportsSAS && <span className="text-[8px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 uppercase">SAS</span>}
+
+                                        {/* Compatible Hardware */}
+                                        {compatibilityMap[m.id] && compatibilityMap[m.id].length > 0 && (
+                                            <div className="space-y-1.5 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                                <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Certified Hardware</p>
+                                                <div className="flex flex-col gap-1">
+                                                    {compatibilityMap[m.id].slice(0, 3).map(compat => (
+                                                        <div key={compat.id} className="flex justify-between items-center text-[8px]">
+                                                            <span className="font-bold text-gray-700 truncate mr-2">{compat.product.name}</span>
+                                                            <span className="text-[7px] text-blue-600 font-bold uppercase shrink-0">{compat.category}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )

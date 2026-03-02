@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import {
     Database, Plus, Edit2, Trash2, Save, X,
     HardDrive, Cpu, Box, Zap, Network, ShieldCheck,
-    Search, LayoutGrid, List, AlertCircle
+    Search, LayoutGrid, List, AlertCircle, Link, PlusCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -42,11 +42,17 @@ export default function NASFeaturesPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [isEditing, setIsEditing] = useState<string | null>(null)
+    const [managingCompatibility, setManagingCompatibility] = useState<NASModel | null>(null)
+    const [compatItems, setCompatItems] = useState<any[]>([])
     const [formData, setFormData] = useState<Partial<NASModel>>({})
+    const [allProducts, setAllProducts] = useState<Product[]>([])
+    const [showProductSearch, setShowProductSearch] = useState(false)
+    const [productSearchTerm, setProductSearchTerm] = useState("")
 
     useEffect(() => {
         fetchModels()
         fetchInventory()
+        fetchAllProducts()
     }, [])
 
     async function fetchInventory() {
@@ -58,6 +64,18 @@ export default function NASFeaturesPage() {
             }
         } catch (error) {
             console.error("Failed to fetch inventory")
+        }
+    }
+
+    async function fetchAllProducts() {
+        try {
+            const res = await fetch('/api/products?limit=1000') // Fetch all for selection
+            if (res.ok) {
+                const data = await res.json()
+                setAllProducts(data.items || [])
+            }
+        } catch (error) {
+            console.error("Failed to fetch all products")
         }
     }
 
@@ -105,6 +123,50 @@ export default function NASFeaturesPage() {
             }
         } catch (error) {
             alert("Delete failed")
+        }
+    }
+
+    async function fetchCompatibility(modelId: string) {
+        try {
+            const res = await fetch(`/api/crm/nas-models/${modelId}/compatibility`)
+            if (res.ok) {
+                const data = await res.json()
+                setCompatItems(data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch compatibility")
+        }
+    }
+
+    async function handleAddCompatibility(productId: string, category: string) {
+        if (!managingCompatibility) return
+        try {
+            const res = await fetch(`/api/crm/nas-models/${managingCompatibility.id}/compatibility`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, category })
+            })
+            if (res.ok) {
+                fetchCompatibility(managingCompatibility.id)
+                setShowProductSearch(false)
+            }
+        } catch (error) {
+            alert("Failed to add compatibility")
+        }
+    }
+
+    async function handleRemoveCompatibility(productId: string) {
+        if (!managingCompatibility) return
+        if (!confirm("Remove this compatibility mapping?")) return
+        try {
+            const res = await fetch(`/api/crm/nas-models/${managingCompatibility.id}/compatibility?productId=${productId}`, {
+                method: 'DELETE'
+            })
+            if (res.ok) {
+                fetchCompatibility(managingCompatibility.id)
+            }
+        } catch (error) {
+            alert("Failed to remove compatibility")
         }
     }
 
@@ -218,6 +280,16 @@ export default function NASFeaturesPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => {
+                                                    setManagingCompatibility(model);
+                                                    fetchCompatibility(model.id);
+                                                }}
+                                                className="p-2 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-all"
+                                                title="Manage Compatibility"
+                                            >
+                                                <Link className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => { setFormData(model); setIsEditing(model.id); }}
                                                 className="p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all"
@@ -365,6 +437,99 @@ export default function NASFeaturesPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* ── Compatibility Modal ── */}
+            {managingCompatibility && (
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 p-8 flex flex-col max-h-[90vh]">
+                        <button onClick={() => setManagingCompatibility(null)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 transition-colors"><X className="w-5 h-5" /></button>
+
+                        <div className="mb-6">
+                            <h2 className="text-xl font-bold text-gray-900 uppercase tracking-tight">{managingCompatibility.modelName} Compatibility</h2>
+                            <p className="text-sm text-gray-500 mt-1 font-medium">Link compatible drives, RAM, and modules from your inventory.</p>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                            {['DRIVE', 'RAM', 'NETWORK', 'EXPANSION'].map(cat => {
+                                const items = compatItems.filter(i => i.category === cat);
+                                return (
+                                    <div key={cat} className="space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-2">
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{cat}S</h3>
+                                            <button
+                                                onClick={() => { setShowProductSearch(true); setProductSearchTerm(""); }}
+                                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 uppercase"
+                                            >
+                                                <PlusCircle className="w-3 h-3" /> Add {cat}
+                                            </button>
+                                        </div>
+                                        {items.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {items.map(item => (
+                                                    <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 group/item">
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-900">{item.product.name}</p>
+                                                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">{item.product.sku} • {item.product.brand}</p>
+                                                        </div>
+                                                        <button onClick={() => handleRemoveCompatibility(item.productId)} className="p-2 text-gray-300 hover:text-red-600 transition-colors opacity-0 group-hover/item:opacity-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 italic py-2">No {cat.toLowerCase()}s mapped.</p>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {showProductSearch && (
+                            <div className="absolute inset-0 bg-white rounded-2xl p-8 flex flex-col z-10 animate-in fade-in duration-200">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-gray-900">Select Compatible Product</h3>
+                                    <button onClick={() => setShowProductSearch(false)} className="p-2 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                                </div>
+                                <div className="relative mb-4">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Search inventory by Name or SKU..."
+                                        value={productSearchTerm}
+                                        onChange={e => setProductSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {allProducts
+                                        .filter(p => p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || p.sku.toLowerCase().includes(productSearchTerm.toLowerCase()))
+                                        .slice(0, 50)
+                                        .map(prod => (
+                                            <div key={prod.id} className="p-4 hover:bg-gray-50 rounded-xl border border-gray-100 cursor-pointer transition-all flex justify-between items-center group">
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">{prod.name}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{prod.sku} • {prod.brand} • {prod.category}</p>
+                                                </div>
+                                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {['DRIVE', 'RAM', 'NETWORK', 'EXPANSION'].map(cat => (
+                                                        <button
+                                                            key={cat}
+                                                            onClick={() => handleAddCompatibility(prod.id, cat)}
+                                                            className="px-2 py-1 bg-white border border-gray-200 text-[8px] font-bold text-gray-600 rounded hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all uppercase"
+                                                        >
+                                                            As {cat}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
+                                    }
+                                    {allProducts.length === 0 && <p className="text-center text-gray-400 py-10 italic">No products found in inventory.</p>}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
