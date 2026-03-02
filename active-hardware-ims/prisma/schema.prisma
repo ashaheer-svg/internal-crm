@@ -48,6 +48,9 @@ model User {
  
   // Build Workflow
   builtOrders     DeliveryOrder[]  @relation("BuiltBy")
+  
+  // Import Queue
+  pendingProjectImports PendingProjectImport[]
 }
 
 // ------------------------------------------
@@ -888,4 +891,20 @@ model MessageReceipt {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+model PendingProjectImport {
+  id           String   @id @default(uuid())
+  date         String   // Original date string from source
+  customerName String
+  partnerName  String?
+  brand        String?
+  salesRepName String?
+  value        Float
+  stage        String
+  pipelineId   String
+  
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  
+  createdAt    DateTime @default(now())
 }

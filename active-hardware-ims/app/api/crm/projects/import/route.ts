@@ -5,140 +5,181 @@ import { requirePermission } from '@/lib/auth'
 export async function POST(req: Request) {
     try {
         const user = await requirePermission('crm:manage')
-        const { projects, pipelineId, entityMap } = await req.json()
+        const body = await req.json()
+        const { action } = body
 
-        if (!projects || !Array.isArray(projects)) {
-            return NextResponse.json({ error: 'Invalid projects data' }, { status: 400 })
-        }
-
-        if (!pipelineId) {
-            return NextResponse.json({ error: 'Pipeline ID is required' }, { status: 400 })
-        }
-
-        // 1. Get Pipeline Stages for mapping
-        const stages = await prisma.cRMStage.findMany({
-            where: { pipelineId },
-            orderBy: { order: 'asc' }
-        })
-
-        const leadStage = stages.find(s => s.name.toUpperCase() === 'LEAD') || stages[0]
-        const wonStage = stages.find(s => s.name.toUpperCase() === 'WON') || stages[stages.length - 2] // Fallback to second last or lead
-
-        const results = {
-            created: 0,
-            skipped: 0,
-            errors: 0
-        }
-
-        // 2. Process in a Transaction
-        await prisma.$transaction(async (tx) => {
-            for (const item of projects) {
-                try {
-                    // ── Customer resolution ─────────────────────────────────────
-                    // entityMap entries now carry real DB IDs (pre-created in wizard)
-                    const resolvedCustomer = entityMap?.[item.customerName]
-                    let customerId = resolvedCustomer?.id
-
-                    if (!customerId || customerId === 'NEW' || customerId === 'SKIP') {
-                        // Safety fallback: find by name or create
-                        let customer = await tx.customer.findFirst({ where: { name: item.customerName } })
-                        if (!customer) {
-                            customer = await tx.customer.create({ data: { name: item.customerName, isCustomer: true } })
-                        }
-                        customerId = customer.id
-                    }
-
-                    // ── Partner resolution ──────────────────────────────────────
-                    let partnerId: string | null = null
-                    if (item.partnerName) {
-                        const resolvedPartner = entityMap?.[item.partnerName]
-                        partnerId = resolvedPartner?.id || null
-
-                        if (!partnerId || partnerId === 'NEW' || partnerId === 'SKIP') {
-                            let partner = await tx.customer.findFirst({ where: { name: item.partnerName } })
-                            if (!partner) {
-                                partner = await tx.customer.create({ data: { name: item.partnerName, isPartner: true } })
-                            }
-                            partnerId = partner.id
-                        }
-                    }
-
-                    // ── Sales Rep ───────────────────────────────────────────────
-                    let salesRepId = null
-                    if (item.salesRepName) {
-                        let salesRep = await tx.salesRep.findFirst({ where: { name: item.salesRepName } })
-                        if (!salesRep) salesRep = await tx.salesRep.create({ data: { name: item.salesRepName } })
-                        salesRepId = salesRep.id
-                    }
-
-                    // ── Stage + Status ──────────────────────────────────────────
-                    const isWon = item.stage.toUpperCase() === 'WON'
-                    const stage = isWon ? wonStage : leadStage
-                    const status = isWon ? 'WON' : 'OPEN'
-                    const probability = isWon ? 100 : 10
-                    const closedAt = isWon ? new Date(item.date) : null
-                    const projectCode = `${item.stage.charAt(0)}-LEG-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
-                    const customerName = resolvedCustomer?.name || item.customerName
-
-                    await tx.cRMProject.create({
-                        data: {
-                            projectCode,
-                            title: `Legacy Import: ${customerName}`,
-                            brand: item.brand || null,
-                            status, probability,
-                            expectedValue: item.value || 0,
-                            startDate: new Date(item.date),
-                            expectedCloseDate: new Date(item.date),
-                            closedAt, stageId: stage.id, pipelineId,
-                            customerId, partnerId, salesRepId,
-                            members: { create: { userId: user.id, role: 'OWNER' } }
-                        } as any
-                    })
-
-                    results.created++
-                } catch (err) {
-                    console.error("Failed to import project row:", err)
-                    throw err
-                }
+        // ── Action: UPLOAD (Batch Save to Queue) ───────────────────────────
+        if (action === 'upload') {
+            const { projects, pipelineId } = body
+            if (!projects || !Array.isArray(projects)) {
+                return NextResponse.json({ error: 'Invalid projects data' }, { status: 400 })
             }
-        }, { timeout: 120000 })
+            if (!pipelineId) {
+                return NextResponse.json({ error: 'Pipeline ID is required' }, { status: 400 })
+            }
 
+            // Save to pending queue
+            await prisma.pendingProjectImport.createMany({
+                data: projects.map(p => ({
+                    date: String(p.date),
+                    customerName: p.customerName || 'Unknown',
+                    partnerName: p.partnerName || null,
+                    brand: p.brand || null,
+                    salesRepName: p.salesRepName || null,
+                    value: parseFloat(p.value) || 0,
+                    stage: p.stage || 'Lead',
+                    pipelineId,
+                    uploadedById: user.id
+                }))
+            })
 
-        return NextResponse.json({
-            success: true,
-            message: `Successfully imported ${results.created} legacy projects.`,
-            details: results
-        })
+            return NextResponse.json({ success: true, message: `Queued ${projects.length} rows for processing.` })
+        }
+
+        // ── Action: PROCESS (Single Row Import) ───────────────────────────
+        if (action === 'process') {
+            const { rowId, entityMap, approved, editedData } = body
+
+            if (!approved) {
+                // If not approved, we just delete/skip it
+                await prisma.pendingProjectImport.delete({ where: { id: rowId } })
+                return NextResponse.json({ success: true, message: 'Row skipped/deleted.' })
+            }
+
+            const pending = await prisma.pendingProjectImport.findUnique({ where: { id: rowId } })
+            if (!pending) return NextResponse.json({ error: 'Pending row not found' }, { status: 404 })
+
+            // Use edited data if provided, else fallback to pending database record
+            const dataToUse = {
+                date: editedData?.date || pending.date,
+                customerName: editedData?.customerName || pending.customerName,
+                partnerName: editedData?.partnerName !== undefined ? editedData.partnerName : pending.partnerName,
+                brand: editedData?.brand !== undefined ? editedData.brand : pending.brand,
+                salesRepName: editedData?.salesRepName !== undefined ? editedData.salesRepName : pending.salesRepName,
+                value: editedData?.value !== undefined ? parseFloat(editedData.value) : pending.value,
+                stage: editedData?.stage || pending.stage,
+                pipelineId: pending.pipelineId // Keep original pipeline
+            }
+
+            const stages = await prisma.cRMStage.findMany({
+                where: { pipelineId: dataToUse.pipelineId },
+                orderBy: { order: 'asc' }
+            })
+
+            const leadStage = stages.find(s => s.name.toUpperCase() === 'LEAD') || stages[0]
+            const wonStage = stages.find(s => s.name.toUpperCase() === 'WON') || stages[stages.length - 2]
+
+            const results = await prisma.$transaction(async (tx) => {
+                // Customer Resolution
+                const resolvedCustomer = entityMap?.[pending.customerName]
+                let customerId = resolvedCustomer?.id
+                if (!customerId || customerId === 'NEW' || customerId === 'SKIP') {
+                    let customer = await tx.customer.findFirst({ where: { name: dataToUse.customerName } })
+                    if (!customer) customer = await tx.customer.create({ data: { name: dataToUse.customerName, isCustomer: true } })
+                    customerId = customer.id
+                }
+
+                // Partner Resolution
+                let partnerId = null
+                if (dataToUse.partnerName) {
+                    const resolvedPartner = entityMap?.[pending.partnerName || '']
+                    partnerId = resolvedPartner?.id || null
+                    if (!partnerId || partnerId === 'NEW' || partnerId === 'SKIP') {
+                        let partner = await tx.customer.findFirst({ where: { name: dataToUse.partnerName } })
+                        if (!partner) partner = await tx.customer.create({ data: { name: dataToUse.partnerName, isPartner: true } })
+                        partnerId = partner.id
+                    }
+                }
+
+                // Sales Rep
+                let salesRepId = null
+                if (dataToUse.salesRepName) {
+                    let salesRep = await tx.salesRep.findFirst({ where: { name: dataToUse.salesRepName } })
+                    if (!salesRep) salesRep = await tx.salesRep.create({ data: { name: dataToUse.salesRepName } })
+                    salesRepId = salesRep.id
+                }
+
+                const isWon = dataToUse.stage.toUpperCase() === 'WON'
+                const stage = isWon ? wonStage : leadStage
+                const status = isWon ? 'WON' : 'OPEN'
+                const projectCode = `${dataToUse.stage.charAt(0)}-LEG-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+
+                const project = await tx.cRMProject.create({
+                    data: {
+                        projectCode,
+                        title: `Legacy: ${resolvedCustomer?.name || dataToUse.customerName}`,
+                        brand: dataToUse.brand,
+                        status,
+                        probability: isWon ? 100 : 10,
+                        expectedValue: dataToUse.value,
+                        startDate: new Date(dataToUse.date),
+                        expectedCloseDate: new Date(dataToUse.date),
+                        closedAt: isWon ? new Date(dataToUse.date) : null,
+                        stageId: stage.id,
+                        pipelineId: dataToUse.pipelineId,
+                        customerId,
+                        partnerId,
+                        salesRepId,
+                        members: { create: { userId: user.id, role: 'OWNER' } }
+                    } as any
+                })
+
+                // Delete from pending queue
+                await tx.pendingProjectImport.delete({ where: { id: rowId } })
+
+                return project
+            })
+
+            return NextResponse.json({ success: true, project: results })
+        }
+
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
     } catch (error: any) {
-        console.error('Legacy project import error:', error)
-        return NextResponse.json(
-            { error: error.message || 'Failed to import legacy projects' },
-            { status: 500 }
-        )
+        console.error('Import error:', error)
+        return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }
 
-// GET - Download CSV template
-export async function GET() {
+// GET - Download CSV template OR Fetch Pending Queue
+export async function GET(req: Request) {
     try {
-        await requirePermission('crm:manage')
+        const user = await requirePermission('crm:manage')
+        const { searchParams } = new URL(req.url)
+        const type = searchParams.get('type')
 
-        const template = `date,customerName,partnerName,brand,salesRepName,stage,value
+        if (type === 'template') {
+            const template = `date,customerName,partnerName,brand,salesRepName,stage,value
 2024-01-15,Acme Corp,Global Solutions,Cisco,John Doe,WON,15000
 2024-02-10,Beta Industries,Direct,Dell,Jane Smith,LEAD,5000
 2024-03-05,Charlie LLC,Partner X,HP,Bob Wilson,WON,25000`
 
-        return new NextResponse(template, {
-            headers: {
-                'Content-Type': 'text/csv',
-                'Content-Disposition': 'attachment; filename="legacy_project_import_template.csv"'
-            }
-        })
+            return new NextResponse(template, {
+                headers: {
+                    'Content-Type': 'text/csv',
+                    'Content-Disposition': 'attachment; filename="import_template.csv"'
+                }
+            })
+        }
+
+        // Default: Fetch Pending Queue
+        const skip = parseInt(searchParams.get('skip') || '0')
+        const take = parseInt(searchParams.get('take') || '10')
+
+        const [pending, total] = await Promise.all([
+            prisma.pendingProjectImport.findMany({
+                where: { uploadedById: user.id },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take
+            }),
+            prisma.pendingProjectImport.count({ where: { uploadedById: user.id } })
+        ])
+
+        return NextResponse.json({ pending, total })
+
     } catch (error: any) {
-        return NextResponse.json(
-            { error: error.message || 'Failed to download template' },
-            { status: error.message === 'Forbidden' ? 403 : 500 }
-        )
+        return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }
+
