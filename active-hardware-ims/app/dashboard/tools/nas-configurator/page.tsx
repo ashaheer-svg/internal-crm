@@ -8,7 +8,7 @@ import {
     ArrowRight, Box, Zap, DollarSign, Activity, PlusCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell, Legend } from "recharts"
 
 interface NASModel {
     id: string
@@ -127,6 +127,13 @@ export default function RAIDConfiguratorPage() {
         { name: "Unused", value: results.unallocated, color: "#f1f5f9" }
     ].filter(d => d.value > 0)
 
+    const stackedBarData = [{
+        name: "Storage",
+        Usable: results.usable,
+        Protection: results.redundancy,
+        Unused: results.unallocated
+    }]
+
     // Recommendations Logic & Compatibility Fetching
     const suggestedModels = useMemo(() => {
         if (!Array.isArray(nasModels)) return [];
@@ -184,6 +191,10 @@ export default function RAIDConfiguratorPage() {
                         <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Net Usable</span>
                         <span className="text-xs font-bold text-blue-600">~{results.usable.toFixed(1)} TB</span>
                     </div>
+                    <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Formatted</span>
+                        <span className="text-xs font-bold text-emerald-600">~{(results.usable * 0.9).toFixed(1)} TB</span>
+                    </div>
                 </div>
             </div>
 
@@ -205,13 +216,20 @@ export default function RAIDConfiguratorPage() {
                             <div className="md:col-span-2 space-y-3">
                                 <label className="flex justify-between items-end">
                                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Quantity</span>
-                                    <span className="text-lg font-bold text-blue-600">{driveCount} Bays</span>
+                                    <span className="text-lg font-bold text-blue-600">{driveCount} Drives</span>
                                 </label>
                                 <div className="flex items-center gap-4">
-                                    <input type="range" min="1" max="100" step="1" value={driveCount} onChange={(e) => setDriveCount(parseInt(e.target.value))} className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                                    <div className="flex gap-1">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        value={driveCount}
+                                        onChange={(e) => setDriveCount(Math.max(1, parseInt(e.target.value) || 0))}
+                                        className="w-20 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    />
+                                    <div className="flex flex-wrap gap-1">
                                         {[2, 4, 8, 12, 16, 24].map(b => (
-                                            <button key={b} onClick={() => setDriveCount(b)} className={cn("px-2 py-0.5 rounded text-[8px] font-bold transition-all border", driveCount === b ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-500 border-gray-200")}>{b}</button>
+                                            <button key={b} onClick={() => setDriveCount(b)} className={cn("px-2 py-1.5 rounded text-[8px] font-bold transition-all border", driveCount === b ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-500 border-gray-200")}>{b}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -243,16 +261,49 @@ export default function RAIDConfiguratorPage() {
                     {/* RAID Visualization */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[350px]">
-                            <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center gap-2 tracking-tight"><PieIcon className="w-4 h-4 text-emerald-500" /> Space Distribution</h3>
-                            <div className="h-[220px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={chartData} innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
-                                            {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />)}
-                                        </Pie>
-                                        <RechartsTooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                            <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center gap-2 tracking-tight"><Activity className="w-4 h-4 text-emerald-500" /> Space Distribution</h3>
+                            <div className="h-[220px] w-full flex flex-col justify-center">
+                                <div className="h-12 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart layout="vertical" data={stackedBarData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                                            <XAxis type="number" hide />
+                                            <YAxis type="category" dataKey="name" hide />
+                                            <RechartsTooltip
+                                                cursor={{ fill: 'transparent' }}
+                                                content={({ active, payload }) => {
+                                                    if (active && payload && payload.length) {
+                                                        return (
+                                                            <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg">
+                                                                {payload.map((entry: any, index: number) => (
+                                                                    <div key={index} className="flex items-center gap-2 text-[10px] font-bold">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                        <span className="text-gray-500 uppercase">{entry.name}:</span>
+                                                                        <span className="text-gray-900">{Number(entry.value).toFixed(1)} TB</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                            />
+                                            <Bar dataKey="Usable" stackId="a" fill="#2563eb" radius={[6, 0, 0, 6]} />
+                                            <Bar dataKey="Protection" stackId="a" fill="#10b981" />
+                                            <Bar dataKey="Unused" stackId="a" fill="#e2e8f0" radius={[0, 6, 6, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="mt-8 grid grid-cols-3 gap-4">
+                                    {chartData.map((item, idx) => (
+                                        <div key={idx} className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{item.name}</span>
+                                            </div>
+                                            <span className="text-sm font-black text-gray-900">{item.value.toFixed(1)} TB</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -327,7 +378,7 @@ export default function RAIDConfiguratorPage() {
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
                                             <h4 className="text-md font-bold text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{m.modelName}</h4>
-                                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.series} Series • Base {m.bays} Bays</p>
+                                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.series} Series • Base {m.bays} Drives</p>
                                         </div>
                                         <div className="p-1.5 bg-gray-50 text-gray-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all border border-gray-100"><ChevronRight className="w-4 h-4" /></div>
                                     </div>
