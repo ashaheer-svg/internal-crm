@@ -191,7 +191,17 @@ export default function ProjectImportPage() {
 
     // ── Batch Upload Logic ───────────────────────────────────────────────────
     async function handleUpload(rowsToQueue: any[]) {
+        if (!selectedPipelineId) {
+            setStatus({ type: 'error', message: "Please select a target pipeline first." })
+            return
+        }
+        if (!rowsToQueue || rowsToQueue.length === 0) {
+            setStatus({ type: 'error', message: "No data found to upload." })
+            return
+        }
+
         setLoading(true)
+        setStatus(null) // Clear previous status
         try {
             const res = await fetch('/api/crm/projects/import', {
                 method: 'POST',
@@ -202,28 +212,87 @@ export default function ProjectImportPage() {
                     pipelineId: selectedPipelineId
                 })
             })
+
+            const data = await res.json()
+
             if (res.ok) {
-                setStatus({ type: 'success', message: `Queued ${rowsToQueue.length} rows.` })
+                setStatus({ type: 'success', message: `Successfully queued ${rowsToQueue.length} rows.` })
                 setPasteText("")
                 fetchQueue()
                 setView('queue')
+            } else {
+                setStatus({ type: 'error', message: data.error || 'Failed to upload projects.' })
             }
-        } catch (e: any) { setStatus({ type: 'error', message: e.message }) }
+        } catch (e: any) {
+            console.error("Upload error:", e)
+            setStatus({ type: 'error', message: "Network error while uploading. Check console for details." })
+        }
         finally { setLoading(false) }
     }
 
     function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]; if (!file) return
-        const done = (parsed: any[]) => handleUpload(parsed)
-        if (file.name.endsWith('.csv')) {
-            Papa.parse(file, { header: true, skipEmptyLines: true, complete: r => done(r.data) })
-        } else {
-            const reader = new FileReader()
-            reader.onload = evt => {
-                const wb = XLSX.read(evt.target?.result, { type: 'binary' })
-                done(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]))
+
+        if (!selectedPipelineId) {
+            setStatus({ type: 'error', message: "Please select a target pipeline above before uploading." })
+            // Reset file input so user can try again
+            if (e.target) e.target.value = ''
+            return
+        }
+
+        setLoading(true)
+        const done = (parsed: any[]) => {
+            if (!parsed || parsed.length === 0) {
+                setStatus({ type: 'error', message: "The file appears to be empty." })
+                setLoading(false)
+                return
             }
-            reader.readAsBinaryString(file)
+            handleUpload(parsed)
+        }
+
+        try {
+            if (file.name.endsWith('.csv')) {
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: r => {
+                        if (r.errors.length > 0) {
+                            console.error("CSV Parse Errors:", r.errors)
+                            setStatus({ type: 'error', message: `Error parsing CSV: ${r.errors[0].message}` })
+                            setLoading(false)
+                        } else {
+                            done(r.data)
+                        }
+                    },
+                    error: err => {
+                        setStatus({ type: 'error', message: `File read error: ${err.message}` })
+                        setLoading(false)
+                    }
+                })
+            } else {
+                const reader = new FileReader()
+                reader.onload = evt => {
+                    try {
+                        const bstr = evt.target?.result
+                        const wb = XLSX.read(bstr, { type: 'binary' })
+                        const wsname = wb.SheetNames[0]
+                        const ws = wb.Sheets[wsname]
+                        const data = XLSX.utils.sheet_to_json(ws)
+                        done(data)
+                    } catch (err: any) {
+                        setStatus({ type: 'error', message: `Excel parse error: ${err.message}` })
+                        setLoading(false)
+                    }
+                }
+                reader.onerror = () => {
+                    setStatus({ type: 'error', message: "Failed to read file." })
+                    setLoading(false)
+                }
+                reader.readAsBinaryString(file)
+            }
+        } catch (err: any) {
+            setStatus({ type: 'error', message: `Unexpected error: ${err.message}` })
+            setLoading(false)
         }
     }
 
