@@ -29,7 +29,7 @@ export async function GET(request: Request) {
             where.items = {
                 some: {
                     product: {
-                        serviceDefinitionId: { not: null }
+                        serviceDefinition: { isNot: null }
                     }
                 }
             }
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
             where.items = {
                 none: {
                     product: {
-                        serviceDefinitionId: { not: null }
+                        serviceDefinition: { isNot: null }
                     }
                 }
             }
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
 
             const safeOrders = orders.map((order: any) => ({
                 ...order,
-                hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinitionId),
+                hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinition),
                 _count: { items: order.items?.length || 0 }
             }))
 
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
 
         const safeOrders = orders.map((order: any) => ({
             ...order,
-            hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinitionId),
+            hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinition),
             _count: { items: order.items?.length || 0 }
         }))
 
