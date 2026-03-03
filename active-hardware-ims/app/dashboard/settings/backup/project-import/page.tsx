@@ -78,6 +78,9 @@ export default function ProjectImportPage() {
 
     useEffect(() => {
         fetchPipelines()
+    }, [])
+
+    useEffect(() => {
         fetchQueue()
     }, [queuePage])
 
@@ -196,8 +199,9 @@ export default function ProjectImportPage() {
 
     // ── Batch Upload Logic ───────────────────────────────────────────────────
     async function handleUpload(rowsToQueue: any[]) {
+        console.log("DEBUG: handleUpload called with pipelineId:", selectedPipelineId);
         if (!selectedPipelineId) {
-            setStatus({ type: 'error', message: "Please select a target pipeline first." })
+            setStatus({ type: 'error', message: "Please select a target pipeline first. (ID: " + selectedPipelineId + ")" })
             return
         }
         if (!rowsToQueue || rowsToQueue.length === 0) {
@@ -238,8 +242,9 @@ export default function ProjectImportPage() {
     function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]; if (!file) return
 
+        console.log("DEBUG: handleFile called with pipelineId:", selectedPipelineId);
         if (!selectedPipelineId) {
-            setStatus({ type: 'error', message: "Please select a target pipeline above before uploading." })
+            setStatus({ type: 'error', message: "Please select a target pipeline above before uploading. (ID: " + selectedPipelineId + ")" })
             // Reset file input so user can try again
             if (e.target) e.target.value = ''
             return
