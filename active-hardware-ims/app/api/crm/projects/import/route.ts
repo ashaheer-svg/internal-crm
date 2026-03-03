@@ -2,6 +2,21 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requirePermission } from '@/lib/auth'
 
+function parseDate(val: any): Date {
+    if (!val) return new Date()
+
+    // Handle Excel Serial Dates (numbers > 30000)
+    const num = parseFloat(String(val))
+    if (!isNaN(num) && num > 30000 && num < 100000) {
+        // Excel base date is Dec 30, 1899
+        return new Date((num - 25569) * 86400 * 1000)
+    }
+
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return new Date()
+    return d
+}
+
 export async function POST(req: Request) {
     try {
         const user = await requirePermission('crm:manage')
@@ -61,6 +76,11 @@ export async function POST(req: Request) {
                 pipelineId: pending.pipelineId // Keep original pipeline
             }
 
+            const activeDate = parseDate(dataToUse.date)
+            if (isNaN(activeDate.getTime())) {
+                return NextResponse.json({ error: 'Invalid date format provided: ' + dataToUse.date }, { status: 400 })
+            }
+
             const stages = await prisma.cRMStage.findMany({
                 where: { pipelineId: dataToUse.pipelineId },
                 orderBy: { order: 'asc' }
@@ -112,9 +132,9 @@ export async function POST(req: Request) {
                         status,
                         probability: isWon ? 100 : 10,
                         expectedValue: dataToUse.value,
-                        startDate: new Date(dataToUse.date),
-                        expectedCloseDate: new Date(dataToUse.date),
-                        closedAt: isWon ? new Date(dataToUse.date) : null,
+                        startDate: activeDate,
+                        expectedCloseDate: activeDate,
+                        closedAt: isWon ? activeDate : null,
                         stageId: stage.id,
                         pipelineId: dataToUse.pipelineId,
                         customerId,
