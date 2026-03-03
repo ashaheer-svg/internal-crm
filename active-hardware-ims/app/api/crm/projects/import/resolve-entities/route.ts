@@ -33,26 +33,43 @@ function getSimilarity(s1: string, s2: string): number {
 export async function POST(req: Request) {
     try {
         await requirePermission('crm:manage')
+        /**
+         * names: Array<{ input: string; type: 'CUSTOMER' | 'PARTNER' }>
+         */
         const { names } = await req.json()
 
         if (!names || !Array.isArray(names)) {
             return NextResponse.json({ error: 'Invalid names data' }, { status: 400 })
         }
 
-        // 1. Fetch all existing customers and partners
+        // Fetch all existing customers / partners
         const existingEntities = await prisma.customer.findMany({
             select: { id: true, name: true, isCustomer: true, isPartner: true }
         })
 
-        const results = names.map(name => {
-            const normalized = name.trim()
+        const results = names.map((item: { input: string; type?: 'CUSTOMER' | 'PARTNER' } | string) => {
+            // Accept both old format (string) and new format ({ input, type })
+            const name = typeof item === 'string' ? item : item.input
+            const entityType = typeof item === 'string' ? undefined : item.type
+
+            const normalized = name?.trim()
             if (!normalized) return null
 
-            // Find best match
-            let bestMatch = null
+            // Filter candidates by type if specified
+            let candidates = existingEntities
+            if (entityType === 'CUSTOMER') {
+                candidates = existingEntities.filter(e => e.isCustomer)
+            } else if (entityType === 'PARTNER') {
+                candidates = existingEntities.filter(e => e.isPartner)
+            }
+
+            // If narrowed pool is empty, fall back to all
+            if (candidates.length === 0) candidates = existingEntities
+
+            let bestMatch: typeof existingEntities[0] | null = null
             let highScorer = -1
 
-            for (const entity of existingEntities) {
+            for (const entity of candidates) {
                 const score = getSimilarity(normalized, entity.name)
                 if (score > highScorer) {
                     highScorer = score
@@ -62,17 +79,19 @@ export async function POST(req: Request) {
 
             return {
                 input: name,
+                type: entityType,
                 match: highScorer > 0.6 ? {
                     id: bestMatch?.id,
                     name: bestMatch?.name,
                     score: highScorer,
-                    type: bestMatch?.isPartner ? 'PARTNER' : 'CUSTOMER'
+                    isPartner: bestMatch?.isPartner,
+                    isCustomer: bestMatch?.isCustomer,
                 } : null,
-                suggestions: existingEntities
-                    .map(e => ({ id: e.id, name: e.name, score: getSimilarity(normalized, e.name) }))
-                    .filter(s => s.score > 0.4 && s.score < 1.0)
+                suggestions: candidates
+                    .map(e => ({ id: e.id, name: e.name, score: getSimilarity(normalized, e.name), isPartner: e.isPartner, isCustomer: e.isCustomer }))
+                    .filter(s => s.score > 0.35)
                     .sort((a, b) => b.score - a.score)
-                    .slice(0, 5)
+                    .slice(0, 6)
             }
         }).filter(Boolean)
 

@@ -898,6 +898,7 @@ model MessageReceipt {
 model PendingProjectImport {
   id           String   @id @default(uuid())
   date         String   // Original date string from source
+  projectTitle String?  // Project title from import file
   customerName String
   partnerName  String?
   brand        String?

@@ -1,803 +1,793 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import {
-    Upload, Check, X, AlertCircle, CheckCircle2, FileText, Trash2, ShieldCheck,
-    Users, Briefcase, Download, ClipboardPaste, LayoutDashboard, Search,
-    ListFilter, ArrowRight, ArrowLeft, Globe, ExternalLink, RefreshCw,
-    Layers, Link2, Plus, Sparkles, Calendar, DollarSign, Tag, UserCheck
+    Upload, Check, X, AlertCircle, CheckCircle2, FileText, Download,
+    ArrowRight, ArrowLeft, RefreshCw, Search, Plus, Sparkles,
+    ChevronRight, Users, Briefcase, ClipboardList, Rocket, Info
 } from "lucide-react"
-import FormattedNumberInput from "@/components/FormattedNumberInput"
 import { cn } from "@/lib/utils"
 import Papa from "papaparse"
 import * as XLSX from "xlsx"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type PendingImportRow = {
-    id: string; date: string; customerName: string; partnerName?: string | null
-    brand?: string | null; salesRepName?: string | null; value: number; stage: string
-    pipelineId: string; createdAt: string
+
+type RawRow = Record<string, any>
+
+type MappedRow = {
+    date: string
+    projectTitle: string
+    customerName: string
+    partnerName: string
+    salesRepName: string
+    stage: string
+    value: number
 }
 
-type EntitySuggestion = { id: string; name: string; score: number }
-type UnresolvedEntity = {
-    input: string; type: 'CUSTOMER' | 'PARTNER'
-    match: EntitySuggestion | null; suggestions: EntitySuggestion[]
+type EntityType = 'CUSTOMER' | 'PARTNER'
+
+type ResolutionEntry = {
+    rawName: string
+    type: EntityType
+    status: 'AUTO_MATCHED' | 'NEEDS_REVIEW' | 'NEW' | 'CONFIRMED'
+    matchId?: string
+    matchName?: string
+    confidence?: number
+    suggestions: { id: string; name: string; score: number }[]
+    finalName?: string   // only used when creating new
 }
 
-type ResolvedEntity = {
-    id: string           // Always a real DB id
-    name: string         // Display name
-    type: 'CUSTOMER' | 'PARTNER'
-    isNew?: boolean
-}
+type Step = 'upload' | 'map' | 'resolve' | 'commit' | 'done'
 
-type Status = { type: 'success' | 'error' | 'info'; message: string } | null
+const STEPS: { key: Step; label: string; icon: any }[] = [
+    { key: 'upload', label: 'Upload', icon: Upload },
+    { key: 'map', label: 'Map Columns', icon: ClipboardList },
+    { key: 'resolve', label: 'Entity Resolution', icon: Users },
+    { key: 'commit', label: 'Commit', icon: Rocket },
+]
+
+const REQUIRED_FIELDS = ['date', 'customerName', 'projectTitle'] as const
+const OPTIONAL_FIELDS = ['partnerName', 'salesRepName', 'stage', 'value'] as const
+const ALL_FIELDS = [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS] as const
+type FieldKey = typeof ALL_FIELDS[number]
+
+const FIELD_LABELS: Record<FieldKey, string> = {
+    date: 'Date',
+    projectTitle: 'Project Title',
+    customerName: 'Customer',
+    partnerName: 'Partner',
+    salesRepName: 'Sales Rep',
+    stage: 'Stage',
+    value: 'Value',
+}
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function ProjectImportPage() {
-    // Queue State
-    const [queue, setQueue] = useState<PendingImportRow[]>([])
-    const [totalQueue, setTotalQueue] = useState(0)
-    const [fetchingQueue, setFetchingQueue] = useState(false)
-    const [queuePage, setQueuePage] = useState(0)
-    const take = 15
-
-    // UI Steps: 'dashboard' (list + upload), 'process' (single row wizard)
-    const [view, setView] = useState<'dashboard' | 'process'>('dashboard')
-    const [processingRow, setProcessingRow] = useState<PendingImportRow | null>(null)
-
-    // Upload & UI Controls
-    const [showPaste, setShowPaste] = useState(false)
-
-    // Upload State
-    const [pasteText, setPasteText] = useState("")
-    const [loading, setLoading] = useState(false)
+    const [step, setStep] = useState<Step>('upload')
+    const [rawRows, setRawRows] = useState<RawRow[]>([])
+    const [headers, setHeaders] = useState<string[]>([])
+    const [columnMap, setColumnMap] = useState<Partial<Record<FieldKey, string>>>({})
+    const [mappedRows, setMappedRows] = useState<MappedRow[]>([])
     const [pipelines, setPipelines] = useState<any[]>([])
-    const [selectedPipelineId, setSelectedPipelineId] = useState("")
-    const [defaultValue, setDefaultValue] = useState(0)
-
-    // Single Row Editor State
-    const [editedRow, setEditedRow] = useState<PendingImportRow | null>(null)
-    const [resCustomer, setResCustomer] = useState<UnresolvedEntity | null>(null)
-    const [resPartner, setResPartner] = useState<UnresolvedEntity | null>(null)
-    const [resolutionMap, setResolutionMap] = useState<Record<string, ResolvedEntity | 'SKIP'>>({})
-    const [wizardTab, setWizardTab] = useState<'details' | 'customer' | 'partner' | 'finish'>('details')
-
-    // Entity Resolution Tab States
-    const [entityTab, setEntityTab] = useState<'suggest' | 'search' | 'create'>('suggest')
-    const [searchQ, setSearchQ] = useState("")
-    const [searchResults, setSearchResults] = useState<any[]>([])
-    const [searchLoading, setSearchLoading] = useState(false)
-    const [customName, setCustomName] = useState("")
-    const [creating, setCreating] = useState(false)
-    const [status, setStatus] = useState<Status>(null)
-    const [importing, setImporting] = useState(false)
-
+    const [pipelineId, setPipelineId] = useState('')
+    const [resolutions, setResolutions] = useState<ResolutionEntry[]>([])
+    const [resolving, setResolving] = useState(false)
+    const [committing, setCommitting] = useState(false)
+    const [commitResult, setCommitResult] = useState<{ count: number } | null>(null)
+    const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Popover state for entity resolution
+    const [activePopover, setActivePopover] = useState<string | null>(null)
+    const [searchQ, setSearchQ] = useState('')
+    const [searchResults, setSearchResults] = useState<any[]>([])
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [newName, setNewName] = useState('')
+
     useEffect(() => {
-        fetchPipelines()
+        fetch('/api/crm/pipelines').then(r => r.json()).then(data => {
+            if (Array.isArray(data)) {
+                setPipelines(data)
+                const def = data.find((p: any) => p.isDefault) || data[0]
+                if (def) setPipelineId(def.id)
+            }
+        }).catch(() => { })
     }, [])
 
-    useEffect(() => {
-        fetchQueue()
-    }, [queuePage])
+    // ── Step 1: File parsing ──────────────────────────────────────────────────
+    function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setError(null)
 
-    async function fetchPipelines() {
-        try {
-            const res = await fetch('/api/crm/pipelines')
-            if (res.ok) {
-                const data = await res.json()
-                setPipelines(data)
-                // If nothing selected yet, pick default
-                if (!selectedPipelineId) {
-                    const def = data.find((p: any) => p.isDefault) || data[0]
-                    if (def) setSelectedPipelineId(def.id)
-                }
+        const done = (rows: RawRow[]) => {
+            if (!rows.length) { setError('File is empty.'); return }
+            setRawRows(rows)
+            setHeaders(Object.keys(rows[0]))
+            autoDetectColumns(Object.keys(rows[0]))
+            setStep('map')
+        }
+
+        if (file.name.endsWith('.csv')) {
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: r => {
+                    if (r.errors.length) { setError(r.errors[0].message); return }
+                    done(r.data as RawRow[])
+                },
+                error: e => setError(e.message)
+            })
+        } else {
+            const reader = new FileReader()
+            reader.onload = evt => {
+                try {
+                    const wb = XLSX.read(evt.target?.result, { type: 'binary' })
+                    const ws = wb.Sheets[wb.SheetNames[0]]
+                    done(XLSX.utils.sheet_to_json(ws) as RawRow[])
+                } catch (e: any) { setError(e.message) }
             }
-        } catch (e) { console.error("Failed to fetch pipelines", e) }
+            reader.readAsBinaryString(file)
+        }
+        // Reset input so same file can be reselected
+        e.target.value = ''
     }
 
-    async function fetchQueue() {
-        setFetchingQueue(true)
-        try {
-            const res = await fetch(`/api/crm/projects/import?skip=${queuePage * take}&take=${take}`)
-            if (res.ok) {
-                const data = await res.json()
-                setQueue(data.pending)
-                setTotalQueue(data.total)
-            }
-        } catch (e) { console.error("Failed to fetch queue", e) }
-        finally { setFetchingQueue(false) }
+    function autoDetectColumns(cols: string[]) {
+        const patterns: Record<FieldKey, RegExp> = {
+            date: /date|dt|day/i,
+            projectTitle: /title|project|name|description|desc/i,
+            customerName: /customer|client|end.?customer/i,
+            partnerName: /partner|reseller|channel/i,
+            salesRepName: /rep|sales.?rep|agent|staff/i,
+            stage: /stage|status|phase/i,
+            value: /value|amount|price|revenue|deal/i,
+        }
+        const map: Partial<Record<FieldKey, string>> = {}
+        for (const [field, regex] of Object.entries(patterns)) {
+            const col = cols.find(c => regex.test(c))
+            if (col) map[field as FieldKey] = col
+        }
+        setColumnMap(map)
     }
 
-    const generateId = useCallback(() => Math.random().toString(36).substring(2, 11), [])
+    // ── Step 2: Build mapped rows ─────────────────────────────────────────────
+    function buildMappedRows(): MappedRow[] {
+        return rawRows.map(row => ({
+            date: String(row[columnMap.date || ''] ?? ''),
+            projectTitle: String(row[columnMap.projectTitle || ''] ?? ''),
+            customerName: String(row[columnMap.customerName || ''] ?? '').trim(),
+            partnerName: String(row[columnMap.partnerName || ''] ?? '').trim(),
+            salesRepName: String(row[columnMap.salesRepName || ''] ?? '').trim(),
+            stage: String(row[columnMap.stage || ''] ?? 'Lead').trim() || 'Lead',
+            value: parseFloat(String(row[columnMap.value || ''] ?? '0')) || 0,
+        })).filter(r => r.customerName)
+    }
 
-    // ── Single Row Processing Logic ──────────────────────────────────────────
-    async function startProcessing(row: PendingImportRow) {
-        setProcessingRow(row)
-        setEditedRow({ ...row })
-        setWizardTab('details')
-        setResolutionMap({})
-        setView('process')
+    async function proceedToResolve() {
+        const rows = buildMappedRows()
+        if (!rows.length) { setError('No valid rows found (customer name is required).'); return }
+        setMappedRows(rows)
+        setError(null)
 
-        // Fetch fuzzy matches for BOTH names
-        setLoading(true)
+        // Deduplicate: collect all unique Customer and Partner names
+        const customerNames = [...new Set(rows.map(r => r.customerName).filter(Boolean))]
+        const partnerNames = [...new Set(rows.map(r => r.partnerName).filter(Boolean))]
+
+        const payload = [
+            ...customerNames.map(n => ({ input: n, type: 'CUSTOMER' as EntityType })),
+            ...partnerNames.map(n => ({ input: n, type: 'PARTNER' as EntityType })),
+        ]
+
+        setResolving(true)
+        setStep('resolve')
         try {
-            const names = [row.customerName]
-            if (row.partnerName) names.push(row.partnerName)
-
             const res = await fetch('/api/crm/projects/import/resolve-entities', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ names })
+                body: JSON.stringify({ names: payload })
             })
             const data = await res.json()
 
-            const custRes = data.results.find((r: any) => r.input === row.customerName)
-            const partRes = row.partnerName ? data.results.find((r: any) => r.input === row.partnerName) : null
-
-            setResCustomer({ ...custRes, type: 'CUSTOMER' })
-            if (partRes) setResPartner({ ...partRes, type: 'PARTNER' })
-            else setResPartner(null)
-
-            // Auto-resolve high score matches
-            const newMap: Record<string, ResolvedEntity | 'SKIP'> = {}
-            if (custRes?.match?.score > 0.95) {
-                newMap[row.customerName] = { id: custRes.match.id, name: custRes.match.name, type: 'CUSTOMER' }
-            }
-            if (partRes?.match?.score > 0.95 && row.partnerName) {
-                newMap[row.partnerName] = { id: partRes.match.id, name: partRes.match.name, type: 'PARTNER' }
-            }
-            setResolutionMap(newMap)
-
-        } catch (e) { console.error("Failed to analyze row", e) }
-        finally { setLoading(false) }
-    }
-
-    async function handleFinalizeRow() {
-        if (!editedRow) return
-        setImporting(true)
-        try {
-            const res = await fetch('/api/crm/projects/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'process',
-                    rowId: editedRow.id,
-                    approved: true,
-                    entityMap: resolutionMap,
-                    // The backend needs to know about any manual edits to the row
-                    // We'll pass the whole edited object
-                    editedData: editedRow
-                })
+            const AUTO_THRESHOLD = 0.92
+            const entries: ResolutionEntry[] = (data.results || []).map((r: any) => {
+                const autoMatch = r.match && r.match.score >= AUTO_THRESHOLD
+                return {
+                    rawName: r.input,
+                    type: r.type,
+                    status: autoMatch ? 'AUTO_MATCHED' : (r.match ? 'NEEDS_REVIEW' : 'NEW'),
+                    matchId: autoMatch ? r.match.id : undefined,
+                    matchName: autoMatch ? r.match.name : undefined,
+                    confidence: r.match?.score,
+                    suggestions: r.suggestions || [],
+                    finalName: autoMatch ? undefined : r.input,
+                }
             })
-            if (res.ok) {
-                setStatus({ type: 'success', message: 'Project imported successfully' })
-                setView('dashboard')
-                fetchQueue()
-            } else {
-                const err = await res.json()
-                setStatus({ type: 'error', message: err.error || 'Import failed' })
-            }
-        } catch (e: any) { setStatus({ type: 'error', message: e.message }) }
-        finally { setImporting(false) }
-    }
-
-    async function handleDeleteRow(id: string) {
-        if (!confirm("Are you sure you want to dismiss this entry?")) return
-        try {
-            const res = await fetch('/api/crm/projects/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'process', rowId: id, approved: false })
-            })
-            if (res.ok) { fetchQueue() }
-        } catch (e) { console.error("Delete failed", e) }
-    }
-
-    // ── Batch Upload Logic ───────────────────────────────────────────────────
-    async function handleUpload(rowsToQueue: any[]) {
-        console.log("DEBUG: handleUpload called with pipelineId:", selectedPipelineId);
-        if (!selectedPipelineId) {
-            setStatus({ type: 'error', message: "Please select a target pipeline first. (ID: " + selectedPipelineId + ")" })
-            return
-        }
-        if (!rowsToQueue || rowsToQueue.length === 0) {
-            setStatus({ type: 'error', message: "No data found to upload." })
-            return
-        }
-
-        setLoading(true)
-        setStatus(null) // Clear previous status
-        try {
-            const res = await fetch('/api/crm/projects/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'upload',
-                    projects: rowsToQueue,
-                    pipelineId: selectedPipelineId
-                })
-            })
-
-            const data = await res.json()
-
-            if (res.ok) {
-                setStatus({ type: 'success', message: `Successfully queued ${rowsToQueue.length} rows.` })
-                setPasteText("")
-                setShowPaste(false)
-                fetchQueue()
-            } else {
-                setStatus({ type: 'error', message: data.error || 'Failed to upload projects.' })
-            }
+            setResolutions(entries)
         } catch (e: any) {
-            console.error("Upload error:", e)
-            setStatus({ type: 'error', message: "Network error while uploading. Check console for details." })
-        }
-        finally { setLoading(false) }
-    }
-
-    function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0]; if (!file) return
-
-        console.log("DEBUG: handleFile called with pipelineId:", selectedPipelineId);
-        if (!selectedPipelineId) {
-            setStatus({ type: 'error', message: "Please select a target pipeline above before uploading. (ID: " + selectedPipelineId + ")" })
-            // Reset file input so user can try again
-            if (e.target) e.target.value = ''
-            return
-        }
-
-        setLoading(true)
-        const done = (parsed: any[]) => {
-            if (!parsed || parsed.length === 0) {
-                setStatus({ type: 'error', message: "The file appears to be empty." })
-                setLoading(false)
-                return
-            }
-            handleUpload(parsed)
-        }
-
-        try {
-            if (file.name.endsWith('.csv')) {
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: r => {
-                        if (r.errors.length > 0) {
-                            console.error("CSV Parse Errors:", r.errors)
-                            setStatus({ type: 'error', message: `Error parsing CSV: ${r.errors[0].message}` })
-                            setLoading(false)
-                        } else {
-                            done(r.data)
-                        }
-                    },
-                    error: err => {
-                        setStatus({ type: 'error', message: `File read error: ${err.message}` })
-                        setLoading(false)
-                    }
-                })
-            } else {
-                const reader = new FileReader()
-                reader.onload = evt => {
-                    try {
-                        const bstr = evt.target?.result
-                        const wb = XLSX.read(bstr, { type: 'binary' })
-                        const wsname = wb.SheetNames[0]
-                        const ws = wb.Sheets[wsname]
-                        const data = XLSX.utils.sheet_to_json(ws)
-                        done(data)
-                    } catch (err: any) {
-                        setStatus({ type: 'error', message: `Excel parse error: ${err.message}` })
-                        setLoading(false)
-                    }
-                }
-                reader.onerror = () => {
-                    setStatus({ type: 'error', message: "Failed to read file." })
-                    setLoading(false)
-                }
-                reader.readAsBinaryString(file)
-            }
-        } catch (err: any) {
-            setStatus({ type: 'error', message: `Unexpected error: ${err.message}` })
-            setLoading(false)
+            setError(e.message)
+        } finally {
+            setResolving(false)
         }
     }
 
-    // ── Entity Resolution Helpers ───────────────────────────────────────────
-    async function handleCreateEntity(input: string, type: 'CUSTOMER' | 'PARTNER', customName?: string) {
-        setCreating(true)
-        const nameToUse = customName || input
-        try {
-            const res = await fetch('/api/customers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: nameToUse,
-                    isCustomer: type === 'CUSTOMER',
-                    isPartner: type === 'PARTNER'
-                })
-            })
-            if (res.ok) {
-                const created = await res.json()
-                setResolutionMap(p => ({ ...p, [input]: { id: created.id, name: created.name, type, isNew: true } }))
-                setEntityTab('suggest')
-                // Advance tab if both resolved
-                checkAutoAdvance(input, type)
-            }
-        } catch (e) { console.error("Create failed", e) }
-        finally { setCreating(false) }
-    }
-
-    async function handleLiveSearch(q: string) {
-        setSearchQ(q)
-        if (q.length < 2) { setSearchResults([]); return }
+    // ── Entity search helper ──────────────────────────────────────────────────
+    const doSearch = useCallback(async (q: string, type: EntityType) => {
+        if (!q.trim()) { setSearchResults([]); return }
         setSearchLoading(true)
         try {
-            const res = await fetch(`/api/customers?search=${encodeURIComponent(q)}&limit=5`)
-            if (res.ok) { const d = await res.json(); setSearchResults(d.customers || []) }
-        } finally { setSearchLoading(false) }
+            const res = await fetch('/api/crm/projects/import/resolve-entities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ names: [{ input: q, type }] })
+            })
+            const data = await res.json()
+            setSearchResults(data.results?.[0]?.suggestions || [])
+        } catch { setSearchResults([]) }
+        finally { setSearchLoading(false) }
+    }, [])
+
+    function confirmMatch(rawName: string, matchId: string, matchName: string) {
+        setResolutions(prev => prev.map(r => r.rawName === rawName
+            ? { ...r, status: 'CONFIRMED', matchId, matchName }
+            : r
+        ))
+        setActivePopover(null)
+        setSearchQ('')
+        setSearchResults([])
+        setNewName('')
     }
 
-    function checkAutoAdvance(input: string, type: 'CUSTOMER' | 'PARTNER') {
-        if (type === 'CUSTOMER') setWizardTab('partner')
-        else setWizardTab('finish')
+    function confirmNew(rawName: string, finalName: string) {
+        setResolutions(prev => prev.map(r => r.rawName === rawName
+            ? { ...r, status: 'NEW', matchId: undefined, matchName: undefined, finalName }
+            : r
+        ))
+        setActivePopover(null)
+        setSearchQ('')
+        setSearchResults([])
+        setNewName('')
     }
 
-    // ── Render Helpers ───────────────────────────────────────────────────────
-    function TabBtn({ id, label, icon: Icon, active, resolved }: any) {
-        return (
-            <button onClick={() => setWizardTab(id)} className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all",
-                active ? "border-blue-600 text-blue-700 bg-white" : "border-transparent text-gray-400 hover:text-gray-600",
-                resolved && !active && "text-emerald-500"
-            )}>
-                <Icon className={cn("w-3.5 h-3.5", resolved && !active ? "text-emerald-500" : "")} />
-                {label}
-                {resolved && <Check className="w-3 h-3 ml-1" />}
-            </button>
-        )
+    // ── Step 4: Commit ────────────────────────────────────────────────────────
+    async function handleCommit() {
+        setCommitting(true)
+        setError(null)
+        try {
+            // Build entity resolutions map
+            const entityResolutions: Record<string, any> = {}
+            for (const r of resolutions) {
+                if (r.status === 'AUTO_MATCHED' || r.status === 'CONFIRMED') {
+                    entityResolutions[r.rawName] = { id: r.matchId, name: r.matchName, type: r.type }
+                } else {
+                    // NEW: will be created with the finalName (or rawName fallback)
+                    entityResolutions[r.rawName] = 'NEW'
+                }
+            }
+
+            const res = await fetch('/api/crm/projects/import/batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pipelineId, rows: mappedRows, entityResolutions })
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Import failed')
+            setCommitResult({ count: data.count })
+            setStep('done')
+        } catch (e: any) {
+            setError(e.message)
+        } finally {
+            setCommitting(false)
+        }
+    }
+
+    const canProceedToCommit = resolutions.every(r => r.status !== 'NEEDS_REVIEW')
+    const needsReviewCount = resolutions.filter(r => r.status === 'NEEDS_REVIEW').length
+    const stepIndex = STEPS.findIndex(s => s.key === step)
+
+    // ── CSV Template ──────────────────────────────────────────────────────────
+    function downloadTemplate() {
+        const csv = `date,projectTitle,customerName,partnerName,salesRepName,stage,value\n2024-01-15,CRM System Implementation,Acme Corp,TechCorp,John Doe,WON,120000\n2024-03-20,Network Upgrade,Beta Industries,,Jane Smith,Lead,45000`
+        const blob = new Blob([csv], { type: 'text/csv' })
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+        a.download = 'legacy_import_template.csv'; a.click()
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div className="max-w-[1200px] mx-auto space-y-6 pb-20 px-4">
-
-            {/* ── Header ── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 rounded-2xl"><Layers className="w-7 h-7 text-blue-600" /></div>
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-900 tracking-tight">Project Importer</h1>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[.2em] mt-1">Pending Queue: {totalQueue} Records</p>
+        <div className="min-h-screen bg-gray-50/60">
+            {/* Page Header */}
+            <div className="bg-white border-b border-gray-200 shadow-sm">
+                <div className="max-w-5xl mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-xl font-bold tracking-tight text-gray-900">Legacy Project Import</h1>
+                            <p className="text-sm text-gray-500 mt-0.5">Import historical projects with smart entity deduplication</p>
+                        </div>
+                        <button onClick={downloadTemplate} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                            <Download className="w-4 h-4" />
+                            CSV Template
+                        </button>
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <a href="/api/crm/projects/import?type=template" download className="px-5 py-3 rounded-2xl bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all flex items-center gap-2">
-                        <Download className="w-4 h-4" /> Download CSV Template
-                    </a>
+
+                    {/* Step Indicator */}
+                    {step !== 'done' && (
+                        <div className="flex items-center gap-0 mt-5">
+                            {STEPS.map((s, i) => {
+                                const done = stepIndex > i
+                                const active = stepIndex === i
+                                return (
+                                    <div key={s.key} className="flex items-center">
+                                        <div className={cn(
+                                            "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-bold",
+                                            active ? "bg-blue-600 text-white shadow-sm" :
+                                                done ? "text-emerald-700 bg-emerald-50" : "text-gray-400"
+                                        )}>
+                                            {done ? <Check className="w-3.5 h-3.5" /> : <s.icon className="w-3.5 h-3.5" />}
+                                            <span className="hidden sm:inline">{s.label}</span>
+                                        </div>
+                                        {i < STEPS.length - 1 && (
+                                            <ChevronRight className={cn("w-4 h-4 mx-1", done ? "text-emerald-400" : "text-gray-300")} />
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* ── View: Dashboard (Unified) ── */}
-            {view === 'dashboard' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
-
-                    {/* Compact Import Console */}
-                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl p-8 space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-
-                            {/* Step 1: Pipeline Selection */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><CheckCircle2 className="w-5 h-5 text-amber-500" /></div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-gray-900 uppercase">1. Select Destination</h3>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Targets your CRM Pipeline</p>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
-                                    <select className="flex-1 bg-transparent text-xs font-black text-blue-600 outline-none cursor-pointer" value={selectedPipelineId} onChange={e => setSelectedPipelineId(e.target.value)}>
-                                        <option value="" disabled>Select Pipeline...</option>
-                                        {pipelines.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.name} {p.isDefault ? '(System Default)' : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Step 2: Upload Action */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><Upload className="w-5 h-5 text-blue-600" /></div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-gray-900 uppercase">2. Upload Source</h3>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Excel or CSV files supported</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => fileInputRef.current?.click()} className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3">
-                                        <FileText className="w-4 h-4" /> Drop or Browse Files
-                                    </button>
-                                    <button onClick={() => setShowPaste(!showPaste)} className={cn("p-4 rounded-2xl border transition-all", showPaste ? "bg-amber-50 border-amber-200 text-amber-600" : "bg-white border-gray-200 text-gray-400 hover:text-amber-500")}>
-                                        <ClipboardPaste className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={handleFile} />
-                            </div>
-
-                        </div>
-
-                        {/* Collapsible Direct Paste */}
-                        {showPaste && (
-                            <div className="pt-6 border-t border-dashed border-gray-100 space-y-4 animate-in slide-in-from-top-4 duration-300">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Direct Data Entry (Paste from Sheet)</p>
-                                    <button onClick={() => setPasteText("")} className="text-[9px] font-black text-red-400 uppercase hover:underline">Clear Area</button>
-                                </div>
-                                <textarea className="w-full h-32 px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-[10px] font-mono focus:outline-none focus:ring-4 focus:ring-blue-100/50 resize-none" placeholder="Paste CSV/TSV data here..." value={pasteText} onChange={e => setPasteText(e.target.value)} />
-                                <button onClick={() => {
-                                    const parsed = Papa.parse(pasteText, { header: true, skipEmptyLines: true }).data
-                                    if (parsed.length) handleUpload(parsed)
-                                }} className="w-full py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2">
-                                    <Check className="w-4 h-4" /> Process Pasted Data ({pasteText.split('\n').length ? Math.max(0, pasteText.split('\n').length - 1) : 0} Rows)
-                                </button>
-                            </div>
-                        )}
+            <div className="max-w-5xl mx-auto px-6 py-8">
+                {error && (
+                    <div className="mb-6 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span>{error}</span>
+                        <button onClick={() => setError(null)} className="ml-auto"><X className="w-4 h-4" /></button>
                     </div>
+                )}
 
-                    {/* Pending Queue Manager */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                        <div className="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
-                            <div>
-                                <h2 className="text-lg font-black text-gray-900">Pending Import Queue</h2>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Record processing and resolution</p>
+                {/* ── STEP 1: UPLOAD ── */}
+                {step === 'upload' && (
+                    <div className="space-y-6">
+                        {/* Pipeline selector */}
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Target Pipeline</label>
+                            <select
+                                value={pipelineId}
+                                onChange={e => setPipelineId(e.target.value)}
+                                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                {pipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Drop zone */}
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors shadow-sm p-14 flex flex-col items-center gap-4 cursor-pointer group"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                <Upload className="w-8 h-8 text-blue-500" />
                             </div>
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => setQueuePage(p => Math.max(0, p - 1))} disabled={queuePage === 0} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowLeft className="w-4 h-4" /></button>
-                                <span className="text-[10px] font-black w-14 text-center">{queuePage + 1} / {Math.ceil(totalQueue / take) || 1}</span>
-                                <button onClick={() => setQueuePage(p => p + 1)} disabled={(queuePage + 1) * take >= totalQueue} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowRight className="w-4 h-4" /></button>
+                            <div className="text-center">
+                                <p className="text-base font-bold text-gray-800">Click to select file</p>
+                                <p className="text-sm text-gray-500 mt-1">Supports CSV and Excel (.xlsx, .xls)</p>
+                            </div>
+                            <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleFile} />
+                        </div>
+
+                        {/* Info box */}
+                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
+                            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="font-semibold">Expected columns</p>
+                                <p className="mt-0.5 text-blue-600">Date · Project Title · Customer · Partner (optional) · Sales Rep (optional) · Stage (optional) · Value (optional)</p>
+                                <p className="mt-1 text-blue-600">Column names don't need to match exactly — you'll map them in the next step.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STEP 2: COLUMN MAPPING ── */}
+                {step === 'map' && (
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="font-bold text-gray-900 text-sm">Map Columns</h2>
+                                        <p className="text-xs text-gray-500 mt-0.5">{rawRows.length} rows detected · Map your file headers to the required fields</p>
+                                    </div>
+                                    <button onClick={() => setStep('upload')} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                                        <ArrowLeft className="w-3.5 h-3.5" /> Change file
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-5 space-y-3">
+                                {ALL_FIELDS.map(field => {
+                                    const required = REQUIRED_FIELDS.includes(field as any)
+                                    return (
+                                        <div key={field} className="flex items-center gap-4">
+                                            <div className="w-32 flex-shrink-0">
+                                                <span className="text-xs font-bold text-gray-700">{FIELD_LABELS[field]}</span>
+                                                {required && <span className="ml-1 text-red-500">*</span>}
+                                            </div>
+                                            <select
+                                                value={columnMap[field] || ''}
+                                                onChange={e => setColumnMap(prev => ({ ...prev, [field]: e.target.value || undefined }))}
+                                                className={cn(
+                                                    "flex-1 text-sm border rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500",
+                                                    required && !columnMap[field] ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"
+                                                )}
+                                            >
+                                                <option value="">— Not mapped —</option>
+                                                {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                                            </select>
+                                            {columnMap[field] && (
+                                                <span className="text-xs text-gray-400 font-mono truncate max-w-[120px]">
+                                                    e.g. "{String(rawRows[0]?.[columnMap[field]!] ?? '').slice(0, 20)}"
+                                                </span>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto min-h-[400px]">
-                            {fetchingQueue ? (
-                                <div className="flex flex-col items-center justify-center h-[400px] gap-3">
-                                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Refreshing Queue...</p>
-                                </div>
-                            ) : queue.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-[400px] text-center px-20">
-                                    <ShieldCheck className="w-12 h-12 text-gray-200 mb-4" />
-                                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter">Queue is Empty</h3>
-                                    <p className="text-xs font-medium text-gray-300 mt-2 uppercase tracking-widest">Upload your project list above to start importing</p>
-                                </div>
-                            ) : (
-                                <table className="w-full text-left border-separate border-spacing-0">
+                        {/* Preview Table */}
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Preview (first 3 rows)</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
                                     <thead>
-                                        <tr className="bg-white/80 sticky top-0 backdrop-blur-md">
-                                            <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Row Details</th>
-                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Date</th>
-                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Value</th>
-                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Brand</th>
-                                            <th className="px-4 py-4 text-right border-b border-gray-50 pr-8">Actions</th>
+                                        <tr className="bg-gray-50 border-b border-gray-100">
+                                            {ALL_FIELDS.filter(f => columnMap[f]).map(f => (
+                                                <th key={f} className="px-4 py-2 text-left font-bold text-gray-500 uppercase tracking-wider">{FIELD_LABELS[f]}</th>
+                                            ))}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {queue.map(row => (
-                                            <tr key={row.id} className="group hover:bg-gray-50/80 transition-all border-b border-gray-50">
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all"><Users className="w-4 h-4" /></div>
-                                                        <div>
-                                                            <p className="text-xs font-black text-gray-900 group-hover:text-blue-700 transition-colors uppercase">{row.customerName}</p>
-                                                            <p className="text-[10px] text-gray-400 font-bold mt-0.5">{row.partnerName ? `via ${row.partnerName}` : 'Direct'}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-5"><span className="text-[10px] font-mono text-gray-500">{row.date}</span></td>
-                                                <td className="px-4 py-5"><span className="text-[11px] font-black text-gray-900">${row.value.toLocaleString()}</span></td>
-                                                <td className="px-4 py-5">{row.brand ? <span className="text-[9px] font-black px-2 py-0.5 rounded bg-gray-900 text-white uppercase">{row.brand}</span> : <span className="text-gray-300">—</span>}</td>
-                                                <td className="px-4 py-5 text-right pr-8">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 rounded-xl text-gray-300 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all"><Trash2 className="w-4 h-4" /></button>
-                                                        <button onClick={() => startProcessing(row)} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">Process</button>
-                                                    </div>
-                                                </td>
+                                        {rawRows.slice(0, 3).map((row, i) => (
+                                            <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                                {ALL_FIELDS.filter(f => columnMap[f]).map(f => (
+                                                    <td key={f} className="px-4 py-2 text-gray-700 font-medium">{String(row[columnMap[f]!] ?? '—').slice(0, 40)}</td>
+                                                ))}
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
-                            )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                onClick={proceedToResolve}
+                                disabled={REQUIRED_FIELDS.some(f => !columnMap[f])}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            >
+                                Next: Entity Resolution <ArrowRight className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* ── View: Process Row Wizard ── */}
-            {view === 'process' && editedRow && (
-                <div className="max-w-[800px] mx-auto space-y-4 animate-in zoom-in-95 duration-300">
-                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden">
+                {/* ── STEP 3: ENTITY RESOLUTION ── */}
+                {step === 'resolve' && (
+                    <div className="space-y-6">
+                        {resolving ? (
+                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-16 flex flex-col items-center gap-4">
+                                <RefreshCw className="w-10 h-10 text-blue-500 animate-spin" />
+                                <p className="text-sm font-semibold text-gray-600">Analysing entity names across all {mappedRows.length} rows…</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Stats bar */}
+                                <div className="grid grid-cols-3 gap-4">
+                                    {[
+                                        { label: 'Auto-matched', count: resolutions.filter(r => r.status === 'AUTO_MATCHED').length, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+                                        { label: 'Needs Review', count: needsReviewCount, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+                                        { label: 'Will Create New', count: resolutions.filter(r => r.status === 'NEW').length, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+                                    ].map(s => (
+                                        <div key={s.label} className={cn("rounded-xl border px-4 py-3 text-center", s.color)}>
+                                            <div className="text-2xl font-black">{s.count}</div>
+                                            <div className="text-xs font-bold mt-0.5 uppercase tracking-wider opacity-70">{s.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
 
-                        {/* Wizard Header */}
-                        <div className="p-8 border-b border-gray-50 bg-gray-50/20 flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <button onClick={() => setView('dashboard')} className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><X className="w-5 h-5" /></button>
-                                <div>
-                                    <h2 className="text-xl font-black text-gray-900 leading-tight">Resolve Record</h2>
-                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Reviewing: {editedRow.customerName}</p>
+                                {/* Resolution table */}
+                                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                    <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                                        <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest">{resolutions.length} Unique Entities</h2>
+                                        {needsReviewCount > 0 && (
+                                            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                                                {needsReviewCount} need your attention
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="divide-y divide-gray-50">
+                                        {resolutions.map((r) => (
+                                            <div key={r.rawName + r.type} className={cn(
+                                                "px-5 py-3.5 flex items-center gap-4 transition-colors",
+                                                r.status === 'NEEDS_REVIEW' ? "bg-amber-50/40" : ""
+                                            )}>
+                                                {/* Type badge */}
+                                                <div className={cn(
+                                                    "flex-shrink-0 px-2 py-0.5 rounded-md text-[10px] font-black border uppercase tracking-wider",
+                                                    r.type === 'CUSTOMER'
+                                                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                                                        : "bg-purple-50 text-purple-700 border-purple-100"
+                                                )}>
+                                                    {r.type === 'CUSTOMER' ? <><Users className="w-2.5 h-2.5 inline mr-1" />Cust</> : <><Briefcase className="w-2.5 h-2.5 inline mr-1" />Partner</>}
+                                                </div>
+
+                                                {/* Raw name */}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-800 truncate">{r.rawName}</p>
+                                                    <p className="text-xs text-gray-400 mt-0.5">
+                                                        {mappedRows.filter(row =>
+                                                            (r.type === 'CUSTOMER' ? row.customerName : row.partnerName) === r.rawName
+                                                        ).length} project{mappedRows.filter(row =>
+                                                            (r.type === 'CUSTOMER' ? row.customerName : row.partnerName) === r.rawName
+                                                        ).length !== 1 ? 's' : ''}
+                                                    </p>
+                                                </div>
+
+                                                {/* Arrow */}
+                                                <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+
+                                                {/* Resolution */}
+                                                <div className="flex-1 min-w-0">
+                                                    {(r.status === 'AUTO_MATCHED' || r.status === 'CONFIRMED') && (
+                                                        <div className="flex items-center gap-2">
+                                                            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                                            <div>
+                                                                <p className="text-sm font-bold text-gray-800 truncate">{r.matchName}</p>
+                                                                {r.confidence && (
+                                                                    <p className="text-xs text-emerald-600 font-semibold">{Math.round(r.confidence * 100)}% confident</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {r.status === 'NEW' && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Plus className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                                            <p className="text-sm font-bold text-blue-700">Create: "{r.finalName || r.rawName}"</p>
+                                                        </div>
+                                                    )}
+                                                    {r.status === 'NEEDS_REVIEW' && (
+                                                        <div className="flex items-center gap-2">
+                                                            <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                                            <div>
+                                                                <p className="text-xs font-bold text-amber-700">Possible match:</p>
+                                                                <p className="text-sm font-bold text-gray-700">{r.suggestions[0]?.name} ({Math.round((r.suggestions[0]?.score || 0) * 100)}%)</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Action button */}
+                                                <div className="relative flex-shrink-0">
+                                                    {(r.status === 'AUTO_MATCHED' || r.status === 'CONFIRMED' || r.status === 'NEW') && (
+                                                        <button
+                                                            onClick={() => { setActivePopover(r.rawName + r.type); setSearchQ(''); setSearchResults([]); setNewName(r.finalName || r.rawName) }}
+                                                            className="text-xs text-gray-400 hover:text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                                                        >
+                                                            Change
+                                                        </button>
+                                                    )}
+                                                    {r.status === 'NEEDS_REVIEW' && (
+                                                        <button
+                                                            onClick={() => { setActivePopover(r.rawName + r.type); setSearchQ(''); setSearchResults([]); setNewName(r.rawName) }}
+                                                            className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
+                                                        >
+                                                            <Sparkles className="w-3.5 h-3.5" /> Review
+                                                        </button>
+                                                    )}
+
+                                                    {/* Inline Popover */}
+                                                    {activePopover === r.rawName + r.type && (
+                                                        <div className="absolute right-0 top-8 z-50 w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl p-4">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <p className="text-xs font-black text-gray-500 uppercase tracking-wider">Resolve: {r.rawName}</p>
+                                                                <button onClick={() => setActivePopover(null)}><X className="w-4 h-4 text-gray-400" /></button>
+                                                            </div>
+
+                                                            {/* Quick suggestions */}
+                                                            {r.suggestions.length > 0 && (
+                                                                <div className="mb-3">
+                                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Suggestions</p>
+                                                                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                                                                        {r.suggestions.map(s => (
+                                                                            <button key={s.id} onClick={() => confirmMatch(r.rawName, s.id, s.name)}
+                                                                                className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50 transition-colors text-sm">
+                                                                                <span className="font-semibold text-gray-800">{s.name}</span>
+                                                                                <span className="text-xs text-gray-400 font-bold">{Math.round(s.score * 100)}%</span>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Search */}
+                                                            <div className="mb-3">
+                                                                <div className="relative">
+                                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                                                                    <input
+                                                                        value={searchQ}
+                                                                        onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value, r.type) }}
+                                                                        placeholder="Search existing…"
+                                                                        className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                                                                    />
+                                                                </div>
+                                                                {searchLoading && <p className="text-xs text-gray-500 mt-1 pl-1">Searching…</p>}
+                                                                {searchResults.length > 0 && (
+                                                                    <div className="mt-1 space-y-1 max-h-28 overflow-y-auto">
+                                                                        {searchResults.map(s => (
+                                                                            <button key={s.id} onClick={() => confirmMatch(r.rawName, s.id, s.name)}
+                                                                                className="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-50 text-sm font-semibold text-gray-800 transition-colors">
+                                                                                {s.name}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Create new */}
+                                                            <div className="border-t border-gray-100 pt-3">
+                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Create New Record</p>
+                                                                <div className="flex gap-2">
+                                                                    <input
+                                                                        value={newName}
+                                                                        onChange={e => setNewName(e.target.value)}
+                                                                        placeholder="Correct name…"
+                                                                        className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => confirmNew(r.rawName, newName || r.rawName)}
+                                                                        disabled={!newName.trim()}
+                                                                        className="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Navigation */}
+                                <div className="flex items-center justify-between">
+                                    <button onClick={() => setStep('map')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                                        <ArrowLeft className="w-4 h-4" /> Back
+                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        {needsReviewCount > 0 && (
+                                            <p className="text-sm text-amber-700 font-semibold">{needsReviewCount} entity{needsReviewCount !== 1 ? 'ies need' : 'y needs'} review</p>
+                                        )}
+                                        <button
+                                            disabled={!canProceedToCommit}
+                                            onClick={() => setStep('commit')}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                        >
+                                            Review & Import <ArrowRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* ── STEP 4: COMMIT ── */}
+                {step === 'commit' && (
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <h2 className="font-bold text-gray-900 text-sm">Import Summary</h2>
+                                <p className="text-xs text-gray-500 mt-0.5">Review everything before committing to the database</p>
+                            </div>
+                            <div className="p-5 space-y-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    {[
+                                        { label: 'Projects', value: mappedRows.length, icon: FileText, color: 'blue' },
+                                        { label: 'Customers', value: resolutions.filter(r => r.type === 'CUSTOMER').length, icon: Users, color: 'indigo' },
+                                        { label: 'Partners', value: resolutions.filter(r => r.type === 'PARTNER').length, icon: Briefcase, color: 'purple' },
+                                        { label: 'New Records', value: resolutions.filter(r => r.status === 'NEW').length, icon: Plus, color: 'emerald' },
+                                    ].map(s => (
+                                        <div key={s.label} className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                                            <div className="text-3xl font-black text-gray-900">{s.value}</div>
+                                            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">{s.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <strong className="text-gray-700">Pipeline:</strong> {pipelines.find(p => p.id === pipelineId)?.name || pipelineId}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className={cn("w-1.5 h-1.5 rounded-full",
-                                        wizardTab === 'details' && i === 1 || wizardTab === 'customer' && i === 2 || wizardTab === 'partner' && i === 3 || wizardTab === 'finish' && i === 4 ? "bg-blue-600 w-6 transition-all duration-300" : "bg-gray-200"
-                                    )} />
+                        </div>
+
+                        {/* Entity Summary */}
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Entity Resolution Summary</h3>
+                            </div>
+                            <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+                                {resolutions.map(r => (
+                                    <div key={r.rawName + r.type} className="px-5 py-3 flex items-center gap-3 text-sm">
+                                        <span className={cn(
+                                            "text-[10px] font-black px-2 py-0.5 rounded border uppercase tracking-wider flex-shrink-0",
+                                            r.type === 'CUSTOMER' ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-purple-50 text-purple-700 border-purple-100"
+                                        )}>{r.type === 'CUSTOMER' ? 'Cust' : 'Part'}</span>
+                                        <span className="text-gray-500 truncate flex-1">{r.rawName}</span>
+                                        <ArrowRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                                        {(r.status === 'AUTO_MATCHED' || r.status === 'CONFIRMED') ? (
+                                            <span className="font-semibold text-emerald-700 flex items-center gap-1 truncate flex-1">
+                                                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" /> {r.matchName}
+                                            </span>
+                                        ) : (
+                                            <span className="font-semibold text-blue-700 flex items-center gap-1 truncate flex-1">
+                                                <Plus className="w-3.5 h-3.5 flex-shrink-0" /> {r.finalName || r.rawName}
+                                            </span>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Tabs Navigation */}
-                        <div className="flex border-b border-gray-50 px-4 bg-gray-50/20">
-                            <TabBtn id="details" label="1. Data Edit" icon={FileText} active={wizardTab === 'details'} resolved />
-                            <TabBtn id="customer" label="2. Customer" icon={Users} active={wizardTab === 'customer'} resolved={!!resolutionMap[editedRow.customerName]} />
-                            <TabBtn id="partner" label="3. Partner" icon={Briefcase} active={wizardTab === 'partner'} resolved={!editedRow.partnerName || !!resolutionMap[editedRow.partnerName]} />
-                            <TabBtn id="finish" label="4. Process" icon={CheckCircle2} active={wizardTab === 'finish'} />
-                        </div>
-
-                        {/* ── TAB: DATA EDIT ── */}
-                        {wizardTab === 'details' && (
-                            <div className="p-10 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Calendar className="w-3 h-3" /> Date</label>
-                                        <input type="text" className="w-full px-5 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-mono text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all font-black" value={editedRow.date} onChange={e => setEditedRow({ ...editedRow, date: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><DollarSign className="w-3 h-3" /> Expected Value</label>
-                                        <FormattedNumberInput value={editedRow.value} onChange={v => setEditedRow({ ...editedRow, value: v })} className="w-full px-5 py-4 rounded-2xl border border-gray-100 bg-gray-50 text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all font-black" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><Tag className="w-3 h-3" /> Brand / Technology</label>
-                                        <input type="text" className="w-full px-5 py-4 rounded-2xl border border-gray-100 bg-gray-50 text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all font-black uppercase" value={editedRow.brand || ''} onChange={e => setEditedRow({ ...editedRow, brand: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><UserCheck className="w-3 h-3" /> Primary Sales Rep</label>
-                                        <input type="text" className="w-full px-5 py-4 rounded-2xl border border-gray-100 bg-gray-50 text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all font-black" value={editedRow.salesRepName || ''} onChange={e => setEditedRow({ ...editedRow, salesRepName: e.target.value })} />
-                                    </div>
-                                </div>
-                                <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white"><LayoutDashboard className="w-5 h-5" /></div>
-                                        <div>
-                                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Active Stage</p>
-                                            <p className="text-sm font-black text-blue-900">{editedRow.stage}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {['LEAD', 'WON', 'LOST'].map(s => (
-                                            <button key={s} onClick={() => setEditedRow({ ...editedRow, stage: s })} className={cn(
-                                                "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                                editedRow.stage === s ? "bg-white text-blue-600 shadow-sm" : "text-blue-400 hover:text-blue-600"
-                                            )}>{s}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── TAB: ENTITY RESOLUTION (Customer or Partner) ── */}
-                        {(wizardTab === 'customer' || wizardTab === 'partner') && (
-                            <div className="flex flex-col">
-                                {(() => {
-                                    const entityType = wizardTab.toUpperCase() as 'CUSTOMER' | 'PARTNER'
-                                    const entityInput = entityType === 'CUSTOMER' ? editedRow.customerName : (editedRow.partnerName || '')
-                                    const resData = entityType === 'CUSTOMER' ? resCustomer : resPartner
-                                    const currentResolution = resolutionMap[entityInput]
-
-                                    if (!entityInput) return <div className="p-20 text-center"><p className="text-gray-400 italic">No partner linked to this record</p><button onClick={() => setWizardTab('finish')} className="mt-4 text-blue-600 font-black text-xs uppercase underline">Skip to Finish</button></div>
-
-                                    return (
-                                        <>
-                                            <div className="px-10 py-8 bg-gray-50/50 border-b border-gray-50 flex items-center justify-between">
-                                                <div className="flex items-center gap-5">
-                                                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm", entityType === 'PARTNER' ? 'bg-blue-600 text-white' : 'bg-gray-900 text-white')}>
-                                                        {entityType === 'PARTNER' ? <Briefcase className="w-7 h-7" /> : <Users className="w-7 h-7" />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-3 mb-1">
-                                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[.2em]">{entityType} NAME FROM RECORD:</span>
-                                                            <a href={`https://www.google.com/search?q=${encodeURIComponent(entityInput + ' Sri Lanka')}`} target="_blank" className="flex items-center gap-1 text-[9px] font-black text-blue-500 hover:underline"><Globe className="w-3 h-3" /> VERIFY SL</a>
-                                                        </div>
-                                                        <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{entityInput}</h3>
-                                                        {currentResolution && (
-                                                            <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-700 w-fit">
-                                                                <Check className="w-3.5 h-3.5" />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest">{currentResolution === 'SKIP' ? 'Using original name' : `Linked to: ${currentResolution.name}`}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex border-b border-gray-50">
-                                                {(['suggest', 'search', 'create'] as const).map(t => (
-                                                    <button key={t} onClick={() => setEntityTab(t)} className={cn(
-                                                        "flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all",
-                                                        entityTab === t ? "text-blue-600 underline underline-offset-8 decoration-2" : "text-gray-400"
-                                                    )}>{t === 'suggest' ? '🎯 Suggestions' : t === 'search' ? '🔍 Manual Search' : '✨ Create Now'}</button>
-                                                ))}
-                                            </div>
-
-                                            <div className="p-8 min-h-[340px]">
-                                                {entityTab === 'suggest' && (
-                                                    <div className="space-y-3">
-                                                        {resData?.match && (
-                                                            <button onClick={() => {
-                                                                setResolutionMap(p => ({ ...p, [entityInput]: { id: resData.match!.id, name: resData.match!.name, type: entityType } }))
-                                                                checkAutoAdvance(entityInput, entityType)
-                                                            }} className={cn("w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between group transition-all",
-                                                                (currentResolution as any)?.id === resData.match.id ? "border-emerald-500 bg-emerald-50/50" : "border-gray-100 hover:border-blue-500 bg-white"
-                                                            )}>
-                                                                <div>
-                                                                    <p className="text-[9px] font-black text-emerald-500 uppercase mb-1">High Accuracy Match</p>
-                                                                    <p className="text-lg font-black text-gray-900 group-hover:text-blue-600">{resData.match.name}</p>
-                                                                    <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">{Math.round(resData.match.score * 100)}% Similarity in database</p>
-                                                                </div>
-                                                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-all", (currentResolution as any)?.id === resData.match.id ? "bg-emerald-500 text-white" : "bg-gray-50 text-gray-200 group-hover:bg-blue-600 group-hover:text-white")}><Check className="w-5 h-5" /></div>
-                                                            </button>
-                                                        )}
-                                                        {resData?.suggestions.map(s => (
-                                                            <button key={s.id} onClick={() => {
-                                                                setResolutionMap(p => ({ ...p, [entityInput]: { id: s.id, name: s.name, type: entityType } }))
-                                                                checkAutoAdvance(entityInput, entityType)
-                                                            }} className={cn("w-full p-4 rounded-2xl border flex items-center justify-between text-left group hover:border-blue-400 transition-all", (currentResolution as any)?.id === s.id ? "bg-emerald-50 border-emerald-300" : "bg-white")}>
-                                                                <p className="text-sm font-black text-gray-700 group-hover:text-blue-600">{s.name}</p>
-                                                                <span className="text-[9px] font-black text-gray-300 uppercase">{Math.round(s.score * 100)}% match</span>
-                                                            </button>
-                                                        ))}
-                                                        {!resData?.match && !resData?.suggestions.length && (
-                                                            <div className="text-center py-20 space-y-3">
-                                                                <Sparkles className="w-10 h-10 text-gray-100 mx-auto" />
-                                                                <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No Smart Suggestions</p>
-                                                                <button onClick={() => setEntityTab('search')} className="text-xs font-black text-blue-600 underline">Search manually</button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {entityTab === 'search' && (
-                                                    <div className="space-y-4">
-                                                        <div className="relative">
-                                                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-                                                            <input autoFocus type="text" placeholder="Start typing name..." value={searchQ} onChange={e => handleLiveSearch(e.target.value)}
-                                                                className="w-full pl-14 pr-12 py-5 rounded-2xl border-2 border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all font-black" />
-                                                            {searchLoading && <RefreshCw className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
-                                                        </div>
-                                                        <div className="space-y-2 max-h-[300px] overflow-auto pr-2">
-                                                            {searchResults.map(s => (
-                                                                <button key={s.id} onClick={() => {
-                                                                    setResolutionMap(p => ({ ...p, [entityInput]: { id: s.id, name: s.name, type: entityType } }))
-                                                                    checkAutoAdvance(entityInput, entityType)
-                                                                }} className="w-full p-4 rounded-xl border border-gray-100 bg-white hover:border-blue-400 hover:shadow-sm transition-all flex items-center justify-between group">
-                                                                    <p className="text-sm font-black text-gray-800 group-hover:text-blue-600">{s.name}</p>
-                                                                    <div className="flex gap-2">
-                                                                        {s.isPartner && <span className="text-[8px] font-black bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">P</span>}
-                                                                        <Plus className="w-4 h-4 text-gray-200 group-hover:text-blue-500" />
-                                                                    </div>
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {entityTab === 'create' && (
-                                                    <div className="space-y-6">
-                                                        <div className="p-6 bg-amber-50 rounded-3xl border border-amber-100 flex gap-4">
-                                                            <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
-                                                            <p className="text-[11px] font-bold text-amber-800 leading-relaxed uppercase tracking-tight">Warning: This will create a permanent new {entityType.toLowerCase()} record in your CRM. Correct abbreviations to full legal names now.</p>
-                                                        </div>
-                                                        <div className="space-y-3">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[.2em] ml-2">Legal Name for Database</label>
-                                                            <input type="text" placeholder="e.g. Network Information Technology Pvt Ltd" value={customName} onChange={e => setCustomName(e.target.value)}
-                                                                className="w-full px-6 py-5 rounded-2xl border-2 border-purple-100 bg-purple-50/20 focus:bg-white focus:border-purple-400 focus:outline-none focus:ring-4 focus:ring-purple-50 transition-all font-black text-lg" />
-                                                        </div>
-                                                        <button disabled={creating} onClick={() => handleCreateEntity(entityInput, entityType, customName)}
-                                                            className="w-full py-5 rounded-2xl bg-purple-600 text-white font-black uppercase tracking-widest text-sm hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 flex items-center justify-center gap-2">
-                                                            {creating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                                                            {creating ? 'Creating Record...' : `Create "${customName || entityInput}" Now`}
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </>
-                                    )
-                                })()}
-                            </div>
-                        )}
-
-                        {/* ── TAB: FINISH ── */}
-                        {wizardTab === 'finish' && (
-                            <div className="p-10 flex flex-col items-center text-center space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                                <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-inner">
-                                    <ShieldCheck className="w-12 h-12" />
-                                </div>
-                                <div className="space-y-2">
-                                    <h3 className="text-2xl font-black text-gray-900 leading-tight">Ready for Importance</h3>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Selected Entities & Adjusted Data verified</p>
-                                </div>
-
-                                <div className="w-full grid grid-cols-2 gap-4">
-                                    <div className="p-6 bg-gray-50 rounded-[2rem] text-left border border-gray-100">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer</p>
-                                        <p className="text-xs font-black text-gray-900 truncate">{(resolutionMap[editedRow.customerName] as any)?.name || editedRow.customerName}</p>
-                                    </div>
-                                    <div className="p-6 bg-gray-50 rounded-[2rem] text-left border border-gray-100">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Deal Value</p>
-                                        <p className="text-xs font-black text-emerald-600">${editedRow.value.toLocaleString()}</p>
-                                    </div>
-                                </div>
-
-                                <div className="w-full space-y-3">
-                                    <button disabled={importing} onClick={handleFinalizeRow} className="w-full py-5 rounded-2xl bg-gray-900 text-white font-black text-sm uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3">
-                                        {importing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
-                                        {importing ? 'Importing...' : 'Finalize & Import Project'}
-                                    </button>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">This will remove the entry from queue and create a CRM project</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Navigation Footer */}
-                        <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/30 flex justify-between items-center">
-                            <button onClick={() => setView('dashboard')} className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600">Cancel & return to queue</button>
-                            <div className="flex gap-3">
-                                <button onClick={() => {
-                                    if (wizardTab === 'customer') setWizardTab('details')
-                                    else if (wizardTab === 'partner') setWizardTab('customer')
-                                    else if (wizardTab === 'finish') setWizardTab('partner')
-                                }} disabled={wizardTab === 'details'} className="px-5 py-2.5 rounded-xl border border-gray-200 text-[10px] font-black uppercase tracking-widest disabled:opacity-20 hover:bg-white transition-all">Previous Step</button>
-
-                                {wizardTab !== 'finish' && (
-                                    <button onClick={() => {
-                                        if (wizardTab === 'details') setWizardTab('customer')
-                                        else if (wizardTab === 'customer') setWizardTab('partner')
-                                        else if (wizardTab === 'partner') setWizardTab('finish')
-                                    }} className="px-8 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-md">Next Step</button>
-                                )}
-                            </div>
+                        <div className="flex items-center justify-between">
+                            <button onClick={() => setStep('resolve')} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                                <ArrowLeft className="w-4 h-4" /> Back
+                            </button>
+                            <button
+                                onClick={handleCommit}
+                                disabled={committing}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
+                            >
+                                {committing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+                                {committing ? `Importing ${mappedRows.length} projects…` : `Import ${mappedRows.length} Projects`}
+                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* ── Toast Status ── */}
-            {status && (
-                <div className="fixed bottom-8 right-8 z-[110] animate-in fade-in slide-in-from-right-8 duration-500">
-                    <div className={cn("px-6 py-4 rounded-[2rem] flex items-center gap-4 border shadow-2xl backdrop-blur-xl", status.type === 'success' ? 'bg-emerald-50/90 border-emerald-100 text-emerald-900' : 'bg-red-50/90 border-red-100 text-red-900')}>
-                        {status.type === 'success' ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <AlertCircle className="w-6 h-6 text-red-500" />}
-                        <span className="text-[11px] font-black uppercase tracking-widest">{status.message}</span>
-                        <button onClick={() => setStatus(null)} className="p-1 rounded-full hover:bg-black/5 transition-all"><X className="w-4 h-4 opacity-40" /></button>
+                {/* ── DONE ── */}
+                {step === 'done' && commitResult && (
+                    <div className="flex flex-col items-center text-center gap-6 py-16">
+                        <div className="w-20 h-20 rounded-3xl bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-gray-900">Import Complete!</h2>
+                            <p className="text-base text-gray-500 mt-2">
+                                <strong className="text-gray-800">{commitResult.count}</strong> legacy projects have been imported to the CRM pipeline.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setStep('upload'); setRawRows([]); setResolutions([]); setMappedRows([]); setCommitResult(null); setError(null) }}
+                                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Import Another File
+                            </button>
+                            <a href="/dashboard/crm/pipeline" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                                View CRM Pipeline <ArrowRight className="w-4 h-4" />
+                            </a>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* ── Initial Loading Overlay ── */}
-            {loading && (
-                <div className="fixed inset-0 bg-white/80 backdrop-blur-md z-[200] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-300">
-                    <div className="relative">
-                        <div className="w-20 h-20 border-4 border-gray-100 rounded-full" />
-                        <div className="w-20 h-20 border-4 border-t-blue-600 rounded-full animate-spin absolute top-0 left-0" />
-                    </div>
-                    <div className="text-center space-y-1">
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-[.4em] animate-pulse">Syncing Engine</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Optimizing Data Pipeline...</p>
-                    </div>
-                </div>
+            {/* Overlay to close popover */}
+            {activePopover && (
+                <div className="fixed inset-0 z-40" onClick={() => setActivePopover(null)} />
             )}
         </div>
     )
