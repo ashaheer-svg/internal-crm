@@ -43,9 +43,12 @@ export default function ProjectImportPage() {
     const [queuePage, setQueuePage] = useState(0)
     const take = 15
 
-    // UI Steps: 'setup' (upload/paste), 'queue' (list), 'process' (single row wizard)
-    const [view, setView] = useState<'setup' | 'queue' | 'process'>('queue')
+    // UI Steps: 'dashboard' (list + upload), 'process' (single row wizard)
+    const [view, setView] = useState<'dashboard' | 'process'>('dashboard')
     const [processingRow, setProcessingRow] = useState<PendingImportRow | null>(null)
+
+    // Upload & UI Controls
+    const [showPaste, setShowPaste] = useState(false)
 
     // Upload State
     const [pasteText, setPasteText] = useState("")
@@ -84,8 +87,11 @@ export default function ProjectImportPage() {
             if (res.ok) {
                 const data = await res.json()
                 setPipelines(data)
-                const def = data.find((p: any) => p.isDefault) || data[0]
-                if (def) setSelectedPipelineId(def.id)
+                // If nothing selected yet, pick default
+                if (!selectedPipelineId) {
+                    const def = data.find((p: any) => p.isDefault) || data[0]
+                    if (def) setSelectedPipelineId(def.id)
+                }
             }
         } catch (e) { console.error("Failed to fetch pipelines", e) }
     }
@@ -98,7 +104,6 @@ export default function ProjectImportPage() {
                 const data = await res.json()
                 setQueue(data.pending)
                 setTotalQueue(data.total)
-                if (data.total > 0 && view === 'setup') setView('queue')
             }
         } catch (e) { console.error("Failed to fetch queue", e) }
         finally { setFetchingQueue(false) }
@@ -167,7 +172,7 @@ export default function ProjectImportPage() {
             })
             if (res.ok) {
                 setStatus({ type: 'success', message: 'Project imported successfully' })
-                setView('queue')
+                setView('dashboard')
                 fetchQueue()
             } else {
                 const err = await res.json()
@@ -218,8 +223,8 @@ export default function ProjectImportPage() {
             if (res.ok) {
                 setStatus({ type: 'success', message: `Successfully queued ${rowsToQueue.length} rows.` })
                 setPasteText("")
+                setShowPaste(false)
                 fetchQueue()
-                setView('queue')
             } else {
                 setStatus({ type: 'error', message: data.error || 'Failed to upload projects.' })
             }
@@ -365,116 +370,145 @@ export default function ProjectImportPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {view !== 'setup' && (
-                        <button onClick={() => setView('setup')} className="px-5 py-3 rounded-2xl bg-gray-900 text-white text-xs font-black hover:bg-black transition-all flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> New Upload
-                        </button>
-                    )}
-                    {view === 'setup' && totalQueue > 0 && (
-                        <button onClick={() => setView('queue')} className="px-5 py-3 rounded-2xl bg-white border border-gray-200 text-gray-600 text-xs font-black hover:border-blue-600 transition-all">
-                            View Queue
-                        </button>
-                    )}
+                    <a href="/api/crm/projects/import?type=template" download className="px-5 py-3 rounded-2xl bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all flex items-center gap-2">
+                        <Download className="w-4 h-4" /> Download CSV Template
+                    </a>
                 </div>
             </div>
 
-            {/* ── View: Setup ── */}
-            {view === 'setup' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-10 flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mb-6"><Upload className="w-8 h-8 text-blue-600" /></div>
-                        <h2 className="text-xl font-black text-gray-900 mb-2">Upload Data</h2>
-                        <p className="text-xs text-gray-400 font-medium mb-8 uppercase tracking-widest px-10 leading-relaxed">Choose a CSV or Excel file to populate the import queue</p>
-                        <div className="flex gap-3 w-full max-w-sm">
-                            <button onClick={() => fileInputRef.current?.click()} className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white text-sm font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">Browse Files</button>
-                            <a href="/api/crm/projects/import?type=template" download className="p-4 rounded-2xl bg-white border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all"><Download className="w-5 h-5" /></a>
-                        </div>
-                        <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={handleFile} />
-                    </div>
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 space-y-4 flex flex-col">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3"><ClipboardPaste className="w-5 h-5 text-amber-500" /><h2 className="text-lg font-black text-gray-900">Direct Paste</h2></div>
-                            <div className="bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 flex items-center gap-2">
-                                <span className="text-[9px] font-black text-gray-400 uppercase">Target Pipeline</span>
-                                <select className="text-[10px] font-black bg-transparent outline-none text-blue-600" value={selectedPipelineId} onChange={e => setSelectedPipelineId(e.target.value)}>
-                                    {pipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                        <textarea className="flex-1 px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-[10px] font-mono focus:outline-none focus:ring-4 focus:ring-blue-100/50 resize-none" placeholder="Paste CSV/TSV data here..." value={pasteText} onChange={e => setPasteText(e.target.value)} />
-                        <button onClick={() => {
-                            const parsed = Papa.parse(pasteText, { header: true, skipEmptyLines: true }).data
-                            if (parsed.length) handleUpload(parsed)
-                        }} className="w-full py-4 rounded-2xl bg-gray-900 text-white text-sm font-black hover:bg-black transition-all">Queue {pasteText.split('\n').length - 1} Rows</button>
-                    </div>
-                </div>
-            )}
+            {/* ── View: Dashboard (Unified) ── */}
+            {view === 'dashboard' && (
+                <div className="space-y-6 animate-in fade-in duration-500">
 
-            {/* ── View: Queue Manager ── */}
-            {view === 'queue' && (
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
-                    <div className="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
-                        <div>
-                            <h2 className="text-lg font-black text-gray-900">Pending Imports</h2>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Showing {queue.length} of {totalQueue} records</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setQueuePage(p => Math.max(0, p - 1))} disabled={queuePage === 0} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowLeft className="w-4 h-4" /></button>
-                            <span className="text-[10px] font-black w-14 text-center">{queuePage + 1} / {Math.ceil(totalQueue / take) || 1}</span>
-                            <button onClick={() => setQueuePage(p => p + 1)} disabled={(queuePage + 1) * take >= totalQueue} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowRight className="w-4 h-4" /></button>
-                        </div>
-                    </div>
+                    {/* Compact Import Console */}
+                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl p-8 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
 
-                    <div className="overflow-x-auto min-h-[400px]">
-                        {fetchingQueue ? (
-                            <div className="flex flex-col items-center justify-center h-[400px] gap-3">
-                                <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Refreshing Queue...</p>
+                            {/* Step 1: Pipeline Selection */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><CheckCircle2 className="w-5 h-5 text-amber-500" /></div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-gray-900 uppercase">1. Select Destination</h3>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Targets your CRM Pipeline</p>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                    <select className="flex-1 bg-transparent text-xs font-black text-blue-600 outline-none cursor-pointer" value={selectedPipelineId} onChange={e => setSelectedPipelineId(e.target.value)}>
+                                        <option value="" disabled>Select Pipeline...</option>
+                                        {pipelines.map(p => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.name} {p.isDefault ? '(System Default)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                        ) : queue.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-[400px] text-center px-20">
-                                <ShieldCheck className="w-12 h-12 text-gray-200 mb-4" />
-                                <h3 className="text-lg font-black text-gray-400">Queue looks empty</h3>
-                                <p className="text-xs text-gray-300 mt-2">Upload some data to start processing projects record-by-record.</p>
-                                <button onClick={() => setView('setup')} className="mt-6 text-xs font-black text-blue-600 hover:underline">Upload Data Now →</button>
+
+                            {/* Step 2: Upload Action */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center"><Upload className="w-5 h-5 text-blue-600" /></div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-gray-900 uppercase">2. Upload Source</h3>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Excel or CSV files supported</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => fileInputRef.current?.click()} className="flex-1 px-6 py-4 rounded-2xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-3">
+                                        <FileText className="w-4 h-4" /> Drop or Browse Files
+                                    </button>
+                                    <button onClick={() => setShowPaste(!showPaste)} className={cn("p-4 rounded-2xl border transition-all", showPaste ? "bg-amber-50 border-amber-200 text-amber-600" : "bg-white border-gray-200 text-gray-400 hover:text-amber-500")}>
+                                        <ClipboardPaste className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={handleFile} />
                             </div>
-                        ) : (
-                            <table className="w-full text-left border-separate border-spacing-0">
-                                <thead>
-                                    <tr className="bg-white/80 sticky top-0 backdrop-blur-md">
-                                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Row Details</th>
-                                        <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Date</th>
-                                        <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Value</th>
-                                        <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Brand</th>
-                                        <th className="px-4 py-4 text-right border-b border-gray-50 pr-8">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {queue.map(row => (
-                                        <tr key={row.id} className="group hover:bg-gray-50/80 transition-all border-b border-gray-50">
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all"><Users className="w-4 h-4" /></div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-gray-900 group-hover:text-blue-700 transition-colors uppercase">{row.customerName}</p>
-                                                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">{row.partnerName ? `via ${row.partnerName}` : 'Direct'}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-5"><span className="text-[10px] font-mono text-gray-500">{row.date}</span></td>
-                                            <td className="px-4 py-5"><span className="text-[11px] font-black text-gray-900">${row.value.toLocaleString()}</span></td>
-                                            <td className="px-4 py-5">{row.brand ? <span className="text-[9px] font-black px-2 py-0.5 rounded bg-gray-900 text-white uppercase">{row.brand}</span> : <span className="text-gray-300">—</span>}</td>
-                                            <td className="px-4 py-5 text-right pr-8">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 rounded-xl text-gray-300 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all"><Trash2 className="w-4 h-4" /></button>
-                                                    <button onClick={() => startProcessing(row)} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">Process</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+
+                        </div>
+
+                        {/* Collapsible Direct Paste */}
+                        {showPaste && (
+                            <div className="pt-6 border-t border-dashed border-gray-100 space-y-4 animate-in slide-in-from-top-4 duration-300">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Direct Data Entry (Paste from Sheet)</p>
+                                    <button onClick={() => setPasteText("")} className="text-[9px] font-black text-red-400 uppercase hover:underline">Clear Area</button>
+                                </div>
+                                <textarea className="w-full h-32 px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50/50 text-[10px] font-mono focus:outline-none focus:ring-4 focus:ring-blue-100/50 resize-none" placeholder="Paste CSV/TSV data here..." value={pasteText} onChange={e => setPasteText(e.target.value)} />
+                                <button onClick={() => {
+                                    const parsed = Papa.parse(pasteText, { header: true, skipEmptyLines: true }).data
+                                    if (parsed.length) handleUpload(parsed)
+                                }} className="w-full py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2">
+                                    <Check className="w-4 h-4" /> Process Pasted Data ({pasteText.split('\n').length ? Math.max(0, pasteText.split('\n').length - 1) : 0} Rows)
+                                </button>
+                            </div>
                         )}
+                    </div>
+
+                    {/* Pending Queue Manager */}
+                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                        <div className="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-lg font-black text-gray-900">Pending Import Queue</h2>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Record processing and resolution</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setQueuePage(p => Math.max(0, p - 1))} disabled={queuePage === 0} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowLeft className="w-4 h-4" /></button>
+                                <span className="text-[10px] font-black w-14 text-center">{queuePage + 1} / {Math.ceil(totalQueue / take) || 1}</span>
+                                <button onClick={() => setQueuePage(p => p + 1)} disabled={(queuePage + 1) * take >= totalQueue} className="p-2.5 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-white transition-all"><ArrowRight className="w-4 h-4" /></button>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto min-h-[400px]">
+                            {fetchingQueue ? (
+                                <div className="flex flex-col items-center justify-center h-[400px] gap-3">
+                                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Refreshing Queue...</p>
+                                </div>
+                            ) : queue.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-[400px] text-center px-20">
+                                    <ShieldCheck className="w-12 h-12 text-gray-200 mb-4" />
+                                    <h3 className="text-lg font-black text-gray-400 uppercase tracking-tighter">Queue is Empty</h3>
+                                    <p className="text-xs font-medium text-gray-300 mt-2 uppercase tracking-widest">Upload your project list above to start importing</p>
+                                </div>
+                            ) : (
+                                <table className="w-full text-left border-separate border-spacing-0">
+                                    <thead>
+                                        <tr className="bg-white/80 sticky top-0 backdrop-blur-md">
+                                            <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Row Details</th>
+                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Date</th>
+                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Value</th>
+                                            <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">Brand</th>
+                                            <th className="px-4 py-4 text-right border-b border-gray-50 pr-8">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {queue.map(row => (
+                                            <tr key={row.id} className="group hover:bg-gray-50/80 transition-all border-b border-gray-50">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all"><Users className="w-4 h-4" /></div>
+                                                        <div>
+                                                            <p className="text-xs font-black text-gray-900 group-hover:text-blue-700 transition-colors uppercase">{row.customerName}</p>
+                                                            <p className="text-[10px] text-gray-400 font-bold mt-0.5">{row.partnerName ? `via ${row.partnerName}` : 'Direct'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-5"><span className="text-[10px] font-mono text-gray-500">{row.date}</span></td>
+                                                <td className="px-4 py-5"><span className="text-[11px] font-black text-gray-900">${row.value.toLocaleString()}</span></td>
+                                                <td className="px-4 py-5">{row.brand ? <span className="text-[9px] font-black px-2 py-0.5 rounded bg-gray-900 text-white uppercase">{row.brand}</span> : <span className="text-gray-300">—</span>}</td>
+                                                <td className="px-4 py-5 text-right pr-8">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button onClick={() => handleDeleteRow(row.id)} className="p-2.5 rounded-xl text-gray-300 hover:text-red-500 hover:bg-white hover:shadow-sm transition-all"><Trash2 className="w-4 h-4" /></button>
+                                                        <button onClick={() => startProcessing(row)} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">Process</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -487,7 +521,7 @@ export default function ProjectImportPage() {
                         {/* Wizard Header */}
                         <div className="p-8 border-b border-gray-50 bg-gray-50/20 flex justify-between items-center">
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setView('queue')} className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><X className="w-5 h-5" /></button>
+                                <button onClick={() => setView('dashboard')} className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><X className="w-5 h-5" /></button>
                                 <div>
                                     <h2 className="text-xl font-black text-gray-900 leading-tight">Resolve Record</h2>
                                     <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Reviewing: {editedRow.customerName}</p>
@@ -715,7 +749,7 @@ export default function ProjectImportPage() {
 
                         {/* Navigation Footer */}
                         <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/30 flex justify-between items-center">
-                            <button onClick={() => setView('queue')} className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600">Cancel & return to queue</button>
+                            <button onClick={() => setView('dashboard')} className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600">Cancel & return to queue</button>
                             <div className="flex gap-3">
                                 <button onClick={() => {
                                     if (wizardTab === 'customer') setWizardTab('details')
