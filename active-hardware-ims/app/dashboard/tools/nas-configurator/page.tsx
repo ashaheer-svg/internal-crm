@@ -225,7 +225,7 @@ export default function RAIDConfiguratorPage() {
                                         max="100"
                                         value={driveCount}
                                         onChange={(e) => setDriveCount(Math.max(1, parseInt(e.target.value) || 0))}
-                                        className="w-20 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        className="w-20 px-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center"
                                     />
                                     <div className="flex flex-wrap gap-1">
                                         {[2, 4, 8, 12, 16, 24].map(b => (
@@ -369,9 +369,12 @@ export default function RAIDConfiguratorPage() {
                             {/* Form Factor */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block ml-0.5">Form Factor</label>
-                                <div className="grid grid-cols-3 gap-1.5">
+                                <div className="grid grid-cols-1 gap-1.5">
                                     {["Any", "Desktop", "Rackmount"].map(f => (
-                                        <button key={f} onClick={() => setFormFactor(f as any)} className={cn("py-1.5 rounded-lg text-[10px] font-bold border transition-all", formFactor === f ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>{f}</button>
+                                        <button key={f} onClick={() => setFormFactor(f as any)} className={cn("py-2 px-4 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-between", formFactor === f ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>
+                                            {f}
+                                            {formFactor === f && <Check className="w-3 h-3" />}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -379,84 +382,16 @@ export default function RAIDConfiguratorPage() {
                             {/* Power */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block ml-0.5">Power Supply</label>
-                                <div className="grid grid-cols-3 gap-1.5">
+                                <div className="grid grid-cols-1 gap-1.5">
                                     {["Any", "Standard", "Redundant"].map(p => (
-                                        <button key={p} onClick={() => setPowerType(p as any)} className={cn("py-1.5 rounded-lg text-[10px] font-bold border transition-all", powerType === p ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>{p}</button>
+                                        <button key={p} onClick={() => setPowerType(p as any)} className={cn("py-2 px-4 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-between", powerType === p ? "bg-gray-900 text-white border-gray-900" : "bg-gray-50 text-gray-500 border-transparent hover:border-gray-300")}>
+                                            {p}
+                                            {powerType === p && <Check className="w-3 h-3" />}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Recommendations */}
-                    <div className="space-y-3">
-                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[.25em] px-2">Hardware Suggestions</h3>
-                        {suggestedModels.length > 0 ? suggestedModels.map((m, idx) => {
-                            const expansionsNeeded = Math.ceil(Math.max(0, driveCount - m.bays) / (m.expansionBaysPerUnit || 1));
-                            const ramDeficit = requiresHighRam && m.maxRamGB < 32;
-
-                            return (
-                                <div key={m.id} className={cn("bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-all group animate-in slide-in-from-right-4 duration-300", ramDeficit ? "opacity-50 grayscale pointer-events-none" : "hover:border-blue-400")} style={{ animationDelay: `${idx * 100}ms` }}>
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <h4 className="text-md font-bold text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{m.modelName}</h4>
-                                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.series} Series • Base {m.bays} Drives</p>
-                                        </div>
-                                        <div className="p-1.5 bg-gray-50 text-gray-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all border border-gray-100"><ChevronRight className="w-4 h-4" /></div>
-                                    </div>
-
-                                    {expansionsNeeded > 0 && (
-                                        <div className="mb-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100 flex items-center gap-1.5">
-                                            <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
-                                            <span className="text-[9px] font-bold text-blue-700 uppercase">Requires {expansionsNeeded}× {m.expansionUnitModel} Units</span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex flex-wrap gap-1.5">
-                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1"><Box className="w-2.5 h-2.5" /> {m.formFactor}</span>
-                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1"><Cpu className="w-2.5 h-2.5" /> {m.defaultRamGB}-{m.maxRamGB}G RAM</span>
-                                        <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-md text-[8px] font-bold text-gray-500 uppercase flex items-center gap-1 font-black"><Network className="w-2.5 h-2.5" /> {m.networkPorts?.split(',')[0]}</span>
-                                    </div>
-
-                                    {ramDeficit && (
-                                        <div className="mt-2 flex items-center gap-1.5 text-red-500">
-                                            <AlertTriangle className="w-3 h-3" />
-                                            <span className="text-[8px] font-bold uppercase">RAM Limit Reached (32GB Required)</span>
-                                        </div>
-                                    )}
-
-                                    <div className="mt-3 pt-3 border-t border-gray-50 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5">
-                                                <Activity className="w-3 h-3 text-emerald-500" />
-                                                <span className="text-[8px] font-bold text-emerald-600 uppercase">Tier: {m.targetMarket}</span>
-                                            </div>
-                                            {m.supportsSAS && <span className="text-[8px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 uppercase">SAS</span>}
-                                        </div>
-
-                                        {/* Compatible Hardware */}
-                                        {compatibilityMap[m.id] && compatibilityMap[m.id].length > 0 && (
-                                            <div className="space-y-1.5 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                                <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Certified Hardware</p>
-                                                <div className="flex flex-col gap-1">
-                                                    {compatibilityMap[m.id].slice(0, 3).map(compat => (
-                                                        <div key={compat.id} className="flex justify-between items-center text-[8px]">
-                                                            <span className="font-bold text-gray-700 truncate mr-2">{compat.product.name}</span>
-                                                            <span className="text-[7px] text-blue-600 font-bold uppercase shrink-0">{compat.category}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        }) : (
-                            <div className="bg-white/50 border border-dashed border-gray-300 rounded-2xl p-8 text-center">
-                                <AlertTriangle className="w-5 h-5 text-gray-300 mx-auto mb-2" />
-                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">No matching hardware scenarios found for this configuration.</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Add-ons Advice */}
@@ -469,6 +404,117 @@ export default function RAIDConfiguratorPage() {
                         </ul>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Hardware Suggestions (Full Width) ── */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-3 px-2">
+                    <Server className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-[.15em]">Hardware Solutions & Suggested Assemblies</h3>
+                </div>
+
+                {suggestedModels.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                        {suggestedModels.map((m, idx) => {
+                            const expansionsNeeded = Math.ceil(Math.max(0, driveCount - m.bays) / (m.expansionBaysPerUnit || 1));
+                            const ramDeficit = requiresHighRam && m.maxRamGB < 32;
+
+                            return (
+                                <div key={m.id} className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all group animate-in slide-in-from-bottom-4 duration-500", ramDeficit ? "opacity-60 grayscale pointer-events-none" : "hover:border-blue-400 hover:shadow-md")} style={{ animationDelay: `${idx * 100}ms` }}>
+                                    <div className="flex flex-col lg:flex-row">
+                                        {/* Model Info Header */}
+                                        <div className="lg:w-1/3 p-6 bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="px-2 py-0.5 bg-blue-600 text-[8px] font-black text-white rounded uppercase tracking-widest">{m.series} Series</span>
+                                                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Base {m.bays} Drives</span>
+                                                </div>
+                                                <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight leading-none mb-1">{m.modelName}</h4>
+                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{m.targetMarket} Tier Solution</p>
+                                            </div>
+
+                                            <div className="mt-6 flex flex-wrap gap-2">
+                                                <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-[9px] font-bold text-gray-600 uppercase flex items-center gap-1.5 shadow-sm"><Box className="w-3 h-3 text-blue-500" /> {m.formFactor}</span>
+                                                <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-[9px] font-bold text-gray-600 uppercase flex items-center gap-1.5 shadow-sm"><Cpu className="w-3 h-3 text-purple-500" /> {m.defaultRamGB}-{m.maxRamGB}G RAM</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Technical Assembly Detail */}
+                                        <div className="flex-1 p-6 space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-4">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[.2em]">Technical Specification</p>
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-blue-50 rounded-lg"><HardDrive className="w-4 h-4 text-blue-500" /></div>
+                                                                <div>
+                                                                    <p className="text-[8px] font-bold text-gray-400 uppercase">Primary Storage</p>
+                                                                    <span className="text-xs font-bold text-gray-900">{driveCount}× {driveCapacity}TB {driveType} Drives</span>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-xs font-black text-gray-900">{(driveCount * driveCapacity)}TB Raw</span>
+                                                        </div>
+
+                                                        {expansionsNeeded > 0 && (
+                                                            <div className="flex items-center justify-between p-3 bg-blue-50/30 border border-blue-100 rounded-xl">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-blue-100/50 rounded-lg"><PlusCircle className="w-4 h-4 text-blue-600" /></div>
+                                                                    <div>
+                                                                        <p className="text-[8px] font-bold text-blue-400 uppercase">Expansion Kits</p>
+                                                                        <span className="text-xs font-bold text-blue-700">{expansionsNeeded}× {m.expansionUnitModel} Units</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex items-center justify-between p-3 bg-emerald-50/30 border border-emerald-100 rounded-xl">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-emerald-100/50 rounded-lg"><ShieldCheck className="w-4 h-4 text-emerald-500" /></div>
+                                                                <div>
+                                                                    <p className="text-[8px] font-bold text-emerald-400 uppercase">Architecture</p>
+                                                                    <span className="text-xs font-bold text-emerald-700">{selectedRAID} Configuration</span>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-xs font-black text-emerald-600">~{results.usable.toFixed(1)}TB Net</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[.2em]">Validated Add-ons</p>
+                                                    {compatibilityMap[m.id] && compatibilityMap[m.id].length > 0 ? (
+                                                        <div className="grid grid-cols-1 gap-2">
+                                                            {compatibilityMap[m.id].slice(0, 3).map(compat => (
+                                                                <div key={compat.id} className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-100 rounded-lg">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Check className="w-3 h-3 text-blue-500" />
+                                                                        <span className="text-[10px] font-bold text-gray-700 truncate max-w-[150px]">{compat.product.name}</span>
+                                                                    </div>
+                                                                    <span className="text-[8px] font-black text-blue-600 uppercase bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">{compat.category}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-6 border border-dashed border-gray-200 rounded-xl text-center">
+                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">Checking Compatibility...</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <div className="bg-white border border-dashed border-gray-300 rounded-3xl p-16 text-center">
+                        <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-4" />
+                        <h4 className="text-lg font-bold text-gray-400 uppercase tracking-widest mb-2">System Mismatch</h4>
+                        <p className="text-sm text-gray-300 max-w-md mx-auto leading-relaxed">The current drive quantity exceeds the technical limits of our database models. Adjust filters or lower drive count.</p>
+                    </div>
+                )}
             </div>
 
         </div>
