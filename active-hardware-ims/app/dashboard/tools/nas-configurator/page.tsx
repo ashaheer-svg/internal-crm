@@ -259,10 +259,10 @@ export default function RAIDConfiguratorPage() {
                     </div>
 
                     {/* RAID Visualization */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[350px]">
+                    <div className="space-y-6">
+                        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[300px]">
                             <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center gap-2 tracking-tight"><Activity className="w-4 h-4 text-emerald-500" /> Space Distribution</h3>
-                            <div className="h-[220px] w-full flex flex-col justify-center">
+                            <div className="h-[180px] w-full flex flex-col justify-center">
                                 <div className="h-12 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart layout="vertical" data={stackedBarData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
@@ -293,45 +293,67 @@ export default function RAIDConfiguratorPage() {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
-                                <div className="mt-8 grid grid-cols-3 gap-4">
-                                    {chartData.map((item, idx) => (
-                                        <div key={idx} className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{item.name}</span>
-                                            </div>
-                                            <span className="text-sm font-black text-gray-900">{item.value.toFixed(1)} TB</span>
+                                <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    <div className="flex flex-col gap-1.5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-gray-900" />
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Total Raw</span>
                                         </div>
-                                    ))}
+                                        <span className="text-xl font-black text-gray-900 leading-none">{driveCount * driveCapacity} TB</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-blue-600" />
+                                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-tight">Net Usable</span>
+                                        </div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xl font-black text-blue-600 leading-none">~{results.usable.toFixed(1)} TB</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-tight">Formatted</span>
+                                        </div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xl font-black text-emerald-600 leading-none">~{(results.usable * 0.9).toFixed(1)} TB</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg space-y-6 flex flex-col justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold mb-0.5">Architecture Summary</h3>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Efficiency & Protection</p>
+                        <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-lg font-bold mb-0.5">Architecture Summary</h3>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Efficiency & Protection</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="text-right">
+                                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Protection</p>
+                                        <span className="text-xs font-bold text-white bg-white/10 px-2 py-1 rounded">
+                                            {selectedRAID === 'RAID 6' || selectedRAID === 'SHR-2' ? 'Dual Sink' : (selectedRAID === 'RAID 0' ? 'None' : 'Single Sink')}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
                                     <div className="flex items-center gap-2.5"><Zap className="w-4 h-4 text-amber-400" /> <span className="text-xs font-semibold text-gray-300">Failure Tolerance</span></div>
                                     <span className="text-xs font-bold text-white">
                                         {selectedRAID === 'RAID 6' || selectedRAID === 'SHR-2' ? '2 Disks' : (selectedRAID === 'RAID 0' ? 'None' : '1 Disk')}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
-                                    <div className="flex items-center gap-2.5"><ShieldCheck className="w-4 h-4 text-blue-400" /> <span className="text-xs font-semibold text-gray-300">Volume Memory</span></div>
+                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
+                                    <div className="flex items-center gap-2.5"><ShieldCheck className="w-4 h-4 text-blue-400" /> <span className="text-xs font-semibold text-gray-300">Volume Capacity</span></div>
                                     <span className="text-xs font-bold text-white tracking-tight">{requiresHighRam ? 'Requires 32GB RAM' : 'Standard 2GB+'}</span>
-                                </div>
-                                <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/10">
-                                    <div className="flex items-center gap-2.5"><ArrowRight className="w-4 h-4 text-emerald-400" /> <span className="text-xs font-semibold text-gray-300">Usable Space</span></div>
-                                    <span className="text-xl font-bold text-emerald-400">{results.usable.toFixed(1)} TB</span>
                                 </div>
                             </div>
                             {requiresHighRam && (
                                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-2.5">
                                     <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                                    <p className="text-[10px] font-semibold text-amber-500 uppercase leading-tight">Volumes &gt; 108TB require 32GB RAM upgrade.</p>
+                                    <p className="text-[10px] font-semibold text-amber-500 uppercase leading-tight">Volumes &gt; 108TB require 32GB RAM upgrade to manage metadata.</p>
                                 </div>
                             )}
                         </div>
