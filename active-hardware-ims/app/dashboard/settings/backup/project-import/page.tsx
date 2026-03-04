@@ -213,20 +213,40 @@ export default function ProjectImportPage() {
     }
 
     // ── Entity search helper ──────────────────────────────────────────────────
-    const doSearch = useCallback(async (q: string, type: EntityType) => {
+    const doSearch = useCallback(async (q: string, type: EntityType, currentRawName?: string) => {
         if (!q.trim()) { setSearchResults([]); return }
         setSearchLoading(true)
         try {
+            // Include local session resolutions of the same type (already confirmed in this import)
+            const localMatches = resolutions
+                .filter(r => r.type === type && r.rawName !== currentRawName)
+                .filter(r => r.status === 'CONFIRMED' || r.status === 'AUTO_MATCHED' || r.status === 'NEW')
+                .map(r => ({
+                    id: r.matchId || `local::${r.finalName || r.rawName}`,
+                    name: r.matchName || r.finalName || r.rawName,
+                    score: 1,
+                    isLocal: true
+                }))
+                .filter(r => r.name.toLowerCase().includes(q.toLowerCase()))
+
             const res = await fetch('/api/crm/projects/import/resolve-entities', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ names: [{ input: q, type }] })
             })
             const data = await res.json()
-            setSearchResults(data.results?.[0]?.suggestions || [])
+            const apiResults: any[] = data.results?.[0]?.suggestions || []
+
+            // Merge: local first, then DB results — dedup by ID
+            const seen = new Set(localMatches.map(l => l.id))
+            const merged = [
+                ...localMatches,
+                ...apiResults.filter(a => !seen.has(a.id))
+            ]
+            setSearchResults(merged)
         } catch { setSearchResults([]) }
         finally { setSearchLoading(false) }
-    }, [])
+    }, [resolutions])
 
     function openPopover(key: string, e: React.MouseEvent<HTMLButtonElement>, fallbackName: string) {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -691,8 +711,8 @@ export default function ProjectImportPage() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                                     <input
                                         value={searchQ}
-                                        onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value, activeEntry?.type) }}
-                                        placeholder="Search database…"
+                                        onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value, activeEntry?.type, activeEntry?.rawName) }}
+                                        placeholder="Search database & this import…"
                                         className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
                                     />
                                 </div>
@@ -700,8 +720,10 @@ export default function ProjectImportPage() {
                                 {searchResults.length > 0 && (
                                     <div className="mt-1 space-y-1 max-h-24 overflow-y-auto">
                                         {searchResults.map(s => (
-                                            <button key={s.id} onClick={() => confirmMatch(activeEntry.rawName, s.id, s.name)}
-                                                className="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-50 text-sm font-semibold text-gray-800 transition-colors">
+                                            <button key={s.id}
+                                                onClick={() => s.id?.startsWith('local::') ? confirmNew(activeEntry.rawName, s.name) : confirmMatch(activeEntry.rawName, s.id, s.name)}
+                                                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-50 text-sm font-semibold text-gray-800 transition-colors">
+                                                {s.isLocal && <Sparkles className="w-3 h-3 text-blue-400 flex-shrink-0" />}
                                                 {s.name}
                                             </button>
                                         ))}
