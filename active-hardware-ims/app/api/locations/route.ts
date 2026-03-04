@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requirePermission } from '@/lib/auth'
+import { requireAuth, requirePermission } from '@/lib/auth'
 
 export async function GET() {
     try {
-        await requirePermission('locations:read')
+        await requireAuth() // Locations are reference data needed by all staff (e.g. allocate modal)
         const locations = await prisma.location.findMany({
             orderBy: { createdAt: 'desc' },
             include: {

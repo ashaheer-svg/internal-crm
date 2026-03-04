@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requirePermission } from '@/lib/auth'
+import { requireAuth, requirePermission } from '@/lib/auth'
 import { logUpdate } from '@/lib/audit'
 
 export async function GET() {
     try {
-        await requirePermission('settings:manage')
+        await requireAuth() // Any authenticated user can check maintenance mode
 
         const setting = await (prisma as any).systemSetting.findUnique({
             where: { key: 'MAINTENANCE_MODE' }

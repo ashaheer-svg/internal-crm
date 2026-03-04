@@ -111,7 +111,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         try {
             const res = await fetch('/api/locations')
             const data = await res.json()
-            setLocations(data)
+            setLocations(Array.isArray(data) ? data : [])
         } catch (e) {
             console.error("Failed to load locations")
         }
