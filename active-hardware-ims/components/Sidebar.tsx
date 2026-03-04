@@ -40,7 +40,7 @@ const navigation: NavItem[] = [
     { name: "CRM", href: "/dashboard/crm", icon: Users, permission: 'customers:read' },
     { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
-    { name: "Technical Build Queue", href: "/dashboard/build", icon: Hammer, permission: 'inventory:manage' },
+    { name: "Technical Build Queue", href: "/dashboard/build", icon: Hammer, permission: 'build:read' },
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft, permission: 'inventory:read' },
     { name: "Locations", href: "/dashboard/locations", icon: MapPin, permission: 'locations:read' },

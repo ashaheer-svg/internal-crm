@@ -6,6 +6,8 @@ const DEFAULT_ROLES = [
     { name: 'ADMIN', description: 'System Administrator with full access to all features.', isSystemDefault: true },
     { name: 'SALES', description: 'Sales Representative with access to CRM, Quotes, and Customers.', isSystemDefault: false },
     { name: 'SALES-MGR', description: 'Sales Manager with unrestricted CRM project access.', isSystemDefault: false },
+    { name: 'ACC-MGR', description: 'Accounts / Operations Manager — full view of transactions, inventory, and financials.', isSystemDefault: false },
+    { name: 'TECHNICAL', description: 'Technical staff — access to the Build Queue and inventory management.', isSystemDefault: false },
     { name: 'VIEWER', description: 'Read-only access to standard reports and lists.', isSystemDefault: true }
 ]
 
@@ -127,6 +129,49 @@ async function main() {
                 { action: 'update', resource: 'customers' },
                 { action: 'read', resource: 'reports' },
                 { action: 'read', resource: 'reports:sales' },
+                { action: 'read', resource: 'general_lookup' },
+            ],
+            'ACC-MGR': [
+                // Transactions
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'create', resource: 'delivery_orders' },
+                { action: 'update', resource: 'delivery_orders' },
+                { action: 'read', resource: 'purchase_orders' },
+                { action: 'create', resource: 'purchase_orders' },
+                { action: 'update', resource: 'purchase_orders' },
+                { action: 'read', resource: 'invoices' },
+                { action: 'create', resource: 'invoices' },
+                { action: 'update', resource: 'invoices' },
+                // Inventory & Build
+                { action: 'read', resource: 'inventory' },
+                { action: 'update', resource: 'inventory' },
+                { action: 'read', resource: 'build' },
+                { action: 'update', resource: 'build' },
+                { action: 'read', resource: 'locations' },
+                // Customers
+                { action: 'read', resource: 'customers' },
+                { action: 'create', resource: 'customers' },
+                { action: 'update', resource: 'customers' },
+                // Reports
+                { action: 'read', resource: 'reports' },
+                { action: 'read', resource: 'reports:sales' },
+                { action: 'read', resource: 'reports:inventory-valuation' },
+                { action: 'read', resource: 'reports:stock-movement' },
+                { action: 'read', resource: 'reports:purchase' },
+                { action: 'read', resource: 'reports:backorder' },
+                { action: 'read', resource: 'reports:profitability' },
+                // Lookup
+                { action: 'read', resource: 'general_lookup' },
+            ],
+            TECHNICAL: [
+                // Build Queue — read queue, mark as built, reject items
+                { action: 'read', resource: 'build' },
+                { action: 'update', resource: 'build' },
+                { action: 'read', resource: 'delivery_orders' },
+                { action: 'update', resource: 'delivery_orders' },
+                { action: 'read', resource: 'inventory' },
+                { action: 'manage', resource: 'inventory' }, // needed to reject serials during build
+                { action: 'read', resource: 'locations' },
                 { action: 'read', resource: 'general_lookup' },
             ],
             VIEWER: [
