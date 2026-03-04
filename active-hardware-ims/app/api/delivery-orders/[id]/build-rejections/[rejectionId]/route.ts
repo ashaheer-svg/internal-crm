@@ -14,13 +14,31 @@ export async function PATCH(
     try {
         const user = await requireAuth()
 
-        await (prisma as any).buildRejection.update({
+        // Fetch the rejection to get the inventoryItemId before dismissing
+        const rejection = await (prisma as any).buildRejection.findUnique({
             where: { id: params.rejectionId },
-            data: {
-                dismissed: true,
-                dismissedAt: new Date(),
-                dismissedByName: user.name,
-            },
+        })
+
+        if (!rejection) {
+            return NextResponse.json({ error: 'Rejection not found' }, { status: 404 })
+        }
+
+        await prisma.$transaction(async (tx: any) => {
+            // Dismiss the rejection record
+            await tx.buildRejection.update({
+                where: { id: params.rejectionId },
+                data: {
+                    dismissed: true,
+                    dismissedAt: new Date(),
+                    dismissedByName: user.name,
+                },
+            })
+
+            // Release item back to AVAILABLE — rejection was not a fault
+            await tx.inventoryItem.update({
+                where: { id: rejection.inventoryItemId },
+                data: { status: 'AVAILABLE' },
+            })
         })
 
         return NextResponse.json({ success: true })

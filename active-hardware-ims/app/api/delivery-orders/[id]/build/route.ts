@@ -100,7 +100,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
             await tx.inventoryItem.update({
                 where: { id: inventoryItemId! },
                 data: {
-                    status: 'AVAILABLE',
+                    status: 'RMA',           // Quarantine — prevents re-issuance while fault is under review
                     deliveryOrderItemId: null
                 }
             })
