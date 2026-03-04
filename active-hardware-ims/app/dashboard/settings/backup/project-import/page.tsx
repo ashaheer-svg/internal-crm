@@ -80,6 +80,7 @@ export default function ProjectImportPage() {
 
     // Popover state for entity resolution
     const [activePopover, setActivePopover] = useState<string | null>(null)
+    const [popoverRect, setPopoverRect] = useState<{ top: number; right: number } | null>(null)
     const [searchQ, setSearchQ] = useState('')
     const [searchResults, setSearchResults] = useState<any[]>([])
     const [searchLoading, setSearchLoading] = useState(false)
@@ -227,15 +228,29 @@ export default function ProjectImportPage() {
         finally { setSearchLoading(false) }
     }, [])
 
+    function openPopover(key: string, e: React.MouseEvent<HTMLButtonElement>, fallbackName: string) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        setPopoverRect({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+        setActivePopover(key)
+        setSearchQ('')
+        setSearchResults([])
+        setNewName(fallbackName)
+    }
+
+    function closePopover() {
+        setActivePopover(null)
+        setPopoverRect(null)
+        setSearchQ('')
+        setSearchResults([])
+        setNewName('')
+    }
+
     function confirmMatch(rawName: string, matchId: string, matchName: string) {
         setResolutions(prev => prev.map(r => r.rawName === rawName
             ? { ...r, status: 'CONFIRMED', matchId, matchName }
             : r
         ))
-        setActivePopover(null)
-        setSearchQ('')
-        setSearchResults([])
-        setNewName('')
+        closePopover()
     }
 
     function confirmNew(rawName: string, finalName: string) {
@@ -243,10 +258,7 @@ export default function ProjectImportPage() {
             ? { ...r, status: 'NEW', matchId: undefined, matchName: undefined, finalName }
             : r
         ))
-        setActivePopover(null)
-        setSearchQ('')
-        setSearchResults([])
-        setNewName('')
+        closePopover()
     }
 
     // ── Step 4: Commit ────────────────────────────────────────────────────────
@@ -570,10 +582,10 @@ export default function ProjectImportPage() {
                                                 </div>
 
                                                 {/* Action button */}
-                                                <div className="relative flex-shrink-0">
+                                                <div className="flex-shrink-0">
                                                     {(r.status === 'AUTO_MATCHED' || r.status === 'CONFIRMED' || r.status === 'NEW') && (
                                                         <button
-                                                            onClick={() => { setActivePopover(r.rawName + r.type); setSearchQ(''); setSearchResults([]); setNewName(r.finalName || r.rawName) }}
+                                                            onClick={e => openPopover(r.rawName + r.type, e, r.finalName || r.rawName)}
                                                             className="text-xs text-gray-400 hover:text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors font-medium"
                                                         >
                                                             Change
@@ -581,81 +593,11 @@ export default function ProjectImportPage() {
                                                     )}
                                                     {r.status === 'NEEDS_REVIEW' && (
                                                         <button
-                                                            onClick={() => { setActivePopover(r.rawName + r.type); setSearchQ(''); setSearchResults([]); setNewName(r.rawName) }}
+                                                            onClick={e => openPopover(r.rawName + r.type, e, r.rawName)}
                                                             className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
                                                         >
                                                             <Sparkles className="w-3.5 h-3.5" /> Review
                                                         </button>
-                                                    )}
-
-                                                    {/* Inline Popover */}
-                                                    {activePopover === r.rawName + r.type && (
-                                                        <div className="absolute right-0 top-8 z-50 w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl p-4">
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <p className="text-xs font-black text-gray-500 uppercase tracking-wider">Resolve: {r.rawName}</p>
-                                                                <button onClick={() => setActivePopover(null)}><X className="w-4 h-4 text-gray-400" /></button>
-                                                            </div>
-
-                                                            {/* Quick suggestions */}
-                                                            {r.suggestions.length > 0 && (
-                                                                <div className="mb-3">
-                                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Suggestions</p>
-                                                                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                                                                        {r.suggestions.map(s => (
-                                                                            <button key={s.id} onClick={() => confirmMatch(r.rawName, s.id, s.name)}
-                                                                                className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50 transition-colors text-sm">
-                                                                                <span className="font-semibold text-gray-800">{s.name}</span>
-                                                                                <span className="text-xs text-gray-400 font-bold">{Math.round(s.score * 100)}%</span>
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Search */}
-                                                            <div className="mb-3">
-                                                                <div className="relative">
-                                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                                                                    <input
-                                                                        value={searchQ}
-                                                                        onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value, r.type) }}
-                                                                        placeholder="Search existing…"
-                                                                        className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
-                                                                    />
-                                                                </div>
-                                                                {searchLoading && <p className="text-xs text-gray-500 mt-1 pl-1">Searching…</p>}
-                                                                {searchResults.length > 0 && (
-                                                                    <div className="mt-1 space-y-1 max-h-28 overflow-y-auto">
-                                                                        {searchResults.map(s => (
-                                                                            <button key={s.id} onClick={() => confirmMatch(r.rawName, s.id, s.name)}
-                                                                                className="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-50 text-sm font-semibold text-gray-800 transition-colors">
-                                                                                {s.name}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Create new */}
-                                                            <div className="border-t border-gray-100 pt-3">
-                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Create New Record</p>
-                                                                <div className="flex gap-2">
-                                                                    <input
-                                                                        value={newName}
-                                                                        onChange={e => setNewName(e.target.value)}
-                                                                        placeholder="Correct name…"
-                                                                        className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                                                                    />
-                                                                    <button
-                                                                        onClick={() => confirmNew(r.rawName, newName || r.rawName)}
-                                                                        disabled={!newName.trim()}
-                                                                        className="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -685,6 +627,110 @@ export default function ProjectImportPage() {
                         )}
                     </div>
                 )}
+
+                {/* ── FIXED POPOVER PORTAL (renders outside the scrollable list) ── */}
+                {activePopover && popoverRect && (() => {
+                    const activeEntry = resolutions.find(r => r.rawName + r.type === activePopover)!
+                    // Local suggestions: already-resolved entries of the same type
+                    const localSuggestions = resolutions
+                        .filter(r => r.rawName + r.type !== activePopover && r.type === activeEntry?.type)
+                        .filter(r => r.status === 'CONFIRMED' || r.status === 'AUTO_MATCHED' || r.status === 'NEW')
+                        .map(r => ({
+                            id: r.matchId || `local::${r.finalName || r.rawName}`,
+                            name: r.matchName || r.finalName || r.rawName,
+                            score: 1,
+                            isLocal: true
+                        }))
+                    // Flip upward if popover would go off the bottom of the screen
+                    const wouldClip = popoverRect.top + 440 > window.innerHeight
+                    const style: React.CSSProperties = wouldClip
+                        ? { position: 'fixed', bottom: window.innerHeight - popoverRect.top + 36, right: popoverRect.right }
+                        : { position: 'fixed', top: popoverRect.top, right: popoverRect.right }
+                    return (
+                        <div style={style} className="z-[9999] w-80 bg-white rounded-2xl border border-gray-200 shadow-2xl p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs font-black text-gray-500 uppercase tracking-wider">Resolve: {activeEntry?.rawName}</p>
+                                <button onClick={closePopover}><X className="w-4 h-4 text-gray-400" /></button>
+                            </div>
+
+                            {/* Local session suggestions (previously resolved names) */}
+                            {localSuggestions.length > 0 && (
+                                <div className="mb-3">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">From this import</p>
+                                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                                        {localSuggestions.map(s => (
+                                            <button key={s.id} onClick={() => s.id.startsWith('local::') ? confirmNew(activeEntry.rawName, s.name) : confirmMatch(activeEntry.rawName, s.id, s.name)}
+                                                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-blue-50 transition-colors text-sm">
+                                                <Sparkles className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                                                <span className="font-semibold text-gray-800">{s.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* DB Suggestions */}
+                            {activeEntry?.suggestions.length > 0 && (
+                                <div className="mb-3">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Database matches</p>
+                                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                                        {activeEntry.suggestions.map(s => (
+                                            <button key={s.id} onClick={() => confirmMatch(activeEntry.rawName, s.id, s.name)}
+                                                className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50 transition-colors text-sm">
+                                                <span className="font-semibold text-gray-800">{s.name}</span>
+                                                <span className="text-xs text-gray-400 font-bold">{Math.round(s.score * 100)}%</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Search */}
+                            <div className="mb-3">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                                    <input
+                                        value={searchQ}
+                                        onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value, activeEntry?.type) }}
+                                        placeholder="Search database…"
+                                        className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                                {searchLoading && <p className="text-xs text-gray-500 mt-1 pl-1">Searching…</p>}
+                                {searchResults.length > 0 && (
+                                    <div className="mt-1 space-y-1 max-h-24 overflow-y-auto">
+                                        {searchResults.map(s => (
+                                            <button key={s.id} onClick={() => confirmMatch(activeEntry.rawName, s.id, s.name)}
+                                                className="w-full text-left px-3 py-2 rounded-xl hover:bg-blue-50 text-sm font-semibold text-gray-800 transition-colors">
+                                                {s.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Create new */}
+                            <div className="border-t border-gray-100 pt-3">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Create New Record</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        value={newName}
+                                        onChange={e => setNewName(e.target.value)}
+                                        placeholder="Correct / canonical name…"
+                                        className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <button
+                                        onClick={() => confirmNew(activeEntry.rawName, newName || activeEntry.rawName)}
+                                        disabled={!newName.trim()}
+                                        className="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })()}
 
                 {/* ── STEP 4: COMMIT ── */}
                 {step === 'commit' && (
@@ -787,7 +833,7 @@ export default function ProjectImportPage() {
 
             {/* Overlay to close popover */}
             {activePopover && (
-                <div className="fixed inset-0 z-40" onClick={() => setActivePopover(null)} />
+                <div className="fixed inset-0 z-[9998]" onClick={closePopover} />
             )}
         </div>
     )
