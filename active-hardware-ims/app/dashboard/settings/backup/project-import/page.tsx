@@ -123,9 +123,9 @@ export default function ProjectImportPage() {
             const reader = new FileReader()
             reader.onload = evt => {
                 try {
-                    const wb = XLSX.read(evt.target?.result, { type: 'binary' })
+                    const wb = XLSX.read(evt.target?.result, { type: 'binary', cellDates: true })
                     const ws = wb.Sheets[wb.SheetNames[0]]
-                    done(XLSX.utils.sheet_to_json(ws) as RawRow[])
+                    done(XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'yyyy-mm-dd' }) as RawRow[])
                 } catch (e: any) { setError(e.message) }
             }
             reader.readAsBinaryString(file)
