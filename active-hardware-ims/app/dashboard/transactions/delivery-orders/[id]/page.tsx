@@ -83,6 +83,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [locations, setLocations] = useState<any[]>([])
     const [selectedLocation, setSelectedLocation] = useState<string>("")
 
+    // Rejected serials (from TECHNICAL build rejections)
+    const [rejectedSerials, setRejectedSerials] = useState<{ serialNumber: string; rejectedBy: string; rejectedAt: string }[]>([])
+
     // Service Fulfillment Modal State
     const [fulfillingItem, setFulfillingItem] = useState<DeliveryOrderItem | null>(null)
     const [serviceStartDate, setServiceStartDate] = useState("")
@@ -92,6 +95,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     useEffect(() => {
         fetchOrder()
         fetchLocations()
+        fetchRejections()
     }, [id])
 
     async function fetchOrder() {
@@ -114,6 +118,18 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             setLocations(Array.isArray(data) ? data : [])
         } catch (e) {
             console.error("Failed to load locations")
+        }
+    }
+
+    async function fetchRejections() {
+        try {
+            const res = await fetch(`/api/delivery-orders/${id}/build-rejections`)
+            if (res.ok) {
+                const data = await res.json()
+                setRejectedSerials(data.rejections || [])
+            }
+        } catch (e) {
+            console.error("Failed to load build rejections")
         }
     }
 
@@ -555,6 +571,45 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             })}
                         </ul>
                     </div>
+
+                    {/* ── Rejected Serials Panel ── */}
+                    {rejectedSerials.length > 0 && (
+                        <div className="bg-white shadow rounded-lg overflow-hidden border border-red-200">
+                            <div className="px-6 py-3 bg-red-50 border-b border-red-200 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                    <h2 className="font-semibold text-red-800 text-sm">
+                                        Items Rejected During Technical Build
+                                    </h2>
+                                </div>
+                                <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full border border-red-200">
+                                    {rejectedSerials.length} rejected
+                                </span>
+                            </div>
+                            <ul className="divide-y divide-red-50">
+                                {rejectedSerials.map((r, idx) => (
+                                    <li key={idx} className="px-6 py-3 flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-mono text-sm font-bold text-red-800 bg-red-50 border border-red-200 px-2 py-1 rounded">
+                                                {r.serialNumber}
+                                            </span>
+                                            <div className="text-xs text-gray-500">
+                                                <span className="font-medium text-gray-700">Rejected by {r.rejectedBy}</span>
+                                                {' · '}
+                                                {new Date(r.rejectedAt).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="px-6 py-3 bg-amber-50 border-t border-amber-200 flex items-start gap-2 text-xs text-amber-800">
+                                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
+                                <span>
+                                    These serial numbers were rejected during the build. Use the <strong>Alloc / Fulfill</strong> button on the affected line item above to assign replacement inventory.
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar Details */}
