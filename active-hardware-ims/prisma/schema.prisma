@@ -497,8 +497,9 @@ model DeliveryOrder {
   buildNotes  String?
   builtAt     DateTime?
 
-  items  DeliveryOrderItem[]
-  quotes CRMQuote[]
+  items          DeliveryOrderItem[]
+  quotes         CRMQuote[]
+  buildRejections BuildRejection[]
 }
 
 model DeliveryOrderItem {
@@ -953,4 +954,33 @@ model NasCompatibility {
   updatedAt   DateTime @updatedAt
 
   @@unique([nasModelId, productId])
+}
+
+// ------------------------------------------
+// Build Rejection Tracking
+// ------------------------------------------
+
+model BuildRejection {
+  id              String   @id @default(uuid())
+  deliveryOrderId String
+  deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+
+  // Snapshot of the inventory item at time of rejection
+  inventoryItemId String   // Not a FK — item returns to AVAILABLE stock after rejection
+  serialNumber    String
+
+  // Rejection details
+  comment         String?  // Reason given by TECHNICAL user
+  rejectedById    String
+  rejectedByName  String
+  rejectedAt      DateTime @default(now())
+
+  // Dismissal — ACC-MGR can dismiss if not a fault (e.g. wrong config, not defective)
+  dismissed       Boolean  @default(false)
+  dismissedAt     DateTime?
+  dismissedByName String?
+
+  @@index([deliveryOrderId])
+  @@index([inventoryItemId])
+  @@index([serialNumber])
 }

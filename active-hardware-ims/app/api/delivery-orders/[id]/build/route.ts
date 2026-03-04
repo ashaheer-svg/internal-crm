@@ -61,13 +61,25 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     }
 }
 
-// DELETE to "Reject" or "Reverse" allocation during build
+// DELETE — Reject/Release a serial during build. Accepts JSON body with inventoryItemId + comment.
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
         const user = await requirePermission('inventory:manage')
-        const { searchParams } = new URL(request.url)
-        const inventoryItemId = searchParams.get('inventoryItemId')
+
+        // Support both JSON body and query param for inventoryItemId
+        let inventoryItemId: string | null = null
+        let comment: string | null = null
+
+        try {
+            const body = await request.json()
+            inventoryItemId = body.inventoryItemId || null
+            comment = body.comment || null
+        } catch {
+            // Fallback to query param if body parse fails
+            const { searchParams } = new URL(request.url)
+            inventoryItemId = searchParams.get('inventoryItemId')
+        }
 
         if (!inventoryItemId) {
             return NextResponse.json({ error: 'Inventory Item ID is required' }, { status: 400 })
@@ -83,10 +95,10 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Item not found or not part of this order' }, { status: 404 })
         }
 
-        // Release the item
+        // Release the item and create BuildRejection record in a transaction
         await prisma.$transaction(async (tx) => {
             await tx.inventoryItem.update({
-                where: { id: inventoryItemId },
+                where: { id: inventoryItemId! },
                 data: {
                     status: 'AVAILABLE',
                     deliveryOrderItemId: null
@@ -100,13 +112,26 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
                     quantityFulfilled: { decrement: 1 }
                 }
             })
+
+            // Create BuildRejection record
+            await (tx as any).buildRejection.create({
+                data: {
+                    deliveryOrderId: params.id,
+                    inventoryItemId: inventoryItemId!,
+                    serialNumber: item.serialNumber,
+                    comment: comment || null,
+                    rejectedById: user.id,
+                    rejectedByName: user.name,
+                }
+            })
         })
 
-        // Audit Log
+        // Audit Log (preserved for backward compatibility)
         const { logCreate } = await import('@/lib/audit')
         await logCreate('DELIVERY_ORDER_BUILD_REJECT', params.id, user.id, user.name, {
             serialNumber: item.serialNumber,
-            inventoryItemId
+            inventoryItemId,
+            comment: comment || null,
         })
 
         return NextResponse.json({ success: true })

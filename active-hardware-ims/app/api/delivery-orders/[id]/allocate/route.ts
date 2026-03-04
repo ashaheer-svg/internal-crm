@@ -13,10 +13,13 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
         }
 
-        // Fetch current item and its reservations
+        // Fetch current item and its reservations, also fetch the parent DO status
         const orderItem = await prisma.deliveryOrderItem.findUnique({
             where: { id: itemId },
-            include: { reservedItems: true }
+            include: {
+                reservedItems: true,
+                deliveryOrder: { select: { id: true, status: true } }
+            }
         })
 
         if (!orderItem) {
@@ -39,7 +42,6 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             })
 
             if (availableItems.length !== idsToAdd.length) {
-                // Find which ones failed
                 const foundIds = availableItems.map(i => i.id)
                 const invalidIds = idsToAdd.filter(id => !foundIds.includes(id))
                 return NextResponse.json({ error: `Some items are not available: ${invalidIds.join(', ')}` }, { status: 400 })
@@ -71,7 +73,6 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             }
 
             // Update quantityFulfilled on the order item
-            // We need to count total reserved items after this operation
             const totalReserved = (currentIds.length - idsToRemove.length) + idsToAdd.length
 
             await tx.deliveryOrderItem.update({
@@ -80,6 +81,15 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                     quantityFulfilled: totalReserved
                 } as any
             })
+
+            // If new items were added and the DO was BUILT, reset to BUILDING
+            // so it re-enters the TECHNICAL queue for re-verification
+            if (idsToAdd.length > 0 && orderItem.deliveryOrder?.status === 'BUILT') {
+                await tx.deliveryOrder.update({
+                    where: { id: params.id },
+                    data: { status: 'BUILDING' }
+                })
+            }
         })
 
         return NextResponse.json({ success: true })

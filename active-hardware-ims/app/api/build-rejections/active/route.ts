@@ -3,19 +3,20 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 
 /**
- * GET /api/delivery-orders/[id]/build-rejections
- * Returns all active (non-dismissed) build rejections for this DO.
- * Reads from the BuildRejection table.
+ * GET /api/build-rejections/active
+ * Returns all non-dismissed build rejections across all DOs.
+ * Used by the Warranty/RMA page to show a dismissible alert on page load.
  */
-export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
-    const params = await props.params
+export async function GET() {
     try {
         await requireAuth()
 
         const rejections = await (prisma as any).buildRejection.findMany({
-            where: {
-                deliveryOrderId: params.id,
-                dismissed: false,
+            where: { dismissed: false },
+            include: {
+                deliveryOrder: {
+                    select: { orderNumber: true, id: true }
+                }
             },
             orderBy: { rejectedAt: 'desc' },
         })

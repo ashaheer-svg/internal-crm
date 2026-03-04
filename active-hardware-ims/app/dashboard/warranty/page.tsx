@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Shield, Search } from "lucide-react"
+import { Plus, Search, AlertTriangle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 type WarrantyClaim = {
@@ -36,8 +36,12 @@ export default function WarrantyPage() {
     const [activeTab, setActiveTab] = useState<string>('all')
     const [searchTerm, setSearchTerm] = useState("")
 
+    // Build rejection alerts
+    const [buildRejections, setBuildRejections] = useState<any[]>([])
+
     useEffect(() => {
         fetchClaims()
+        fetchBuildRejections()
     }, [])
 
     useEffect(() => {
@@ -53,6 +57,29 @@ export default function WarrantyPage() {
             console.error('Failed to fetch warranty claims:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function fetchBuildRejections() {
+        try {
+            const res = await fetch('/api/build-rejections/active')
+            if (res.ok) {
+                const data = await res.json()
+                setBuildRejections(data.rejections || [])
+            }
+        } catch (e) {
+            console.error('Failed to fetch build rejections', e)
+        }
+    }
+
+    async function handleDismissRejection(rejectionId: string, doId: string) {
+        try {
+            await fetch(`/api/delivery-orders/${doId}/build-rejections/${rejectionId}`, {
+                method: 'PATCH'
+            })
+            setBuildRejections(prev => prev.filter(r => r.id !== rejectionId))
+        } catch (e) {
+            console.error('Failed to dismiss rejection', e)
         }
     }
 
@@ -146,6 +173,55 @@ export default function WarrantyPage() {
                 </div>
             </div>
 
+            {/* ── Build Rejection Alert Banner ── */}
+            {buildRejections.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 overflow-hidden">
+                    <div className="px-4 py-3 flex items-center justify-between border-b border-red-200">
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                            <span className="text-sm font-semibold text-red-800">
+                                {buildRejections.length} item{buildRejections.length > 1 ? 's' : ''} rejected during technical build — potential fault
+                            </span>
+                        </div>
+                        <span className="text-xs text-red-500 italic">Dismiss if not a defect</span>
+                    </div>
+                    <ul className="divide-y divide-red-100">
+                        {buildRejections.map((r) => (
+                            <li key={r.id} className="px-4 py-3 flex items-start gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-mono text-sm font-bold text-red-800">{r.serialNumber}</span>
+                                        <span className="text-xs text-gray-500">
+                                            · DO {r.deliveryOrder?.orderNumber}
+                                            · Rejected by {r.rejectedByName}
+                                            · {new Date(r.rejectedAt).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    {r.comment && (
+                                        <p className="text-xs text-red-700 mt-1">
+                                            <span className="font-semibold">Reason:</span> {r.comment}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 flex-shrink-0">
+                                    <Link
+                                        href={`/dashboard/warranty/new?serial=${encodeURIComponent(r.serialNumber)}`}
+                                        className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                    >
+                                        + Claim
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDismissRejection(r.id, r.deliveryOrder?.id)}
+                                        className="text-xs px-2 py-1 rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 transition-colors"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {/* Search Bar */}
             <div className="bg-white shadow sm:rounded-lg p-4">
                 <div className="relative">

@@ -53,6 +53,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const [serviceEndDate, setServiceEndDate] = useState("")
     const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
 
+    // Rejection Reason Modal State
+    const [rejectionTarget, setRejectionTarget] = useState<{ id: string; serialNumber: string } | null>(null)
+    const [rejectionComment, setRejectionComment] = useState("")
+
     useEffect(() => {
         fetchOrder()
     }, [id])
@@ -97,14 +101,20 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     const handleRejectItem = async (inventoryItemId: string) => {
-        if (!confirm("Are you sure you want to REJECT this item? This SN will be released back to inventory and the allocation will be reduced.")) return
-
+        if (!rejectionComment.trim()) return
         setActionLoading(true)
         try {
             const res = await fetch(`/api/delivery-orders/${id}/build?inventoryItemId=${inventoryItemId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    inventoryItemId,
+                    comment: rejectionComment.trim()
+                })
             })
             if (!res.ok) throw new Error("Rejection failed")
+            setRejectionTarget(null)
+            setRejectionComment("")
             await fetchOrder()
         } catch (e) {
             alert("Failed to reject item")
@@ -284,7 +294,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                                     </div>
 
                                                     <button
-                                                        onClick={() => handleRejectItem(sn.id)}
+                                                        onClick={() => {
+                                                            setRejectionTarget({ id: sn.id, serialNumber: sn.serialNumber })
+                                                            setRejectionComment("")
+                                                        }}
                                                         className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-white transition-colors"
                                                         title="Reject Incompatible SN"
                                                     >
@@ -409,6 +422,57 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {actionLoading ? 'Saving...' : 'Mark as Procured'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rejection Reason Modal */}
+            {rejectionTarget && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center bg-red-50">
+                            <div>
+                                <h3 className="font-bold text-red-900">Reject Serial Number</h3>
+                                <p className="text-xs text-red-600 font-mono mt-0.5">{rejectionTarget.serialNumber}</p>
+                            </div>
+                            <button onClick={() => setRejectionTarget(null)}>
+                                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Reason for Rejection <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={rejectionComment}
+                                    onChange={(e) => setRejectionComment(e.target.value)}
+                                    rows={3}
+                                    placeholder="e.g. Failed POST test, incorrect hardware revision, physical damage..."
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-2 border"
+                                />
+                                <p className="mt-1 text-[10px] text-gray-500 italic">
+                                    This reason will be visible to the Accounts Manager and recorded in the inventory history.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => { setRejectionTarget(null); setRejectionComment("") }}
+                                className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleRejectItem(rejectionTarget.id)}
+                                disabled={actionLoading || !rejectionComment.trim()}
+                                className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
                             </button>
                         </div>
                     </div>

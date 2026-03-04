@@ -128,6 +128,15 @@ export async function GET(request: Request) {
             orderBy: { createdAt: 'desc' }
         }) as any[];
 
+        // 4b. Find Build Rejections for this serial
+        const buildRejections = await (prisma as any).buildRejection.findMany({
+            where: { serialNumber: exactSerial },
+            include: {
+                deliveryOrder: { select: { orderNumber: true, id: true } }
+            },
+            orderBy: { rejectedAt: 'desc' },
+        })
+
         // Manually fetch replacement items since the relation is missing in schema
         const replacementItemIds = warrantyClaims
             .map(c => c.replacementItemId)
@@ -260,7 +269,17 @@ export async function GET(request: Request) {
                 invoiceNumber: doInfo.invoiceNumber
             } : null,
             history: allHistory,
-            replacementInfo
+            replacementInfo,
+            buildRejections: buildRejections.map((r: any) => ({
+                id: r.id,
+                serialNumber: r.serialNumber,
+                comment: r.comment,
+                rejectedByName: r.rejectedByName,
+                rejectedAt: r.rejectedAt,
+                dismissed: r.dismissed,
+                orderNumber: r.deliveryOrder?.orderNumber || null,
+                orderId: r.deliveryOrder?.id || null,
+            }))
         };
 
         return NextResponse.json(result);
