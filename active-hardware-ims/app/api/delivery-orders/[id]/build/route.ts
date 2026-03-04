@@ -124,6 +124,19 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
                     rejectedByName: user.name,
                 }
             })
+
+            // TransactionLog — RESERVED → RMA (F2: stock movement traceability)
+            await tx.transactionLog.create({
+                data: {
+                    type: 'ADJUSTMENT',
+                    referenceType: 'BUILD_REJECTION',
+                    referenceId: params.id,
+                    productId: item.productId,
+                    serialNumber: item.serialNumber,
+                    quantity: 1,
+                    notes: `SN ${item.serialNumber} quarantined (RMA) by ${user.name} during build. Reason: ${comment || 'Not specified'}`
+                }
+            })
         })
 
         // Audit Log (preserved for backward compatibility)

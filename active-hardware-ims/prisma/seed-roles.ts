@@ -12,7 +12,7 @@ const DEFAULT_ROLES = [
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations',
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations', 'backorders', 'stock_movements',
     'reports:inventory-valuation', 'reports:stock-movement', 'reports:sales', 'reports:purchase', 'reports:warranty', 'reports:location', 'reports:backorder', 'reports:profitability'
 ]
 
@@ -94,8 +94,7 @@ async function main() {
                 { action: 'read', resource: 'warranty_rma' },
                 { action: 'create', resource: 'warranty_rma' },
                 { action: 'update', resource: 'warranty_rma' },
-                // Warranty Lookup
-                { action: 'read', resource: 'warranty_lookup' },
+                // general_lookup covers warranty lookup
                 { action: 'read', resource: 'customers' },
                 { action: 'create', resource: 'customers' },
                 { action: 'update', resource: 'customers' },
@@ -115,6 +114,9 @@ async function main() {
                 { action: 'read', resource: 'reports:sales' },
                 { action: 'read', resource: 'reports:warranty' },
                 { action: 'read', resource: 'reports:backorder' },
+                // Backorders & Stock Movements
+                { action: 'read', resource: 'backorders' },
+                { action: 'read', resource: 'stock_movements' },
             ],
             'SALES-MGR': [
                 { action: 'read', resource: 'projects' },
@@ -160,6 +162,15 @@ async function main() {
                 { action: 'read', resource: 'reports:purchase' },
                 { action: 'read', resource: 'reports:backorder' },
                 { action: 'read', resource: 'reports:profitability' },
+                // Backorders & Stock Movements
+                { action: 'read', resource: 'backorders' },
+                { action: 'read', resource: 'stock_movements' },
+                // Warranty & RMA — primary handler of build rejections
+                { action: 'read', resource: 'warranty_rma' },
+                { action: 'create', resource: 'warranty_rma' },
+                { action: 'update', resource: 'warranty_rma' },
+                // Audit Logs — for traceability of dismissals and rejections
+                { action: 'read', resource: 'audit_logs' },
                 // Lookup
                 { action: 'read', resource: 'general_lookup' },
             ],
@@ -192,6 +203,8 @@ async function main() {
                 { action: 'read', resource: 'reports:warranty' },
                 { action: 'read', resource: 'reports:location' },
                 { action: 'read', resource: 'reports:backorder' },
+                { action: 'read', resource: 'backorders' },
+                { action: 'read', resource: 'stock_movements' },
             ],
         }
 

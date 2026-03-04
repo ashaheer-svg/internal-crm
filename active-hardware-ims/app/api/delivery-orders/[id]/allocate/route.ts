@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { logCreate } from '@/lib/audit'
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const body = await request.json()
         const { itemId, inventoryItemIds } = body // itemId is DeliveryOrderItem ID
 
@@ -18,7 +19,8 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             where: { id: itemId },
             include: {
                 reservedItems: true,
-                deliveryOrder: { select: { id: true, status: true } }
+                deliveryOrder: { select: { id: true, status: true, orderNumber: true } },
+                product: { select: { name: true, sku: true } }
             }
         })
 
@@ -47,6 +49,24 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                 return NextResponse.json({ error: `Some items are not available: ${invalidIds.join(', ')}` }, { status: 400 })
             }
         }
+
+        // Capture serial numbers for audit log before making changes
+        let addedSerials: string[] = []
+        let removedSerials: string[] = []
+
+        if (idsToAdd.length > 0) {
+            const items = await prisma.inventoryItem.findMany({
+                where: { id: { in: idsToAdd } }, select: { serialNumber: true }
+            })
+            addedSerials = items.map(i => i.serialNumber)
+        }
+        if (idsToRemove.length > 0) {
+            removedSerials = orderItem.reservedItems
+                .filter(i => idsToRemove.includes(i.id))
+                .map(i => i.serialNumber)
+        }
+
+        let resetToBuilding = false
 
         // Apply changes
         await prisma.$transaction(async (tx) => {
@@ -89,7 +109,17 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                     where: { id: params.id },
                     data: { status: 'BUILDING' }
                 })
+                resetToBuilding = true
             }
+        })
+
+        // F7: Audit Log — who allocated which SNs to which DO
+        await logCreate('DELIVERY_ORDER_ALLOCATE', params.id, user.id, user.name, {
+            orderNumber: orderItem.deliveryOrder?.orderNumber,
+            product: (orderItem as any).product?.name || (orderItem as any).product?.sku,
+            serialsAdded: addedSerials,
+            serialsRemoved: removedSerials,
+            resetToBuilding,
         })
 
         return NextResponse.json({ success: true })

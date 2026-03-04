@@ -44,7 +44,7 @@ const navigation: NavItem[] = [
     { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'inventory:read' },
     { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft, permission: 'inventory:read' },
     { name: "Locations", href: "/dashboard/locations", icon: MapPin, permission: 'locations:read' },
-    { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:create' },
+    { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:read' },
     {
         name: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: 'reports:read',
         submenu: [
@@ -60,9 +60,9 @@ const navigation: NavItem[] = [
     },
     { name: "Audit Logs", href: "/dashboard/audit-logs", icon: ClipboardList, permission: 'audit_logs:read' },
     {
-        name: "Solution Engineering", href: "#", icon: Hammer,
+        name: "Solution Engineering", href: "#", icon: Hammer, permission: 'general_lookup:read',
         submenu: [
-            { name: "NAS Configurator", href: "/dashboard/tools/nas-configurator", icon: FileText },
+            { name: "NAS Configurator", href: "/dashboard/tools/nas-configurator", icon: FileText, permission: 'general_lookup:read' },
             { name: "NAS Hardware Specs", href: "/dashboard/settings/nas-features", icon: Settings, permission: 'settings:manage' },
         ]
     },

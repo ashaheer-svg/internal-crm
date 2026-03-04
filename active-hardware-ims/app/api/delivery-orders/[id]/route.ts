@@ -137,14 +137,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 }
             }
 
-            // If cancelling, release all stock
+            // If cancelling, release all RESERVED stock (but NOT RMA items — they stay quarantined)
             if (status === 'CANCELLED') {
                 await prisma.$transaction(async (tx) => {
-                    // Release stock
+                    // Release stock — only RESERVED items. RMA items are managed separately via dismissal.
                     for (const item of order.items) {
                         if (item.reservedItems.length > 0) {
                             await tx.inventoryItem.updateMany({
-                                where: { deliveryOrderItemId: item.id },
+                                where: {
+                                    deliveryOrderItemId: item.id,
+                                    status: 'RESERVED' // CR2: explicitly exclude RMA items
+                                },
                                 data: { status: 'AVAILABLE', deliveryOrderItemId: null }
                             })
                         }
@@ -155,6 +158,15 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         data: { status: 'CANCELLED' }
                     })
                 })
+
+                // F5: Audit log for cancellation
+                const { logCreate } = await import('@/lib/audit')
+                await logCreate('DELIVERY_ORDER', params.id, user.id, user.name, {
+                    event: 'CANCELLED',
+                    orderNumber: order.orderNumber,
+                    customerName: order.customerName,
+                })
+
                 return NextResponse.json({ success: true })
             }
 
@@ -409,8 +421,16 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         data: { status: 'COMPLETED' }
                     })
                 }, {
-                    maxWait: 10000, // 10 seconds to acquire connection
-                    timeout: 60000  // 60 seconds total execution time for complex orders
+                    maxWait: 10000,
+                    timeout: 60000
+                })
+
+                // F4: Audit log for DO completion
+                const { logCreate: logCompleted } = await import('@/lib/audit')
+                await logCompleted('DELIVERY_ORDER', params.id, user.id, user.name, {
+                    event: 'COMPLETED',
+                    orderNumber: order.orderNumber,
+                    customerName: order.customerName,
                 })
 
                 // --- WhatsApp Alerts ---
