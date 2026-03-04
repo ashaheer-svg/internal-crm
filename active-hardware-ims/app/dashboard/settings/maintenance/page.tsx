@@ -28,6 +28,10 @@ export default function MaintenanceDashboard() {
     const [savingMaint, setSavingMaint] = useState(false)
     const [savingEmail, setSavingEmail] = useState(false)
     const [testLoading, setTestLoading] = useState(false)
+    const [backupEmailLoading, setBackupEmailLoading] = useState(false)
+    const [housekeepingLoading, setHousekeepingLoading] = useState(false)
+    const [housekeepingResult, setHousekeepingResult] = useState<any>(null)
+    const [backupRecipient, setBackupRecipient] = useState('')
     const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     // Backup States (Ported)
@@ -95,6 +99,54 @@ export default function MaintenanceDashboard() {
         } finally {
             setSavingEmail(false)
         }
+    }
+
+    const handleTestEmail = async () => {
+        if (!email.user) { setMsg({ type: 'error', text: 'Enter your SMTP username first — it will receive the test.' }); return }
+        setTestLoading(true)
+        try {
+            const res = await fetch('/api/settings/maintenance/backup-email/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipientEmail: email.user })
+            })
+            const data = await res.json()
+            if (res.ok) setMsg({ type: 'success', text: `Test email sent to ${email.user}` })
+            else setMsg({ type: 'error', text: data.error || 'Test failed' })
+        } catch { setMsg({ type: 'error', text: 'Test email failed' }) }
+        finally { setTestLoading(false) }
+    }
+
+    const handleSendBackup = async () => {
+        if (!backupRecipient) { setMsg({ type: 'error', text: 'Enter a recipient email address.' }); return }
+        setBackupEmailLoading(true)
+        try {
+            const res = await fetch('/api/settings/maintenance/backup-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipientEmail: backupRecipient })
+            })
+            const data = await res.json()
+            if (res.ok) setMsg({ type: 'success', text: `Backup sent to ${backupRecipient} (${data.sizeMB} MB)` })
+            else setMsg({ type: 'error', text: data.error || 'Backup email failed' })
+        } catch { setMsg({ type: 'error', text: 'Backup email failed' }) }
+        finally { setBackupEmailLoading(false) }
+    }
+
+    const handleHousekeeping = async () => {
+        setHousekeepingLoading(true)
+        setHousekeepingResult(null)
+        try {
+            const res = await fetch('/api/settings/maintenance/housekeeping')
+            const data = await res.json()
+            if (res.ok) {
+                setHousekeepingResult(data.results)
+                setMsg({ type: 'success', text: `Housekeeping complete — ${data.results.auditLogPruned} audit logs pruned` })
+            } else {
+                setMsg({ type: 'error', text: data.error || 'Housekeeping failed' })
+            }
+        } catch { setMsg({ type: 'error', text: 'Housekeeping failed' }) }
+        finally { setHousekeepingLoading(false) }
     }
 
     // Backup Functions
@@ -298,10 +350,11 @@ export default function MaintenanceDashboard() {
                                 <div className="flex gap-3">
                                     <button
                                         type="button"
+                                        onClick={handleTestEmail}
                                         disabled={testLoading}
                                         className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all flex items-center gap-2"
                                     >
-                                        <Send className="h-4 w-4" />
+                                        {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                         Test
                                     </button>
                                     <button
@@ -347,7 +400,58 @@ export default function MaintenanceDashboard() {
                                 </p>
                             </div>
 
-                            {/* RBAC Backup */}
+                            {/* Email Backup */}
+                            <div className="space-y-3 pt-3 border-t border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Email Backup</h4>
+                                <input
+                                    type="email"
+                                    placeholder="Recipient email address"
+                                    value={backupRecipient}
+                                    onChange={e => setBackupRecipient(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                    onClick={handleSendBackup}
+                                    disabled={backupEmailLoading}
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-green-500 hover:text-green-700 transition-all group shadow-sm"
+                                >
+                                    <div className="flex items-center gap-3 text-sm font-medium">
+                                        <Mail className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
+                                        Send Backup via Email
+                                    </div>
+                                    {backupEmailLoading && <Loader2 className="h-4 w-4 animate-spin text-green-500" />}
+                                </button>
+                                <p className="text-[10px] text-gray-400 leading-tight">
+                                    Creates a fresh gzip backup and attaches it to an email. Uses SMTP config above.
+                                </p>
+                            </div>
+
+                            {/* Housekeeping */}
+                            <div className="space-y-3 pt-3 border-t border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">DB Housekeeping</h4>
+                                <button
+                                    onClick={handleHousekeeping}
+                                    disabled={housekeepingLoading}
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-purple-500 hover:text-purple-700 transition-all group shadow-sm"
+                                >
+                                    <div className="flex items-center gap-3 text-sm font-medium">
+                                        <RefreshCw className={`h-5 w-5 text-purple-500 group-hover:scale-110 transition-transform ${housekeepingLoading ? 'animate-spin' : ''}`} />
+                                        Run Housekeeping
+                                    </div>
+                                    {housekeepingLoading && <Loader2 className="h-4 w-4 animate-spin text-purple-500" />}
+                                </button>
+                                {housekeepingResult && (
+                                    <div className="text-[11px] text-gray-500 space-y-1 bg-gray-50 rounded-lg p-3">
+                                        <p>✓ VACUUM + WAL checkpoint</p>
+                                        <p>✓ Audit logs pruned: <strong>{housekeepingResult.auditLogPruned}</strong></p>
+                                        <p>✓ Sessions pruned: <strong>{housekeepingResult.sessionsPruned}</strong></p>
+                                        <p>✓ Old rejections cleared: <strong>{housekeepingResult.dismissedRejectionsPruned}</strong></p>
+                                    </div>
+                                )}
+                                <p className="text-[10px] text-gray-400 leading-tight">
+                                    VACUUM, WAL checkpoint, prune audit logs (&gt;365d) and dismissed rejections (&gt;90d).
+                                </p>
+                            </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Users & Permissions</h4>
                                 <div className="space-y-2">
