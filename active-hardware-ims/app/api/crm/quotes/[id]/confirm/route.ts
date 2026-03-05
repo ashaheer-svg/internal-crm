@@ -13,7 +13,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         const quote = await (prisma as any).cRMQuote.findUnique({
             where: { id },
             include: {
-                items: true,
+                items: {
+                    include: {
+                        details: true
+                    }
+                },
                 project: {
                     include: {
                         customer: true
@@ -116,7 +120,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                                         productId: item.productId,
                                         quantity: item.quantity,
                                         unitPrice: item.unitPrice,
-                                        isBackorder: false
+                                        isBackorder: false,
+                                        details: {
+                                            create: item.details?.map((d: any) => ({
+                                                modelName: d.modelName,
+                                                serialNumbers: d.serialNumbers
+                                            })) || []
+                                        }
                                     }))
                             }
                         }

@@ -72,13 +72,22 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium text-gray-900">Project Quotes</h3>
-                <button
-                    onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/new`)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                    <Plus className="w-4 h-4" />
-                    New Quote
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/new/hardware`)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Hardware Quote
+                    </button>
+                    <button
+                        onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/new/service`)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Service Quote
+                    </button>
+                </div>
             </div>
 
             {quotes.length === 0 ? (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Save, ArrowLeft, X } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import ProductSelector from "@/components/selectors/ProductSelector"
 import CustomerSelector from "@/components/selectors/CustomerSelector"
@@ -15,6 +15,7 @@ export interface QuoteItem {
     description: string
     productModel?: string | null
     serialNumbers?: string | null
+    details?: { modelName: string; serialNumbers: string }[]
     quantity: number
     unitPrice: number
     discount?: number // Percentage
@@ -28,9 +29,10 @@ interface QuoteFormProps {
     onSubmit: (data: any) => Promise<void>
     loading: boolean
     title: string
+    mode?: 'HARDWARE' | 'SERVICE'
 }
 
-export default function QuoteForm({ initialData, projectId, onSubmit, loading, title }: QuoteFormProps) {
+export default function QuoteForm({ initialData, projectId, onSubmit, loading, title, mode = 'HARDWARE' }: QuoteFormProps) {
     const router = useRouter()
 
     // State
@@ -181,7 +183,8 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             quantity: 1,
             unitPrice: product.resellerPrice || 0,
             discount: 0,
-            total: product.resellerPrice || 0
+            total: product.resellerPrice || 0,
+            details: mode === 'SERVICE' ? [{ modelName: product.model || '', serialNumbers: '' }] : []
         }
         setItems(prev => [...prev, newItem])
     }
@@ -197,7 +200,8 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             quantity: 1,
             unitPrice: 0,
             discount: 0,
-            total: 0
+            total: 0,
+            details: mode === 'SERVICE' ? [{ modelName: '', serialNumbers: '' }] : []
         }
         setItems(prev => [...prev, newItem])
     }
@@ -213,9 +217,39 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             quantity: 1,
             unitPrice: 0,
             discount: 0,
-            total: 0
+            total: 0,
+            details: []
         }
         setItems(prev => [...prev, newItem])
+    }
+
+    const addEquipment = (itemId: string) => {
+        setItems(prev => prev.map(item => {
+            if (item.id === itemId) {
+                return { ...item, details: [...(item.details || []), { modelName: '', serialNumbers: '' }] }
+            }
+            return item
+        }))
+    }
+
+    const removeEquipment = (itemId: string, index: number) => {
+        setItems(prev => prev.map(item => {
+            if (item.id === itemId) {
+                return { ...item, details: (item.details || []).filter((_, i) => i !== index) }
+            }
+            return item
+        }))
+    }
+
+    const updateEquipment = (itemId: string, index: number, field: 'modelName' | 'serialNumbers', value: string) => {
+        setItems(prev => prev.map(item => {
+            if (item.id === itemId) {
+                const newDetails = [...(item.details || [])]
+                newDetails[index] = { ...newDetails[index], [field]: value }
+                return { ...item, details: newDetails }
+            }
+            return item
+        }))
     }
 
     function handleSubmit() {
@@ -422,28 +456,78 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                                     placeholder="Item description..."
                                                 />
-                                                <div className="mt-2 grid grid-cols-2 gap-2">
-                                                    <div>
-                                                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Equipment Model</label>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
-                                                            value={item.productModel || ''}
-                                                            onChange={(e) => updateItem(item.id, 'productModel', e.target.value)}
-                                                            placeholder="Model (if AMC)"
-                                                        />
+                                                {mode === 'HARDWARE' ? (
+                                                    <>
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Equipment Model</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
+                                                                value={item.productModel || ''}
+                                                                onChange={(e) => updateItem(item.id, 'productModel', e.target.value)}
+                                                                placeholder="Model (if any)"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Serial Number(s)</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
+                                                                value={item.serialNumbers || ''}
+                                                                onChange={(e) => updateItem(item.id, 'serialNumbers', e.target.value)}
+                                                                placeholder="Comma separated"
+                                                            />
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="col-span-2 space-y-3 mt-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="text-[10px] uppercase font-extrabold text-blue-600 tracking-tight">Covered Equipment Details</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => addEquipment(item.id)}
+                                                                className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 font-bold hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center gap-1"
+                                                            >
+                                                                <Plus className="w-2 h-2" /> Add Module
+                                                            </button>
+                                                        </div>
+                                                        {item.details && item.details.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {item.details.map((detail, dIdx) => (
+                                                                    <div key={dIdx} className="bg-blue-50/30 p-2 rounded border border-blue-100 relative group/detail">
+                                                                        {item.details!.length > 1 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => removeEquipment(item.id, dIdx)}
+                                                                                className="absolute -top-1.5 -right-1.5 bg-white text-red-500 rounded-full border border-red-100 p-0.5 opacity-0 group-hover/detail:opacity-100 transition-opacity shadow-sm"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        )}
+                                                                        <div className="grid grid-cols-2 gap-2">
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full border-gray-200 rounded text-[11px] p-1 border focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                                                value={detail.modelName}
+                                                                                onChange={(e) => updateEquipment(item.id, dIdx, 'modelName', e.target.value)}
+                                                                                placeholder="Product/Model Name"
+                                                                            />
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full border-gray-200 rounded text-[11px] p-1 border focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                                                value={detail.serialNumbers}
+                                                                                onChange={(e) => updateEquipment(item.id, dIdx, 'serialNumbers', e.target.value)}
+                                                                                placeholder="Serial Number(s)"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[10px] text-gray-400 italic">No equipment modules specified</p>
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Serial Number(s)</label>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
-                                                            value={item.serialNumbers || ''}
-                                                            onChange={(e) => updateItem(item.id, 'serialNumbers', e.target.value)}
-                                                            placeholder="Comma separated"
-                                                        />
-                                                    </div>
-                                                </div>
+                                                )}
                                             </td>
                                             <td className="py-3 px-2 align-top">
                                                 <input

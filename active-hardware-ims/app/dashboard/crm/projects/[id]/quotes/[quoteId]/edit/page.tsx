@@ -70,6 +70,7 @@ export default function EditQuotePage({ params }: { params: Promise<{ id: string
             onSubmit={handleSave}
             loading={loading}
             title={`Edit Quote ${quote.quoteNumber}`}
+            mode={quote.quoteType === 'SERVICE' ? 'SERVICE' : 'HARDWARE'}
         />
     )
 }

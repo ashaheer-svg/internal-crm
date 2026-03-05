@@ -64,7 +64,8 @@ export async function GET(request: Request) {
                         include: {
                             serviceDefinition: true
                         }
-                    }
+                    },
+                    details: true
                 }
             },
             salesRep: true
@@ -183,7 +184,13 @@ export async function POST(request: Request) {
                             productId: item.productId,
                             quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
                             unitPrice: Number(item.unitPrice) || 0,
-                            isBackorder: false // Initially false, updated on allocation
+                            isBackorder: false,
+                            details: {
+                                create: item.details?.map((d: any) => ({
+                                    modelName: d.modelName,
+                                    serialNumbers: d.serialNumbers
+                                })) || []
+                            }
                         }))
                     }
                 },
@@ -194,7 +201,8 @@ export async function POST(request: Request) {
                                 include: {
                                     serviceDefinition: true
                                 }
-                            }
+                            },
+                            details: true
                         }
                     }
                 }

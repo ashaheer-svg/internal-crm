@@ -17,13 +17,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                 },
                 items: {
                     include: {
+                        details: true,
                         product: {
                             include: { serviceDefinition: true }
                         }
                     }
                 },
                 createdBy: true
-            }
+            } as any
         })
 
         if (!quote) {
@@ -32,11 +33,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
         // Compute quoteType from items - no schema change needed
         const itemTypes = new Set(
-            quote.items
-                .map(i => (i.product as any)?.serviceDefinition?.type)
+            (quote as any).items
+                .map((i: any) => (i.product as any)?.serviceDefinition?.type)
                 .filter(Boolean)
         )
-        const hasHardware = quote.items.some(i => !(i.product as any)?.serviceDefinition)
+        const hasHardware = (quote as any).items.some((i: any) => !(i.product as any)?.serviceDefinition)
         const hasService = itemTypes.has('AMC') || itemTypes.has('WARRANTY') || itemTypes.has('SUPPORT')
         const hasRental = itemTypes.has('RENTAL')
 
@@ -72,9 +73,17 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                 order: index,
                 productId: item.productId || null,
                 description: item.description,
+                productModel: item.productModel || null,
+                serialNumbers: item.serialNumbers || null,
                 quantity: Number(item.quantity),
                 unitPrice: Number(item.unitPrice),
-                total: lineTotal
+                total: lineTotal,
+                details: {
+                    create: item.details?.map((detail: any) => ({
+                        modelName: detail.modelName,
+                        serialNumbers: detail.serialNumbers
+                    })) || []
+                }
             }
         })
 
@@ -170,10 +179,14 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                     terms,
                     items: {
                         create: quoteItems
-                    }
+                    } as any
                 },
                 include: {
-                    items: true
+                    items: {
+                        include: {
+                            details: true
+                        }
+                    } as any
                 }
             });
             return res;

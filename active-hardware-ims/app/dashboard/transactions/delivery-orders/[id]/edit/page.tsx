@@ -109,7 +109,11 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                     quantity: i.quantity,
                     unitPrice: i.unitPrice,
                     isBackorder: i.isBackorder,
-                    product: i.product // full product if needed
+                    product: i.product, // full product if needed
+                    details: i.details?.map((d: any) => ({
+                        modelName: d.modelName,
+                        serialNumbers: d.serialNumbers
+                    })) || []
                 }))
                 setItems(formattedItems)
             } catch (e: any) {
@@ -607,6 +611,15 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     <div key={idx} className="flex items-center gap-4 p-3 bg-white border rounded-md shadow-sm text-sm">
                                         <div className="flex-1">
                                             <div className="font-medium text-gray-900">{item.productName}</div>
+                                            {item.details && item.details.length > 0 && (
+                                                <div className="mt-1 flex flex-wrap gap-2">
+                                                    {item.details.map((d: any, di: number) => (
+                                                        <div key={di} className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 italic">
+                                                            {d.modelName}: {d.serialNumbers}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="w-24">

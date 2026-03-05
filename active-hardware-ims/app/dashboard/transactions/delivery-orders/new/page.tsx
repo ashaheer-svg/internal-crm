@@ -18,6 +18,7 @@ type DeliveryOrderItem = {
     quantity: number
     unitPrice: number
     isBackorder: boolean // For display only in draft
+    details?: { modelName: string; serialNumbers: string }[]
 }
 
 export default function NewDeliveryOrderPage() {
@@ -149,7 +150,11 @@ export default function NewDeliveryOrderPage() {
                             productName: qi.product ? `${qi.product.brand || ''} ${qi.product.name}`.trim() : qi.description,
                             quantity: qi.quantity,
                             unitPrice: qi.unitPrice,
-                            isBackorder: false
+                            isBackorder: false,
+                            details: qi.details?.map((d: any) => ({
+                                modelName: d.modelName,
+                                serialNumbers: d.serialNumbers
+                            })) || []
                         }))
                         setItems(quoteItems)
                     }
@@ -778,6 +783,15 @@ export default function NewDeliveryOrderPage() {
                                         <div key={idx} className="flex gap-4 items-center p-3 border rounded-md bg-gray-50 text-sm">
                                             <div className="flex-1">
                                                 <p className="font-medium text-gray-900">{item.productName}</p>
+                                                {item.details && item.details.length > 0 && (
+                                                    <div className="mt-1 space-y-1">
+                                                        {item.details.map((d, di) => (
+                                                            <div key={di} className="text-[11px] text-gray-500 bg-white/50 px-2 py-0.5 rounded border border-gray-100 inline-block mr-2 mt-1">
+                                                                <span className="font-semibold">{d.modelName}</span>: {d.serialNumbers}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="w-24">
                                                 <FormattedNumberInput

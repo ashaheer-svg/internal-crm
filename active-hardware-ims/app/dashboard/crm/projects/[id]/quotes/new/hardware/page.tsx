@@ -4,7 +4,7 @@ import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import QuoteForm from '@/components/crm/QuoteForm'
 
-export default function NewQuotePage({ params }: { params: Promise<{ id: string }> }) {
+export default function NewHardwareQuotePage({ params }: { params: Promise<{ id: string }> }) {
     const { id: projectId } = use(params)
     const router = useRouter()
     const [loading, setLoading] = useState(false)
@@ -37,7 +37,8 @@ export default function NewQuotePage({ params }: { params: Promise<{ id: string 
             projectId={projectId}
             onSubmit={handleSave}
             loading={loading}
-            title="New Quote"
+            title="New Hardware Quote"
+            mode="HARDWARE"
         />
     )
 }

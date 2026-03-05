@@ -122,9 +122,9 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                                 </span>
                                 {quote.quoteType && (
                                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${quote.quoteType === 'SERVICE' ? 'bg-purple-50 border-purple-200 text-purple-700' :
-                                            quote.quoteType === 'RENTAL' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                                                quote.quoteType === 'MIXED' ? 'bg-teal-50 border-teal-200 text-teal-700' :
-                                                    'bg-gray-50 border-gray-200 text-gray-600'
+                                        quote.quoteType === 'RENTAL' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                            quote.quoteType === 'MIXED' ? 'bg-teal-50 border-teal-200 text-teal-700' :
+                                                'bg-gray-50 border-gray-200 text-gray-600'
                                         }`}>
                                         {quote.quoteType}
                                     </span>
@@ -225,7 +225,19 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                             {quote.items.map((item: any, idx: number) => (
                                 <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 text-sm text-gray-500 text-center">{idx + 1}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-900 whitespace-pre-wrap">{item.description}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-900 whitespace-pre-wrap">
+                                        <div className="font-medium">{item.description}</div>
+                                        {item.details && item.details.length > 0 && (
+                                            <div className="mt-2 space-y-1">
+                                                {item.details.map((detail: any, dIdx: number) => (
+                                                    <div key={dIdx} className="text-[11px] bg-blue-50 text-blue-700 p-1.5 rounded border border-blue-100 flex flex-wrap gap-x-3">
+                                                        <span className="font-bold">Model: {detail.modelName}</span>
+                                                        <span className="text-gray-500 font-medium">S/N: {detail.serialNumbers}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.quantity}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600 text-right">{formatCurrency(item.unitPrice)}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.discount > 0 ? `${item.discount}%` : '-'}</td>

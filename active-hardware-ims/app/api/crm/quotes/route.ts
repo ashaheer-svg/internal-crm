@@ -65,7 +65,13 @@ export async function POST(request: Request) {
                 quantity,
                 unitPrice,
                 discount,
-                total: lineTotal
+                total: lineTotal,
+                details: {
+                    create: item.details?.map((detail: any) => ({
+                        modelName: detail.modelName,
+                        serialNumbers: detail.serialNumbers
+                    })) || []
+                }
             }
         })
 
@@ -105,11 +111,21 @@ export async function POST(request: Request) {
                 terms: terms || 'Standard Terms Apply',
                 createdById: user.id,
                 items: {
-                    create: quoteItems
-                }
+                    create: quoteItems.map((item: any) => ({
+                        ...item,
+                        details: item.details
+                    }))
+                } as any
             },
             include: {
-                items: true
+                items: {
+                    include: {
+                        details: true,
+                        product: {
+                            include: { serviceDefinition: true }
+                        }
+                    }
+                } as any
             }
         })
 

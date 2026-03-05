@@ -9,7 +9,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
         const originalQuote = await prisma.cRMQuote.findUnique({
             where: { id },
-            include: { items: true }
+            include: {
+                items: {
+                    include: { details: true }
+                } as any
+            }
         })
 
         if (!originalQuote) {
@@ -46,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 terms: originalQuote.terms,
                 createdById: user.id,
                 items: {
-                    create: originalQuote.items.map(item => ({
+                    create: (originalQuote as any).items.map((item: any) => ({
                         order: item.order,
                         productId: item.productId,
                         description: item.description,
@@ -54,9 +58,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                         unitPrice: item.unitPrice,
                         discount: item.discount,
                         taxRate: item.taxRate,
-                        total: item.total
+                        total: item.total,
+                        details: {
+                            create: item.details?.map((detail: any) => ({
+                                modelName: detail.modelName,
+                                serialNumbers: detail.serialNumbers
+                            })) || []
+                        }
                     }))
-                }
+                } as any
             }
         })
 

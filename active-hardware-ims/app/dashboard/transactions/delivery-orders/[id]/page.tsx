@@ -39,6 +39,7 @@ type DeliveryOrderItem = {
     serviceStartDate?: string | null
     serviceEndDate?: string | null
     reservedItems: InventoryItem[]
+    details?: { modelName: string; serialNumbers: string }[]
 }
 
 type DeliveryOrder = {
@@ -559,6 +560,19 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                                         Return
                                                                     </button>
                                                                 )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Equipment Details */}
+                                                {item.details && item.details.length > 0 && (
+                                                    <div className="mt-3 space-y-2">
+                                                        <h3 className="font-semibold text-gray-900">Equipment Details</h3>
+                                                        {item.details.map((d: any, di: number) => (
+                                                            <div key={di} className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 flex flex-col">
+                                                                <span className="font-bold uppercase tracking-tight">{d.modelName}</span>
+                                                                <span className="font-mono mt-0.5">{d.serialNumbers}</span>
                                                             </div>
                                                         ))}
                                                     </div>

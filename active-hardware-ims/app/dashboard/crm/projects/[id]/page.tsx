@@ -194,11 +194,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             Edit Project
                         </button>
                         <button
-                            onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new`)}
+                            onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/hardware`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Hardware Quote
+                        </button>
+                        <button
+                            onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/service`)}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            New Quote
+                            Service Quote
                         </button>
                     </div>
                 </div>

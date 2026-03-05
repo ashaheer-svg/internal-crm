@@ -18,7 +18,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
                                 serviceDefinition: true
                             }
                         },
-                        reservedItems: true // Include reserved serials
+                        reservedItems: true, // Include reserved serials
+                        details: true
                     }
                 },
                 salesRep: true
@@ -561,7 +562,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                             data: {
                                 productId: item.productId,
                                 quantity: Number(item.quantity),
-                                unitPrice: Number(item.unitPrice)
+                                unitPrice: Number(item.unitPrice),
+                                details: {
+                                    deleteMany: {},
+                                    create: item.details?.map((d: any) => ({
+                                        modelName: d.modelName,
+                                        serialNumbers: d.serialNumbers
+                                    })) || []
+                                }
                             }
                         })
 
@@ -609,7 +617,13 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                 productId: item.productId,
                                 quantity: Number(item.quantity),
                                 unitPrice: Number(item.unitPrice),
-                                isBackorder: false
+                                isBackorder: false,
+                                details: {
+                                    create: item.details?.map((d: any) => ({
+                                        modelName: d.modelName,
+                                        serialNumbers: d.serialNumbers
+                                    })) || []
+                                }
                             }
                         })
                         orderItemId = newItem.id

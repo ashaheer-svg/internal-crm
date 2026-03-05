@@ -526,6 +526,17 @@ model DeliveryOrderItem {
   serviceStartDate DateTime?
   serviceEndDate   DateTime?
   unitCost         Float?
+  details          DeliveryOrderItemDetail[]
+}
+
+model DeliveryOrderItemDetail {
+  id                  String            @id @default(uuid())
+  deliveryOrderItemId String
+  deliveryOrderItem   DeliveryOrderItem @relation(fields: [deliveryOrderItemId], references: [id], onDelete: Cascade)
+  modelName           String
+  serialNumbers       String // Comma separated or JSON
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 }
 
 // Enums removed for SQLite compatibility. Using String types.
@@ -827,13 +838,32 @@ model CRMQuoteItem {
   product   Product? @relation(fields: [productId], references: [id])
 
   description  String
-  productModel String? // Override model for AMC
-  serialNumbers String? // Comma-separated or list of serials
+  
+  // Legacy fields - kept for compatibility but will migrate to details
+  productModel String? 
+  serialNumbers String? 
+
+  details CRMQuoteItemDetail[]
+
   quantity     Int
   unitPrice    Float
   discount     Float  @default(0)
   taxRate      Float  @default(0)
   total        Float
+}
+
+model CRMQuoteItemDetail {
+  id              String       @id @default(uuid())
+  quoteItemId     String
+  quoteItem       CRMQuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+
+  modelName      String
+  serialNumbers  String // Comma separated or newline separated
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quoteItemId])
 }
 
 model TaxConfiguration {
