@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Search, Plus, ChevronDown } from "lucide-react"
+import { Search, Plus, ChevronDown, X } from "lucide-react"
 import CustomerFormModal from "@/app/dashboard/settings/customers/CustomerFormModal"
 
 type Customer = {
@@ -115,29 +115,32 @@ export default function CustomerSelector({
 
             {/* Selected Customer Display */}
             {selectedCustomer ? (
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50 shadow-sm transition-all hover:bg-white hover:border-gray-300">
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50 shadow-sm transition-all hover:bg-white hover:border-blue-200 cursor-pointer group"
+                >
                     <div className="overflow-hidden">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{selectedCustomer.name}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">{selectedCustomer.name}</p>
                         {(selectedCustomer.email || selectedCustomer.phone) && (
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-gray-500 truncate mt-0.5">
                                 {[selectedCustomer.email, selectedCustomer.phone].filter(Boolean).join(" • ")}
                             </p>
                         )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-4">
-                        <button
-                            type="button"
-                            onClick={() => setIsOpen(true)}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
-                        >
+                    <div className="flex items-center gap-3 shrink-0 ml-4">
+                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
                             Change
-                        </button>
+                        </span>
                         <button
                             type="button"
-                            onClick={handleClear}
-                            className="text-xs font-medium text-gray-500 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleClear();
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Clear selection"
                         >
-                            Clear
+                            <X className="h-4 w-4" />
                         </button>
                     </div>
                 </div>

@@ -485,7 +485,7 @@ export default function NewDeliveryOrderPage() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto mt-8 px-4">
+            <div className="max-w-6xl mx-auto mt-8 px-4 relative z-0">
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
                         {error && (
@@ -495,7 +495,7 @@ export default function NewDeliveryOrderPage() {
                         )}
 
                         {/* Order Details */}
-                        <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
+                        <div className="bg-white shadow sm:rounded-xl p-6 space-y-4 relative z-10">
                             <h2 className="text-lg font-medium text-gray-900">Order Details</h2>
 
                             <div className="flex p-1 bg-gray-100/50 rounded-xl w-fit mb-6">
@@ -537,7 +537,7 @@ export default function NewDeliveryOrderPage() {
                                     />
                                 </div>
 
-                                <div className="sm:col-span-2">
+                                <div className="sm:col-span-2 relative z-20">
                                     <CustomerSelector
                                         label={saleType === "PARTNER" ? "Partner Entity (Bill To)" : "Customer Entity"}
                                         required
@@ -549,7 +549,7 @@ export default function NewDeliveryOrderPage() {
                                 </div>
 
                                 {saleType === "PARTNER" && (
-                                    <div className="sm:col-span-2">
+                                    <div className="sm:col-span-2 relative z-10">
                                         <CustomerSelector
                                             label="End Customer (Ship To)"
                                             required
