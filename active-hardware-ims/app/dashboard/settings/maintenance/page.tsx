@@ -28,6 +28,7 @@ export default function MaintenanceDashboard() {
     const [savingMaint, setSavingMaint] = useState(false)
     const [savingEmail, setSavingEmail] = useState(false)
     const [testLoading, setTestLoading] = useState(false)
+    const [testMsg, setTestMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [backupEmailLoading, setBackupEmailLoading] = useState(false)
     const [housekeepingLoading, setHousekeepingLoading] = useState(false)
     const [housekeepingResult, setHousekeepingResult] = useState<any>(null)
@@ -102,8 +103,9 @@ export default function MaintenanceDashboard() {
     }
 
     const handleTestEmail = async () => {
-        if (!email.user) { setMsg({ type: 'error', text: 'Enter your SMTP username first — it will receive the test.' }); return }
+        if (!email.user) { setTestMsg({ type: 'error', text: 'Enter your SMTP username first.' }); return }
         setTestLoading(true)
+        setTestMsg(null)
         try {
             const res = await fetch('/api/settings/maintenance/backup-email/test', {
                 method: 'POST',
@@ -111,9 +113,9 @@ export default function MaintenanceDashboard() {
                 body: JSON.stringify({ recipientEmail: email.user })
             })
             const data = await res.json()
-            if (res.ok) setMsg({ type: 'success', text: `Test email sent to ${email.user}` })
-            else setMsg({ type: 'error', text: data.error || 'Test failed' })
-        } catch { setMsg({ type: 'error', text: 'Test email failed' }) }
+            if (res.ok) setTestMsg({ type: 'success', text: `✓ Test email sent to ${email.user}` })
+            else setTestMsg({ type: 'error', text: data.error || 'Test failed' })
+        } catch { setTestMsg({ type: 'error', text: 'Connection error — could not reach server.' }) }
         finally { setTestLoading(false) }
     }
 
@@ -339,33 +341,45 @@ export default function MaintenanceDashboard() {
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between pt-4">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <input
-                                        type="checkbox" checked={email.secure} onChange={e => setEmail({ ...email, secure: e.target.checked })}
-                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Use SSL/TLS Security</span>
-                                </label>
-                                <div className="flex gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={handleTestEmail}
-                                        disabled={testLoading}
-                                        className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all flex items-center gap-2"
-                                    >
-                                        {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                        Test
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={savingEmail}
-                                        className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2"
-                                    >
-                                        {savingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                        Save Changes
-                                    </button>
+                            <div className="flex flex-col gap-3 pt-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox" checked={email.secure} onChange={e => setEmail({ ...email, secure: e.target.checked })}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Use SSL/TLS Security</span>
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleTestEmail}
+                                            disabled={testLoading}
+                                            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all flex items-center gap-2"
+                                        >
+                                            {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                            {testLoading ? 'Sending…' : 'Test'}
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={savingEmail}
+                                            className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2"
+                                        >
+                                            {savingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                            Save Changes
+                                        </button>
+                                    </div>
                                 </div>
+                                {testMsg && (
+                                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${testMsg.type === 'success'
+                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                        }`}>
+                                        {testMsg.type === 'success' ? <CheckCircle className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
+                                        <span className="flex-1">{testMsg.text}</span>
+                                        <button onClick={() => setTestMsg(null)} className="opacity-50 hover:opacity-100 text-xs font-bold">✕</button>
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>
