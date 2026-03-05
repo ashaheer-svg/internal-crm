@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import BackButton from '@/components/BackButton'
 import FormattedNumberInput from '@/components/FormattedNumberInput'
+import CustomerSelector from '@/components/selectors/CustomerSelector'
+import SalesRepSelector from '@/components/selectors/SalesRepSelector'
+import { Plus, Briefcase, Calendar, DollarSign, Tag, AlignLeft, CheckCircle2 } from 'lucide-react'
 
 interface Customer {
     id: string
@@ -45,41 +48,15 @@ export default function NewProjectPage() {
     })
 
     useEffect(() => {
-        // Fetch Customers, Sales Reps, Pipelines AND Sequence
+        // Fetch Sequences & Pipelines
         Promise.all([
-            fetch('/api/customers?limit=100').then(res => {
-                if (!res.ok) throw new Error('Failed to fetch customers')
-                return res.json()
-            }),
-            fetch('/api/sales-reps').then(res => {
-                if (!res.ok) {
-                    return []
-                }
-                return res.json()
-            }).catch(() => []),
-            fetch('/api/crm/pipeline').then(res => {
-                if (!res.ok) throw new Error('Failed to fetch pipeline')
-                return res.json()
-            }),
+            fetch('/api/crm/pipeline').then(res => res.ok ? res.json() : null),
             fetch('/api/sequences', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'PROJ', consume: false })
-            }).then(res => res.json())
-        ]).then(([customersData, salesRepsData, pipelineData, sequenceData]) => {
-            let allCustomers: Customer[] = []
-            if (customersData && customersData.customers) {
-                allCustomers = customersData.customers
-            } else if (Array.isArray(customersData)) {
-                allCustomers = customersData
-            }
-            setCustomers(allCustomers)
-            setPartners(allCustomers.filter(c => c.isPartner))
-
-            if (Array.isArray(salesRepsData)) {
-                setSalesReps(salesRepsData)
-            }
-
+            }).then(res => res.ok ? res.json() : null)
+        ]).then(([pipelineData, sequenceData]) => {
             if (pipelineData && pipelineData.id) {
                 setPipelines([pipelineData])
                 setFormData(prev => ({ ...prev, pipelineId: pipelineData.id }))
@@ -128,154 +105,211 @@ export default function NewProjectPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
-            <div className="mb-4">
-                <BackButton />
+        <div className="min-h-screen bg-[#f8fafc] pb-12">
+            {/* Header */}
+            <div className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30 px-8 py-5">
+                <div className="max-w-5xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <BackButton className="p-2 hover:bg-gray-100 rounded-full transition-colors" label="" />
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Create Sales Project</h1>
+                            <p className="text-sm text-gray-500 font-medium">Capture a new business opportunity</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => router.back()}
+                            className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {loading ? (
+                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <CheckCircle2 className="w-4 h-4" />
+                            )}
+                            {loading ? 'Creating...' : 'Create Project'}
+                        </button>
+                    </div>
+                </div>
             </div>
-            <h1 className="text-2xl font-bold mb-6">Create New Sales Project</h1>
 
-            <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Project Code (Auto-generated)</label>
-                    <input
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-gray-50"
-                        value={formData.projectCode}
-                        onChange={e => setFormData({ ...formData, projectCode: e.target.value })}
-                        placeholder="PROJ-XXXX-XXXX"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">You can edit this code if needed.</p>
-                </div>
+            <div className="max-w-4xl mx-auto mt-8 px-4">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Basic Info Section */}
+                    <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-500/5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-75">
+                        <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Briefcase className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Core Information</h3>
+                        </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Project Title</label>
-                    <input
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                        value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="e.g. Acme Corp Network Upgrade"
-                    />
-                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-2">
+                                    Project Title <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium"
+                                    value={formData.title}
+                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                    placeholder="e.g. Acme Corp Infrastructure Refresh"
+                                />
+                            </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Brand</label>
-                    <input
-                        type="text"
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                        value={formData.brand}
-                        onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                        placeholder="e.g. Cisco, HP, Dell"
-                    />
-                </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Project Code</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm bg-gray-50/50 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-mono font-bold"
+                                    value={formData.projectCode}
+                                    onChange={e => setFormData({ ...formData, projectCode: e.target.value })}
+                                    placeholder="PROJ-XXXX"
+                                />
+                                <p className="text-[10px] text-blue-600 mt-1.5 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span className="w-1 h-1 bg-blue-600 rounded-full animate-pulse"></span>
+                                    Autogenerated Sequence
+                                </p>
+                            </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Customer (End Client)</label>
-                    <select
-                        required
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                        value={formData.customerId}
-                        onChange={e => setFormData({ ...formData, customerId: e.target.value })}
-                    >
-                        <option value="">Select a Customer</option>
-                        {customers.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Primary Brand</label>
+                                <div className="relative group">
+                                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-xl border-gray-200 pl-10 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium"
+                                        value={formData.brand}
+                                        onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                                        placeholder="Cisco, HP, Dell etc."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Partner (Reseller)</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                            value={formData.partnerId}
-                            onChange={e => handlePartnerChange(e.target.value)}
-                        >
-                            <option value="">None (Direct)</option>
-                            {partners.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                            value={formData.salesRepId}
-                            onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
-                        >
-                            <option value="">Select Rep</option>
-                            {salesReps.map(rep => (
-                                <option key={rep.id} value={rep.id}>{rep.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+                    {/* Stakeholders Section */}
+                    <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-500/5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+                        <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                            <div className="p-2 bg-orange-50 rounded-lg">
+                                <AlignLeft className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Stakeholders</h3>
+                        </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Expected Value</label>
-                        <FormattedNumberInput
-                            value={Number(formData.expectedValue) || 0}
-                            onChange={val => setFormData({ ...formData, expectedValue: val.toString() })}
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <CustomerSelector
+                                    label="End Client"
+                                    required
+                                    type="CUSTOMER"
+                                    selectedCustomer={null} // Need to handle ID based selection in component or just pass current data
+                                    onSelect={(c) => setFormData(prev => ({ ...prev, customerId: c?.id || '' }))}
+                                    placeholder="Search for an end customer..."
+                                />
+                            </div>
+
+                            <div>
+                                <CustomerSelector
+                                    label="Partner (Optional)"
+                                    type="PARTNER"
+                                    selectedCustomer={null}
+                                    onSelect={(p) => {
+                                        setFormData(prev => ({ ...prev, partnerId: p?.id || '', salesRepId: p?.salesRepId || prev.salesRepId }))
+                                    }}
+                                    placeholder="Search for a partner/reseller..."
+                                />
+                                <p className="text-[10px] text-gray-400 mt-1.5 italic font-medium">Leave empty for direct deals</p>
+                            </div>
+
+                            <div className="md:col-span-2 border-t border-gray-50 pt-6">
+                                <SalesRepSelector
+                                    label="Assigned Sales Representative"
+                                    selectedId={formData.salesRepId}
+                                    onSelect={(rep) => setFormData(prev => ({ ...prev, salesRepId: rep?.id || '' }))}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Financials Section */}
+                    <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-500/5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+                        <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
+                            <div className="p-2 bg-green-50 rounded-lg">
+                                <DollarSign className="w-5 h-5 text-green-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Commercial Details</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Expected Value</label>
+                                <div className="relative group">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">
+                                        {formData.currency}
+                                    </div>
+                                    <FormattedNumberInput
+                                        value={Number(formData.expectedValue) || 0}
+                                        onChange={val => setFormData({ ...formData, expectedValue: val.toString() })}
+                                        className="w-full rounded-xl border-gray-200 pl-12 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-bold text-blue-600"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">Currency</label>
+                                <select
+                                    className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-bold bg-white"
+                                    value={formData.currency}
+                                    onChange={e => setFormData({ ...formData, currency: e.target.value })}
+                                >
+                                    <option value="Rs.">Rs. (LKR)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-3">
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    Expected Closing Timeframe
+                                </label>
+                                <input
+                                    type="month"
+                                    className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium"
+                                    value={formData.expectedCloseDate ? formData.expectedCloseDate.substring(0, 7) : ''}
+                                    onChange={e => setFormData({ ...formData, expectedCloseDate: e.target.value ? `${e.target.value}-01` : '' })}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Additional Details */}
+                    <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-500/5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+                        <label className="text-lg font-bold text-gray-900 flex items-center gap-3">
+                            <AlignLeft className="w-5 h-5 text-gray-400" />
+                            Brief Description / Project Scope
+                        </label>
+                        <textarea
+                            className="w-full rounded-xl border-gray-200 bg-gray-50/30 p-4 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-medium"
+                            rows={4}
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Briefly describe the hardware components, services required, and any specific client needs..."
                         />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Currency</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                            value={formData.currency}
-                            onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                        >
-                            <option value="Rs.">Rs.</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Expected Closing Timeframe</label>
-                    <input
-                        type="month"
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                        value={formData.expectedCloseDate ? formData.expectedCloseDate.substring(0, 7) : ''}
-                        onChange={e => setFormData({ ...formData, expectedCloseDate: e.target.value ? `${e.target.value}-01` : '' })}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">When do you expect to close this deal?</p>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                        rows={3}
-                        value={formData.description}
-                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                    />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
-                    >
-                        {loading ? 'Creating...' : 'Create Project'}
-                    </button>
-                </div>
-            </form>
+                    </section>
+                </form>
+            </div>
         </div>
     )
 }
