@@ -389,7 +389,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 ) : (
                                     <CustomerSelector
                                         onSelect={setCustomer}
-                                        selectedCustomer={null}
+                                        selectedCustomer={customer}
                                         type={saleType === "PARTNER" ? "PARTNER" : undefined}
                                     />
                                 )}
@@ -409,7 +409,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                     ) : (
                                         <CustomerSelector
                                             onSelect={setEndCustomer}
-                                            selectedCustomer={null}
+                                            selectedCustomer={endCustomer}
                                             type="CUSTOMER"
                                         />
                                     )}

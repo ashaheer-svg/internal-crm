@@ -42,6 +42,7 @@ export default function NewGRNPage() {
     const [receivedBy, setReceivedBy] = useState("")
     const [notes, setNotes] = useState("")
     const [items, setItems] = useState<GRNItem[]>([])
+    const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
 
     useEffect(() => {
         fetchLocations()
@@ -230,8 +231,11 @@ export default function NewGRNPage() {
                                     label="Supplier / Vendor"
                                     required
                                     type="SUPPLIER"
-                                    selectedCustomer={null}
-                                    onSelect={(s) => setSupplier(s?.name || "")}
+                                    selectedCustomer={selectedSupplier}
+                                    onSelect={(s) => {
+                                        setSelectedSupplier(s);
+                                        setSupplier(s?.name || "");
+                                    }}
                                     placeholder="Search for a supplier..."
                                 />
                             </div>

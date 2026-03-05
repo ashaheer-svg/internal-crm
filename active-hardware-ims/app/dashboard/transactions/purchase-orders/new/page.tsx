@@ -35,6 +35,7 @@ export default function NewPurchaseOrderPage() {
     const [supplier, setSupplier] = useState("")
     const [notes, setNotes] = useState("")
     const [items, setItems] = useState<POItem[]>([])
+    const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
 
     const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([])
 
@@ -227,8 +228,11 @@ export default function NewPurchaseOrderPage() {
                                     label="Supplier / Vendor"
                                     required
                                     type="SUPPLIER"
-                                    selectedCustomer={null}
-                                    onSelect={(s) => setSupplier(s?.name || "")}
+                                    selectedCustomer={selectedSupplier}
+                                    onSelect={(s) => {
+                                        setSelectedSupplier(s)
+                                        setSupplier(s?.name || "")
+                                    }}
                                     placeholder="Search for a manufacturer or supplier..."
                                 />
                             </div>

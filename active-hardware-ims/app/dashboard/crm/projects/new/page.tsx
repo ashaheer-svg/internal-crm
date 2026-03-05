@@ -47,6 +47,9 @@ export default function NewProjectPage() {
         description: ''
     })
 
+    const [selectedClient, setSelectedClient] = useState<Customer | null>(null)
+    const [selectedPartner, setSelectedPartner] = useState<Customer | null>(null)
+
     useEffect(() => {
         // Fetch Sequences & Pipelines
         Promise.all([
@@ -213,8 +216,11 @@ export default function NewProjectPage() {
                                     label="End Client"
                                     required
                                     type="CUSTOMER"
-                                    selectedCustomer={null} // Need to handle ID based selection in component or just pass current data
-                                    onSelect={(c) => setFormData(prev => ({ ...prev, customerId: c?.id || '' }))}
+                                    selectedCustomer={selectedClient}
+                                    onSelect={(c) => {
+                                        setSelectedClient(c)
+                                        setFormData(prev => ({ ...prev, customerId: c?.id || '' }))
+                                    }}
                                     placeholder="Search for an end customer..."
                                 />
                             </div>
@@ -223,9 +229,14 @@ export default function NewProjectPage() {
                                 <CustomerSelector
                                     label="Partner (Optional)"
                                     type="PARTNER"
-                                    selectedCustomer={null}
+                                    selectedCustomer={selectedPartner}
                                     onSelect={(p) => {
-                                        setFormData(prev => ({ ...prev, partnerId: p?.id || '', salesRepId: p?.salesRepId || prev.salesRepId }))
+                                        setSelectedPartner(p)
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            partnerId: p?.id || '',
+                                            salesRepId: p?.salesRepId || prev.salesRepId
+                                        }))
                                     }}
                                     placeholder="Search for a partner/reseller..."
                                 />
