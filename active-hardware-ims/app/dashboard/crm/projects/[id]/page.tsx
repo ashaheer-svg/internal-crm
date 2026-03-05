@@ -146,7 +146,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             {project.title}
                         </h1>
 
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-3">
                             {/* Customer Pillar */}
                             <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
                                 <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
