@@ -8,7 +8,8 @@ import { Currency } from "@/components/Currency"
 import ProductSelector from "./ProductSelector"
 import StockDisplay from "./StockDisplay"
 import BulkEntryModal from "./BulkEntryModal"
-import CustomerSelector from "./CustomerSelector"
+import CustomerSelector from "@/components/selectors/CustomerSelector"
+import SalesRepSelector from "@/components/selectors/SalesRepSelector"
 import FormattedNumberInput from "@/components/FormattedNumberInput"
 
 type Product = {
@@ -316,17 +317,11 @@ export default function NewInvoicePage() {
                             </div>
 
                             <div className="sm:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
-                                <select
-                                    value={salesRepId}
-                                    onChange={(e) => setSalesRepId(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-blue-500 focus:ring-blue-500"
-                                >
-                                    <option value="">Select Sales Rep</option>
-                                    {salesReps.map(rep => (
-                                        <option key={rep.id} value={rep.id}>{rep.name}</option>
-                                    ))}
-                                </select>
+                                <SalesRepSelector
+                                    label="Sales Representative"
+                                    onSelect={(rep) => setSalesRepId(rep?.id ?? "")}
+                                    selectedId={salesRepId || null}
+                                />
                             </div>
                         </div>
                     </div>

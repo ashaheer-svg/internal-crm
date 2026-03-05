@@ -525,102 +525,81 @@ export default function NewDeliveryOrderPage() {
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Order Number *</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Order Number</label>
                                     <input
                                         type="text"
                                         required
                                         value={orderNumber}
                                         onChange={(e) => setOrderNumber(e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-mono font-bold"
                                     />
                                 </div>
 
-                                {/* Customer / Partner Selection */}
                                 <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"} *
-                                    </label>
                                     <CustomerSelector
+                                        label={saleType === "PARTNER" ? "Partner Entity (Bill To)" : "Customer Entity"}
+                                        required
                                         onSelect={handleCustomerSelect}
                                         selectedCustomer={selectedCustomer}
-                                        type={saleType === "PARTNER" ? "PARTNER" : undefined}
+                                        type={saleType === "PARTNER" ? "PARTNER" : "CUSTOMER"}
+                                        placeholder={saleType === "PARTNER" ? "Search for selling partner..." : "Search for end customer..."}
                                     />
                                 </div>
 
-                                {/* End Customer Selection (Partner Sale Only) */}
                                 {saleType === "PARTNER" && (
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Ship To (End Customer) *
-                                        </label>
                                         <CustomerSelector
+                                            label="End Customer (Ship To)"
+                                            required
                                             onSelect={handleEndCustomerSelect}
                                             selectedCustomer={selectedEndCustomer}
                                             type="CUSTOMER"
+                                            placeholder="Identification of the delivery destination..."
                                         />
                                     </div>
                                 )}
 
                                 <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Invoice Value (Excl. Tax)</label>
-                                    <div className="relative mt-1 rounded-md shadow-sm">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <span className="text-gray-500 sm:text-sm">Rs.</span>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Revenue Value (Excl. Tax)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <span className="text-gray-400 text-xs font-bold">Rs.</span>
                                         </div>
                                         <FormattedNumberInput
                                             value={invoiceValue}
                                             onChange={setInvoiceValue}
-                                            className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                            className="w-full rounded-xl border-gray-200 pl-11 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-bold"
                                             placeholder="0.00"
                                         />
                                     </div>
                                 </div>
                                 <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Invoice Number</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Associated Invoice #</label>
                                     <input
                                         type="text"
                                         value={invoiceNumber}
                                         onChange={(e) => setInvoiceNumber(e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                        placeholder="e.g. INV-1234"
+                                        className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium"
+                                        placeholder="e.g. INV-2024-001"
                                     />
                                 </div>
                                 <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Additional Costs (Overhead)</label>
-                                    <div className="relative mt-1 rounded-md shadow-sm">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <span className="text-gray-500 sm:text-sm">Rs.</span>
-                                        </div>
-                                        <FormattedNumberInput
-                                            value={additionalCosts}
-                                            onChange={setAdditionalCosts}
-                                            className="block w-full rounded-lg border border-gray-200 pl-10 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
+                                    <SalesRepSelector
+                                        label="Assigned Representative"
+                                        onSelect={(rep) => setSalesRepId(rep?.id ?? "")}
+                                        selectedId={salesRepId || null}
+                                    />
                                 </div>
                                 <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
-                                    <select
-                                        value={salesRepId}
-                                        onChange={(e) => setSalesRepId(e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                    >
-                                        <option value="">Select Sales Rep</option>
-                                        {salesReps.map(rep => (
-                                            <option key={rep.id} value={rep.id}>{rep.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="sm:col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700">Notes</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Dispatch Notes</label>
                                     <textarea
                                         rows={1}
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border bg-gray-50/30"
+                                        placeholder="Special handling instructions..."
                                     />
                                 </div>
 

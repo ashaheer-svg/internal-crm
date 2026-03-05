@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Save, Calendar as CalendarIcon, Search } from "lucide-react"
 import Link from "next/link"
 
-import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
-import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
+import CustomerSelector from "@/components/selectors/CustomerSelector"
+import ProductSelector from "@/components/selectors/ProductSelector"
+import SalesRepSelector from "@/components/selectors/SalesRepSelector"
 
 type Customer = {
     id: string
@@ -157,17 +158,11 @@ export default function NewServiceAgreementPage() {
 
                     {/* Sales Rep Selection */}
                     <div className="sm:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Sales Representative</label>
-                        <select
-                            value={salesRepId}
-                            onChange={(e) => setSalesRepId(e.target.value)}
-                            className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-left text-sm"
-                        >
-                            <option value="">Select a Sales Rep</option>
-                            {salesReps.map(rep => (
-                                <option key={rep.id} value={rep.id}>{rep.name}</option>
-                            ))}
-                        </select>
+                        <SalesRepSelector
+                            label="Sales Representative"
+                            onSelect={(rep) => setSalesRepId(rep?.id ?? "")}
+                            selectedId={salesRepId || null}
+                        />
                     </div>
 
                     {/* Partner Selection */}
