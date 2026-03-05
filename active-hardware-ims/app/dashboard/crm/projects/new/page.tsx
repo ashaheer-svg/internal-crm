@@ -8,11 +8,11 @@ import CustomerSelector from '@/components/selectors/CustomerSelector'
 import SalesRepSelector from '@/components/selectors/SalesRepSelector'
 import { Plus, Briefcase, Calendar, DollarSign, Tag, AlignLeft, CheckCircle2 } from 'lucide-react'
 
-interface Customer {
+interface ProjectCustomer {
     id: string
     name: string
-    isPartner: boolean
-    salesRepId?: string // To auto-select
+    isPartner?: boolean
+    salesRepId?: string | null // To auto-select
 }
 
 interface SalesRep {
@@ -28,8 +28,8 @@ interface Pipeline {
 export default function NewProjectPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
-    const [customers, setCustomers] = useState<Customer[]>([])
-    const [partners, setPartners] = useState<Customer[]>([])
+    const [customers, setCustomers] = useState<ProjectCustomer[]>([])
+    const [partners, setPartners] = useState<ProjectCustomer[]>([])
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
     const [pipelines, setPipelines] = useState<Pipeline[]>([])
 
@@ -47,8 +47,8 @@ export default function NewProjectPage() {
         description: ''
     })
 
-    const [selectedClient, setSelectedClient] = useState<Customer | null>(null)
-    const [selectedPartner, setSelectedPartner] = useState<Customer | null>(null)
+    const [selectedClient, setSelectedClient] = useState<any>(null)
+    const [selectedPartner, setSelectedPartner] = useState<any>(null)
 
     useEffect(() => {
         // Fetch Sequences & Pipelines
