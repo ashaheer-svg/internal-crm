@@ -30,11 +30,11 @@ export async function GET(request: Request) {
 
         if (search) {
             where.OR = [
-                { contractNumber: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { customer: { name: { contains: search, mode: 'insensitive' } } },
-                { partner: { name: { contains: search, mode: 'insensitive' } } },
-                { product: { name: { contains: search, mode: 'insensitive' } } }
+                { contractNumber: { contains: search } },
+                { description: { contains: search } },
+                { customer: { name: { contains: search } } },
+                { partner: { name: { contains: search } } },
+                { product: { name: { contains: search } } }
             ]
         }
 
