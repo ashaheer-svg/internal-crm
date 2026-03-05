@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Save, Calendar as CalendarIcon, Search } from "lucide-react"
 import Link from "next/link"
 
+import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
+import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
+
 type Customer = {
     id: string
     name: string
-    email: string
+    email?: string
 }
 
 type ServiceProduct = {
@@ -32,15 +35,15 @@ export default function NewServiceAgreementPage() {
     const [error, setError] = useState("")
 
     // Data Sources
-    const [customers, setCustomers] = useState<Customer[]>([])
-    const [products, setProducts] = useState<ServiceProduct[]>([])
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
 
+    // Selection States (Objects)
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+    const [selectedPartner, setSelectedPartner] = useState<Customer | null>(null)
+    const [selectedProduct, setSelectedProduct] = useState<ServiceProduct | null>(null)
+
     // Form State
-    const [customerId, setCustomerId] = useState("")
-    const [partnerId, setPartnerId] = useState("")
     const [salesRepId, setSalesRepId] = useState("")
-    const [productId, setProductId] = useState("")
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
     const [contractNumber, setContractNumber] = useState("")
     const [contractValue, setContractValue] = useState(0)
@@ -52,31 +55,6 @@ export default function NewServiceAgreementPage() {
     const [durationUnit, setDurationUnit] = useState("YEAR")
 
     useEffect(() => {
-        // Fetch Customers
-        fetch("/api/customers?type=ALL")
-            .then(res => res.json())
-            .then(data => {
-                // API returns { customers: [], totalCount, ... }
-                if (data.customers && Array.isArray(data.customers)) {
-                    setCustomers(data.customers)
-                } else if (Array.isArray(data)) {
-                    setCustomers(data)
-                } else {
-                    console.error("Unexpected customer data format", data)
-                    setCustomers([])
-                }
-            })
-            .catch(err => console.error("Failed to fetch customers", err))
-
-        // Fetch Service Products
-        fetch("/api/products?type=service&limit=100")
-            .then(res => res.json())
-            .then(data => {
-                const prods = data.products || (Array.isArray(data) ? data : [])
-                setProducts(prods)
-            })
-            .catch(err => console.error("Failed to fetch services", err))
-
         // Fetch Sales Reps
         fetch("/api/sales-reps")
             .then(res => res.json())
@@ -89,15 +67,24 @@ export default function NewServiceAgreementPage() {
 
     // Update duration defaults when product selected
     useEffect(() => {
-        const product = products.find(p => p.id === productId)
-        if (product && product.serviceDefinition) {
-            setDurationValue(product.serviceDefinition.durationValue)
-            setDurationUnit(product.serviceDefinition.durationUnit)
+        if (selectedProduct && selectedProduct.serviceDefinition) {
+            setDurationValue(selectedProduct.serviceDefinition.durationValue)
+            setDurationUnit(selectedProduct.serviceDefinition.durationUnit)
         }
-    }, [productId, products])
+    }, [selectedProduct])
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault()
+
+        if (!selectedCustomer) {
+            setError("Please select a customer")
+            return
+        }
+        if (!selectedProduct) {
+            setError("Please select a service plan")
+            return
+        }
+
         setLoading(true)
         setError("")
 
@@ -106,14 +93,14 @@ export default function NewServiceAgreementPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    customerId,
-                    productId,
+                    customerId: selectedCustomer.id,
+                    productId: selectedProduct.id,
                     startDate,
                     durationValue,
                     durationUnit,
                     description,
                     contractNumber,
-                    partnerId: partnerId || undefined,
+                    partnerId: selectedPartner?.id || undefined,
                     salesRepId: salesRepId || undefined,
                     contractValue,
                     invoiceReference
@@ -157,27 +144,20 @@ export default function NewServiceAgreementPage() {
                 <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     {/* Customer Selection */}
                     <div className="sm:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700">Customer *</label>
-                        <select
-                            required
-                            value={customerId}
-                            onChange={(e) => setCustomerId(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        >
-                            <option value="">Select a Customer</option>
-                            {customers.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                        <CustomerSelector
+                            selectedCustomer={selectedCustomer as any}
+                            onSelect={(c) => setSelectedCustomer(c as any)}
+                            type="CUSTOMER"
+                        />
                     </div>
 
                     {/* Sales Rep Selection */}
                     <div className="sm:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sales Representative</label>
                         <select
                             value={salesRepId}
                             onChange={(e) => setSalesRepId(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-left text-sm"
                         >
                             <option value="">Select a Sales Rep</option>
                             {salesReps.map(rep => (
@@ -188,43 +168,36 @@ export default function NewServiceAgreementPage() {
 
                     {/* Partner Selection */}
                     <div className="sm:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700">Partner (Optional)</label>
-                        <select
-                            value={partnerId}
-                            onChange={(e) => setPartnerId(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        >
-                            <option value="">Select a Partner</option>
-                            {customers.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                        <CustomerSelector
+                            selectedCustomer={selectedPartner as any}
+                            onSelect={(p) => setSelectedPartner(p as any)}
+                            type="PARTNER"
+                        />
                     </div>
 
                     {/* Service Selection */}
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Service Plan *</label>
-                        <select
-                            required
-                            value={productId}
-                            onChange={(e) => setProductId(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        >
-                            <option value="">Select a Service</option>
-                            {products.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
-                            ))}
-                        </select>
+                    <div className="sm:col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Service Plan *</label>
+                        <ProductSelector
+                            onProductSelect={(p) => setSelectedProduct(p as any)}
+                            type="service"
+                        />
+                        {selectedProduct && (
+                            <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100">
+                                <p className="text-xs font-medium text-blue-900">{selectedProduct.name}</p>
+                                <p className="text-[10px] text-blue-700 font-bold uppercase tracking-tighter">{selectedProduct.sku}</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Contract Details */}
                     <div className="sm:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700">Agreement / Contract No.</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Agreement / Contract No.</label>
                         <input
                             type="text"
                             value={contractNumber}
                             onChange={(e) => setContractNumber(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-blue-500 focus:border-blue-500 outline-none"
                             placeholder="e.g. CTR-2024-001"
                         />
                     </div>
