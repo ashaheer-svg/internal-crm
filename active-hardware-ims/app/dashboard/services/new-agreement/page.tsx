@@ -49,6 +49,8 @@ export default function NewServiceAgreementPage() {
     const [contractValue, setContractValue] = useState(0)
     const [invoiceReference, setInvoiceReference] = useState("")
     const [description, setDescription] = useState("")
+    const [productModel, setProductModel] = useState("")
+    const [coveredSerials, setCoveredSerials] = useState("")
 
     // Duration Logic
     const [durationValue, setDurationValue] = useState(1)
@@ -103,7 +105,9 @@ export default function NewServiceAgreementPage() {
                     partnerId: selectedPartner?.id || undefined,
                     salesRepId: salesRepId || undefined,
                     contractValue,
-                    invoiceReference
+                    invoiceReference,
+                    productModel,
+                    coveredSerials
                 })
             })
 
@@ -265,6 +269,28 @@ export default function NewServiceAgreementPage() {
                                 <option value="YEAR">Years</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Covered Equipment Model</label>
+                        <input
+                            type="text"
+                            value={productModel}
+                            onChange={(e) => setProductModel(e.target.value)}
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            placeholder="e.g. Synology DS920+, Seagate 10TB HDD, etc."
+                        />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Covered Serial Numbers</label>
+                        <textarea
+                            rows={2}
+                            value={coveredSerials}
+                            onChange={(e) => setCoveredSerials(e.target.value)}
+                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            placeholder="Enter serial numbers, one per line or separated by commas"
+                        />
                     </div>
 
                     <div className="sm:col-span-2">

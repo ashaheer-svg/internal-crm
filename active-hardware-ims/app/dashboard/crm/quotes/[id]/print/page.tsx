@@ -28,6 +28,8 @@ interface Quote {
     items: {
         id: string
         description: string
+        productModel: string | null
+        serialNumbers: string | null
         quantity: number
         unitPrice: number
         discount: number
@@ -110,6 +112,12 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                                 <td>
                                     <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.product?.name || 'Custom Item'}</p>
                                     <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap' }}>{item.description}</p>
+                                    {(item.productModel || item.serialNumbers) && (
+                                        <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--print-bg-muted)', borderRadius: '4px', fontSize: '0.75rem', borderLeft: '2px solid var(--print-brand-primary)' }}>
+                                            {item.productModel && <p><strong>Model:</strong> {item.productModel}</p>}
+                                            {item.serialNumbers && <p style={{ marginTop: '0.25rem' }}><strong>Serial(s):</strong> {item.serialNumbers}</p>}
+                                        </div>
+                                    )}
                                 </td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{item.quantity}</td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{formatCurrency(item.unitPrice)}</td>

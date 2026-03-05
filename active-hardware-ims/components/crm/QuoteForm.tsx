@@ -13,6 +13,8 @@ export interface QuoteItem {
     id: string
     productId: string | null
     description: string
+    productModel?: string | null
+    serialNumbers?: string | null
     quantity: number
     unitPrice: number
     discount?: number // Percentage
@@ -174,6 +176,8 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             id: Math.random().toString(),
             productId: product.id,
             description: `${product.brand} ${product.name}`,
+            productModel: product.model || '',
+            serialNumbers: '',
             quantity: 1,
             unitPrice: product.resellerPrice || 0,
             discount: 0,
@@ -188,6 +192,8 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             id: Math.random().toString(),
             productId: null,
             description: 'New Item',
+            productModel: '',
+            serialNumbers: '',
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -202,6 +208,8 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             id: Math.random().toString(),
             productId: null,
             description: 'Additional Charge (Shipping/Installation)',
+            productModel: '',
+            serialNumbers: '',
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -410,6 +418,28 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                                     placeholder="Item description..."
                                                 />
+                                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Equipment Model</label>
+                                                        <input
+                                                            type="text"
+                                                            className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
+                                                            value={item.productModel || ''}
+                                                            onChange={(e) => updateItem(item.id, 'productModel', e.target.value)}
+                                                            placeholder="Model (if AMC)"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Serial Number(s)</label>
+                                                        <input
+                                                            type="text"
+                                                            className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
+                                                            value={item.serialNumbers || ''}
+                                                            onChange={(e) => updateItem(item.id, 'serialNumbers', e.target.value)}
+                                                            placeholder="Comma separated"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="py-3 px-2 align-top">
                                                 <input

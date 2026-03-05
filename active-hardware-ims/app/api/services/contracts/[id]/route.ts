@@ -51,7 +51,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             invoiceReference,
             description,
             endDate,
-            status // Add status to allowed fields
+            status,
+            productModel,
+            coveredSerials
         } = body
 
         // Verify contract exists
@@ -83,6 +85,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                     invoiceReference,
                     description,
                     endDate: endDate ? new Date(endDate) : undefined,
+                    productModel,
+                    coveredSerials
                     // Don't set status here yet
                 }
             });
@@ -104,7 +108,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                     invoiceReference,
                     description,
                     endDate: endDate ? new Date(endDate) : undefined,
-                    status: status || undefined
+                    status: status || undefined,
+                    productModel,
+                    coveredSerials
                 }
             })
         }

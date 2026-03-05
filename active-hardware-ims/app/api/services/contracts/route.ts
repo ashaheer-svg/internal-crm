@@ -93,7 +93,9 @@ export async function POST(request: Request) {
             partnerId,
             contractValue,
             invoiceReference,
-            salesRepId
+            salesRepId,
+            productModel,
+            coveredSerials
         } = body
 
         if (!customerId || !productId) {
@@ -121,7 +123,9 @@ export async function POST(request: Request) {
             partnerId,
             contractValue: contractValue ? Number(contractValue) : 0,
             invoiceReference,
-            salesRepId
+            salesRepId,
+            productModel,
+            coveredSerials
         })
 
         await logCreate('SERVICE_CONTRACT', contract.id, user.id, user.name, {

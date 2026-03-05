@@ -41,51 +41,87 @@ export async function GET(request: Request) {
             take: 10 // Limit results for selection
         });
 
-        if (items.length === 0) {
-            return NextResponse.json({ error: 'Serial number not found' }, { status: 404 });
+        // 1b. Find AMC Contracts that cover this serial (for goods not in our inventory item table)
+        const amcContracts = await prisma.serviceContract.findMany({
+            where: {
+                coveredSerials: {
+                    contains: serial
+                }
+            },
+            include: {
+                customer: true,
+                product: true,
+                partner: true
+            },
+            take: 5
+        });
+
+        if (items.length === 0 && amcContracts.length === 0) {
+            return NextResponse.json({ error: 'Serial number not found in Inventory or AMC records' }, { status: 404 });
         }
 
-        let item = items[0];
+        // Handle candidates if multiple matches (combining items and AMC)
+        if (items.length + amcContracts.length > 1) {
+            const exactItemMatch = items.find(i => i.serialNumber.toLowerCase() === serial.toLowerCase());
+            const exactAmcMatch = amcContracts.find(c => c.coveredSerials?.toLowerCase().includes(serial.toLowerCase()));
 
-        // If multiple matches found, return candidates for selection
-        // UNLESS one of them is an exact match
-        if (items.length > 1) {
-            const exactMatch = items.find(i => i.serialNumber.toLowerCase() === serial.toLowerCase());
-            if (exactMatch) {
-                item = exactMatch;
-            } else {
-                return NextResponse.json({
-                    candidates: items.map(i => {
-                        const doInfo = i.deliveryOrderItem?.deliveryOrder;
-                        return {
-                            id: i.id,
-                            serialNumber: i.serialNumber,
-                            status: i.status,
-                            location: i.location.name,
-                            partner: doInfo?.customer?.name || doInfo?.customerName || 'N/A',
-                            endCustomer: doInfo?.endCustomer?.name || doInfo?.endCustomerName || null,
-                            deliveryOrder: {
-                                number: doInfo?.orderNumber || null,
-                                date: doInfo?.createdAt || null,
-                                invoiceNumber: doInfo?.invoiceNumber || null
-                            },
-                            product: {
-                                sku: i.product.sku,
-                                name: i.product.name,
-                                brand: i.product.brand,
-                                model: i.product.model
-                            }
-                        };
-                    })
+            // If we don't have a singular exact match, show candidates
+            if (!exactItemMatch && !exactAmcMatch) {
+                const itemCandidates = items.map(i => {
+                    const doInfo = i.deliveryOrderItem?.deliveryOrder;
+                    return {
+                        id: i.id,
+                        serialNumber: i.serialNumber,
+                        type: 'INVENTORY',
+                        status: i.status,
+                        location: i.location.name,
+                        partner: doInfo?.customer?.name || doInfo?.customerName || 'N/A',
+                        endCustomer: doInfo?.endCustomer?.name || doInfo?.endCustomerName || null,
+                        deliveryOrder: {
+                            number: doInfo?.orderNumber || null,
+                            date: doInfo?.createdAt || null,
+                            invoiceNumber: doInfo?.invoiceNumber || null
+                        },
+                        product: {
+                            sku: i.product.sku,
+                            name: i.product.name,
+                            brand: i.product.brand,
+                            model: i.product.model
+                        }
+                    };
                 });
+
+                const amcCandidates = amcContracts.map(c => ({
+                    id: c.id,
+                    serialNumber: c.coveredSerials || 'N/A',
+                    type: 'AMC_ONLY',
+                    status: c.status,
+                    location: 'Client Site',
+                    partner: c.partner?.name || 'N/A',
+                    endCustomer: c.customer.name,
+                    deliveryOrder: {
+                        number: c.contractNumber,
+                        date: c.createdAt,
+                        invoiceNumber: c.invoiceReference
+                    },
+                    product: {
+                        sku: c.product.sku,
+                        name: c.product.name,
+                        brand: c.product.brand,
+                        model: c.productModel || c.product.model
+                    }
+                }));
+
+                return NextResponse.json({ candidates: [...itemCandidates, ...amcCandidates] });
             }
         }
 
-        const exactSerial = item.serialNumber;
-        console.log("Found item:", item.id);
+        let item = items[0];
+        let amcRecord = amcContracts[0];
+        const exactSerial = item?.serialNumber || serial; // Use the found serial or the provided one
 
         // 2. Find associated Transaction Logs
-        const transactionLogs = await prisma.transactionLog.findMany({
+        const transactionLogs = item ? await prisma.transactionLog.findMany({
             where: {
                 OR: [
                     { serialNumber: exactSerial },
@@ -93,29 +129,34 @@ export async function GET(request: Request) {
                 ]
             },
             orderBy: { createdAt: 'desc' }
-        });
+        }) : [];
 
-        // 3. Find associated Audit Logs (WARRANTY and INVENTORY events)
+        // 3. Find associated Audit Logs
         const auditLogs = await prisma.auditLog.findMany({
             where: {
                 OR: [
-                    // Warranty claims for this item
-                    {
-                        entityType: 'WARRANTY',
-                        metadata: { contains: exactSerial }
-                    },
-                    // Inventory changes for this specific item
-                    {
-                        entityType: 'INVENTORY',
-                        entityId: item.id
-                    }
-                ]
+                    { entityType: 'WARRANTY', metadata: { contains: exactSerial } },
+                    item ? { entityType: 'INVENTORY', entityId: item.id } : {},
+                    { entityType: 'SERVICE_CONTRACT', metadata: { contains: exactSerial } }
+                ].filter(condition => Object.keys(condition).length > 0)
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        // 4. Find Replacement Context
-        const warrantyClaims = await (prisma.warrantyClaim as any).findMany({
+        // 4. Find all AMC/Service Contracts for this serial
+        const allRelatedAMCs = await prisma.serviceContract.findMany({
+            where: {
+                OR: [
+                    item ? { rentalAssets: { some: { id: item.id } } } : {},
+                    { coveredSerials: { contains: exactSerial } }
+                ].filter(condition => Object.keys(condition).length > 0)
+            },
+            include: { product: true },
+            orderBy: { startDate: 'desc' }
+        });
+
+        // 5. Find Replacement Context
+        const warrantyClaims = item ? await (prisma.warrantyClaim as any).findMany({
             where: {
                 OR: [
                     { inventoryItemId: item.id },
@@ -126,16 +167,7 @@ export async function GET(request: Request) {
                 inventoryItem: { include: { product: true } }
             },
             orderBy: { createdAt: 'desc' }
-        }) as any[];
-
-        // 4b. Find Build Rejections for this serial
-        const buildRejections = await (prisma as any).buildRejection.findMany({
-            where: { serialNumber: exactSerial },
-            include: {
-                deliveryOrder: { select: { orderNumber: true, id: true } }
-            },
-            orderBy: { rejectedAt: 'desc' },
-        })
+        }) as any[] : [];
 
         // Manually fetch replacement items since the relation is missing in schema
         const replacementItemIds = warrantyClaims
@@ -148,7 +180,6 @@ export async function GET(request: Request) {
                 include: { product: true }
             });
 
-            // Associate back to claims
             warrantyClaims.forEach(c => {
                 if (c.replacementItemId) {
                     c.replacementItem = replacementItems.find(i => i.id === c.replacementItemId);
@@ -157,10 +188,8 @@ export async function GET(request: Request) {
         }
 
         let replacementInfo = null;
-        if (warrantyClaims.length > 0) {
-            // Check if this item was replaced (it is the original item in a claim with a replacement)
+        if (warrantyClaims.length > 0 && item) {
             const wasReplacedClaim = warrantyClaims.find(c => c.inventoryItemId === item.id && (c.replacementItemId || (c as any).replacementExternalInfo));
-            // Check if this item IS a replacement (it is the replacement item in a claim)
             const isReplacementClaim = warrantyClaims.find(c => c.replacementItemId === item.id);
 
             replacementInfo = {
@@ -180,7 +209,7 @@ export async function GET(request: Request) {
             };
         }
 
-        // 5. Combine and format all events
+        // 6. Combine and format all events
         const transactionHistory = transactionLogs.map(log => ({
             id: log.id,
             type: log.type,
@@ -191,41 +220,22 @@ export async function GET(request: Request) {
         }));
 
         const auditHistory = auditLogs.map(log => {
-            // Parse metadata if it exists
             let metadata: any = {};
-            try {
-                if (log.metadata) {
-                    metadata = JSON.parse(log.metadata);
-                }
-            } catch (e) {
-                console.error('Failed to parse audit log metadata:', e);
-            }
-
-            // Parse changes if they exist
+            try { if (log.metadata) metadata = JSON.parse(log.metadata); } catch (e) { }
             let changes: any = {};
-            try {
-                if (log.changes) {
-                    changes = JSON.parse(log.changes);
-                }
-            } catch (e) {
-                console.error('Failed to parse audit log changes:', e);
-            }
+            try { if (log.changes) changes = JSON.parse(log.changes); } catch (e) { }
 
-            // Format the event description based on entity type and action
             let description = '';
             if (log.entityType === 'WARRANTY') {
-                if (log.action === 'CREATE') {
-                    description = `Warranty claim created: ${metadata.description || 'No description'}`;
-                } else if (log.action === 'UPDATE') {
-                    description = `Warranty claim updated`;
-                }
+                description = log.action === 'CREATE'
+                    ? `Warranty claim created: ${metadata.description || 'No description'}`
+                    : `Warranty claim updated: ${log.action}`;
             } else if (log.entityType === 'INVENTORY') {
                 if (log.action === 'UPDATE' && changes.after?.status) {
                     description = `Status changed from ${changes.before?.status || 'N/A'} to ${changes.after?.status}`;
-                    if (changes.after?.reason) {
-                        description += ` - ${changes.after.reason}`;
-                    }
                 }
+            } else if (log.entityType === 'SERVICE_CONTRACT') {
+                description = `AMC/Contract update: ${log.action}`;
             }
 
             return {
@@ -234,21 +244,26 @@ export async function GET(request: Request) {
                 date: log.createdAt,
                 notes: description || `${log.entityType} ${log.action}`,
                 performedBy: log.userName,
-                source: 'audit',
-                metadata,
-                changes
+                source: 'audit'
             };
         });
 
-        // Combine and sort all events by date (newest first)
-        const allHistory = [...transactionHistory, ...auditHistory]
+        const amcHistory = allRelatedAMCs.map(amc => ({
+            id: amc.id,
+            type: 'AMC_COVERAGE',
+            date: amc.startDate,
+            notes: `Covered under AMC: ${amc.product.name} (Ref: ${amc.contractNumber || 'N/A'}) - Status: ${amc.status}`,
+            performedBy: 'System',
+            source: 'amc'
+        }));
+
+        const allHistory = [...transactionHistory, ...auditHistory, ...amcHistory]
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-        console.log("Total history events:", allHistory.length);
+        const doInfo = (item as any)?.deliveryOrderItem?.deliveryOrder;
 
-        const doInfo = (item as any).deliveryOrderItem?.deliveryOrder;
-        const result = {
-            item: {
+        const finalResult = {
+            item: item ? {
                 id: item.id,
                 serialNumber: item.serialNumber,
                 status: item.status,
@@ -260,6 +275,15 @@ export async function GET(request: Request) {
                     model: item.product.model,
                     warrantyMonths: item.product.warrantyMonths
                 }
+            } : {
+                serialNumber: exactSerial,
+                status: 'AMC_ONLY',
+                product: {
+                    name: amcRecord?.product.name || 'External Product',
+                    brand: amcRecord?.product.brand || 'N/A',
+                    model: amcRecord?.productModel || 'N/A',
+                    sku: amcRecord?.product.sku || 'N/A'
+                }
             },
             saleParams: doInfo ? {
                 date: doInfo.createdAt,
@@ -268,21 +292,19 @@ export async function GET(request: Request) {
                 endCustomer: doInfo.endCustomer?.name || doInfo.endCustomerName || null,
                 invoiceNumber: doInfo.invoiceNumber
             } : null,
+            amcs: allRelatedAMCs.map(amc => ({
+                id: amc.id,
+                contractNumber: amc.contractNumber,
+                status: amc.status,
+                startDate: amc.startDate,
+                endDate: amc.endDate,
+                productName: amc.product.name
+            })),
             history: allHistory,
-            replacementInfo,
-            buildRejections: buildRejections.map((r: any) => ({
-                id: r.id,
-                serialNumber: r.serialNumber,
-                comment: r.comment,
-                rejectedByName: r.rejectedByName,
-                rejectedAt: r.rejectedAt,
-                dismissed: r.dismissed,
-                orderNumber: r.deliveryOrder?.orderNumber || null,
-                orderId: r.deliveryOrder?.id || null,
-            }))
+            replacementInfo
         };
 
-        return NextResponse.json(result);
+        return NextResponse.json(finalResult);
 
     } catch (error: any) {
         console.error("Warranty lookup error:", error);

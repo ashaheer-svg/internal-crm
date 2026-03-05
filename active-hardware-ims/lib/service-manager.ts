@@ -85,6 +85,8 @@ export async function activateServiceContract(data: {
     contractValue?: number;
     invoiceReference?: string;
     salesRepId?: string;
+    productModel?: string;
+    coveredSerials?: string;
 }, tx?: any) {
     const client = tx || db;
     // Fetch definition to get defaults
@@ -117,7 +119,9 @@ export async function activateServiceContract(data: {
             partnerId: data.partnerId,
             contractValue: data.contractValue || 0,
             invoiceReference: data.invoiceReference,
-            salesRepId: data.salesRepId
+            salesRepId: data.salesRepId,
+            productModel: data.productModel,
+            coveredSerials: data.coveredSerials
         }
     });
 }

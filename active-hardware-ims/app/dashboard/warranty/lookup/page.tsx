@@ -9,7 +9,7 @@ import DocumentFooter from "@/components/DocumentFooter"
 
 type WarrantyInfo = {
     item: {
-        id: string
+        id?: string
         serialNumber: string
         status: string
         warrantyExpiry: string | null
@@ -26,15 +26,23 @@ type WarrantyInfo = {
         orderNumber: string
         customer: string
         endCustomer: string | null
-        type: string
         invoiceNumber: string | null
     } | null
+    amcs: Array<{
+        id: string
+        contractNumber: string | null
+        status: string
+        startDate: string
+        endDate: string | null
+        productName: string
+    }>
     history: Array<{
         id: string
         type: string
         date: string
         notes: string
         performedBy: string
+        source: string
     }>
     replacementInfo: {
         replacedBy: {
@@ -54,7 +62,16 @@ type WarrantyInfo = {
     candidates?: Array<{
         id: string
         serialNumber: string
+        type: string
         status: string
+        location: string
+        partner: string
+        endCustomer: string | null
+        deliveryOrder: {
+            number: string | null
+            date: string | null
+            invoiceNumber: string | null
+        }
         product: {
             sku: string
             name: string
@@ -77,9 +94,9 @@ export default function WarrantyLookupPage() {
     const [projectLoading, setProjectLoading] = useState(false)
     const [projectError, setProjectError] = useState("")
 
-    async function handleSearch(e: React.FormEvent) {
-        e.preventDefault()
-        if (!serial.trim()) return
+    async function handleSearch(e: React.FormEvent | string) {
+        if (typeof e !== 'string') e.preventDefault()
+        if (typeof e === 'string' ? !e.trim() : !serial.trim()) return
 
         setLoading(true)
         setError("")
@@ -110,7 +127,7 @@ export default function WarrantyLookupPage() {
 
     function selectCandidate(s: string) {
         setSerial(s)
-        handleSearch(s as any)
+        handleSearch(s)
     }
 
     async function handleProjectSearch(e: React.FormEvent) {
@@ -154,7 +171,7 @@ export default function WarrantyLookupPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
+        <div className="space-y-6 max-w-5xl mx-auto pb-12">
             <style jsx global>{`
                 @page {
                     size: A4;
@@ -172,12 +189,12 @@ export default function WarrantyLookupPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
                 {/* Serial Search Box */}
-                <div className="bg-white shadow rounded-lg p-6 print:hidden">
+                <div className="bg-white shadow rounded-lg p-6">
                     <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <Package className="w-4 h-4" />
-                        Inventory Item (Serial Number)
+                        Inventory Item / AMC Serial
                     </h2>
                     <form onSubmit={handleSearch} className="flex gap-4">
                         <div className="relative flex-grow">
@@ -189,13 +206,13 @@ export default function WarrantyLookupPage() {
                                 value={serial}
                                 onChange={(e) => setSerial(e.target.value)}
                                 placeholder="Enter Serial Number..."
-                                className="block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 text-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 text-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-[48px]"
                             />
                         </div>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 h-[48px]"
                         >
                             {loading ? 'Searching...' : 'Search'}
                         </button>
@@ -203,7 +220,7 @@ export default function WarrantyLookupPage() {
                 </div>
 
                 {/* Project Search Box */}
-                <div className="bg-white shadow rounded-lg p-6 print:hidden">
+                <div className="bg-white shadow rounded-lg p-6">
                     <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <FileText className="w-4 h-4" />
                         CRM Projects (Name, Customer, Partner)
@@ -218,13 +235,13 @@ export default function WarrantyLookupPage() {
                                 value={projectQuery}
                                 onChange={(e) => setProjectQuery(e.target.value)}
                                 placeholder="Search Projects..."
-                                className="block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 text-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 text-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-[48px]"
                             />
                         </div>
                         <button
                             type="submit"
                             disabled={projectLoading}
-                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 h-[48px]"
                         >
                             {projectLoading ? 'Searching...' : 'Search'}
                         </button>
@@ -234,7 +251,7 @@ export default function WarrantyLookupPage() {
 
             {/* Serial Search Error */}
             {error && (
-                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-md">
+                <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-md no-print">
                     <div className="flex">
                         <div className="flex-shrink-0">
                             <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -262,7 +279,7 @@ export default function WarrantyLookupPage() {
 
             {/* Project Search Results */}
             {projects && (
-                <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-200 mt-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-200 mt-6 no-print animate-in fade-in slide-in-from-top-4">
                     <div className="px-6 py-4 border-b border-gray-200 bg-indigo-50 flex justify-between items-center">
                         <h3 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
                             <FileText className="h-5 w-5" />
@@ -320,233 +337,234 @@ export default function WarrantyLookupPage() {
             )}
 
             {/* Candidate Selection List */}
-            {
-                candidates && candidates.length > 0 && (
-                    <div className="bg-white shadow rounded-lg overflow-hidden border-2 border-blue-100 no-print">
-                        <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
-                            <h3 className="text-lg font-medium text-blue-900 flex items-center gap-2">
-                                <Search className="h-5 w-5" />
-                                Multiple matches found. Please select:
-                            </h3>
-                        </div>
-                        <div className="divide-y divide-gray-200">
-                            {candidates.map((cand) => (
-                                <button
-                                    key={cand.id}
-                                    onClick={() => selectCandidate(cand.serialNumber)}
-                                    className="w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors"
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <p className="font-bold text-xl text-gray-900 font-mono">{cand.serialNumber}</p>
-                                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                                <span className="text-gray-600 flex items-center gap-1">
-                                                    <Package className="w-3.5 h-3.5" />
-                                                    {cand.product.brand} {cand.product.model}
-                                                </span>
-                                                <span className="text-gray-500 font-mono text-xs flex items-center gap-1 border-l pl-4">
-                                                    {cand.product.sku}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cand.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                                                cand.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {cand.status}
-                                            </span>
-                                            <p className="text-blue-600 text-sm font-medium mt-1">View Details →</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Extra Details Grid */}
-                                    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-3 rounded-md text-xs">
-                                        <div>
-                                            <p className="text-gray-500 font-medium">Location</p>
-                                            <p className="text-gray-900 font-semibold mt-0.5">{cand.location}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 font-medium">Partner / Customer</p>
-                                            <p className="text-gray-900 font-semibold mt-0.5 truncate max-w-[150px]" title={cand.partner}>
-                                                {cand.partner}
-                                                {cand.endCustomer && <span className="text-gray-400 font-normal"> → {cand.endCustomer}</span>}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 font-medium">Delivery Order</p>
-                                            <p className="text-gray-900 font-semibold mt-0.5">
-                                                {cand.deliveryOrder.number ? (
-                                                    <>#{cand.deliveryOrder.number} <span className="text-gray-400 font-normal">({formatDate(cand.deliveryOrder.date)})</span></>
-                                                ) : 'N/A'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 font-medium">Invoice Number</p>
-                                            <p className="text-gray-900 font-semibold mt-0.5">{cand.deliveryOrder.invoiceNumber || 'N/A'}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+            {candidates && candidates.length > 0 && (
+                <div className="bg-white shadow rounded-lg overflow-hidden border-2 border-blue-100 no-print">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                        <h3 className="text-lg font-medium text-blue-900 flex items-center gap-2">
+                            <Search className="h-5 w-5" />
+                            Multiple matches found. Please select:
+                        </h3>
                     </div>
-                )
-            }
+                    <div className="divide-y divide-gray-200">
+                        {candidates.map((cand) => (
+                            <button
+                                key={cand.id}
+                                onClick={() => selectCandidate(cand.serialNumber)}
+                                className="w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-xl text-gray-900 font-mono">{cand.serialNumber}</p>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                            <span className="text-gray-600 flex items-center gap-1">
+                                                <Package className="w-3.5 h-3.5" />
+                                                {cand.product.brand} {cand.product.model}
+                                            </span>
+                                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-bold uppercase tracking-wider ml-2">
+                                                {cand.type}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cand.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
+                                            cand.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {cand.status}
+                                        </span>
+                                        <p className="text-blue-600 text-sm font-medium mt-1 uppercase tracking-tight">View Details →</p>
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Results */}
-            {
-                result && (
-                    <div className="space-y-6">
-                        <div className="hidden print:block">
-                            <DocumentHeader title="WARRANTY REPORT" subtitle="Service History & Coverage" />
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:block print:space-y-6">
-                            {/* Left Col: Product & Status */}
-                            <div className="lg:col-span-2 space-y-6 print:mb-6">
-                                {/* Product Card */}
-                                <div className="bg-white shadow rounded-lg overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                                        <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                                            <Package className="h-5 w-5 text-gray-500" />
-                                            Product Details
-                                        </h3>
+            {result && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                    <div className="hidden print:block">
+                        <DocumentHeader title="WARRANTY & SERVICE REPORT" subtitle="Complete Item Lifecycle History" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:block print:space-y-6">
+                        {/* Left/Main Col */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Status Banner */}
+                            <div className={`p-4 rounded-lg flex items-center justify-between shadow-sm border ${result.item.status === 'AMC_ONLY' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200'}`}>
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-3 rounded-full ${result.item.status === 'AMC_ONLY' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-50 text-blue-600'}`}>
+                                        <Package className="w-6 h-6" />
                                     </div>
-                                    <div className="p-6">
-                                        <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Current Status</p>
+                                        <h2 className="text-xl font-black text-gray-900 leading-none">{result.item.status}</h2>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 text-right">Serial Number</p>
+                                    <h2 className="text-xl font-mono font-bold text-gray-900 leading-none">{result.item.serialNumber}</h2>
+                                </div>
+                            </div>
+
+                            {/* Product & Sale Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+                                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                                        <Package className="w-4 h-4 text-gray-400" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Product Specification</span>
+                                    </div>
+                                    <div className="p-4 space-y-4">
+                                        <div>
+                                            <p className="text-lg font-bold text-gray-900 leading-tight">{result.item.product.name}</p>
+                                            <p className="text-sm text-gray-500 mt-1">{result.item.product.brand} {result.item.product.model}</p>
+                                        </div>
+                                        <div className="flex justify-between items-end border-t pt-3">
                                             <div>
-                                                <dt className="text-sm font-medium text-gray-500">Product Name</dt>
-                                                <dd className="mt-1 text-lg font-semibold text-gray-900">{result.item.product.name}</dd>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Part Number/SKU</p>
+                                                <p className="text-xs font-mono font-bold text-gray-700">{result.item.product.sku}</p>
                                             </div>
-                                            <div>
-                                                <dt className="text-sm font-medium text-gray-500">Brand & Model</dt>
-                                                <dd className="mt-1 text-md text-gray-900">{result.item.product.brand} {result.item.product.model}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-sm font-medium text-gray-500">SKU</dt>
-                                                <dd className="mt-1 text-sm font-mono text-gray-700">{result.item.product.sku}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-sm font-medium text-gray-500">Serial Number</dt>
-                                                <dd className="mt-1 text-sm font-mono text-gray-700 bg-gray-100 inline-block px-2 py-1 rounded">
-                                                    {result.item.serialNumber}
-                                                </dd>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Std. Warranty</p>
+                                                <p className="text-xs font-bold text-gray-700">{result.item.product.warrantyMonths} Months</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Warranty Status Card */}
-                                <div className="bg-white shadow rounded-lg overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                                        <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                                            <ShieldIcon status={getWarrantyStatus(result.item.warrantyExpiry).status} />
-                                            Warranty Status
-                                        </h3>
+                                <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+                                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-gray-400" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Sale & Fulfillment</span>
                                     </div>
-                                    <div className="p-6">
-                                        <div className={`rounded-md p-4 mb-4 flex items-start gap-3 ${getWarrantyStatus(result.item.warrantyExpiry).bg}`}>
-                                            <Clock className={`h-6 w-6 ${getWarrantyStatus(result.item.warrantyExpiry).color}`} />
-                                            <div>
-                                                <h4 className={`text-lg font-bold ${getWarrantyStatus(result.item.warrantyExpiry).color}`}>
-                                                    {getWarrantyStatus(result.item.warrantyExpiry).text}
-                                                </h4>
-                                                <p className={`mt-1 text-sm ${getWarrantyStatus(result.item.warrantyExpiry).color}`}>
-                                                    Standard Warranty: {result.item.product.warrantyMonths} Months
-                                                </p>
-                                            </div>
-                                        </div>
-
+                                    <div className="p-4">
                                         {result.saleParams ? (
-                                            <div className="border-t pt-4 mt-4">
-                                                <h4 className="text-sm font-medium text-gray-600 mb-3">Original Sale Details</h4>
-                                                <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-start">
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Date Sold</p>
-                                                        <p className="font-medium text-gray-900">{formatDate(result.saleParams.date)}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Client / End Customer</p>
+                                                        <p className="text-sm font-bold text-gray-900">{result.saleParams.customer}</p>
+                                                        {result.saleParams.endCustomer && <p className="text-xs text-blue-600 font-medium italic mt-0.5">Ship To: {result.saleParams.endCustomer}</p>}
                                                     </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Sale Date</p>
+                                                        <p className="text-sm font-bold text-gray-900">{formatDate(result.saleParams.date)}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between border-t pt-3">
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Order Number</p>
-                                                        <Link href={`/dashboard/transactions/delivery-orders/${result.saleParams.orderNumber}`} className="text-blue-600 hover:underline font-medium">
-                                                            #{result.saleParams.orderNumber}
-                                                        </Link>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">DO Number</p>
+                                                        <p className="text-xs font-bold text-indigo-600">#{result.saleParams.orderNumber}</p>
                                                     </div>
-                                                    <div className="col-span-2">
-                                                        <p className="text-xs text-gray-500">Customer</p>
-                                                        <div className="font-medium text-gray-900 flex items-center gap-1">
-                                                            <User className="h-3 w-3 text-gray-400" />
-                                                            {result.saleParams.customer}
-                                                            {result.saleParams.endCustomer && (
-                                                                <span className="text-gray-500 font-normal ml-1">
-                                                                    → {result.saleParams.endCustomer}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-500">Invoice Number</p>
-                                                        <p className="font-medium text-gray-900">{result.saleParams.invoiceNumber || 'N/A'}</p>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Invoice Ref</p>
+                                                        <p className="text-xs font-bold text-gray-700">{result.saleParams.invoiceNumber || 'NOT INVOICED'}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="border-t pt-4 mt-4 bg-gray-50 p-4 rounded text-sm text-gray-500 italic">
-                                                Sales record not found in system (possibly imported or legacy item)
+                                            <div className="h-full flex flex-col items-center justify-center text-center py-4">
+                                                <AlertTriangle className="w-8 h-8 text-yellow-400 mb-2" />
+                                                <p className="text-sm font-bold text-gray-800">No Direct Sale Record</p>
+                                                <p className="text-[11px] text-gray-500 max-w-[180px]">Item may be legacy, imported, or only covered under AMC/Service.</p>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Right Col: Timeline */}
-                            <div className="bg-white shadow rounded-lg overflow-hidden flex flex-col h-full">
-                                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                                    <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                                        <FileText className="h-5 w-5 text-gray-500" />
-                                        History Log
-                                    </h3>
-                                    <button
-                                        onClick={() => window.print()}
-                                        className="print:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-                                        title="Print Warranty Report"
-                                    >
-                                        <Printer className="w-5 h-5" />
-                                    </button>
+                            {/* Warranty & AMC Status Box */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Warranty Card */}
+                                <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-5">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <ShieldIcon status={getWarrantyStatus(result.item.warrantyExpiry || null).status} />
+                                        <h3 className="text-sm font-bold text-gray-900">Original Warranty</h3>
+                                    </div>
+                                    <div className={`p-4 rounded-md border ${getWarrantyStatus(result.item.warrantyExpiry || null).bg} ${getWarrantyStatus(result.item.warrantyExpiry || null).color.replace('text', 'border')}`}>
+                                        <p className="text-xs font-bold uppercase tracking-widest opacity-60">Status</p>
+                                        <p className="text-lg font-black">{getWarrantyStatus(result.item.warrantyExpiry || null).status}</p>
+                                        <p className="text-xs mt-1 font-medium italic opacity-80">{getWarrantyStatus(result.item.warrantyExpiry || null).text}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-6 max-h-[600px] print:max-h-none print:overflow-visible">
-                                    {result.history.length === 0 ? (
-                                        <p className="text-sm text-gray-500 italic text-center py-4">No history logged.</p>
-                                    ) : (
-                                        <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                                            {result.history.map((log) => (
-                                                <div key={log.id} className="relative flex items-center justify-between group is-active">
-                                                    {/* Icon */}
-                                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-500 text-slate-500 group-[.is-active]:text-white shadow shrink-0">
-                                                        <Clock className="w-5 h-5" />
-                                                    </div>
 
-                                                    {/* Card */}
-                                                    <div className="w-[calc(100%-3rem)] ml-4 bg-white p-4 rounded border border-slate-200 shadow">
-                                                        <div className="flex items-center justify-between space-x-2 mb-1">
-                                                            <div className="font-bold text-slate-900 text-sm">{log.type}</div>
-                                                            <time className="font-caveat font-medium text-indigo-500 text-xs">{formatDate(log.date)}</time>
-                                                        </div>
-                                                        <div className="text-slate-500 text-xs">
-                                                            {log.notes}
-                                                        </div>
-                                                        <div className="mt-1 text-xs text-gray-400">
-                                                            by {log.performedBy}
-                                                        </div>
+                                {/* AMC Highlights */}
+                                <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-5">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <RefreshCw className="w-5 h-5 text-indigo-500" />
+                                        <h3 className="text-sm font-bold text-gray-900">AMC / Support Coverage</h3>
+                                    </div>
+                                    {result.amcs.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {result.amcs.map(amc => (
+                                                <div key={amc.id} className="p-3 bg-indigo-50 rounded border border-indigo-100">
+                                                    <div className="flex justify-between items-start">
+                                                        <p className="text-xs font-bold text-indigo-900 tracking-tight">{amc.contractNumber || 'AMC AGREEMENT'}</p>
+                                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${amc.status === 'ACTIVE' ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'}`}>
+                                                            {amc.status}
+                                                        </span>
                                                     </div>
+                                                    <p className="text-[10px] text-indigo-700 mt-1 font-medium">{amc.productName}</p>
+                                                    <p className="text-[10px] text-indigo-500 mt-1">
+                                                        Valid: {formatDate(amc.startDate)} to {amc.endDate ? formatDate(amc.endDate) : 'Indefinite'}
+                                                    </p>
                                                 </div>
                                             ))}
+                                        </div>
+                                    ) : (
+                                        <div className="h-[84px] flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded bg-gray-50">
+                                            <p className="text-xs text-gray-400 font-medium">No Active AMC</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        <DocumentFooter />
+
+                        {/* Right Col: Timeline History */}
+                        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden flex flex-col">
+                            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest">Item History</h3>
+                                <button
+                                    onClick={() => window.print()}
+                                    className="no-print p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="p-6 overflow-y-auto max-h-[800px] print:max-h-none relative">
+                                {result.history.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic text-center py-4">No events recorded.</p>
+                                ) : (
+                                    <div className="space-y-6 relative before:absolute before:left-2.5 before:top-0 before:h-full before:w-0.5 before:bg-gray-100">
+                                        {result.history.map((log) => (
+                                            <div key={log.id} className="relative pl-8">
+                                                {/* Dot/Icon */}
+                                                <div className={`absolute left-0 top-1 w-5 h-5 rounded-full border-2 border-white shadow-sm flex items-center justify-center z-10 
+                                                    ${log.source === 'transaction' ? 'bg-blue-500' : log.source === 'amc' ? 'bg-indigo-500' : 'bg-gray-400'}`}>
+                                                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                                </div>
+                                                <div className="bg-white border border-gray-100 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{log.type}</span>
+                                                        <span className="text-[10px] font-mono text-gray-400 font-medium">{formatDate(log.date)}</span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-800 leading-relaxed font-medium">{log.notes}</p>
+                                                    <div className="mt-2 text-[9px] text-gray-400 flex items-center gap-1 font-bold">
+                                                        <User className="w-2.5 h-2.5" />
+                                                        {log.performedBy.toUpperCase()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                )}
+                </div>
+            )}
+            <DocumentFooter />
         </div>
     )
 }

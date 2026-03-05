@@ -49,7 +49,7 @@ export default function CustomerSelector({ onSelect, selectedCustomer, type }: C
     async function fetchAllCustomers() {
         setLoading(true)
         try {
-            const url = type ? `/api/customers?type=${type}` : "/api/customers"
+            const url = type ? `/api/customers?type=${type}&limit=100` : "/api/customers?limit=100"
             const res = await fetch(url)
             if (!res.ok) throw new Error("Failed to fetch customers")
             const data = await res.json()

@@ -394,6 +394,9 @@ export default function ServiceDashboardClient({
                                             <Link href={`/dashboard/services/contracts/${contract.id}/edit`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Edit Contract">
                                                 <AlertCircle className="w-4 h-4 rotate-180" />
                                             </Link>
+                                            <Link href={`/dashboard/services/contracts/${contract.id}/agreement`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" target="_blank" title="View Agreement">
+                                                <Printer className="w-4 h-4 text-blue-500" />
+                                            </Link>
                                             <Link href={`/dashboard/services/contracts/${contract.id}/print`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" target="_blank" title="Print Certificate">
                                                 <Printer className="w-4 h-4" />
                                             </Link>

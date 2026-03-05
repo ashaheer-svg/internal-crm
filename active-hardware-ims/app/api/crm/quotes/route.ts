@@ -60,6 +60,8 @@ export async function POST(request: Request) {
                 order: index,
                 productId: item.productId || null,
                 description: item.description,
+                productModel: item.productModel || null,
+                serialNumbers: item.serialNumbers || null,
                 quantity,
                 unitPrice,
                 discount,

@@ -34,7 +34,7 @@ export default function ProductSelector({
             const params = new URLSearchParams({
                 type,
                 search,
-                limit: '50' // Show up to 50 matches in the dropdown
+                limit: '100' // Show up to 100 matches in the dropdown
             })
             const res = await fetch(`/api/products?${params}`)
 
