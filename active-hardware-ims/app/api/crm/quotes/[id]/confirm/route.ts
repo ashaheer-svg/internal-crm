@@ -22,7 +22,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                     include: {
                         customer: true
                     }
-                }
+                },
+                billTo: true,
+                shipTo: true
             }
         })
 
@@ -106,8 +108,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                     const deliveryOrder = await (tx as any).deliveryOrder.create({
                         data: {
                             orderNumber: doNumber,
-                            customerId: quote.project.customerId,
-                            customerName: quote.project.customer?.name || 'Unknown',
+                            customerId: quote.billToId || quote.project.customerId,
+                            customerName: (quote as any).billTo?.name || quote.project.customer?.name || 'Unknown',
+                            endCustomerId: quote.saleType === 'PARTNER' ? (quote.shipToId || quote.project.customerId) : null,
+                            endCustomerName: quote.saleType === 'PARTNER' ? ((quote as any).shipTo?.name || quote.project.customer?.name) : null,
                             saleType: quote.saleType || 'DIRECT',
                             invoiceValue: quote.subTotal, // Use Sub-total for revenue reporting
                             notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,

@@ -125,84 +125,140 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             />
 
             {/* Header / Cockpit Top */}
-            <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <div className="mb-4">
+            <div className="bg-white border-b border-gray-200 px-8 py-8 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                    <div className="flex-1 w-full">
+                        <div className="flex items-center gap-3 mb-4">
                             <BackButton />
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-medium text-gray-500">{project.projectCode}</span>
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${project.status === 'WON' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                            <div className="h-4 w-px bg-gray-200 mx-1" />
+                            <span className="text-sm font-bold tracking-wider text-gray-400 font-mono">{project.projectCode}</span>
+                            <span className={cn(
+                                "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+                                project.status === 'WON' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                                    project.status === 'LOST' ? 'bg-red-50 border-red-100 text-red-700' :
+                                        'bg-blue-50 border-blue-100 text-blue-700'
+                            )}>
                                 {project.status}
                             </span>
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
-                        <div className="flex items-center gap-4 mt-2 text-gray-600">
-                            <span className="flex items-center text-sm">
-                                <User className="w-4 h-4 mr-1" />
-                                {project.customer.name}
-                            </span>
+
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6">
+                            {project.title}
+                        </h1>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Customer Pillar */}
+                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
+                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                    <Users className="w-4 h-4 text-gray-400" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Customer</p>
+                                    <p className="text-sm font-bold text-gray-900 leading-none">{project.customer.name}</p>
+                                </div>
+                            </div>
+
+                            {/* Brand Pillar */}
                             {project.brand && (
-                                <span className="flex items-center text-sm px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full border border-gray-200">
-                                    <Tag className="w-3.5 h-3.5 mr-1" />
-                                    {project.brand}
-                                </span>
+                                <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
+                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                        <Tag className="w-4 h-4 text-blue-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Brand</p>
+                                        <p className="text-sm font-bold text-gray-900 leading-none">{project.brand}</p>
+                                    </div>
+                                </div>
                             )}
+
+                            {/* Partner Pillar */}
                             {project.partner && (
-                                <span className="flex items-center text-sm px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100">
-                                    <Users className="w-4 h-4 mr-1" />
-                                    Partner: {project.partner.name}
-                                </span>
+                                <div className="flex items-center bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-2 shadow-sm">
+                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                        <Users className="w-4 h-4 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1">Partner</p>
+                                        <p className="text-sm font-bold text-purple-700 leading-none">{project.partner.name}</p>
+                                    </div>
+                                </div>
                             )}
+
+                            {/* Sales Rep Pillar */}
                             {project.salesRep && (
-                                <span className="flex items-center text-sm px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100">
-                                    <User className="w-4 h-4 mr-1" />
-                                    Rep: {project.salesRep.name}
-                                </span>
+                                <div className="flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2 shadow-sm">
+                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                        <User className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1">Owner</p>
+                                        <p className="text-sm font-bold text-blue-700 leading-none">{project.salesRep.name}</p>
+                                    </div>
+                                </div>
                             )}
-                            <span className="flex items-center text-sm">
-                                <DollarSign className="w-4 h-4 mr-1" />
-                                {formatCurrency(project.expectedValue, project.currency)}
-                            </span>
-                            <span className="flex items-center text-sm">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                Target: {project.targetDate ? new Date(project.targetDate).toLocaleDateString() : 'N/A'}
-                            </span>
+
+                            {/* Expected Value */}
+                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
+                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Expected Value</p>
+                                    <p className="text-sm font-bold text-gray-900 leading-none">{formatCurrency(project.expectedValue, project.currency)}</p>
+                                </div>
+                            </div>
+
+                            {/* Target Date */}
+                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
+                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3">
+                                    <Calendar className="w-4 h-4 text-amber-500" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Target Date</p>
+                                    <p className="text-sm font-bold text-gray-900 leading-none">
+                                        {project.targetDate ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* GP Indicator */}
                             {project.estimatedGP !== undefined && (
-                                <span className={cn(
-                                    "flex items-center text-sm px-2 py-0.5 rounded-full border border-opacity-50 font-bold",
-                                    project.estimatedGP >= 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"
+                                <div className={cn(
+                                    "flex items-center rounded-xl px-4 py-2 shadow-sm border",
+                                    project.estimatedGP >= 0 ? "bg-emerald-500 border-emerald-600" : "bg-red-500 border-red-600"
                                 )}>
-                                    GP: {formatCurrency(project.estimatedGP, project.currency)} ({project.estimatedMargin?.toFixed(1)}%)
-                                </span>
-                            )}
-                            {project.expectedCloseDate && (
-                                <span className="flex items-center text-sm text-blue-600 font-medium">
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    Close: {new Date(project.expectedCloseDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
-                                </span>
+                                    <div className="p-1.5 bg-white/20 rounded-lg mr-3">
+                                        <DollarSign className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1">Est. Profit</p>
+                                        <p className="text-sm font-black text-white leading-none">
+                                            {formatCurrency(project.estimatedGP, project.currency)}
+                                            <span className="ml-1.5 text-xs font-bold opacity-80">({project.estimatedMargin?.toFixed(1)}%)</span>
+                                        </p>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setShowEditModal(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
                         >
                             Edit Project
                         </button>
                         <button
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/hardware`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-sm font-black text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100"
                         >
                             <Plus className="w-4 h-4" />
                             Hardware Quote
                         </button>
                         <button
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/service`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-sm font-black text-white hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
                         >
                             <Plus className="w-4 h-4" />
                             Service Quote
@@ -210,38 +266,36 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                 </div>
 
-                {/* Pipeline Progress Bar */}
-                <div className="mt-8">
-                    <div className="flex items-center w-full">
+                {/* Pipeline Progress Indicator */}
+                <div className="mt-10">
+                    <div className="flex items-center justify-between gap-1">
                         {project.pipeline.stages.map((stage, idx) => {
-                            // Determine status
                             const currentStageIndex = project.pipeline.stages.findIndex(s => s.id === project.stage.id);
-                            const isCompleted = idx <= currentStageIndex;
+                            const isCompleted = idx < currentStageIndex;
                             const isCurrent = idx === currentStageIndex;
+                            const isPast = idx <= currentStageIndex;
 
                             return (
-                                <div key={stage.id} className="flex-1 relative group">
-                                    <div className="flex items-center">
-                                        {/* Bar */}
-                                        <div
-                                            className={`h-2 w-full transition-colors ${isCompleted ? 'bg-blue-500' : 'bg-gray-200'
-                                                } ${idx === 0 ? 'rounded-l-full' : ''} ${idx === project.pipeline.stages.length - 1 ? 'rounded-r-full' : ''}`}
-                                        />
-                                        {/* Divider (white space) */}
-                                        {idx < project.pipeline.stages.length - 1 && (
-                                            <div className="w-1 h-2 bg-white z-10" />
-                                        )}
+                                <button
+                                    key={stage.id}
+                                    onClick={() => updateStage(stage.id)}
+                                    className="flex-1 group transition-all"
+                                >
+                                    <div className="relative mb-2">
+                                        <div className={cn(
+                                            "h-1.5 w-full rounded-full transition-all duration-300",
+                                            isCurrent ? "bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]" :
+                                                isCompleted ? "bg-blue-200" : "bg-gray-100 group-hover:bg-gray-200"
+                                        )} />
                                     </div>
-
-                                    {/* Label Button */}
-                                    <button
-                                        onClick={() => updateStage(stage.id)}
-                                        className={`absolute top-4 left-0 w-full text-center text-xs font-semibold transition-colors ${isCurrent ? 'text-blue-600' : isCompleted ? 'text-gray-900' : 'text-gray-400'
-                                            } hover:text-blue-500`}
-                                    >
+                                    <span className={cn(
+                                        "block text-[10px] font-black uppercase tracking-widest transition-colors",
+                                        isCurrent ? "text-blue-600" :
+                                            isCompleted ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
+                                    )}>
                                         {stage.name}
-                                    </button>
-                                </div>
+                                    </span>
+                                </button>
                             )
                         })}
                     </div>
@@ -276,59 +330,61 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             <div className="col-span-2 space-y-6">
                                 {/* Approval Context Card */}
                                 {project.quotes.find(q => q.status === 'ACCEPTED') && (
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 shadow-sm">
-                                        <div className="flex items-center justify-between mb-4">
+                                    <div className="bg-white border border-emerald-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <div className="bg-emerald-50/50 px-6 py-4 border-b border-emerald-100 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <CheckCircle className="w-5 h-5 text-green-600" />
-                                                <h3 className="text-lg font-bold text-green-900">Quotation Approved</h3>
+                                                <div className="p-1.5 bg-emerald-500 rounded-lg">
+                                                    <CheckCircle className="w-4 h-4 text-white" />
+                                                </div>
+                                                <h3 className="text-sm font-black text-emerald-900 uppercase tracking-widest">Quotation Approved</h3>
                                             </div>
                                             {project.quotes.find(q => q.status === 'ACCEPTED')?.urgency === 'URGENT' && (
-                                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded flex items-center gap-1 animate-pulse">
+                                                <span className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-black rounded-full flex items-center gap-1 animate-pulse border border-red-200 uppercase tracking-tighter">
                                                     <AlertCircle className="w-3 h-3" />
-                                                    URGENT FULFILLMENT
+                                                    Urgent Fulfillment
                                                 </span>
                                             )}
                                         </div>
 
-                                        {(() => {
-                                            const acceptedQuote = project.quotes.find(q => q.status === 'ACCEPTED');
-                                            return (
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-3">
-                                                        <div>
-                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Purchase Order (PO)</p>
-                                                            <p className="text-sm font-bold text-gray-900">{acceptedQuote.poNumber || 'N/A'}</p>
+                                        <div className="p-6">
+                                            {(() => {
+                                                const acceptedQuote = project.quotes.find(q => q.status === 'ACCEPTED');
+                                                return (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Purchase Order (PO)</p>
+                                                            <p className="text-sm font-black text-gray-900">{acceptedQuote.poNumber || 'N/A'}</p>
                                                             {acceptedQuote.poDocumentUrl && (
-                                                                <a href={acceptedQuote.poDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
+                                                                <a href={acceptedQuote.poDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1 transition-colors">
                                                                     <FileText className="w-3 h-3" />
-                                                                    View PO Document
+                                                                    VIEW DOCUMENT
                                                                 </a>
                                                             )}
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Expected Delivery</p>
-                                                            <p className="text-sm font-bold text-gray-900">
-                                                                {acceptedQuote.expectedDeliveryDate ? new Date(acceptedQuote.expectedDeliveryDate).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'Not Specified'}
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Expected Delivery</p>
+                                                            <p className="text-sm font-black text-gray-900">
+                                                                {acceptedQuote.expectedDeliveryDate ? new Date(acceptedQuote.expectedDeliveryDate).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Not Specified'}
                                                             </p>
                                                         </div>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        <div>
-                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Delivery Order (DO)</p>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Delivery Order</p>
                                                             <div className="flex items-center gap-2">
-                                                                <p className="text-sm font-bold text-gray-900">{acceptedQuote.deliveryOrder?.orderNumber || 'Generating...'}</p>
-                                                                <Truck className="w-4 h-4 text-green-600" />
+                                                                <p className="text-sm font-black text-gray-900">{acceptedQuote.deliveryOrder?.orderNumber || 'Pending'}</p>
+                                                                <Truck className="w-4 h-4 text-emerald-500" />
                                                             </div>
-                                                            <p className="text-[10px] text-green-600 font-medium mt-0.5">Status: {acceptedQuote.deliveryOrder?.status || 'DRAFT'}</p>
+                                                            {acceptedQuote.deliveryOrder && (
+                                                                <p className="text-[10px] text-emerald-600 font-black uppercase tracking-tighter mt-0.5">Status: {acceptedQuote.deliveryOrder.status}</p>
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Quote Reference</p>
-                                                            <p className="text-sm font-bold text-gray-900">{acceptedQuote.quoteNumber}</p>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Quote Reference</p>
+                                                            <p className="text-sm font-black text-gray-900">{acceptedQuote.quoteNumber}</p>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })()}
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
                                 )}
 

@@ -318,13 +318,18 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                             // 1. Activate Service Contract / Rental Agreement
                             try {
                                 const contract = await activateServiceContract({
-                                    customerId: currentOrder.customerId!,
+                                    customerId: (currentOrder.saleType === 'PARTNER' && currentOrder.endCustomerId) ? currentOrder.endCustomerId : currentOrder.customerId!,
+                                    partnerId: (currentOrder.saleType === 'PARTNER') ? currentOrder.customerId! : undefined,
                                     productId: item.productId!,
                                     startDate: (item as any).serviceStartDate!,
                                     description: `${isRental ? 'Rental' : 'Service'} fulfilled via Delivery Order ${currentOrder.orderNumber}`,
                                     contractValue: item.unitPrice,
                                     invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
-                                    salesRepId: currentOrder.salesRepId || undefined
+                                    salesRepId: currentOrder.salesRepId || undefined,
+                                    items: (item as any).details?.map((d: any) => ({
+                                        modelName: d.modelName,
+                                        serialNumbers: d.serialNumbers
+                                    }))
                                 }, tx)
 
                                 console.log(`[SERVICE_ACTIVATION] Successfully activated ${serviceType} contract for ${item.product.sku}`);
