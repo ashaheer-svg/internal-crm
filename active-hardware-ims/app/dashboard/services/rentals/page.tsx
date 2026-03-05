@@ -25,7 +25,7 @@ export default function RentalAssetsPage() {
         try {
             const res = await fetch('/api/rentals')
             const data = await res.json()
-            setAssets(data)
+            setAssets(data.assets || [])
         } catch (err) {
             console.error("Failed to fetch assets", err)
         } finally {

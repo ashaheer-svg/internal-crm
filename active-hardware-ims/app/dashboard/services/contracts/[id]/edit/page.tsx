@@ -66,7 +66,7 @@ export default function EditServiceContractPage() {
             if (partnersData.customers) setPartners(partnersData.customers)
             else if (Array.isArray(partnersData)) setPartners(partnersData)
 
-            setSalesReps(salesRepsData)
+            setSalesReps(salesRepsData.salesReps || (Array.isArray(salesRepsData) ? salesRepsData : []))
             setLoading(false)
         }).catch(err => {
             console.error("Failed to load data", err)
@@ -308,7 +308,7 @@ function LinkedAssetsSection({ contractId }: { contractId: string }) {
 
             setLinkedAssets(linked)
             // Filter only available assets
-            setAvailableAssets(all.filter((a: any) => a.status === 'AVAILABLE'))
+            setAvailableAssets((all.assets || []).filter((a: any) => a.status === 'AVAILABLE'))
         } catch (e) {
             console.error("Failed to load assets", e)
         } finally {
