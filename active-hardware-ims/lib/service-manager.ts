@@ -87,6 +87,7 @@ export async function activateServiceContract(data: {
     salesRepId?: string;
     productModel?: string;
     coveredSerials?: string;
+    items?: { modelName: string; serialNumbers: string }[];
 }, tx?: any) {
     const client = tx || db;
     // Fetch definition to get defaults
@@ -121,7 +122,13 @@ export async function activateServiceContract(data: {
             invoiceReference: data.invoiceReference,
             salesRepId: data.salesRepId,
             productModel: data.productModel,
-            coveredSerials: data.coveredSerials
+            coveredSerials: data.coveredSerials,
+            items: data.items ? {
+                create: data.items.map(item => ({
+                    modelName: item.modelName,
+                    serialNumbers: item.serialNumbers
+                }))
+            } : undefined
         }
     });
 }

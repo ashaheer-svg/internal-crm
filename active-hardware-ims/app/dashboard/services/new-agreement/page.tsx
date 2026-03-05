@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Save, Calendar as CalendarIcon, Search } from "lucide-react"
+import { ArrowLeft, Save, Calendar as CalendarIcon, Search, Plus, X } from "lucide-react"
 import Link from "next/link"
 
 import CustomerSelector from "@/components/selectors/CustomerSelector"
@@ -57,6 +57,19 @@ export default function NewServiceAgreementPage() {
     const [durationValue, setDurationValue] = useState(1)
     const [durationUnit, setDurationUnit] = useState("YEAR")
 
+    // Multi-Item Coverage
+    const [items, setItems] = useState<{ modelName: string; serialNumbers: string }[]>([
+        { modelName: "", serialNumbers: "" }
+    ])
+
+    const addItem = () => setItems([...items, { modelName: "", serialNumbers: "" }])
+    const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index))
+    const updateItem = (index: number, field: 'modelName' | 'serialNumbers', value: string) => {
+        const newItems = [...items]
+        newItems[index][field] = value
+        setItems(newItems)
+    }
+
     useEffect(() => {
         // Fetch Sales Reps
         fetch("/api/sales-reps")
@@ -107,8 +120,7 @@ export default function NewServiceAgreementPage() {
                     salesRepId: salesRepId || undefined,
                     contractValue,
                     invoiceReference,
-                    productModel,
-                    coveredSerials
+                    items
                 })
             })
 
@@ -266,26 +278,54 @@ export default function NewServiceAgreementPage() {
                         </div>
                     </div>
 
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Covered Equipment Model</label>
-                        <input
-                            type="text"
-                            value={productModel}
-                            onChange={(e) => setProductModel(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            placeholder="e.g. Synology DS920+, Seagate 10TB HDD, etc."
-                        />
-                    </div>
+                    {/* Multiple Covered Equipment Items */}
+                    <div className="sm:col-span-2 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-medium text-gray-700">Covered Equipment</label>
+                            <button
+                                type="button"
+                                onClick={addItem}
+                                className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                <Plus className="w-3 h-3 mr-1" /> Add Item
+                            </button>
+                        </div>
 
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Covered Serial Numbers</label>
-                        <textarea
-                            rows={2}
-                            value={coveredSerials}
-                            onChange={(e) => setCoveredSerials(e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            placeholder="Enter serial numbers, one per line or separated by commas"
-                        />
+                        {items.map((item, index) => (
+                            <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4 relative group">
+                                {items.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeItem(index)}
+                                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Product / Equipment Model</label>
+                                        <input
+                                            type="text"
+                                            value={item.modelName}
+                                            onChange={(e) => updateItem(index, 'modelName', e.target.value)}
+                                            className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                            placeholder="e.g. Synology DS920+, Seagate 10TB HDD"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Serial Numbers</label>
+                                        <textarea
+                                            rows={2}
+                                            value={item.serialNumbers}
+                                            onChange={(e) => updateItem(index, 'serialNumbers', e.target.value)}
+                                            className="mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                            placeholder="Enter serial numbers, one per line or separated by commas"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                     <div className="sm:col-span-2">

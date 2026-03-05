@@ -595,6 +595,8 @@ model ServiceContract {
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
 
+  items ServiceContractItem[]
+
   // Rental specific - CHANGED to 1:N (Removing rentedAssetId here)
   rentalAssets RentalAsset[] @relation("ActiveRental")
 
@@ -602,6 +604,20 @@ model ServiceContract {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ServiceContractItem {
+  id                String          @id @default(uuid())
+  serviceContractId String
+  serviceContract   ServiceContract @relation(fields: [serviceContractId], references: [id], onDelete: Cascade)
+
+  modelName      String
+  serialNumbers  String // Comma separated or newline separated
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceContractId])
 }
 
 model RentalAsset {
