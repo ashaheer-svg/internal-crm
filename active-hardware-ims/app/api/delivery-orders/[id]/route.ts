@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { sendDeliveryShippedAlert, sendLowStockAlert } from '@/lib/whatsapp'
 import { activateServiceContract } from '@/lib/service-manager'
+import { sendSystemMessage } from '@/lib/notifications'
+import { format } from 'date-fns'
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -167,6 +169,26 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     orderNumber: order.orderNumber,
                     customerName: order.customerName,
                 })
+
+                // Notify TECHNICAL and SALES-MGR
+                try {
+                    const [techRole, salesMgrRole] = await Promise.all([
+                        prisma.role.findUnique({ where: { name: 'TECHNICAL' } }),
+                        prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+                    ]);
+
+                    const itemsList = order.items.map(i => `- ${i.product?.name} (Qty: ${i.quantity})`).join('\n');
+                    const content = `Delivery Order ${order.orderNumber} has been CANCELLED.\n\n` +
+                        `End Customer: ${order.endCustomerName || order.customerName}\n` +
+                        `Partner: ${order.customerName}\n` +
+                        `Items:\n${itemsList}\n` +
+                        `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
+
+                    if (techRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                } catch (err) {
+                    console.error('Failed to send cancellation notification:', err);
+                }
 
                 return NextResponse.json({ success: true })
             }
@@ -439,6 +461,27 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                     customerName: order.customerName,
                 })
 
+                // Notify SALES (Owner), TECHNICAL, and SALES-MGR
+                try {
+                    const [techRole, salesMgrRole] = await Promise.all([
+                        prisma.role.findUnique({ where: { name: 'TECHNICAL' } }),
+                        prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+                    ]);
+
+                    const itemsList = order.items.map(i => `- ${i.product?.name} (Qty: ${i.quantity})`).join('\n');
+                    const content = `Delivery Order ${order.orderNumber} has been COMPLETED/SHIPPED.\n\n` +
+                        `End Customer: ${order.endCustomerName || order.customerName}\n` +
+                        `Partner: ${order.customerName}\n` +
+                        `Items:\n${itemsList}\n` +
+                        `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
+
+                    if (order.salesRepId) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientUserId: order.salesRepId, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+                    if (techRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+                } catch (err) {
+                    console.error('Failed to send completion notification:', err);
+                }
+
                 // --- WhatsApp Alerts ---
                 try {
                     // 1. Shipment Alert
@@ -490,6 +533,28 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 where: { id: params.id },
                 data: { status }
             })
+
+            // Notify for CONFIRMED/READY_FOR_BUILD
+            if (status === 'CONFIRMED' || status === 'READY_FOR_BUILD') {
+                try {
+                    const [techRole, salesMgrRole] = await Promise.all([
+                        prisma.role.findUnique({ where: { name: 'TECHNICAL' } }),
+                        prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+                    ]);
+
+                    const itemsList = order.items.map(i => `- ${i.product?.name} (Qty: ${i.quantity})`).join('\n');
+                    const content = `Delivery Order ${order.orderNumber} is now ${status}.\n\n` +
+                        `End Customer: ${order.endCustomerName || order.customerName}\n` +
+                        `Partner: ${order.customerName}\n` +
+                        `Items:\n${itemsList}\n` +
+                        `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
+
+                    if (techRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                } catch (err) {
+                    console.error('Failed to send status update notification:', err);
+                }
+            }
 
             // Sync with CRM Quotes if linked
             if (order.quotes && order.quotes.length > 0) {

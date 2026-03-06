@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requirePermission } from '@/lib/auth'
+import { sendSystemMessage } from '@/lib/notifications'
+import { format } from 'date-fns'
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -12,7 +14,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
             include: {
-                items: { include: { reservedItems: true } },
+                items: { include: { reservedItems: true, product: true } },
                 quotes: true
             }
         })
@@ -45,6 +47,28 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                     data: { status: 'BUILT' }
                 })
             }
+        }
+
+        // Notify SALES (Owner), ACC-MGR, and SALES-MGR
+        try {
+            const [accMgrRole, salesMgrRole] = await Promise.all([
+                prisma.role.findUnique({ where: { name: 'ACC-MGR' } }),
+                prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+            ]);
+
+            const itemsList = order.items.map(i => `- ${i.product?.name} (Qty: ${i.quantity})`).join('\n');
+            const content = `Delivery Order ${order.orderNumber} has been BUILT and is ready for shipment.\n\n` +
+                `End Customer: ${order.endCustomerName || order.customerName}\n` +
+                `Partner: ${order.customerName}\n` +
+                `Items:\n${itemsList}\n` +
+                `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}\n\n` +
+                `Build Notes: ${buildNotes || 'None'}`;
+
+            if (order.salesRepId) await sendSystemMessage({ subject: `DO BUILT: ${order.orderNumber}`, content, recipientUserId: order.salesRepId, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+            if (accMgrRole) await sendSystemMessage({ subject: `DO BUILT: ${order.orderNumber}`, content, recipientRoleId: accMgrRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+            if (salesMgrRole) await sendSystemMessage({ subject: `DO BUILT: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+        } catch (err) {
+            console.error('Failed to send BUILT notification:', err);
         }
 
         // Audit Log
@@ -88,7 +112,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
         // Fetch the inventory item to ensure it's linked to this DO via a DeliveryOrderItem
         const item = await prisma.inventoryItem.findUnique({
             where: { id: inventoryItemId },
-            include: { deliveryOrderItem: true }
+            include: { deliveryOrderItem: true, product: true }
         })
 
         if (!item || !item.deliveryOrderItem || item.deliveryOrderItem.deliveryOrderId !== params.id) {
@@ -138,6 +162,35 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
                 }
             })
         })
+
+        // Notify SALES (Owner), ACC-MGR, and SALES-MGR about rejection
+        try {
+            const [orderData, accMgrRole, salesMgrRole] = await Promise.all([
+                prisma.deliveryOrder.findUnique({
+                    where: { id: params.id },
+                    include: { items: { include: { product: true } } }
+                }),
+                prisma.role.findUnique({ where: { name: 'ACC-MGR' } }),
+                prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+            ]);
+
+            if (orderData) {
+                const itemsList = orderData.items.map(i => `- ${i.product?.name} (Qty: ${i.quantity})`).join('\n');
+                const content = `An item has been REJECTED during the build of Delivery Order ${orderData.orderNumber}.\n\n` +
+                    `Rejected Item: ${item.serialNumber} (${item.product?.name})\n` +
+                    `Reason: ${comment || 'Not specified'}\n\n` +
+                    `End Customer: ${orderData.endCustomerName || orderData.customerName}\n` +
+                    `Partner: ${orderData.customerName}\n` +
+                    `Order Items:\n${itemsList}\n` +
+                    `Expected Delivery: ${orderData.updatedAt ? format(new Date(orderData.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
+
+                if (orderData.salesRepId) await sendSystemMessage({ subject: `DO REJECTION: ${orderData.orderNumber}`, content, recipientUserId: orderData.salesRepId, category: 'ALERT', priority: 'HIGH', senderId: user.id });
+                if (accMgrRole) await sendSystemMessage({ subject: `DO REJECTION: ${orderData.orderNumber}`, content, recipientRoleId: accMgrRole.id, category: 'ALERT', priority: 'HIGH', senderId: user.id });
+                if (salesMgrRole) await sendSystemMessage({ subject: `DO REJECTION: ${orderData.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'ALERT', priority: 'HIGH', senderId: user.id });
+            }
+        } catch (err) {
+            console.error('Failed to send REJECTION notification:', err);
+        }
 
         // Audit Log (preserved for backward compatibility)
         const { logCreate } = await import('@/lib/audit')
