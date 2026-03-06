@@ -146,13 +146,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             {project.title}
                         </h1>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch gap-4">
+                        <div className="flex flex-wrap items-stretch gap-4">
                             {/* Customer Pillar */}
-                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
                                 <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                     <Users className="w-4 h-4 text-gray-400" />
                                 </div>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Customer</p>
                                     <p className="text-sm font-black text-gray-900 leading-tight truncate" title={project.customer.name}>{project.customer.name}</p>
                                 </div>
@@ -160,11 +160,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
                             {/* Brand Pillar */}
                             {project.brand && (
-                                <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
                                     <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                         <Tag className="w-4 h-4 text-blue-500" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Brand</p>
                                         <p className="text-sm font-black text-gray-900 leading-none truncate">{project.brand}</p>
                                     </div>
@@ -173,11 +173,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
                             {/* Partner Pillar */}
                             {project.partner && (
-                                <div className="flex items-center bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-3 shadow-sm">
                                     <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                         <Users className="w-4 h-4 text-purple-600" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1.5">Partner</p>
                                         <p className="text-sm font-black text-purple-700 leading-tight truncate" title={project.partner.name}>{project.partner.name}</p>
                                     </div>
@@ -186,11 +186,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
                             {/* Sales Rep Pillar */}
                             {project.salesRep && (
-                                <div className="flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 shadow-sm">
                                     <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                         <User className="w-4 h-4 text-blue-600" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1.5">Owner</p>
                                         <p className="text-sm font-black text-blue-700 leading-none truncate">{project.salesRep.name}</p>
                                     </div>
@@ -198,22 +198,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             )}
 
                             {/* Expected Value */}
-                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
                                 <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                     <DollarSign className="w-4 h-4 text-emerald-500" />
                                 </div>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Expected Value</p>
                                     <p className="text-sm font-black text-gray-900 leading-none truncate">{formatCurrency(project.expectedValue, project.currency)}</p>
                                 </div>
                             </div>
 
                             {/* Target Date */}
-                            <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
                                 <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
                                     <Calendar className="w-4 h-4 text-amber-500" />
                                 </div>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Target Date</p>
                                     <p className="text-sm font-black text-gray-900 leading-none truncate">
                                         {project.targetDate ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
@@ -224,13 +224,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             {/* GP Indicator */}
                             {project.estimatedGP !== undefined && (
                                 <div className={cn(
-                                    "flex items-center rounded-xl px-4 py-3 shadow-sm border min-w-0",
+                                    "flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center rounded-xl px-4 py-3 shadow-sm border",
                                     project.estimatedGP >= 0 ? "bg-emerald-500 border-emerald-600" : "bg-red-500 border-red-600"
                                 )}>
                                     <div className="p-1.5 bg-white/20 rounded-lg mr-3 flex-shrink-0">
                                         <DollarSign className="w-4 h-4 text-white" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1.5">Est. Profit</p>
                                         <p className="text-sm font-black text-white leading-none truncate">
                                             {formatCurrency(project.estimatedGP, project.currency)}
