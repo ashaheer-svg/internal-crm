@@ -180,7 +180,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Customer</p>
-                            <p className="text-sm font-black text-gray-900 leading-tight truncate" title={project.customer.name}>{project.customer.name}</p>
+                            <p className="text-xs font-black text-gray-900 leading-tight truncate" title={project.customer.name}>{project.customer.name}</p>
                         </div>
                     </div>
 
@@ -192,7 +192,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div className="min-w-0">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Brand</p>
-                                <p className="text-sm font-black text-gray-900 leading-none truncate">{project.brand}</p>
+                                <p className="text-xs font-black text-gray-900 leading-none truncate">{project.brand}</p>
                             </div>
                         </div>
                     )}
@@ -205,7 +205,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div className="min-w-0">
                                 <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1.5">Partner</p>
-                                <p className="text-sm font-black text-purple-700 leading-tight truncate" title={project.partner.name}>{project.partner.name}</p>
+                                <p className="text-xs font-black text-purple-700 leading-tight truncate" title={project.partner.name}>{project.partner.name}</p>
                             </div>
                         </div>
                     )}
@@ -218,7 +218,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div className="min-w-0">
                                 <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1.5">Owner</p>
-                                <p className="text-sm font-black text-blue-700 leading-none truncate">{project.salesRep.name}</p>
+                                <p className="text-xs font-black text-blue-700 leading-none truncate">{project.salesRep.name}</p>
                             </div>
                         </div>
                     )}
@@ -230,7 +230,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Expected Value</p>
-                            <p className="text-sm font-black text-gray-900 leading-none truncate">{formatCurrency(project.expectedValue, project.currency)}</p>
+                            <p className="text-xs font-black text-gray-900 leading-none truncate">{formatCurrency(project.expectedValue, project.currency)}</p>
                         </div>
                     </div>
 
@@ -241,7 +241,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Target Date</p>
-                            <p className="text-sm font-black text-gray-900 leading-none truncate">
+                            <p className="text-xs font-black text-gray-900 leading-none truncate">
                                 {project.targetDate ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                             </p>
                         </div>
@@ -258,9 +258,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                             <div className="min-w-0">
                                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1.5">Est. Profit</p>
-                                <p className="text-sm font-black text-white leading-none truncate">
+                                <p className="text-xs font-black text-white leading-none truncate">
                                     {formatCurrency(project.estimatedGP, project.currency)}
-                                    <span className="ml-1.5 text-xs font-bold opacity-80">({project.estimatedMargin?.toFixed(1)}%)</span>
+                                    <span className="ml-1.5 text-[10px] font-bold opacity-80">({project.estimatedMargin?.toFixed(1)}%)</span>
                                 </p>
                             </div>
                         </div>
