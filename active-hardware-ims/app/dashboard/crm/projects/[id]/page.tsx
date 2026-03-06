@@ -126,8 +126,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Header / Cockpit Top */}
             <div className="bg-white border-b border-gray-200 px-8 py-8 shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                    <div className="flex-1 w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                    <div>
                         <div className="flex items-center gap-3 mb-4">
                             <BackButton />
                             <div className="h-4 w-px bg-gray-200 mx-1" />
@@ -142,104 +142,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                         </div>
 
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6">
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
                             {project.title}
                         </h1>
-
-                        <div className="flex flex-wrap items-stretch gap-4">
-                            {/* Customer Pillar */}
-                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
-                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                    <Users className="w-4 h-4 text-gray-400" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Customer</p>
-                                    <p className="text-sm font-black text-gray-900 leading-tight truncate" title={project.customer.name}>{project.customer.name}</p>
-                                </div>
-                            </div>
-
-                            {/* Brand Pillar */}
-                            {project.brand && (
-                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
-                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                        <Tag className="w-4 h-4 text-blue-500" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Brand</p>
-                                        <p className="text-sm font-black text-gray-900 leading-none truncate">{project.brand}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Partner Pillar */}
-                            {project.partner && (
-                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-3 shadow-sm">
-                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                        <Users className="w-4 h-4 text-purple-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1.5">Partner</p>
-                                        <p className="text-sm font-black text-purple-700 leading-tight truncate" title={project.partner.name}>{project.partner.name}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Sales Rep Pillar */}
-                            {project.salesRep && (
-                                <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 shadow-sm">
-                                    <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                        <User className="w-4 h-4 text-blue-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1.5">Owner</p>
-                                        <p className="text-sm font-black text-blue-700 leading-none truncate">{project.salesRep.name}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Expected Value */}
-                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
-                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                    <DollarSign className="w-4 h-4 text-emerald-500" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Expected Value</p>
-                                    <p className="text-sm font-black text-gray-900 leading-none truncate">{formatCurrency(project.expectedValue, project.currency)}</p>
-                                </div>
-                            </div>
-
-                            {/* Target Date */}
-                            <div className="flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
-                                <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
-                                    <Calendar className="w-4 h-4 text-amber-500" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Target Date</p>
-                                    <p className="text-sm font-black text-gray-900 leading-none truncate">
-                                        {project.targetDate ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* GP Indicator */}
-                            {project.estimatedGP !== undefined && (
-                                <div className={cn(
-                                    "flex-1 basis-[220px] min-w-[220px] max-w-full flex items-center rounded-xl px-4 py-3 shadow-sm border",
-                                    project.estimatedGP >= 0 ? "bg-emerald-500 border-emerald-600" : "bg-red-500 border-red-600"
-                                )}>
-                                    <div className="p-1.5 bg-white/20 rounded-lg mr-3 flex-shrink-0">
-                                        <DollarSign className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1.5">Est. Profit</p>
-                                        <p className="text-sm font-black text-white leading-none truncate">
-                                            {formatCurrency(project.estimatedGP, project.currency)}
-                                            <span className="ml-1.5 text-xs font-bold opacity-80">({project.estimatedMargin?.toFixed(1)}%)</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -266,6 +171,102 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                 </div>
 
+                {/* Full Width Metadata Badges */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-4">
+                    {/* Customer Pillar */}
+                    <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                        <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                            <Users className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Customer</p>
+                            <p className="text-sm font-black text-gray-900 leading-tight truncate" title={project.customer.name}>{project.customer.name}</p>
+                        </div>
+                    </div>
+
+                    {/* Brand Pillar */}
+                    {project.brand && (
+                        <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                                <Tag className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Brand</p>
+                                <p className="text-sm font-black text-gray-900 leading-none truncate">{project.brand}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Partner Pillar */}
+                    {project.partner && (
+                        <div className="flex items-center bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                                <Users className="w-4 h-4 text-purple-600" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1.5">Partner</p>
+                                <p className="text-sm font-black text-purple-700 leading-tight truncate" title={project.partner.name}>{project.partner.name}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Sales Rep Pillar */}
+                    {project.salesRep && (
+                        <div className="flex items-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                                <User className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1.5">Owner</p>
+                                <p className="text-sm font-black text-blue-700 leading-none truncate">{project.salesRep.name}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Expected Value */}
+                    <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                        <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                            <DollarSign className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Expected Value</p>
+                            <p className="text-sm font-black text-gray-900 leading-none truncate">{formatCurrency(project.expectedValue, project.currency)}</p>
+                        </div>
+                    </div>
+
+                    {/* Target Date */}
+                    <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 shadow-sm min-w-0">
+                        <div className="p-1.5 bg-white rounded-lg shadow-sm mr-3 flex-shrink-0">
+                            <Calendar className="w-4 h-4 text-amber-500" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Target Date</p>
+                            <p className="text-sm font-black text-gray-900 leading-none truncate">
+                                {project.targetDate ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* GP Indicator */}
+                    {project.estimatedGP !== undefined && (
+                        <div className={cn(
+                            "flex items-center rounded-xl px-4 py-3 shadow-sm border min-w-0",
+                            project.estimatedGP >= 0 ? "bg-emerald-500 border-emerald-600" : "bg-red-500 border-red-600"
+                        )}>
+                            <div className="p-1.5 bg-white/20 rounded-lg mr-3 flex-shrink-0">
+                                <DollarSign className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1.5">Est. Profit</p>
+                                <p className="text-sm font-black text-white leading-none truncate">
+                                    {formatCurrency(project.estimatedGP, project.currency)}
+                                    <span className="ml-1.5 text-xs font-bold opacity-80">({project.estimatedMargin?.toFixed(1)}%)</span>
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Pipeline Progress Indicator */}
                 <div className="mt-10">
                     <div className="flex items-center justify-between gap-1">
@@ -273,7 +274,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             const currentStageIndex = project.pipeline.stages.findIndex(s => s.id === project.stage.id);
                             const isCompleted = idx < currentStageIndex;
                             const isCurrent = idx === currentStageIndex;
-                            const isPast = idx <= currentStageIndex;
 
                             return (
                                 <button
@@ -349,6 +349,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                         <div className="p-6">
                                             {(() => {
                                                 const acceptedQuote = project.quotes.find(q => q.status === 'ACCEPTED');
+                                                if (!acceptedQuote) return null;
                                                 return (
                                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                                         <div className="space-y-1">
