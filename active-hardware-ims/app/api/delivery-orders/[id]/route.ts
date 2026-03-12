@@ -325,7 +325,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         where: { deliveryOrderId: params.id },
                         include: {
                             reservedItems: true,
-                            product: { include: { serviceDefinition: true } }
+                            product: { include: { serviceDefinition: true } },
+                            details: true
                         }
                     })
 
@@ -348,6 +349,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                                     contractValue: item.unitPrice,
                                     invoiceReference: currentOrder.invoiceNumber || currentOrder.orderNumber || 'N/A',
                                     salesRepId: currentOrder.salesRepId || undefined,
+                                    productModel: (item as any).details?.[0]?.modelName || 'Multiple',
+                                    coveredSerials: (item as any).details?.map((d: any) => d.serialNumbers).join(', '),
                                     items: (item as any).details?.map((d: any) => ({
                                         modelName: d.modelName,
                                         serialNumbers: d.serialNumbers

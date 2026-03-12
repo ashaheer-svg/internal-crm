@@ -126,10 +126,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                                         unitPrice: item.unitPrice,
                                         isBackorder: false,
                                         details: {
-                                            create: item.details?.map((d: any) => ({
-                                                modelName: d.modelName,
-                                                serialNumbers: d.serialNumbers
-                                            })) || []
+                                            create: (item.details && item.details.length > 0)
+                                                ? item.details.map((d: any) => ({
+                                                    modelName: d.modelName,
+                                                    serialNumbers: d.serialNumbers
+                                                }))
+                                                : (item.productModel || item.serialNumbers)
+                                                    ? [{
+                                                        modelName: item.productModel || 'N/A',
+                                                        serialNumbers: item.serialNumbers || 'N/A'
+                                                    }]
+                                                    : []
                                         }
                                     }))
                             }
