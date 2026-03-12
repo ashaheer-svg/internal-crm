@@ -134,6 +134,11 @@ export default function WarrantyLookupPage() {
         e.preventDefault()
         if (!projectQuery.trim()) return
 
+        if (projectQuery.trim().length < 2) {
+            setProjectError("Search query must be at least 2 characters long")
+            return
+        }
+
         setProjectLoading(true)
         setProjectError("")
         setProjects(null)
@@ -141,7 +146,7 @@ export default function WarrantyLookupPage() {
         setCandidates(null)
 
         try {
-            const res = await fetch(`/api/crm/projects?search=${encodeURIComponent(projectQuery.trim())}`)
+            const res = await fetch(`/api/crm/projects?search=${encodeURIComponent(projectQuery.trim())}&lookup=true`)
             const data = await res.json()
 
             if (!res.ok) throw new Error(data.error || "Project search failed")

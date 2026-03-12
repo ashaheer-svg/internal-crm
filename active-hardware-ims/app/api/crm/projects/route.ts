@@ -11,6 +11,13 @@ export async function GET(request: Request) {
         const page = Number(searchParams.get('page')) || 1
         const limit = Number(searchParams.get('limit')) || 10
         const search = searchParams.get('search') || ''
+        
+        const isLookup = searchParams.get('lookup') === 'true'
+        
+        if (isLookup && search.length < 2) {
+            return NextResponse.json({ error: 'Search query must be at least 2 characters long' }, { status: 400 })
+        }
+
         const sortKey = searchParams.get('sortKey') || 'projectCode'
         const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc'
         const stageId = searchParams.get('stageId')
@@ -28,6 +35,8 @@ export async function GET(request: Request) {
 
         // ... existing permission logic ...
         const u = user as any
+        const canLookup = u.permissions?.includes('general_lookup:read')
+        
         const canViewAll = u.permissions?.includes('all:manage') ||
             u.permissions?.includes('projects:manage') ||
             u.permissions?.includes('projects:view_all')
@@ -36,9 +45,10 @@ export async function GET(request: Request) {
             isDeleted: false
         }
 
-        // ... existing filter logic ...
-        if (!canViewAll || scope === 'mine') {
-            const u = user as any
+        // Broad access bypass only for Lookup page requests
+        const bypassOwnership = isLookup && canLookup
+
+        if ((!canViewAll || scope === 'mine') && !bypassOwnership) {
             if (u.salesRepId) {
                 where.salesRepId = u.salesRepId
             } else {
