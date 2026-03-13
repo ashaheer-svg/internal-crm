@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { getNextSequence } from '@/lib/sequences'
 
 export async function POST(request: Request) {
     try {
@@ -21,20 +22,14 @@ export async function POST(request: Request) {
         if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
         // 2. Determine Quote Number
-        let quoteNumber = body.quoteNumber
-
-        if (!quoteNumber) {
-            const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
-            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-            quoteNumber = `QT-${dateStr}-${random}`
-        }
+        const finalQuoteNumber = body.quoteNumber || await getNextSequence('QUOTE', true)
 
         // Check for existing quote number to provide better error
         const existing = await prisma.cRMQuote.findUnique({
-            where: { quoteNumber }
+            where: { quoteNumber: finalQuoteNumber }
         })
         if (existing) {
-            return NextResponse.json({ error: `Quotation number ${quoteNumber} already exists. Please use a unique number.` }, { status: 400 })
+            return NextResponse.json({ error: `Quotation number ${finalQuoteNumber} already exists. Please use a unique number.` }, { status: 400 })
         }
 
         // 3. Current Version Calculation
@@ -96,7 +91,7 @@ export async function POST(request: Request) {
         // 5. Create Quote
         const quote = await prisma.cRMQuote.create({
             data: {
-                quoteNumber,
+                quoteNumber: finalQuoteNumber,
                 projectId,
                 version,
                 status: 'DRAFT',

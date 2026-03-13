@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser, requireAuth } from '@/lib/auth'
+import { getNextSequence } from '@/lib/sequences'
 
 export async function GET(request: Request) {
     try {
@@ -264,16 +265,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Pipeline has no stages' }, { status: 400 })
         }
 
-        let finalProjectCode = projectCode
-
-        if (!finalProjectCode) {
-            // Fallback if not provided (though UI should provide it)
-            const dateStr = new Date().toISOString().slice(2, 7).replace('-', '')
-            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-            finalProjectCode = `PRJ-${dateStr}-${random}`
-        }
-
-        // Ensure uniqueness check if needed, but Prisma will throw if duplicate
+        // Generate from sequence
+        const finalProjectCode = projectCode || await getNextSequence('PROJ', true)
 
         const project = await prisma.cRMProject.create({
             data: {
@@ -298,22 +291,6 @@ export async function POST(request: Request) {
                 }
             }
         })
-
-        // Increment Sequence if successful and it matches PROJ pattern
-        if (finalProjectCode.startsWith('PROJ-')) {
-            // We blindly increment because we assume the user used the fetching logic
-            // Ideal check: if the code matches the current sequence pattern
-            const currentYearMonth = finalProjectCode.split('-')[1] // e.g. 2402
-            const numberPart = parseInt(finalProjectCode.split('-')[2]) // e.g. 0001
-
-            if (currentYearMonth && !isNaN(numberPart)) {
-                await prisma.sequence.upsert({
-                    where: { id: 'PROJ' },
-                    create: { id: 'PROJ', prefix: 'PROJ-', nextNumber: numberPart + 1, lastYearMonth: currentYearMonth },
-                    update: { nextNumber: numberPart + 1, lastYearMonth: currentYearMonth }
-                })
-            }
-        }
 
         // Audit Log
         const { logCreate } = await import('@/lib/audit') // Dynamic import to avoid circular dep if any

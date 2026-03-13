@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { getNextSequence } from '@/lib/sequences'
 
 export async function GET(request: Request) {
     try {
@@ -130,9 +131,11 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId, quoteReference } = body
 
-        if (!orderNumber || !customerName) {
-            return NextResponse.json({ error: 'Order Number and Customer Name are required' }, { status: 400 })
+        if (!customerName) {
+            return NextResponse.json({ error: 'Customer Name is required' }, { status: 400 })
         }
+
+        const finalOrderNumber = orderNumber || await getNextSequence('DO', true)
 
         if (saleType === 'PARTNER' && !endCustomerId) {
             return NextResponse.json({ error: 'End Customer is required for Partner Sales' }, { status: 400 })
@@ -165,7 +168,7 @@ export async function POST(request: Request) {
             // Create Delivery Order
             const newOrder = await (tx as any).deliveryOrder.create({
                 data: {
-                    orderNumber,
+                    orderNumber: finalOrderNumber,
                     customerId,
                     customerName,
                     saleType: saleType || "DIRECT",

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
+import { getNextSequence } from '@/lib/sequences'
 
 export async function GET(request: Request) {
     try {
@@ -76,9 +77,11 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { invoiceNumber, customerInvoiceRef, customerId, customerName, customerEmail, customerPhone, items, notes, salesRepId } = body
 
-        if (!invoiceNumber || !customerName || !items || items.length === 0) {
+        if (!customerName || !items || items.length === 0) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
+
+        const finalInvoiceNumber = invoiceNumber || await getNextSequence('INV', true)
 
         // Calculate total
         const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice * (item.quantity || 1)), 0)
@@ -91,7 +94,7 @@ export async function POST(request: Request) {
             // Create invoice
             const newInvoice = await tx.invoice.create({
                 data: {
-                    invoiceNumber,
+                    invoiceNumber: finalInvoiceNumber,
                     customerInvoiceRef,
                     customerId,
                     customerName,

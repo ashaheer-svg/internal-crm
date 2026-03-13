@@ -87,15 +87,26 @@ export default function SequencesPage() {
             )}
 
             <div className="bg-white shadow sm:rounded-lg divide-y divide-gray-200">
-                {["PO", "GRN", "DO"].map(type => {
+                {["PO", "GRN", "DO", "QUOTE", "INV", "PROJ"].map(type => {
                     const seq = sequences.find(s => s.id === type)
                     const nextNum = seq?.nextNumber || 1
 
                     let label = "Purchase Order"
                     if (type === "GRN") label = "Goods Receipt Note"
                     if (type === "DO") label = "Delivery Order"
+                    if (type === "QUOTE") label = "Quotation"
+                    if (type === "INV") label = "Invoice"
+                    if (type === "PROJ") label = "Project"
 
-                    const defaultPrefix = type === 'PO' ? 'PO-' : (type === 'GRN' ? 'GRN-' : 'DO-')
+                    const prefixes: Record<string, string> = {
+                        'PO': 'PO-',
+                        'GRN': 'GRN-',
+                        'DO': 'DO-',
+                        'QUOTE': 'QT-',
+                        'INV': 'INV-',
+                        'PROJ': 'PROJ-'
+                    }
+                    const defaultPrefix = prefixes[type] || `${type}-`
 
                     return (
                         <div key={type} className="p-6">
