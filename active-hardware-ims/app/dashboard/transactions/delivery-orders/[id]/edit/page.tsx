@@ -4,8 +4,8 @@ import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
 import { ArrowLeft, Plus, Search, Trash2, Save, ScanLine, Box, AlertCircle, Loader2, X } from "lucide-react"
-import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
-import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
+import ProductSelector from "@/components/selectors/ProductSelector"
+import CustomerSelector from "@/components/selectors/CustomerSelector"
 import BulkEntryModal from "@/app/dashboard/transactions/invoices/new/BulkEntryModal"
 import FormattedNumberInput from "@/components/FormattedNumberInput"
 
@@ -390,42 +390,24 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                             </div>
 
                             {/* Bill To */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"}
-                                </label>
-                                {customer ? (
-                                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                                        <span className="font-medium">{customer.name}</span>
-                                        <button onClick={() => setCustomer(null)} className="text-red-500 text-xs hover:underline">Change</button>
-                                    </div>
-                                ) : (
-                                    <CustomerSelector
-                                        onSelect={setCustomer}
-                                        selectedCustomer={customer}
-                                        type={saleType === "PARTNER" ? "PARTNER" : undefined}
-                                    />
-                                )}
+                            <div className="relative z-20">
+                                <CustomerSelector
+                                    label={saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"}
+                                    onSelect={setCustomer}
+                                    selectedCustomer={customer}
+                                    type={saleType === "PARTNER" ? "PARTNER" : undefined}
+                                />
                             </div>
 
                             {/* Ship To (End Customer) for Partner Sales */}
                             {saleType === "PARTNER" && (
-                                <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Ship To (End Customer)
-                                    </label>
-                                    {endCustomer ? (
-                                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                                            <span className="font-medium">{endCustomer.name}</span>
-                                            <button onClick={() => setEndCustomer(null)} className="text-red-500 text-xs hover:underline">Change</button>
-                                        </div>
-                                    ) : (
-                                        <CustomerSelector
-                                            onSelect={setEndCustomer}
-                                            selectedCustomer={endCustomer}
-                                            type="CUSTOMER"
-                                        />
-                                    )}
+                                <div className="col-span-2 relative z-10">
+                                    <CustomerSelector
+                                        label="Ship To (End Customer)"
+                                        onSelect={setEndCustomer}
+                                        selectedCustomer={endCustomer}
+                                        type="CUSTOMER"
+                                    />
                                 </div>
                             )}
 
@@ -686,10 +668,13 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                             </button>
                         </div>
                         <div className="flex-1 p-6 min-h-[500px] overflow-visible">
-                            <ProductSelector onProductSelect={(p) => {
-                                handleAddItem(p)
-                                setShowProductSelector(false)
-                            }} excludeProductIds={[]} />
+                            <ProductSelector
+                                onProductSelect={(p) => {
+                                    handleAddItem(p)
+                                    setShowProductSelector(false)
+                                }}
+                                excludeProductIds={[]}
+                            />
                         </div>
                     </div>
                 </div>
