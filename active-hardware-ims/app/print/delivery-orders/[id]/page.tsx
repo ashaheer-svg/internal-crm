@@ -17,7 +17,8 @@ async function getOrder(id: string) {
             items: {
                 include: {
                     product: true,
-                    reservedItems: true
+                    reservedItems: true,
+                    details: true
                 }
             },
             salesRep: true
@@ -215,19 +216,26 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                     </thead>
                     <tbody>
                         {order.items.map((item: any) => {
-                            const shippedQty = item.reservedItems.length
+                            const reservedSerials = item.reservedItems.map((i: any) => i.serialNumber)
+                            const detailSerials = item.details.flatMap((d: any) => d.serialNumbers.split(',').map((s: string) => s.trim()))
+                            const allSerials = Array.from(new Set([...reservedSerials, ...detailSerials])).filter(Boolean)
+                            
+                            const shippedQty = allSerials.length || item.reservedItems.length
+                            
                             return (
                                 <tr key={item.id}>
                                     <td>
                                         <div style={{ fontWeight: 'bold' }}>{item.product.brand} {item.product.name}</div>
-                                        <div style={{ fontSize: '12px', color: '#666' }}>Model: {item.product.model}</div>
+                                        <div style={{ fontSize: '12px', color: '#666' }}>
+                                            Model: {item.product.model} | SKU: <span style={{ fontWeight: 600 }}>{item.product.sku}</span>
+                                        </div>
                                     </td>
                                     <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                                     <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{shippedQty}</td>
                                     <td>
-                                        {item.reservedItems.length > 0 ? (
+                                        {allSerials.length > 0 ? (
                                             <div style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
-                                                {item.reservedItems.map((i: any) => i.serialNumber).join(', ')}
+                                                {allSerials.join(', ')}
                                             </div>
                                         ) : (
                                             <span style={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>Pending Allocation</span>

@@ -23,17 +23,26 @@ interface DeliveryOrderWithRelations {
     items: {
         id: string
         quantity: number
-        product: { name: string; brand: string; model: string }
+        product: { name: string; brand: string; model: string; sku: string }
         reservedItems: { serialNumber: string }[]
+        details: { modelName: string; serialNumbers: string }[]
     }[]
 }
 
 async function getOrder(id: string): Promise<DeliveryOrderWithRelations | null> {
     const order = await prisma.deliveryOrder.findUnique({
         where: { id },
-        include: { items: { include: { product: true, reservedItems: true } } }
+        include: { 
+            items: { 
+                include: { 
+                    product: true, 
+                    reservedItems: true,
+                    details: true
+                } 
+            } 
+        }
     })
-    return order as DeliveryOrderWithRelations | null
+    return order as unknown as DeliveryOrderWithRelations | null
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -121,19 +130,26 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                 </thead>
                 <tbody>
                     {order.items.map((item) => {
-                        const shippedQty = item.reservedItems.length
+                        const reservedSerials = item.reservedItems.map(i => i.serialNumber)
+                        const detailSerials = item.details.flatMap(d => d.serialNumbers.split(',').map(s => s.trim()))
+                        const allSerials = Array.from(new Set([...reservedSerials, ...detailSerials])).filter(Boolean)
+                        
+                        const shippedQty = allSerials.length || item.reservedItems.length
+                        
                         return (
                             <tr key={item.id}>
                                 <td>
                                     <div style={{ fontWeight: 'bold' }}>{item.product.brand} {item.product.name}</div>
-                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Model: {item.product.model}</div>
+                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                        Model: {item.product.model} | SKU: <span style={{ fontWeight: 600 }}>{item.product.sku}</span>
+                                    </div>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{shippedQty}</td>
                                 <td>
-                                    {item.reservedItems.length > 0 ? (
+                                    {allSerials.length > 0 ? (
                                         <div style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
-                                            {item.reservedItems.map(i => i.serialNumber).join(', ')}
+                                            {allSerials.join(', ')}
                                         </div>
                                     ) : (
                                         <span style={{ color: '#9ca3af', fontSize: '12px', fontStyle: 'italic' }}>Pending Allocation</span>
