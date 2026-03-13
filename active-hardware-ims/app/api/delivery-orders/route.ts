@@ -135,7 +135,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Customer Name is required' }, { status: 400 })
         }
 
-        const finalOrderNumber = orderNumber || await getNextSequence('DO', true)
+        let finalOrderNumber = orderNumber
+        if (!finalOrderNumber) {
+            finalOrderNumber = await getNextSequence('DO', true)
+        } else {
+            await import('@/lib/sequences').then(m => m.incrementSequence('DO'))
+        }
 
         if (saleType === 'PARTNER' && !endCustomerId) {
             return NextResponse.json({ error: 'End Customer is required for Partner Sales' }, { status: 400 })

@@ -86,19 +86,20 @@ function TransactionsContent() {
     const [loading, setLoading] = useState(true)
     const [logsLoading, setLogsLoading] = useState(false)
     
-    // Initialize activeTab from URL, then localStorage, defaulting to 'po'
-    const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
+    // Initialize activeTab from URL immediately, then check localStorage on mount
+    const initialTab = (searchParams.get('tab') as any)
+    const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>(
+        ['po', 'invoice', 'do', 'log'].includes(initialTab) ? initialTab : 'po'
+    )
 
     useEffect(() => {
-        const tabParam = searchParams.get('tab') as any
-        const savedTab = localStorage.getItem('last_tx_tab') as any
-        
-        if (['po', 'invoice', 'do', 'log'].includes(tabParam)) {
-            setActiveTab(tabParam)
-        } else if (['po', 'invoice', 'do', 'log'].includes(savedTab)) {
-            setActiveTab(savedTab)
+        if (!searchParams.get('tab')) {
+            const savedTab = localStorage.getItem('last_tx_tab') as any
+            if (['po', 'invoice', 'do', 'log'].includes(savedTab)) {
+                setActiveTab(savedTab)
+            }
         }
-    }, [])
+    }, [searchParams])
 
     const handleTabChange = (tabId: 'po' | 'invoice' | 'do' | 'log') => {
         setActiveTab(tabId)

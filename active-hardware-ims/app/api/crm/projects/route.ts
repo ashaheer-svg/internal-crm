@@ -266,7 +266,12 @@ export async function POST(request: Request) {
         }
 
         // Generate from sequence
-        const finalProjectCode = projectCode || await getNextSequence('PROJ', true)
+        let finalProjectCode = projectCode
+        if (!finalProjectCode) {
+            finalProjectCode = await getNextSequence('PROJ', true)
+        } else {
+            await import('@/lib/sequences').then(m => m.incrementSequence('PROJ'))
+        }
 
         const project = await prisma.cRMProject.create({
             data: {

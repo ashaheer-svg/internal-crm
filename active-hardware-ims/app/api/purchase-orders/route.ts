@@ -92,7 +92,16 @@ export async function POST(request: Request) {
         const totalAmount = items.reduce((sum: number, item: any) => sum + item.totalCost, 0)
 
         // Generate from sequence
-        const finalPoNumber = poNumber || await getNextSequence('PO', true)
+        let finalPoNumber = poNumber
+        if (!finalPoNumber) {
+            finalPoNumber = await getNextSequence('PO', true)
+        } else {
+            // If user provided a number (e.g. from the auto-suggested field), 
+            // we should still ensure the sequence is updated/consumed if it matches the current next number.
+            // For simplicity and to match the user's requirement of "sequential auto generation",
+            // we'll explicitly increment it here.
+            await import('@/lib/sequences').then(m => m.incrementSequence('PO'))
+        }
 
         const purchaseOrder = await prisma.purchaseOrder.create({
             data: {

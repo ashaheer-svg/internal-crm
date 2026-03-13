@@ -120,10 +120,10 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {po.items.map((item) => (
                                 <tr key={item.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
                                         {item.product.name}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 text-sm text-gray-500">
                                         {item.product.sku}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

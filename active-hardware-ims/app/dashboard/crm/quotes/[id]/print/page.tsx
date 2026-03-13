@@ -35,7 +35,7 @@ interface Quote {
         unitPrice: number
         discount: number
         total: number
-        product: { name: string } | null
+        product: { name: string; sku: string } | null
     }[]
 }
 
@@ -112,14 +112,10 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                             <tr key={item.id}>
                                 <td style={{ color: 'var(--print-text-muted)', fontSize: '0.875rem' }}>{idx + 1}</td>
                                 <td>
-                                    <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.product?.name || 'Custom Item'}</p>
-                                    <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap' }}>{item.description}</p>
-                                    {(item.productModel || item.serialNumbers) && (
-                                        <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--print-bg-muted)', borderRadius: '4px', fontSize: '0.75rem', borderLeft: '2px solid var(--print-brand-primary)' }}>
-                                            {item.productModel && <p><strong>Model:</strong> {item.productModel}</p>}
-                                            {item.serialNumbers && <p style={{ marginTop: '0.25rem' }}><strong>Serial(s):</strong> {item.serialNumbers}</p>}
-                                        </div>
-                                    )}
+                                    <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--print-text-base)' }}>
+                                        {item.product?.sku ? `[${item.product.sku}] ` : ''}{item.product?.name || 'Custom Item'}
+                                    </p>
+                                    <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{item.description}</p>
                                 </td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{item.quantity}</td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{formatCurrency(item.unitPrice)}</td>

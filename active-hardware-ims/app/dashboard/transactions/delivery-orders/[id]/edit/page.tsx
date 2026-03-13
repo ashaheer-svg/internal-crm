@@ -316,16 +316,20 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href={`/dashboard/transactions/delivery-orders/${id}`} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </Link>
-                <h1 className="text-2xl font-bold text-gray-900">Edit Delivery Order</h1>
-                <div className="flex-1" />
+            <div className="flex items-center justify-between border-b pb-6 mb-6">
+                <div className="flex items-center gap-4">
+                    <Link href={`/dashboard/transactions/delivery-orders/${id}`} className="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Edit Delivery Order</h1>
+                        <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{orderNumber}</p>
+                    </div>
+                </div>
                 <button
                     onClick={handleSubmit}
                     disabled={saving || items.length === 0}
-                    className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-xs"
+                    className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {saving ? "Updating..." : "Update Order"}
@@ -392,7 +396,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                             {/* Bill To */}
                             <div className="relative z-20">
                                 <CustomerSelector
-                                    label={saleType === "PARTNER" ? "Bill To (Partner)" : "Customer"}
+                                    label={saleType === "PARTNER" ? "Bill To (Partner)" : "Customer Entity"}
                                     onSelect={setCustomer}
                                     selectedCustomer={customer}
                                     type={saleType === "PARTNER" ? "PARTNER" : undefined}
@@ -450,7 +454,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 </select>
                             </div>
                             <div className="sm:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700">Notes (Summary)</label>
+                                <label className="block text-sm font-medium text-gray-700">Dispatch Notes</label>
                                 <textarea
                                     className="w-full text-sm border rounded-md p-2 h-10 resize-none mt-1"
                                     placeholder="Order notes..."
@@ -657,7 +661,7 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
             {/* Modals */}
             {showProductSelector && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
                             <h3 className="font-semibold text-gray-900">Select Product</h3>
                             <button 
