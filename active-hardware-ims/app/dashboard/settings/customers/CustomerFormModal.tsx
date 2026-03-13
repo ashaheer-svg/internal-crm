@@ -8,9 +8,10 @@ type CustomerFormModalProps = {
     customer?: any
     onSave: (customer: any) => void
     onClose: () => void
+    defaultRole?: 'CUSTOMER' | 'SUPPLIER' | 'PARTNER'
 }
 
-export default function CustomerFormModal({ customer, onSave, onClose }: CustomerFormModalProps) {
+export default function CustomerFormModal({ customer, onSave, onClose, defaultRole }: CustomerFormModalProps) {
     const [name, setName] = useState(customer?.name || "")
     const [contactName, setContactName] = useState(customer?.contactName || "")
     const [email, setEmail] = useState(customer?.email || "")
@@ -23,9 +24,9 @@ export default function CustomerFormModal({ customer, onSave, onClose }: Custome
     const [notes, setNotes] = useState(customer?.notes || "")
 
     // Multi-role state
-    const [isCustomer, setIsCustomer] = useState(customer?.isCustomer || false)
-    const [isSupplier, setIsSupplier] = useState(customer?.isSupplier || false)
-    const [isPartner, setIsPartner] = useState(customer?.isPartner || false)
+    const [isCustomer, setIsCustomer] = useState(customer?.isCustomer || (defaultRole === 'CUSTOMER'))
+    const [isSupplier, setIsSupplier] = useState(customer?.isSupplier || (defaultRole === 'SUPPLIER'))
+    const [isPartner, setIsPartner] = useState(customer?.isPartner || (defaultRole === 'PARTNER'))
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")

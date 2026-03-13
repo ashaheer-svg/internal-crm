@@ -321,6 +321,15 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">Edit Delivery Order</h1>
+                <div className="flex-1" />
+                <button
+                    onClick={handleSubmit}
+                    disabled={saving || items.length === 0}
+                    className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-xs"
+                >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {saving ? "Updating..." : "Update Order"}
+                </button>
             </div>
 
             {error && (
@@ -330,9 +339,9 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: Form */}
-                <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col gap-6">
+                {/* Main Content Area */}
+                <div className="space-y-6">
                     {/* Customer Section */}
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <h2 className="text-lg font-semibold mb-4">Customer Details</h2>
@@ -659,42 +668,6 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
                                 ))}
                             </div>
                         )}
-                    </div>
-                </div>
-
-                {/* Right Column: Summary */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-6">
-                        <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-                        <div className="space-y-3 mb-6">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Subtotal</span>
-                                <span className="font-medium">
-                                    Rs. {items.reduce((s, i) => s + (i.quantity * i.unitPrice), 0).toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="pt-3 border-t">
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-                                <textarea
-                                    className="w-full text-sm border rounded-md p-2 h-24 resize-none"
-                                    placeholder="Add delivery instructions or notes..."
-                                    value={notes}
-                                    onChange={e => setNotes(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleSubmit}
-                            disabled={saving || items.length === 0}
-                            className="w-full py-2.5 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            Update Order
-                        </button>
-                        <div className="mt-4 text-xs text-gray-500 text-center">
-                            Note: Removing items will release any allocated inventory.
-                        </div>
                     </div>
                 </div>
             </div>

@@ -204,6 +204,7 @@ export default function CustomerSelector({ onSelect, selectedCustomer, type }: C
             {showAddModal && (
                 <CustomerFormModal
                     onClose={() => setShowAddModal(false)}
+                    defaultRole={type === 'ALL' ? undefined : type as any}
                     onSave={(newCustomer) => {
                         onSelect(newCustomer)
                         setShowAddModal(false)
