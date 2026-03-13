@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, MapPin, Warehouse, Edit, Trash2, X } from "lucide-react"
+import BackButton from "@/components/BackButton"
 
 type Location = {
     id: string
@@ -141,6 +142,7 @@ export default function LocationsPage() {
 
     return (
         <div className="space-y-6">
+            <BackButton />
             <div className="sm:flex sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Locations</h1>
                 <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">

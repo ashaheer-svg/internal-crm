@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import BackButton from "@/components/BackButton"
 import '@/styles/print.css'
 import { format } from "date-fns"
 
@@ -48,6 +49,7 @@ export default function AMCAgreementPage({ params }: { params: Promise<{ id: str
         <>
             {/* Print actions */}
             <div className="print-actions">
+                <BackButton className="print-btn print-btn-secondary" />
                 <button onClick={() => window.close()} className="print-btn print-btn-secondary">
                     Close
                 </button>

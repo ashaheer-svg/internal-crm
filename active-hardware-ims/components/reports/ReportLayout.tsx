@@ -5,7 +5,7 @@ import { Download, Printer, Calendar, FileText, ArrowLeft, Loader2 } from "lucid
 import { formatDate } from "@/lib/utils"
 import DocumentFooter from "@/components/DocumentFooter"
 import DocumentHeader from "@/components/DocumentHeader"
-import Link from "next/link"
+import BackButton from "@/components/BackButton"
 
 interface ReportLayoutProps {
     title: string
@@ -102,9 +102,7 @@ export default function ReportLayout({
             <div className="space-y-6">
                 <div className="flex items-center justify-between no-print">
                     <div className="flex items-center gap-4">
-                        <Link href="/dashboard/reports" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-gray-500" />
-                        </Link>
+                        <BackButton />
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h1>
                             {description && <p className="text-sm text-gray-500">{description}</p>}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import BackButton from "@/components/BackButton"
 import '@/styles/print.css'
 
 export default function PrintContractPage() {
@@ -36,7 +37,17 @@ export default function PrintContractPage() {
     if (!contract) return <div className="p-8 text-center text-red-600">Contract not found</div>
 
     return (
-        <div className="print-container" style={{ maxWidth: '56rem' }}>
+        <>
+            <div className="print-actions">
+                <BackButton className="print-btn print-btn-secondary" />
+                <button onClick={() => window.close()} className="print-btn print-btn-secondary">
+                    Close
+                </button>
+                <button onClick={() => window.print()} className="print-btn print-btn-primary">
+                    Print Contract
+                </button>
+            </div>
+            <div className="print-container" style={{ maxWidth: '56rem' }}>
             {/* Header */}
             <DocumentHeader title="Service Contract" />
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem', marginTop: '-1.5rem' }}>
@@ -154,5 +165,6 @@ export default function PrintContractPage() {
             </div>
             <DocumentFooter />
         </div>
+        </>
     )
 }

@@ -7,6 +7,7 @@ import {
     Search, LayoutGrid, List, AlertCircle, Link, PlusCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 interface NASModel {
     id: string
@@ -179,6 +180,7 @@ export default function NASFeaturesPage() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4">
+            <BackButton />
 
             {/* ── Header ── */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

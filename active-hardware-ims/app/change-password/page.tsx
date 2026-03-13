@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Lock } from "lucide-react"
+import BackButton from "@/components/BackButton"
 
 export default function ChangePasswordPage() {
     const router = useRouter()
@@ -53,7 +54,10 @@ export default function ChangePasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+            <div className="max-w-md w-full mb-4">
+                <BackButton className="text-blue-600 hover:text-blue-800" />
+            </div>
             <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
                 {/* Header */}
                 <div className="text-center">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { FileText, ChevronRight, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
+import BackButton from "@/components/BackButton"
 
 const REPORT_TYPES = [
     {
@@ -91,6 +92,7 @@ export default function ReportsMenuPage() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
+            <BackButton />
             <div className="border-b pb-5">
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">Business Intelligence</h1>
                 <p className="mt-2 text-base text-gray-500">Access individualized reports and financial analysis based on your role.</p>

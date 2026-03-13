@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/format'
 import DocumentHeader from '@/components/DocumentHeader'
 import DocumentFooter from '@/components/DocumentFooter'
+import BackButton from '@/components/BackButton'
 import '@/styles/print.css'
 
 interface Quote {
@@ -61,6 +62,7 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
         <>
             {/* Print actions — fixed bottom-right, hidden on print via .print-actions */}
             <div className="print-actions">
+                <BackButton className="print-btn print-btn-secondary" />
                 <button onClick={() => window.close()} className="print-btn print-btn-secondary">
                     Close
                 </button>
