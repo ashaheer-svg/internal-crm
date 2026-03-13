@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from 'next/link'
-import { ArrowLeft, Plus, Search, Trash2, Save, ScanLine, Box, AlertCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, Plus, Search, Trash2, Save, ScanLine, Box, AlertCircle, Loader2, X } from "lucide-react"
 import ProductSelector from "@/app/dashboard/transactions/invoices/new/ProductSelector"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
 import BulkEntryModal from "@/app/dashboard/transactions/invoices/new/BulkEntryModal"
@@ -702,12 +702,17 @@ export default function EditDeliveryOrderPage({ params }: PageProps) {
             {/* Modals */}
             {showProductSelector && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                        <div className="p-4 border-b flex justify-between items-center">
-                            <h3 className="font-semibold">Select Product</h3>
-                            <button onClick={() => setShowProductSelector(false)}><ArrowLeft className="w-5 h-5" /></button>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
+                            <h3 className="font-semibold text-gray-900">Select Product</h3>
+                            <button 
+                                onClick={() => setShowProductSelector(false)}
+                                className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4">
+                        <div className="flex-1 p-6 min-h-[500px] overflow-visible">
                             <ProductSelector onProductSelect={(p) => {
                                 handleAddItem(p)
                                 setShowProductSelector(false)
