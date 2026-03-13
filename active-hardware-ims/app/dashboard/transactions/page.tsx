@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Plus, FileText, Package, Receipt, Search, ArrowRight, MapPin, User, DollarSign, Hash, Filter, RefreshCw, Truck, ArrowLeftRight, Wrench, RotateCcw, AlertTriangle, TrendingDown, ShieldCheck, Layers, Calendar, History } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate, cn } from "@/lib/utils"
@@ -291,7 +291,7 @@ function TransactionsContent() {
                 ].map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => handleTabChange(tab.id as any)}
                         className={cn(
                             "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
                             activeTab === tab.id
@@ -805,5 +805,13 @@ function TransactionsContent() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function TransactionsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading procurement history...</div>}>
+            <TransactionsContent />
+        </Suspense>
     )
 }

@@ -39,7 +39,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/transactions" className="p-2 hover:bg-gray-200 rounded-full">
+                    <Link href="/dashboard/transactions?tab=invoice" className="p-2 hover:bg-gray-200 rounded-full">
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
