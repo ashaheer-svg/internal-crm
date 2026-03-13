@@ -74,15 +74,41 @@ function getTypeCfg(type: string) {
     return TYPE_CFG[type] ?? { label: type, icon: Package, badge: 'bg-gray-100 text-gray-700 border-gray-200 shadow-sm', dot: 'bg-gray-400' }
 }
 
-export default function TransactionsPage() {
+function TransactionsContent() {
     const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+    
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [deliveryOrders, setDeliveryOrders] = useState<any[]>([])
     const [transactionLogs, setTransactionLogs] = useState<TransactionLog[]>([])
     const [loading, setLoading] = useState(true)
     const [logsLoading, setLogsLoading] = useState(false)
+    
+    // Initialize activeTab from URL, then localStorage, defaulting to 'po'
     const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>('po')
+
+    useEffect(() => {
+        const tabParam = searchParams.get('tab') as any
+        const savedTab = localStorage.getItem('last_tx_tab') as any
+        
+        if (['po', 'invoice', 'do', 'log'].includes(tabParam)) {
+            setActiveTab(tabParam)
+        } else if (['po', 'invoice', 'do', 'log'].includes(savedTab)) {
+            setActiveTab(savedTab)
+        }
+    }, [])
+
+    const handleTabChange = (tabId: 'po' | 'invoice' | 'do' | 'log') => {
+        setActiveTab(tabId)
+        localStorage.setItem('last_tx_tab', tabId)
+        
+        // Update URL without full refresh to persist state in history
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('tab', tabId)
+        router.replace(`${pathname}?${params.toString()}`)
+    }
 
     // Filters
     const [logSearch, setLogSearch] = useState('')
