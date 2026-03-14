@@ -456,30 +456,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                                     placeholder="Item description..."
                                                 />
-                                                {mode === 'HARDWARE' ? (
-                                                    <>
-                                                        <div>
-                                                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Equipment Model</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
-                                                                value={item.productModel || ''}
-                                                                onChange={(e) => updateItem(item.id, 'productModel', e.target.value)}
-                                                                placeholder="Model (if any)"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Serial Number(s)</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border-gray-200 rounded-md text-xs p-1.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50"
-                                                                value={item.serialNumbers || ''}
-                                                                onChange={(e) => updateItem(item.id, 'serialNumbers', e.target.value)}
-                                                                placeholder="Comma separated"
-                                                            />
-                                                        </div>
-                                                    </>
-                                                ) : (
+                                                {mode === 'SERVICE' && (
                                                     <div className="col-span-2 space-y-3 mt-2">
                                                         <div className="flex items-center justify-between">
                                                             <p className="text-[10px] uppercase font-extrabold text-blue-600 tracking-tight">Covered Equipment Details</p>
