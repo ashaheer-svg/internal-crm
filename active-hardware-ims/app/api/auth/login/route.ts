@@ -29,7 +29,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const normalizedEmail = email.toLowerCase()
+        const normalizedEmail = email.trim().toLowerCase()
 
         // Rate limit check
         const attemptData = loginAttempts.get(normalizedEmail)
