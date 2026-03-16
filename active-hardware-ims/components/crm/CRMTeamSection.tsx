@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Search, Users, Shield, UserPlus, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface Member {
     id: string
@@ -33,6 +34,8 @@ export default function CRMTeamSection({ projectId, members, onUpdate }: TeamSec
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
     const [isOpen, setIsOpen] = useState(false)
+    const [confirmingMember, setConfirmingMember] = useState<Member | null>(null)
+    const [removing, setRemoving] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -104,29 +107,45 @@ export default function CRMTeamSection({ projectId, members, onUpdate }: TeamSec
         }
     }
 
-    const handleRemoveMember = async (userId: string) => {
-        if (!confirm('Are you sure you want to remove this member from the project?')) return
-
+    const handleConfirmRemove = async () => {
+        if (!confirmingMember) return
+        setRemoving(true)
         try {
             const res = await fetch(`/api/crm/projects/${projectId}/members`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
+                body: JSON.stringify({ userId: confirmingMember.userId })
             })
-
             if (res.ok) {
+                setConfirmingMember(null)
                 onUpdate()
             } else {
                 const data = await res.json()
-                alert(data.error || 'Failed to remove member')
+                setError(data.error || 'Failed to remove member')
+                setConfirmingMember(null)
             }
         } catch (error) {
-            alert('Something went wrong')
+            setError('Something went wrong')
+            setConfirmingMember(null)
+        } finally {
+            setRemoving(false)
         }
     }
 
     return (
         <div className="max-w-4xl space-y-6">
+
+            <ConfirmModal
+                open={!!confirmingMember}
+                title="Remove Member"
+                message={confirmingMember ? `Remove ${confirmingMember.user.name} from this project? This action cannot be undone.` : ''}
+                confirmLabel="Confirm Remove"
+                variant="danger"
+                loading={removing}
+                onConfirm={handleConfirmRemove}
+                onCancel={() => setConfirmingMember(null)}
+            />
+
             <div className="flex justify-between items-center">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">Project Team</h3>
@@ -271,7 +290,7 @@ export default function CRMTeamSection({ projectId, members, onUpdate }: TeamSec
                                 </span>
                                 {member.role !== 'OWNER' && (
                                     <button
-                                        onClick={() => handleRemoveMember(member.userId)}
+                                        onClick={() => setConfirmingMember(member)}
                                         className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                         title="Remove member"
                                     >

@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { Shield, Plus, Check, X, AlertCircle, Trash2, Printer } from "lucide-react"
+import ConfirmModal from "@/components/ConfirmModal"
 
 export default function RolesTab() {
     const [isLoading, setIsLoading] = useState(true)
     const [roles, setRoles] = useState<any[]>([])
     const [permissions, setPermissions] = useState<any[]>([])
     const [error, setError] = useState('')
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; onConfirm: () => void
+    }>(null)
 
     // New Role Form
     const [isCreating, setIsCreating] = useState(false)
@@ -32,15 +36,21 @@ export default function RolesTab() {
     }
 
     const handleDeleteRole = async (roleId: string, roleName: string) => {
-        if (!confirm(`Are you sure you want to permanently delete the "${roleName}" role? This cannot be undone.`)) return
-        try {
-            const res = await fetch(`/api/settings/roles?roleId=${roleId}`, { method: 'DELETE' })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
-            await fetchData()
-        } catch (err: any) {
-            alert(`Failed to delete role: ${err.message}`)
-        }
+        setPendingAction({
+            title: `Delete Role "${roleName}"`,
+            message: `Are you sure you want to permanently delete the "${roleName}" role? This cannot be undone.`,
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/settings/roles?roleId=${roleId}`, { method: 'DELETE' })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error)
+                    await fetchData()
+                } catch (err: any) {
+                    setError(`Failed to delete role: ${err.message}`)
+                }
+            }
+        })
     }
 
     const handleTogglePermission = async (roleId: string, permissionId: string, currentlyHas: boolean) => {
@@ -102,6 +112,14 @@ export default function RolesTab() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant="danger"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-medium text-gray-900">Access Matrix</h2>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Package, Plus, Search, Trash2, Edit2, AlertCircle, CheckCircle } from "lucide-react"
 import BackButton from "@/components/BackButton"
+import ConfirmModal from "@/components/ConfirmModal"
 
 export default function RentalAssetsPage() {
     const [assets, setAssets] = useState<any[]>([])
@@ -16,6 +17,7 @@ export default function RentalAssetsPage() {
     const [newNotes, setNewNotes] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState("")
+    const [pendingAction, setPendingAction] = useState<null | { onConfirm: () => void }>(null)
 
     useEffect(() => {
         fetchAssets()
@@ -68,19 +70,18 @@ export default function RentalAssetsPage() {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this asset? This action cannot be undone.")) return
-
-        try {
-            const res = await fetch(`/api/rentals/${id}`, {
-                method: 'DELETE'
-            })
-
-            if (!res.ok) throw new Error("Failed to delete")
-
-            fetchAssets()
-        } catch (err) {
-            alert("Failed to delete asset. It might be currently rented.")
-        }
+        setPendingAction({
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/rentals/${id}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error("Failed to delete")
+                    fetchAssets()
+                } catch (err) {
+                    setError("Failed to delete asset. It might be currently rented.")
+                }
+            }
+        })
     }
 
     const filteredAssets = assets.filter(asset =>
@@ -90,6 +91,14 @@ export default function RentalAssetsPage() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title="Delete Rental Asset"
+                message="Are you sure you want to delete this asset? This action cannot be undone."
+                variant="danger"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton className="mb-4" />

@@ -5,6 +5,7 @@ import { Plus, Trash2, Download, Save, ChevronLeft, AlertCircle, CheckCircle, Fi
 import Link from "next/link"
 import BackButton from "@/components/BackButton"
 import FormattedNumberInput from "@/components/FormattedNumberInput"
+import ConfirmModal from "@/components/ConfirmModal"
 
 type LegacyItem = {
     id: string
@@ -39,6 +40,7 @@ export default function LegacyDataEntryPage() {
     const [validatedNames, setValidatedNames] = useState<Record<string, boolean>>({})
     const [showBulkPaste, setShowBulkPaste] = useState(false)
     const [bulkPasteText, setBulkPasteText] = useState("")
+    const [pendingAction, setPendingAction] = useState<null | { title: string; message: string; onConfirm: () => void }>(null)
 
     // Current order being edited
     const activeOrder = orders.find(o => o.id === activeOrderId) || null
@@ -100,30 +102,32 @@ export default function LegacyDataEntryPage() {
 
     async function importToSystem() {
         if (orders.length === 0) return
-        if (!confirm(`Are you sure you want to import ${orders.length} orders into the live system? This action cannot be easily undone.`)) return
-
-        setImporting(true)
-        setStatus({ type: 'info', message: "Importing data to system..." })
-
-        try {
-            const res = await fetch('/api/backup/legacy-import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: orders })
-            })
-
-            const result = await res.json()
-            if (!res.ok) throw new Error(result.error || "Failed to import")
-
-            setStatus({ type: 'success', message: result.message })
-            setOrders([])
-            setActiveOrderId(null)
-        } catch (error: any) {
-            console.error("Import failed:", error)
-            setStatus({ type: 'error', message: error.message || "Import failed. Please check your data." })
-        } finally {
-            setImporting(false)
-        }
+        setPendingAction({
+            title: 'Finalize & Import to System',
+            message: `Are you sure you want to import ${orders.length} orders into the live system? This action cannot be easily undone.`,
+            onConfirm: async () => {
+                setPendingAction(null)
+                setImporting(true)
+                setStatus({ type: 'info', message: "Importing data to system..." })
+                try {
+                    const res = await fetch('/api/backup/legacy-import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: orders })
+                    })
+                    const result = await res.json()
+                    if (!res.ok) throw new Error(result.error || "Failed to import")
+                    setStatus({ type: 'success', message: result.message })
+                    setOrders([])
+                    setActiveOrderId(null)
+                } catch (error: any) {
+                    console.error("Import failed:", error)
+                    setStatus({ type: 'error', message: error.message || "Import failed. Please check your data." })
+                } finally {
+                    setImporting(false)
+                }
+            }
+        })
     }
 
     function addOrder() {
@@ -172,9 +176,15 @@ export default function LegacyDataEntryPage() {
     }
 
     function removeOrder(id: string) {
-        if (!confirm("Remove this order from the list?")) return
-        setOrders(orders.filter(o => o.id !== id))
-        if (activeOrderId === id) setActiveOrderId(null)
+        setPendingAction({
+            title: 'Remove Order',
+            message: 'Remove this order from the list? This will not affect the database.',
+            onConfirm: () => {
+                setPendingAction(null)
+                setOrders(orders.filter(o => o.id !== id))
+                if (activeOrderId === id) setActiveOrderId(null)
+            }
+        })
     }
 
     function updateOrder(id: string, updates: Partial<LegacyOrder>) {
@@ -220,10 +230,16 @@ export default function LegacyDataEntryPage() {
 
     function clearAll() {
         if (orders.length === 0) return
-        if (!confirm("Clear all orders in the current list? This will not affect the database.")) return
-        setOrders([])
-        setActiveOrderId(null)
-        setStatus({ type: 'info', message: "List cleared." })
+        setPendingAction({
+            title: 'Clear All Orders',
+            message: 'Clear all orders in the current list? This will not affect the database.',
+            onConfirm: () => {
+                setPendingAction(null)
+                setOrders([])
+                setActiveOrderId(null)
+                setStatus({ type: 'info', message: "List cleared." })
+            }
+        })
     }
 
     function downloadJson() {
@@ -256,6 +272,14 @@ export default function LegacyDataEntryPage() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant="warning"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex justify-between items-center">
                 <div>
                     <BackButton className="mb-2" />

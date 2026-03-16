@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import { format } from 'date-fns'
+import ConfirmModal from '@/components/ConfirmModal'
 
 export default function QuoteDetailPage({ params }: { params: Promise<{ id: string, quoteId: string }> }) {
     const { id: projectId, quoteId } = use(params)
@@ -24,6 +25,9 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
     const [quote, setQuote] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [processing, setProcessing] = useState(false)
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void
+    }>(null)
 
     useEffect(() => {
         fetchQuote()
@@ -46,46 +50,49 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     async function handleDuplicate() {
-        if (!confirm('Create a new quote based on this one?')) return
-        setProcessing(true)
-        try {
-            const res = await fetch(`/api/crm/quotes/${quoteId}/duplicate`, {
-                method: 'POST'
-            })
-            if (res.ok) {
-                const newQuote = await res.json()
-                router.refresh()
-                router.push(`/dashboard/crm/projects/${projectId}/quotes/${newQuote.id}`)
-            } else {
-                alert('Failed to duplicate quote')
+        setPendingAction({
+            title: 'Duplicate Quote',
+            message: 'Create a new quote based on this one? It will be created as a Draft.',
+            variant: 'info',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setProcessing(true)
+                try {
+                    const res = await fetch(`/api/crm/quotes/${quoteId}/duplicate`, { method: 'POST' })
+                    if (res.ok) {
+                        const newQuote = await res.json()
+                        router.refresh()
+                        router.push(`/dashboard/crm/projects/${projectId}/quotes/${newQuote.id}`)
+                    } else {
+                        console.error('Failed to duplicate quote')
+                    }
+                } catch (error) {
+                    console.error(error)
+                } finally {
+                    setProcessing(false)
+                }
             }
-        } catch (error) {
-            console.error(error)
-            alert('Error duplicating quote')
-        } finally {
-            setProcessing(false)
-        }
+        })
     }
 
     async function handleConfirm() {
-        if (!confirm('Mark this quote as Accepted? This will update the status.')) return
-        setProcessing(true)
-        try {
-            const res = await fetch(`/api/crm/quotes/${quoteId}/confirm`, {
-                method: 'POST'
-            })
-            if (res.ok) {
-                router.refresh()
-                fetchQuote()
-            } else {
-                alert('Failed to confirm quote')
+        setPendingAction({
+            title: 'Accept Quote',
+            message: 'Mark this quote as Accepted? This will update the status and cannot be reversed.',
+            variant: 'warning',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setProcessing(true)
+                try {
+                    const res = await fetch(`/api/crm/quotes/${quoteId}/confirm`, { method: 'POST' })
+                    if (res.ok) { router.refresh(); fetchQuote() } else { console.error('Failed to confirm quote') }
+                } catch (error) {
+                    console.error(error)
+                } finally {
+                    setProcessing(false)
+                }
             }
-        } catch (error) {
-            console.error(error)
-            alert('Error confirming quote')
-        } finally {
-            setProcessing(false)
-        }
+        })
     }
 
     if (loading) return <div className="p-8">Loading Quote...</div>
@@ -101,6 +108,15 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant={pendingAction?.variant ?? 'warning'}
+                loading={processing}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             {/* Header */}
             <div className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm">
                 <div className="flex justify-between items-start mb-4">

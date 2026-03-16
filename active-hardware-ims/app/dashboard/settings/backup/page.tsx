@@ -5,6 +5,7 @@ import { Download, Upload, Database, AlertTriangle, CheckCircle, Info, Users, Hi
 import Link from "next/link"
 import { formatDateTime } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
+import ConfirmModal from "@/components/ConfirmModal"
 
 type BackupHistory = {
     id: string
@@ -30,6 +31,7 @@ export default function BackupPage() {
     // Legacy Data Migration State
     const [importingLegacy, setImportingLegacy] = useState(false)
     const [legacyFile, setLegacyFile] = useState<File | null>(null)
+    const [pendingImport, setPendingImport] = useState<null | { label: string; action: () => Promise<void> }>(null)
 
 
     useEffect(() => {
@@ -205,35 +207,34 @@ export default function BackupPage() {
 
     async function handleImportCustomers() {
         if (!customerFile) return
-        if (!confirm(`Import customers from ${customerFile.name}? Existing records with matching IDs will be updated.`)) return
-
-        setImportingCustomers(true)
-        setMessage(null)
-
-        try {
-            const reader = new FileReader()
-            const fileContent = await new Promise((resolve, reject) => {
-                reader.onload = (e) => resolve(e.target?.result)
-                reader.onerror = (e) => reject(new Error('Failed to read file'))
-                reader.readAsText(customerFile)
-            })
-
-            const res = await fetch('/api/backup/customers/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
-            })
-
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Failed to import customers')
-
-            setMessage({ type: 'success', text: data.message })
-            setCustomerFile(null)
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message })
-        } finally {
-            setImportingCustomers(false)
-        }
+        setPendingImport({
+            label: `Import customers from ${customerFile.name}? Existing records with matching IDs will be updated.`,
+            action: async () => {
+                setImportingCustomers(true)
+                setMessage(null)
+                try {
+                    const reader = new FileReader()
+                    const fileContent = await new Promise((resolve, reject) => {
+                        reader.onload = (e) => resolve(e.target?.result)
+                        reader.onerror = () => reject(new Error('Failed to read file'))
+                        reader.readAsText(customerFile)
+                    })
+                    const res = await fetch('/api/backup/customers/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error || 'Failed to import customers')
+                    setMessage({ type: 'success', text: data.message })
+                    setCustomerFile(null)
+                } catch (error: any) {
+                    setMessage({ type: 'error', text: error.message })
+                } finally {
+                    setImportingCustomers(false)
+                }
+            }
+        })
     }
 
     function handleLegacyFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -250,39 +251,46 @@ export default function BackupPage() {
 
     async function handleImportLegacy() {
         if (!legacyFile) return
-        if (!confirm(`Import legacy delivery orders from ${legacyFile.name}? This will create completed orders and mark items as SOLD.`)) return
-
-        setImportingLegacy(true)
-        setMessage(null)
-
-        try {
-            const reader = new FileReader()
-            const fileContent = await new Promise((resolve, reject) => {
-                reader.onload = (e) => resolve(e.target?.result)
-                reader.onerror = (e) => reject(new Error('Failed to read file'))
-                reader.readAsText(legacyFile)
-            })
-
-            const res = await fetch('/api/backup/legacy-import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
-            })
-
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Failed to import legacy data')
-
-            setMessage({ type: 'success', text: data.message })
-            setLegacyFile(null)
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.message })
-        } finally {
-            setImportingLegacy(false)
-        }
+        setPendingImport({
+            label: `Import legacy delivery orders from ${legacyFile.name}? This will create completed orders and mark items as SOLD.`,
+            action: async () => {
+                setImportingLegacy(true)
+                setMessage(null)
+                try {
+                    const reader = new FileReader()
+                    const fileContent = await new Promise((resolve, reject) => {
+                        reader.onload = (e) => resolve(e.target?.result)
+                        reader.onerror = () => reject(new Error('Failed to read file'))
+                        reader.readAsText(legacyFile)
+                    })
+                    const res = await fetch('/api/backup/legacy-import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: JSON.parse(fileContent as string).data })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error || 'Failed to import legacy data')
+                    setMessage({ type: 'success', text: data.message })
+                    setLegacyFile(null)
+                } catch (error: any) {
+                    setMessage({ type: 'error', text: error.message })
+                } finally {
+                    setImportingLegacy(false)
+                }
+            }
+        })
     }
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingImport}
+                title="Confirm Import"
+                message={pendingImport?.label ?? ''}
+                variant="warning"
+                onConfirm={async () => { const action = pendingImport?.action; setPendingImport(null); if (action) await action() }}
+                onCancel={() => setPendingImport(null)}
+            />
             <div>
                 <BackButton className="mb-4" />
                 <h1 className="text-2xl font-bold text-gray-900">Database Backup & Restore</h1>

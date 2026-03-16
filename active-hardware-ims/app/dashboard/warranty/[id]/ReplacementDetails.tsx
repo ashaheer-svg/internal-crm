@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Package, Calendar, AlertCircle, CheckCircle } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface ReplacementDetailsProps {
     claimId: string
@@ -36,47 +37,47 @@ export default function ReplacementDetails({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
+    const [pendingAction, setPendingAction] = useState<null | { onConfirm: () => void }>(null)
 
     const canReturn = replacementType === 'TEMPORARY' && !replacementReturnedAt
 
     async function handleReturnReplacement() {
-        if (!confirm('Are you sure you want to mark this temporary replacement as returned?')) {
-            return
-        }
-
-        setLoading(true)
-        setError('')
-        setSuccess('')
-
-        try {
-            const res = await fetch(`/api/warranty/${claimId}/return`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    notes: 'Temporary replacement returned'
-                })
-            })
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to return replacement')
+        setPendingAction({
+            onConfirm: async () => {
+                setPendingAction(null)
+                setLoading(true)
+                setError('')
+                setSuccess('')
+                try {
+                    const res = await fetch(`/api/warranty/${claimId}/return`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ notes: 'Temporary replacement returned' })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error || 'Failed to return replacement')
+                    setSuccess('Replacement returned successfully!')
+                    setTimeout(() => { router.refresh() }, 1500)
+                } catch (error: any) {
+                    setError(error.message || 'Failed to return replacement')
+                } finally {
+                    setLoading(false)
+                }
             }
-
-            setSuccess('Replacement returned successfully!')
-            setTimeout(() => {
-                router.refresh()
-            }, 1500)
-
-        } catch (error: any) {
-            setError(error.message || 'Failed to return replacement')
-        } finally {
-            setLoading(false)
-        }
+        })
     }
 
     return (
         <div className="bg-white shadow sm:rounded-lg p-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title="Mark as Returned"
+                message="Are you sure you want to mark this temporary replacement as returned? This will return the device to inventory."
+                variant="warning"
+                loading={loading}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Replacement Details</h3>
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${replacementType === 'TEMPORARY'

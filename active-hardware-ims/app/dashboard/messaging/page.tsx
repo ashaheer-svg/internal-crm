@@ -137,7 +137,8 @@ export default function MessagingPage() {
                 }
                 return m
             }))
-            setStats(prev => ({ ...prev, unreadCount: Math.max(0, prev.unreadCount - 1) }))
+            // Refetch stats from server to stay in sync across tabs
+            fetchMessages(meta.page)
         } catch (error) {
             console.error('Failed to mark as read:', error)
         }
@@ -172,7 +173,8 @@ export default function MessagingPage() {
                     }
                     return m
                 }))
-                setStats(prev => ({ ...prev, taskCount: Math.max(0, prev.taskCount - 1) }))
+                // Refetch stats from server to stay in sync across tabs
+                fetchMessages(meta.page)
                 setNotification({ type: 'success', message: "Task completed successfully!" })
                 setTimeout(() => setNotification(null), 3000)
             }

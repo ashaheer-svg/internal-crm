@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Search, UserCircle, Phone, Mail, RefreshCw } from
 import { formatDate, cn } from "@/lib/utils"
 import SortIcon from "@/components/SortIcon"
 import PaginationControls from "@/components/PaginationControls"
+import ConfirmModal from "@/components/ConfirmModal"
 
 interface SalesRep {
     id: string
@@ -32,6 +33,9 @@ export default function SalesRepsTab() {
     const [formData, setFormData] = useState({ name: "", email: "", phone: "" })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' })
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; variant?: 'danger' | 'warning'; onConfirm: () => void
+    }>(null)
 
     const fetchSalesReps = useCallback(async (page: number) => {
         setLoading(true)
@@ -105,26 +109,45 @@ export default function SalesRepsTab() {
     }
 
     const handleDelete = async (id: string, name: string) => {
-        const type = confirm(`Do you want to PERMANENTLY delete ${name}?\n\nOK = Permanent Delete (only if no orders/customers exist)\nCancel = Soft Delete (Deactivate)`)
-            ? "hard"
-            : null
+        // Show deactivate first, then offer permanent delete option
+        setPendingAction({
+            title: `Remove ${name}`,
+            message: `Choose an action for ${name}:\n• Deactivate — keeps history, removes from active lists.\n• Permanent Delete — only if no linked orders or customers exist.`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setPendingAction(null)
+                // Show second modal for permanent delete
+                setPendingAction({
+                    title: `Permanently Delete ${name}?`,
+                    message: `This will PERMANENTLY delete ${name} and cannot be undone. Only allowed if no orders or customers are linked. Press Cancel to deactivate instead.`,
+                    variant: 'danger',
+                    onConfirm: async () => {
+                        setPendingAction(null)
+                        try {
+                            const res = await fetch(`/api/sales-reps/${id}?type=hard`, { method: "DELETE" })
+                            if (res.ok) fetchSalesReps(meta.page)
+                            else { const data = await res.json(); console.error(data.error || "Failed to delete") }
+                        } catch (error) { console.error("Error deleting", error) }
+                    }
+                })
+            }
+        })
+    }
 
-        if (type === null) {
-            if (confirm(`Deactivate ${name}?`)) {
+    const handleDeactivate = async (id: string, name: string) => {
+        setPendingAction({
+            title: `Deactivate ${name}?`,
+            message: `Deactivating will remove ${name} from active lists but preserve all historical data.`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setPendingAction(null)
                 try {
                     const res = await fetch(`/api/sales-reps/${id}?type=soft`, { method: "DELETE" })
                     if (res.ok) fetchSalesReps(meta.page)
-                    else { const data = await res.json(); alert(data.error || "Failed to deactivate") }
+                    else { const data = await res.json(); console.error(data.error || "Failed to deactivate") }
                 } catch (error) { console.error("Error deactivating", error) }
             }
-            return
-        }
-
-        try {
-            const res = await fetch(`/api/sales-reps/${id}?type=hard`, { method: "DELETE" })
-            if (res.ok) fetchSalesReps(meta.page)
-            else { const data = await res.json(); alert(data.error || "Failed to delete") }
-        } catch (error) { console.error("Error deleting", error) }
+        })
     }
 
     const handleToggleStatus = async (rep: SalesRep) => {
@@ -140,6 +163,14 @@ export default function SalesRepsTab() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant={pendingAction?.variant ?? 'danger'}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex-1">
                     <h3 className="text-sm font-bold text-gray-900 mb-1">Human Resource Protocol</h3>

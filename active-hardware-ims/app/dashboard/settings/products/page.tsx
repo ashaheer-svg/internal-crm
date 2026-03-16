@@ -6,6 +6,7 @@ import { Plus, Search, Archive, RefreshCw, Trash2, Edit } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
 import PaginationControls from "@/components/PaginationControls"
+import ConfirmModal from "@/components/ConfirmModal"
 
 type Product = {
     id: string
@@ -27,8 +28,11 @@ export default function ProductManagementPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
-    const [showInactive, setShowInactive] = useState(true) // Default to showing inactive
+    const [showInactive, setShowInactive] = useState(true)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; variant?: 'danger' | 'warning'; onConfirm: () => void
+    }>(null)
 
     // Debounce search
     useEffect(() => {
@@ -65,46 +69,48 @@ export default function ProductManagementPage() {
     }, [fetchProducts])
 
     async function handleStatusChange(productId: string, newStatus: boolean) {
-        if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this product?`)) return
-
-        setActionLoading(productId)
-        try {
-            const res = await fetch(`/api/products/${productId}?type=${newStatus ? 'restore' : 'soft'}`, {
-                method: 'DELETE'
-            })
-
-            if (!res.ok) throw new Error('Failed to update status')
-
-            await fetchProducts()
-        } catch (error) {
-            console.error('Error:', error)
-            alert('Failed to update product status')
-        } finally {
-            setActionLoading(null)
-        }
+        setPendingAction({
+            title: newStatus ? 'Activate Product' : 'Deactivate Product',
+            message: `Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this product?`,
+            variant: newStatus ? 'info' : 'warning',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setActionLoading(productId)
+                try {
+                    const res = await fetch(`/api/products/${productId}?type=${newStatus ? 'restore' : 'soft'}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error('Failed to update status')
+                    await fetchProducts()
+                } catch (error) {
+                    console.error('Error:', error)
+                } finally {
+                    setActionLoading(null)
+                }
+            }
+        })
     }
 
     async function handleDelete(productId: string) {
-        if (!confirm('Are you sure you want to PERMANENTLY delete this product? This action cannot be undone.')) return
-
-        setActionLoading(productId)
-        try {
-            const res = await fetch(`/api/products/${productId}?type=hard`, {
-                method: 'DELETE'
-            })
-
-            if (!res.ok) {
-                const data = await res.json()
-                throw new Error(data.error || 'Failed to delete product')
+        setPendingAction({
+            title: 'Permanently Delete Product',
+            message: 'Are you sure you want to PERMANENTLY delete this product? This action cannot be undone.',
+            variant: 'danger',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setActionLoading(productId)
+                try {
+                    const res = await fetch(`/api/products/${productId}?type=hard`, { method: 'DELETE' })
+                    if (!res.ok) {
+                        const data = await res.json()
+                        throw new Error(data.error || 'Failed to delete product')
+                    }
+                    await fetchProducts()
+                } catch (error: any) {
+                    console.error('Error:', error)
+                } finally {
+                    setActionLoading(null)
+                }
             }
-
-            await fetchProducts()
-        } catch (error: any) {
-            console.error('Error:', error)
-            alert(error.message)
-        } finally {
-            setActionLoading(null)
-        }
+        })
     }
 
     if (loading && products.length === 0) {
@@ -117,6 +123,15 @@ export default function ProductManagementPage() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant={pendingAction?.variant ?? 'danger'}
+                loading={!!actionLoading}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
                     <BackButton className="mb-4" />

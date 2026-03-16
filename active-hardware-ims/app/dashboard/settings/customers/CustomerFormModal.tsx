@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 import EmployeeManager from "./EmployeeManager"
+import ConfirmModal from "@/components/ConfirmModal"
 
 type CustomerFormModalProps = {
     customer?: any
@@ -43,6 +44,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
     const [addrContact, setAddrContact] = useState("")
     const [addrPhone, setAddrPhone] = useState("")
     const [addrDefault, setAddrDefault] = useState(false)
+    const [pendingDeleteAddress, setPendingDeleteAddress] = useState<null | { id: string }>(null)
 
     useEffect(() => {
         if (customer?.id) {
@@ -113,11 +115,15 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
     }
 
     async function handleDeleteAddress(addressId: string) {
-        if (!confirm("Are you sure you want to delete this address?")) return
+        setPendingDeleteAddress({ id: addressId })
+    }
+
+    async function confirmDeleteAddress() {
+        if (!pendingDeleteAddress) return
+        const addressId = pendingDeleteAddress.id
+        setPendingDeleteAddress(null)
         try {
-            const res = await fetch(`/api/customers/${customer.id}/addresses/${addressId}`, {
-                method: "DELETE"
-            })
+            const res = await fetch(`/api/customers/${customer.id}/addresses/${addressId}`, { method: "DELETE" })
             if (res.ok) fetchAddresses()
         } catch (e) {
             console.error("Failed to delete address")
@@ -192,6 +198,14 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <ConfirmModal
+                open={!!pendingDeleteAddress}
+                title="Delete Address"
+                message="Are you sure you want to delete this address? This cannot be undone."
+                variant="danger"
+                onConfirm={confirmDeleteAddress}
+                onCancel={() => setPendingDeleteAddress(null)}
+            />
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">

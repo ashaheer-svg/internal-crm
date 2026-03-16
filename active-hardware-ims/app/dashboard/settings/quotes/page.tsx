@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Edit2, Save, X, ArrowLeft } from 'lucide-react'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface TaxConfig {
     id: string
@@ -21,6 +22,7 @@ export default function QuoteSettingsPage() {
 
     // Edit form state
     const [editForm, setEditForm] = useState({ name: '', rate: 0 })
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
     useEffect(() => {
         fetchTaxes()
@@ -93,16 +95,16 @@ export default function QuoteSettingsPage() {
     }
 
     async function handleDelete(id: string) {
-        if (!confirm('Are you sure? This will not affect existing quotes.')) return
+        setPendingDeleteId(id)
+    }
 
+    async function confirmDelete() {
+        if (!pendingDeleteId) return
+        const id = pendingDeleteId
+        setPendingDeleteId(null)
         try {
-            const res = await fetch(`/api/settings/taxes?id=${id}`, {
-                method: 'DELETE'
-            })
-
-            if (res.ok) {
-                fetchTaxes()
-            }
+            const res = await fetch(`/api/settings/taxes?id=${id}`, { method: 'DELETE' })
+            if (res.ok) fetchTaxes()
         } catch (error) {
             console.error('Failed to delete tax', error)
         }
@@ -115,6 +117,14 @@ export default function QuoteSettingsPage() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingDeleteId}
+                title="Delete Tax Configuration"
+                message="Are you sure you want to delete this tax? This will not affect existing quotes."
+                variant="danger"
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDeleteId(null)}
+            />
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => router.back()}

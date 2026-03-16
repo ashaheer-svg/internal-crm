@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
+import ConfirmModal from "@/components/ConfirmModal"
 
 interface NASModel {
     id: string
@@ -49,6 +50,10 @@ export default function NASFeaturesPage() {
     const [allProducts, setAllProducts] = useState<Product[]>([])
     const [showProductSearch, setShowProductSearch] = useState(false)
     const [productSearchTerm, setProductSearchTerm] = useState("")
+    const [saveError, setSaveError] = useState("")
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; onConfirm: () => void
+    }>(null)
 
     useEffect(() => {
         fetchModels()
@@ -115,16 +120,19 @@ export default function NASFeaturesPage() {
     }
 
     async function handleDelete(id: string) {
-        if (!confirm("Are you sure you want to delete this model?")) return
-        try {
-            const res = await fetch(`/api/crm/nas-models?id=${id}`, { method: 'DELETE' })
-            if (res.ok) {
-                alert("Model deleted")
-                fetchModels()
+        setPendingAction({
+            title: 'Delete NAS Model',
+            message: 'Are you sure you want to delete this model? This cannot be undone.',
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/crm/nas-models?id=${id}`, { method: 'DELETE' })
+                    if (res.ok) fetchModels()
+                } catch (error) {
+                    setSaveError('Delete failed')
+                }
             }
-        } catch (error) {
-            alert("Delete failed")
-        }
+        })
     }
 
     async function fetchCompatibility(modelId: string) {
@@ -158,17 +166,19 @@ export default function NASFeaturesPage() {
 
     async function handleRemoveCompatibility(productId: string) {
         if (!managingCompatibility) return
-        if (!confirm("Remove this compatibility mapping?")) return
-        try {
-            const res = await fetch(`/api/crm/nas-models/${managingCompatibility.id}/compatibility?productId=${productId}`, {
-                method: 'DELETE'
-            })
-            if (res.ok) {
-                fetchCompatibility(managingCompatibility.id)
+        setPendingAction({
+            title: 'Remove Compatibility Mapping',
+            message: 'Remove this compatibility mapping? The product will no longer appear as compatible with this NAS model.',
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/crm/nas-models/${managingCompatibility.id}/compatibility?productId=${productId}`, { method: 'DELETE' })
+                    if (res.ok) fetchCompatibility(managingCompatibility.id)
+                } catch (error) {
+                    setSaveError('Failed to remove compatibility')
+                }
             }
-        } catch (error) {
-            alert("Failed to remove compatibility")
-        }
+        })
     }
 
     const filteredModels = Array.isArray(models) ? models.filter(m =>
@@ -181,6 +191,15 @@ export default function NASFeaturesPage() {
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4">
             <BackButton />
+
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant="danger"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
 
             {/* ── Header ── */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

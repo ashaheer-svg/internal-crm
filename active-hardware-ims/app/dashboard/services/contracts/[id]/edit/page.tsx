@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import { Save, Trash2 } from "lucide-react"
 import Link from "next/link"
 import BackButton from '@/components/BackButton'
+import ConfirmModal from "@/components/ConfirmModal"
 
 interface ContractData {
     id: string
@@ -28,6 +29,7 @@ export default function EditServiceContractPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState("")
+    const [pendingAction, setPendingAction] = useState<null | { onConfirm: () => void }>(null)
 
     // Data Sources
     const [partners, setPartners] = useState<{ id: string, name: string }[]>([])
@@ -109,20 +111,19 @@ export default function EditServiceContractPage() {
     }
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this contract? This action will unlink all assets.")) return
-
-        try {
-            const res = await fetch(`/api/services/contracts/${id}`, {
-                method: 'DELETE'
-            })
-
-            if (!res.ok) throw new Error("Failed to delete contract")
-
-            router.push("/dashboard/services")
-            router.refresh()
-        } catch (err: any) {
-            alert(err.message)
-        }
+        setPendingAction({
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/services/contracts/${id}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error("Failed to delete contract")
+                    router.push("/dashboard/services")
+                    router.refresh()
+                } catch (err: any) {
+                    setError(err.message)
+                }
+            }
+        })
     }
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading contract details...</div>
@@ -130,6 +131,14 @@ export default function EditServiceContractPage() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title="Delete Service Contract"
+                message="Are you sure you want to delete this contract? This action will unlink all linked assets."
+                variant="danger"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center gap-4">
                 <BackButton className="p-2 hover:bg-gray-200 rounded-full" label="" />
                 <div className="flex-1">
@@ -291,6 +300,7 @@ function LinkedAssetsSection({ contractId }: { contractId: string }) {
     const [isLoading, setIsLoading] = useState(true)
     const [isAssigning, setIsAssigning] = useState(false)
     const [selectedAssetId, setSelectedAssetId] = useState("")
+    const [pendingReturn, setPendingReturn] = useState<null | { assetId: string }>(null)
 
     useEffect(() => {
         loadAssets()
@@ -337,20 +347,30 @@ function LinkedAssetsSection({ contractId }: { contractId: string }) {
     }
 
     const handleReturn = async (assetId: string) => {
-        if (!confirm("Return this asset?")) return
-        try {
-            const res = await fetch(`/api/services/contracts/${contractId}/assets?assetId=${assetId}`, {
-                method: 'DELETE'
-            })
-            if (!res.ok) throw new Error("Failed to return")
-            loadAssets()
-        } catch (e) {
-            alert("Failed to return asset")
-        }
+        setPendingReturn({ assetId })
     }
 
     return (
         <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
+            <ConfirmModal
+                open={!!pendingReturn}
+                title="Return Asset"
+                message="Return this asset from the contract? It will be marked as available again."
+                variant="warning"
+                onConfirm={async () => {
+                    if (!pendingReturn) return
+                    const { assetId } = pendingReturn
+                    setPendingReturn(null)
+                    try {
+                        const res = await fetch(`/api/services/contracts/${contractId}/assets?assetId=${assetId}`, { method: 'DELETE' })
+                        if (!res.ok) throw new Error("Failed to return")
+                        loadAssets()
+                    } catch (e) {
+                        console.error("Failed to return asset", e)
+                    }
+                }}
+                onCancel={() => setPendingReturn(null)}
+            />
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">Linked Rental Assets</h3>
             </div>

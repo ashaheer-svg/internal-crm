@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, CheckCircle, AlertTriangle, Package, Truck, XCircle, Printer, Trash2, Hammer, RotateCcw } from "lucide-react"
 import { Currency } from "@/components/Currency"
 import { formatDate, formatStatus } from "@/lib/utils"
+import ConfirmModal from "@/components/ConfirmModal"
 
 // Types
 type InventoryItem = {
@@ -74,6 +75,14 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
     const [actionLoading, setActionLoading] = useState(false)
+
+    // Confirmation modal state
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string
+        message: string
+        variant?: 'danger' | 'warning'
+        onConfirm: () => void
+    }>(null)
 
     // Allocation Modal State
     const [allocatingItem, setAllocatingItem] = useState<DeliveryOrderItem | null>(null)
@@ -267,19 +276,29 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         if (newStatus === 'COMPLETED') {
             const isPartial = order.items.some(i => !i.product.serviceDefinition && i.reservedItems.length < i.quantity && !i.isBackorder)
             if (isPartial) {
-                const proceed = confirm("This order is NOT fully allocated.\n\nClick OK to ship available items and CREATE A BACKORDER for the remaining items.\nClick Cancel to abort.")
-                if (!proceed) return
-                createBackorder = true
-            } else {
-                if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return
+                setPendingAction({
+                    title: 'Partial Allocation Detected',
+                    message: 'This order is NOT fully allocated. Continuing will ship available items and CREATE A BACKORDER for the remaining items.',
+                    variant: 'warning',
+                    onConfirm: () => doStatusChange(newStatus, true)
+                })
+                return
             }
-        } else {
-            if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return
         }
 
+        setPendingAction({
+            title: `Mark as ${formatStatus(newStatus)}?`,
+            message: `Are you sure you want to update this order status to ${formatStatus(newStatus)}?`,
+            variant: newStatus === 'CANCELLED' ? 'danger' : 'warning',
+            onConfirm: () => doStatusChange(newStatus, false)
+        })
+    }
+
+    async function doStatusChange(newStatus: string, createBackorder: boolean) {
+        setPendingAction(null)
         setActionLoading(true)
         try {
-            const res = await fetch(`/api/delivery-orders/${order.id}`, {
+            const res = await fetch(`/api/delivery-orders/${order!.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, createBackorder })
@@ -291,7 +310,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             }
             await fetchOrder()
         } catch (e: any) {
-            alert(e.message || "Failed to update status")
+            setError(e.message || "Failed to update status")
         } finally {
             setActionLoading(false)
         }
@@ -299,25 +318,29 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
     async function handleDelete(type: 'soft' | 'hard' = 'soft') {
         if (!order) return
+        const title = type === 'hard' ? 'Permanently Delete Order' : 'Move Order to Trash'
         const message = type === 'hard'
-            ? "Are you sure you want to PERMANENTLY delete this order? This cannot be undone."
-            : "Are you sure you want to move this order to trash?"
+            ? 'Are you sure you want to PERMANENTLY delete this delivery order? This cannot be undone.'
+            : 'Move this delivery order to trash?'
 
-        if (!confirm(message)) return
-
-        setActionLoading(true)
-        try {
-            const res = await fetch(`/api/delivery-orders/${order.id}?type=${type}`, {
-                method: 'DELETE',
-            })
-
-            if (!res.ok) throw new Error("Delete failed")
-            router.push('/dashboard/transactions?tab=do')
-        } catch (e) {
-            alert("Failed to delete order")
-        } finally {
-            setActionLoading(false)
-        }
+        setPendingAction({
+            title,
+            message,
+            variant: 'danger',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setActionLoading(true)
+                try {
+                    const res = await fetch(`/api/delivery-orders/${order.id}?type=${type}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error('Delete failed')
+                    router.push('/dashboard/transactions?tab=do')
+                } catch {
+                    setError('Failed to delete order')
+                } finally {
+                    setActionLoading(false)
+                }
+            }
+        })
     }
 
     async function handleReturn(inventoryItemId: string, serialNumber: string) {
@@ -366,6 +389,17 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
+
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant={pendingAction?.variant ?? 'danger'}
+                confirmLabel="Confirm"
+                loading={actionLoading}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">

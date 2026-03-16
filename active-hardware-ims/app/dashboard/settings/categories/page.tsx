@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Search, Tag } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import BackButton from "@/components/BackButton"
+import ConfirmModal from "@/components/ConfirmModal"
 
 interface Category {
     id: string
@@ -22,6 +23,7 @@ export default function CategoriesPage() {
     const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
     const [formData, setFormData] = useState({ name: "", description: "" })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [pendingAction, setPendingAction] = useState<null | { onConfirm: () => void }>(null)
 
     useEffect(() => {
         fetchCategories()
@@ -89,26 +91,29 @@ export default function CategoriesPage() {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this category?")) return
-
-        try {
-            const res = await fetch(`/api/categories/${id}`, {
-                method: "DELETE",
-            })
-
-            if (res.ok) {
-                fetchCategories()
-                router.refresh()
-            } else {
-                alert("Failed to delete category")
+        setPendingAction({
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/categories/${id}`, { method: "DELETE" })
+                    if (res.ok) { fetchCategories(); router.refresh() }
+                } catch (error) {
+                    console.error("Error deleting category", error)
+                }
             }
-        } catch (error) {
-            console.error("Error deleting category", error)
-        }
+        })
     }
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title="Delete Category"
+                message="Are you sure you want to delete this category? This cannot be undone."
+                variant="danger"
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton className="mb-4" />

@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import { Download, Upload, AlertCircle, CheckCircle2, Loader2, Database } from "lucide-react"
+import ConfirmModal from "@/components/ConfirmModal"
 
 export default function MaintenanceTab() {
     const [exportLoading, setExportLoading] = useState(false)
     const [importLoading, setImportLoading] = useState(false)
     const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+    const [pendingImport, setPendingImport] = useState<null | { content: string; fileName: string }>(null)
 
     async function handleExport() {
         setExportLoading(true)
@@ -36,48 +38,52 @@ export default function MaintenanceTab() {
     async function handleImport(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0]
         if (!file) return
+        event.target.value = ''
 
-        if (!confirm("Are you sure you want to restore/merge this RBAC configuration? This will update users, roles, and permissions based on the file content.")) {
-            event.target.value = ''
-            return
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            const content = e.target?.result as string
+            setPendingImport({ content, fileName: file.name })
         }
+        reader.readAsText(file)
+    }
 
+    async function confirmImport() {
+        if (!pendingImport) return
+        const content = pendingImport.content
+        setPendingImport(null)
         setImportLoading(true)
         setStatus(null)
         try {
-            const reader = new FileReader()
-            reader.onload = async (e) => {
-                const content = e.target?.result as string
-                try {
-                    const jsonData = JSON.parse(content)
-                    const res = await fetch('/api/settings/maintenance/import', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(jsonData)
-                    })
-
-                    const result = await res.json()
-                    if (res.ok) {
-                        setStatus({ type: 'success', message: result.message || 'Configuration imported successfully.' })
-                    } else {
-                        throw new Error(result.error || 'Import failed')
-                    }
-                } catch (err: any) {
-                    setStatus({ type: 'error', message: err.message || 'Invalid JSON file format.' })
-                } finally {
-                    setImportLoading(false)
-                }
+            const jsonData = JSON.parse(content)
+            const res = await fetch('/api/settings/maintenance/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(jsonData)
+            })
+            const result = await res.json()
+            if (res.ok) {
+                setStatus({ type: 'success', message: result.message || 'Configuration imported successfully.' })
+            } else {
+                throw new Error(result.error || 'Import failed')
             }
-            reader.readAsText(file)
-        } catch (error: any) {
-            setStatus({ type: 'error', message: error.message || 'Failed to read file.' })
+        } catch (err: any) {
+            setStatus({ type: 'error', message: err.message || 'Invalid JSON file format.' })
+        } finally {
             setImportLoading(false)
         }
-        event.target.value = ''
     }
 
     return (
         <div className="space-y-6 max-w-4xl">
+            <ConfirmModal
+                open={!!pendingImport}
+                title="Restore RBAC Configuration"
+                message={`Are you sure you want to restore/merge this RBAC configuration from "${pendingImport?.fileName ?? ''}"? This will update users, roles, and permissions based on the file content.`}
+                variant="warning"
+                onConfirm={confirmImport}
+                onCancel={() => setPendingImport(null)}
+            />
             <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-blue-50 rounded-lg">

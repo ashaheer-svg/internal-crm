@@ -5,6 +5,7 @@ import { Users, Plus, Edit, Trash2, LogOut } from "lucide-react"
 import UserFormModal from "./UserFormModal"
 import { logoutAllUsers } from "@/app/actions/auth-actions"
 import { formatDate } from "@/lib/utils"
+import ConfirmModal from "@/components/ConfirmModal"
 
 type User = {
     id: string
@@ -21,6 +22,10 @@ export default function UsersTab() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [pendingAction, setPendingAction] = useState<null | {
+        title: string; message: string; variant?: 'danger' | 'warning'; loading?: boolean; onConfirm: () => void
+    }>(null)
+    const [actionLoading, setActionLoading] = useState(false)
 
     useEffect(() => {
         fetchUsers()
@@ -41,25 +46,25 @@ export default function UsersTab() {
     }
 
     async function handleDelete(id: string, name: string) {
-        if (!confirm(`Are you sure you want to deactivate user "${name}"?`)) {
-            return
-        }
-
-        try {
-            const res = await fetch(`/api/users/${id}`, {
-                method: 'DELETE'
-            })
-
-            if (res.ok || res.status === 204) {
-                await fetchUsers()
-            } else {
-                const data = await res.json()
-                alert(data.error || 'Failed to delete user')
+        setPendingAction({
+            title: 'Deactivate User',
+            message: `Are you sure you want to deactivate user "${name}"?`,
+            variant: 'warning',
+            onConfirm: async () => {
+                setPendingAction(null)
+                try {
+                    const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+                    if (res.ok || res.status === 204) {
+                        await fetchUsers()
+                    } else {
+                        const data = await res.json()
+                        console.error(data.error || 'Failed to delete user')
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error)
+                }
             }
-        } catch (error) {
-            console.error('Delete error:', error)
-            alert('Failed to delete user')
-        }
+        })
     }
 
     function getRoleBadgeColor(role: string) {
@@ -74,18 +79,23 @@ export default function UsersTab() {
     }
 
     async function handleLogoutAll() {
-        if (!confirm("Are you sure you want to log out ALL users? This will invalidate all active sessions immediately, including your own.")) {
-            return
-        }
-
-        try {
-            await logoutAllUsers()
-            alert("All users have been logged out.")
-            window.location.href = "/login"
-        } catch (error) {
-            console.error("Failed to logout users:", error)
-            alert("Failed to logout users")
-        }
+        setPendingAction({
+            title: 'Log Out All Users',
+            message: 'Are you sure you want to log out ALL users? This will invalidate all active sessions immediately, including your own.',
+            variant: 'danger',
+            onConfirm: async () => {
+                setPendingAction(null)
+                setActionLoading(true)
+                try {
+                    await logoutAllUsers()
+                    window.location.href = "/login"
+                } catch (error) {
+                    console.error("Failed to logout users:", error)
+                } finally {
+                    setActionLoading(false)
+                }
+            }
+        })
     }
 
     if (loading) {
@@ -98,6 +108,15 @@ export default function UsersTab() {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title={pendingAction?.title ?? ''}
+                message={pendingAction?.message ?? ''}
+                variant={pendingAction?.variant ?? 'danger'}
+                loading={actionLoading}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-medium text-gray-900">User Accounts</h2>

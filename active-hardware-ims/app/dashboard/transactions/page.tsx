@@ -19,18 +19,7 @@ type PurchaseOrder = {
     items: any[]
 }
 
-type Invoice = {
-    id: string
-    invoiceNumber: string
-    customerName: string
-    totalAmount: number
-    status: string
-    createdAt: string
-    items: any[]
-    salesRep?: {
-        name: string
-    }
-}
+
 
 type TransactionLog = {
     id: string
@@ -80,7 +69,7 @@ function TransactionsContent() {
     const searchParams = useSearchParams()
     
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
-    const [invoices, setInvoices] = useState<Invoice[]>([])
+
     const [deliveryOrders, setDeliveryOrders] = useState<any[]>([])
     const [transactionLogs, setTransactionLogs] = useState<TransactionLog[]>([])
     const [loading, setLoading] = useState(true)
@@ -88,20 +77,20 @@ function TransactionsContent() {
     
     // Initialize activeTab from URL immediately, then check localStorage on mount
     const initialTab = (searchParams.get('tab') as any)
-    const [activeTab, setActiveTab] = useState<'po' | 'invoice' | 'do' | 'log'>(
-        ['po', 'invoice', 'do', 'log'].includes(initialTab) ? initialTab : 'po'
+    const [activeTab, setActiveTab] = useState<'po' | 'do' | 'log'>(
+        ['po', 'do', 'log'].includes(initialTab) ? initialTab as any : 'po'
     )
 
     useEffect(() => {
         if (!searchParams.get('tab')) {
             const savedTab = localStorage.getItem('last_tx_tab') as any
-            if (['po', 'invoice', 'do', 'log'].includes(savedTab)) {
+            if (['po', 'do', 'log'].includes(savedTab)) {
                 setActiveTab(savedTab)
             }
         }
     }, [searchParams])
 
-    const handleTabChange = (tabId: 'po' | 'invoice' | 'do' | 'log') => {
+    const handleTabChange = (tabId: 'po' | 'do' | 'log') => {
         setActiveTab(tabId)
         localStorage.setItem('last_tx_tab', tabId)
         
@@ -118,18 +107,18 @@ function TransactionsContent() {
     const [logDateTo, setLogDateTo] = useState('')
     const [poSearch, setPoSearch] = useState('')
     const [doSearch, setDoSearch] = useState('')
-    const [invSearch, setInvSearch] = useState('')
+
 
     // Pagination Meta
     const [poMeta, setPoMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
     const [doMeta, setDoMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
-    const [invMeta, setInvMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
+
     const [logMeta, setLogMeta] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 })
 
     // Sort configs
     const [poSort, setPoSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
     const [doSort, setDoSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
-    const [invSort, setInvSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+
     const [logSort, setLogSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
     const [showDeletedDO, setShowDeletedDO] = useState(false)
@@ -160,32 +149,6 @@ function TransactionsContent() {
             setLoading(false)
         }
     }, [poSort, poSearch])
-
-    const fetchInvoices = useCallback(async (page: number = 1) => {
-        setLoading(true)
-        try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: limit.toString(),
-                sortKey: invSort.key,
-                sortDir: invSort.direction,
-            })
-            if (invSearch) params.set('search', invSearch)
-            const res = await fetch(`/api/invoices?${params}`)
-            const data = await res.json()
-            if (data.invoices) {
-                setInvoices(data.invoices)
-                setInvMeta(data.meta || { total: data.invoices.length, page: 1, limit, totalPages: 1 })
-            } else {
-                setInvoices(data)
-                setInvMeta({ total: data.length, page: 1, limit, totalPages: 1 })
-            }
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setLoading(false)
-        }
-    }, [invSort, invSearch])
 
     const fetchDeliveryOrders = useCallback(async (page: number = 1) => {
         setLoading(true)
@@ -251,10 +214,7 @@ function TransactionsContent() {
         return () => clearTimeout(timer)
     }, [fetchPurchaseOrders])
 
-    useEffect(() => {
-        const timer = setTimeout(() => fetchInvoices(1), 400)
-        return () => clearTimeout(timer)
-    }, [fetchInvoices])
+
 
     useEffect(() => {
         const timer = setTimeout(() => fetchDeliveryOrders(1), 400)
@@ -269,7 +229,7 @@ function TransactionsContent() {
     const handleSort = (tab: string, key: string) => {
         if (tab === 'po') setPoSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
         if (tab === 'do') setDoSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
-        if (tab === 'inv') setInvSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
+
         if (tab === 'log') setLogSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))
     }
 
@@ -287,7 +247,6 @@ function TransactionsContent() {
                 {[
                     { id: 'po', label: 'Purchase Orders', icon: Package },
                     { id: 'do', label: 'Delivery Orders', icon: Truck },
-                    { id: 'invoice', label: 'Invoices', icon: Receipt },
                     { id: 'log', label: 'Transaction Log', icon: History },
                 ].map((tab) => (
                     <button
@@ -535,107 +494,7 @@ function TransactionsContent() {
                 </div>
             )}
 
-            {/* Invoices Tab */}
-            {activeTab === 'invoice' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-900 mb-1">Financial Settlement</h3>
-                                <p className="text-xs text-gray-500 leading-relaxed">Finalize sales records, manage receivables, and generate professional PDF invoices. Integrated inventory reconciliation on issuance.</p>
-                            </div>
-                            <Link
-                                href="/dashboard/transactions/invoices/new"
-                                className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit"
-                            >
-                                <Plus className="w-4 h-4" />
-                                New Invoice
-                            </Link>
-                        </div>
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-                            <h3 className="text-sm font-bold text-gray-900 mb-3">Search & Filters</h3>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Invoice #, customer name..."
-                                    className="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-emerald-500 shadow-sm transition-all"
-                                    value={invSearch}
-                                    onChange={e => setInvSearch(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-[500px]">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-100">
-                                <thead className="bg-gray-50/50">
-                                    <tr>
-                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                            <SortIcon sort={invSort} column="invoiceNumber" label="Document ID" onSort={(k) => handleSort('inv', k)} />
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                            <SortIcon sort={invSort} column="customerName" label="Debtor" onSort={(k) => handleSort('inv', k)} />
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                            <SortIcon sort={invSort} column="status" label="Collection" onSort={(k) => handleSort('inv', k)} />
-                                        </th>
-                                        <th className="px-6 py-3.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                            <SortIcon sort={invSort} column="amount" label="Billing Total" onSort={(k) => handleSort('inv', k)} />
-                                        </th>
-                                        <th className="px-6 py-3.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                            <SortIcon sort={invSort} column="date" label="Billing Date" onSort={(k) => handleSort('inv', k)} />
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {loading ? (
-                                        Array.from({ length: 8 }).map((_, i) => (
-                                            <tr key={i} className="animate-pulse">
-                                                <td colSpan={5} className="px-6 py-4"><div className="h-4 bg-gray-50 rounded-lg w-full" /></td>
-                                            </tr>
-                                        ))
-                                    ) : invoices.map((inv) => (
-                                        <tr key={inv.id} className="hover:bg-gray-50/50 transition-all cursor-pointer group" onClick={() => router.push(`/dashboard/transactions/invoices/${inv.id}`)}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 font-mono tracking-tighter uppercase">{inv.invoiceNumber}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-900 uppercase tracking-tight">{inv.customerName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={cn(
-                                                    "px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter border",
-                                                    inv.status === 'DRAFT' && 'bg-gray-100 text-gray-700 border-gray-200',
-                                                    inv.status === 'ISSUED' && 'bg-blue-50 text-blue-700 border-blue-200',
-                                                    inv.status === 'PAID' && 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm',
-                                                    inv.status === 'CANCELLED' && 'bg-rose-50 text-rose-700 border-rose-200'
-                                                )}>
-                                                    {inv.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right tabular-nums">
-                                                <Currency amount={inv.totalAmount} />
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                {formatDate(inv.createdAt)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {invoices.length === 0 && !loading && (
-                                        <tr><td colSpan={5} className="px-6 py-20 text-center"><p className="text-gray-400 font-medium">No sales documents found</p></td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        <PaginationControls
-                            currentPage={invMeta.page}
-                            totalPages={invMeta.totalPages}
-                            onPageChange={(p) => fetchInvoices(p)}
-                            totalResults={invMeta.total}
-                            limit={invMeta.limit}
-                            className="bg-gray-50/50 border-t border-gray-100"
-                        />
-                    </div>
-                </div>
-            )}
 
             {/* Transaction Log Tab */}
             {activeTab === 'log' && (

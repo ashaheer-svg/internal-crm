@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle, AlertTriangle, Hammer, X, Save, AlertCircle, Package } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import ConfirmModal from "@/components/ConfirmModal"
 
 interface BuildOrder {
     id: string
@@ -46,6 +47,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const [buildNotes, setBuildNotes] = useState("")
     const [verifyingSerials, setVerifyingSerials] = useState<Record<string, boolean>>({})
     const hasTransitionedToBuilding = useRef(false)
+    const [pendingAction, setPendingAction] = useState<null | { onConfirm: () => void }>(null)
 
     // Service Fulfillment Modal State
     const [fulfillingItem, setFulfillingItem] = useState<any | null>(null)
@@ -166,22 +168,25 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     const handleCompleteBuild = async () => {
-        if (!confirm("Is the build complete? The order will be sent to the Accounts Manager for shipping.")) return
-
-        setActionLoading(true)
-        try {
-            const res = await fetch(`/api/delivery-orders/${id}/build`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ buildNotes })
-            })
-            if (!res.ok) throw new Error("Completion failed")
-            router.push('/dashboard/build')
-        } catch (e) {
-            alert("Failed to complete build")
-        } finally {
-            setActionLoading(false)
-        }
+        setPendingAction({
+            onConfirm: async () => {
+                setPendingAction(null)
+                setActionLoading(true)
+                try {
+                    const res = await fetch(`/api/delivery-orders/${id}/build`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ buildNotes })
+                    })
+                    if (!res.ok) throw new Error("Completion failed")
+                    router.push('/dashboard/build')
+                } catch (e) {
+                    console.error("Failed to complete build", e)
+                } finally {
+                    setActionLoading(false)
+                }
+            }
+        })
     }
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading build details...</div>
@@ -206,6 +211,15 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
+            <ConfirmModal
+                open={!!pendingAction}
+                title="Finalize Build"
+                message="Is the build complete? The order will be sent to the Accounts Manager for shipping. This action cannot be undone."
+                variant="warning"
+                loading={actionLoading}
+                onConfirm={() => pendingAction?.onConfirm()}
+                onCancel={() => setPendingAction(null)}
+            />
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link href="/dashboard/build" className="p-2 hover:bg-gray-200 rounded-full">
