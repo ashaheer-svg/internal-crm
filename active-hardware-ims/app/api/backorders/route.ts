@@ -37,10 +37,8 @@ export async function GET(request: Request) {
         if (!status || status === 'PENDING' || status === 'PARTIAL') {
             const doItems = await prisma.deliveryOrderItem.findMany({
                 where: {
-                    isBackorder: true,
                     deliveryOrder: {
-                        status: { in: ['DRAFT', 'CONFIRMED'] }, // Still active/pending
-                        ...(invoiceId ? {} : {}) // DOs don't filter by invoiceId easily here unless we add logic, skipping for now
+                        status: 'CONFIRMED', // "approved DO"
                     },
                     ...(productId ? { productId } : {})
                 },
@@ -51,9 +49,12 @@ export async function GET(request: Request) {
                 }
             })
 
-            doBackorders = doItems.map((item: any) => {
-                // Use the explicit quantityFulfilled field if available (after migration), 
-                // fallback to reserved items count (backward compatibility/safety)
+            const shortfallItems = doItems.filter((item: any) => {
+                const fulfilled = item.quantityFulfilled ?? item.reservedItems.length
+                return fulfilled < item.quantity // Shortfall!
+            })
+
+            doBackorders = shortfallItems.map((item: any) => {
                 const fulfilled = item.quantityFulfilled ?? item.reservedItems.length
 
                 return {
@@ -61,17 +62,16 @@ export async function GET(request: Request) {
                     productId: item.productId,
                     quantityOrdered: item.quantity,
                     quantityFulfilled: fulfilled,
-                    status: fulfilled >= item.quantity ? 'FULFILLED' : 'PARTIAL',
+                    status: fulfilled === 0 ? 'PENDING' : 'PARTIAL',
                     createdAt: item.createdAt,
                     product: item.product,
                     invoice: { // Map DO details to "invoice" shape for UI compatibility
-                        id: item.deliveryOrder.id, // Link to DO details instead
+                        id: item.deliveryOrder.id, 
                         invoiceNumber: item.deliveryOrder.orderNumber,
                         customerName: item.deliveryOrder.customerName,
-                        customerId: item.deliveryOrder.customerId, // Add customerId
+                        customerId: item.deliveryOrder.customerId, 
                         createdAt: item.deliveryOrder.createdAt
                     },
-                    // Add a flag to distinguish type if needed, but UI uses invoice object
                     type: 'DELIVERY_ORDER'
                 }
             })
