@@ -56,6 +56,7 @@ type Message = {
 export default function MessagingPage() {
     const [messages, setMessages] = useState<Message[]>([])
     const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 10, totalPages: 0 })
+    const [stats, setStats] = useState({ unreadCount: 0, urgentCount: 0, taskCount: 0 })
     const [loading, setLoading] = useState(true)
     const [tab, setTab] = useState<'inbox' | 'sent' | 'admin'>('inbox')
     const [searchQuery, setSearchQuery] = useState('')
@@ -105,6 +106,7 @@ export default function MessagingPage() {
                 const data = await res.json()
                 setMessages(data.messages)
                 setMeta(data.meta || { total: data.messages.length, page: 1, limit: 10, totalPages: 1 })
+                if (data.stats) setStats(data.stats)
             }
         } catch (error) {
             console.error('Failed to fetch messages:', error)
@@ -135,6 +137,7 @@ export default function MessagingPage() {
                 }
                 return m
             }))
+            setStats(prev => ({ ...prev, unreadCount: Math.max(0, prev.unreadCount - 1) }))
         } catch (error) {
             console.error('Failed to mark as read:', error)
         }
@@ -169,6 +172,7 @@ export default function MessagingPage() {
                     }
                     return m
                 }))
+                setStats(prev => ({ ...prev, taskCount: Math.max(0, prev.taskCount - 1) }))
                 setNotification({ type: 'success', message: "Task completed successfully!" })
                 setTimeout(() => setNotification(null), 3000)
             }
@@ -179,9 +183,9 @@ export default function MessagingPage() {
         }
     }
 
-    const unreadCount = messages.filter(m => tab === 'inbox' && !m.receipts.find((r: any) => r.userId === currentUser?.id)?.viewedAt).length
-    const urgentCount = messages.filter(m => m.priority === 'URGENT').length
-    const taskCount = messages.filter(m => m.category === 'TASK').length
+    const unreadCount = stats.unreadCount
+    const urgentCount = stats.urgentCount
+    const taskCount = stats.taskCount
 
     const toggleExpand = (id: string, isUnread: boolean) => {
         const newExpanded = new Set(expandedIds)

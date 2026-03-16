@@ -192,7 +192,19 @@ export async function GET(req: Request) {
 
         if (page && limit) {
             const skip = (page - 1) * limit
-            const [messages, total] = await Promise.all([
+            
+            // Build where for unread
+            const unreadWhere = {
+                ...where,
+                receipts: {
+                    some: {
+                        userId: user.id,
+                        viewedAt: null
+                    }
+                }
+            }
+
+            const [messages, total, unreadCount, urgentCount, taskCount] = await Promise.all([
                 prisma.message.findMany({
                     where,
                     orderBy,
@@ -200,11 +212,15 @@ export async function GET(req: Request) {
                     take: limit,
                     include
                 }),
-                prisma.message.count({ where })
+                prisma.message.count({ where }),
+                prisma.message.count({ where: unreadWhere }),
+                prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
+                prisma.message.count({ where: { ...where, category: 'TASK' } })
             ])
 
             return NextResponse.json({
                 messages,
+                stats: { unreadCount, urgentCount, taskCount },
                 meta: {
                     total,
                     page,
@@ -220,7 +236,22 @@ export async function GET(req: Request) {
             include
         })
 
-        return NextResponse.json({ messages })
+        // For non-paginated (all)
+        const unreadWhereAll = { ...where, receipts: { some: { userId: user.id, viewedAt: null } } }
+        const stats = {
+            unreadCount: await prisma.message.count({ where: unreadWhereAll }),
+            urgentCount: await prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
+            pathCount: await prisma.message.count({ where: { ...where, category: 'TASK' } }) // match key name below
+        }
+
+        return NextResponse.json({ 
+            messages, 
+            stats: {
+                unreadCount: stats.unreadCount, 
+                urgentCount: stats.urgentCount, 
+                taskCount: await prisma.message.count({ where: { ...where, category: 'TASK' } })
+            } 
+        })
     } catch (error: any) {
         console.error('List messages error:', error)
         return NextResponse.json({ error: error.message || 'Failed to list messages' }, { status: 500 })
