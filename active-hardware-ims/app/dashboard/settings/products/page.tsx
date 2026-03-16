@@ -17,6 +17,8 @@ type Product = {
     model: string
     isActive: boolean
     createdAt: string
+    lowResellerPrice: number
+    resellerPrice: number
     _count: {
         inventory: number
     }
@@ -33,6 +35,7 @@ export default function ProductManagementPage() {
     const [pendingAction, setPendingAction] = useState<null | {
         title: string; message: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void
     }>(null)
+    const [updatedPrices, setUpdatedPrices] = useState<{ [key: string]: { lowResellerPrice?: string, resellerPrice?: string } }>({})
 
     // Debounce search
     useEffect(() => {
@@ -112,6 +115,36 @@ export default function ProductManagementPage() {
             }
         })
     }
+    
+    async function handlePriceSave(productId: string) {
+        const updates = updatedPrices[productId]
+        if (!updates) return; 
+        try {
+            const res = await fetch(`/api/products/${productId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lowResellerPrice: updates.lowResellerPrice !== undefined ? Number(updates.lowResellerPrice) : undefined,
+                    resellerPrice: updates.resellerPrice !== undefined ? Number(updates.resellerPrice) : undefined
+                })
+            })
+            if (!res.ok) throw new Error('Failed to update price')
+            
+            setProducts(prev => prev.map(p => p.id === productId ? { 
+                ...p, 
+                lowResellerPrice: updates.lowResellerPrice !== undefined ? Number(updates.lowResellerPrice) : p.lowResellerPrice,
+                resellerPrice: updates.resellerPrice !== undefined ? Number(updates.resellerPrice) : p.resellerPrice
+            } : p))
+
+            setUpdatedPrices(prev => {
+                const next = { ...prev };
+                delete next[productId];
+                return next;
+            });
+        } catch (error) {
+            console.error('Failed to save prices:', error)
+        }
+    }
 
     if (loading && products.length === 0) {
         return (
@@ -188,6 +221,8 @@ export default function ProductManagementPage() {
                             <tr>
                                 <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Product</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Low Reseller Price</th>
+                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reseller Price</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
@@ -207,6 +242,35 @@ export default function ProductManagementPage() {
                                         <div>{product.brand}</div>
                                         <div>{product.category} / {product.model}</div>
                                     </td>
+                                    
+                                    {/* Low Reseller Price */}
+                                    <td className="px-3 py-4 text-sm text-gray-500">
+                                        <input
+                                            type="text"
+                                            value={updatedPrices[product.id]?.lowResellerPrice !== undefined ? updatedPrices[product.id].lowResellerPrice : product.lowResellerPrice}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setUpdatedPrices(prev => ({ ...prev, [product.id]: { ...prev[product.id], lowResellerPrice: val } }));
+                                            }}
+                                            onBlur={() => handlePriceSave(product.id)}
+                                            className="w-24 px-2 py-1 rounded border border-gray-200 text-sm focus:ring-1 focus:ring-blue-500 outline-none font-medium text-gray-700"
+                                        />
+                                    </td>
+
+                                    {/* Reseller Price */}
+                                    <td className="px-3 py-4 text-sm text-gray-500">
+                                        <input
+                                            type="text"
+                                            value={updatedPrices[product.id]?.resellerPrice !== undefined ? updatedPrices[product.id].resellerPrice : product.resellerPrice}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setUpdatedPrices(prev => ({ ...prev, [product.id]: { ...prev[product.id], resellerPrice: val } }));
+                                            }}
+                                            onBlur={() => handlePriceSave(product.id)}
+                                            className="w-24 px-2 py-1 rounded border border-gray-200 text-sm focus:ring-1 focus:ring-blue-500 outline-none font-medium text-gray-700"
+                                        />
+                                    </td>
+
                                     <td className="px-3 py-4 text-sm text-gray-500">
                                         {formatDate(product.createdAt)}
                                     </td>

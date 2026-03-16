@@ -61,6 +61,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 category,
                 model,
                 description,
+                lowResellerPrice: Number(lowResellerPrice) || 0,
                 resellerPrice: Number(resellerPrice) || 0,
                 isActive: isActive !== undefined ? isActive : undefined,
                 // Handle Service Definition
@@ -87,8 +88,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
         // Log update
         await logUpdate('PRODUCT', id, user.id, user.name,
-            { name: existing.name, brand: existing.brand, isActive: existing.isActive },
-            { name: product.name, brand: product.brand, isActive: product.isActive }
+            { name: existing.name, brand: existing.brand, isActive: existing.isActive, lowResellerPrice: existing.lowResellerPrice, resellerPrice: existing.resellerPrice },
+            { name: product.name, brand: product.brand, isActive: product.isActive, lowResellerPrice: product.lowResellerPrice, resellerPrice: product.resellerPrice }
         )
 
         return NextResponse.json(product)
