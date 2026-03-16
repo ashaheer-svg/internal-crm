@@ -31,7 +31,7 @@ export default function ProductManagementPage() {
     const [showInactive, setShowInactive] = useState(true)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [pendingAction, setPendingAction] = useState<null | {
-        title: string; message: string; variant?: 'danger' | 'warning'; onConfirm: () => void
+        title: string; message: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void
     }>(null)
 
     // Debounce search

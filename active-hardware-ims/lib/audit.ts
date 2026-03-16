@@ -32,6 +32,7 @@ export type AuditEntityType =
     | 'DELIVERY_ORDER_DISMISS'
     | 'RENTAL_RETURN'
     | 'DELIVERY_ORDER_ITEM'
+    | 'CRM_PROJECT_MEMBER'
 
 interface AuditLogParams {
     action: AuditAction
