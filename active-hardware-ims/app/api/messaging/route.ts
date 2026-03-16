@@ -197,10 +197,7 @@ export async function GET(req: Request) {
             const unreadWhere = {
                 ...where,
                 receipts: {
-                    some: {
-                        userId: user.id,
-                        viewedAt: null
-                    }
+                    some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null }
                 }
             }
 
@@ -237,7 +234,7 @@ export async function GET(req: Request) {
         })
 
         // For non-paginated (all)
-        const unreadWhereAll = { ...where, receipts: { some: { userId: user.id, viewedAt: null } } }
+        const unreadWhereAll = { ...where, receipts: { some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null } } }
         const stats = {
             unreadCount: await prisma.message.count({ where: unreadWhereAll }),
             urgentCount: await prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
