@@ -141,7 +141,20 @@ export async function POST(request: Request) {
 
         return NextResponse.json(customer)
     } catch (error: any) {
-        console.error(error)
+        console.error('Customer Creation Error:', error)
+        
+        if (error.code === 'P2002') {
+            const target = error.meta?.target as string[] | undefined
+            const fieldMap: { [key: string]: string } = {
+                'email': 'Email Address',
+                'phone': 'Phone Number',
+                'taxId': 'Tax ID / VAT',
+                'name': 'Customer Name'
+            }
+            const fields = target ? target.map(f => fieldMap[f] || f).join(', ') : 'details'
+            return NextResponse.json({ error: `A partner with this ${fields} already exists.` }, { status: 400 })
+        }
+
         return NextResponse.json(
             { error: error.message || 'Failed to create customer' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
