@@ -483,23 +483,43 @@ export default function RAIDConfiguratorPage() {
 
                                                 <div className="space-y-4">
                                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-[.2em]">Validated Add-ons</p>
-                                                    {compatibilityMap[m.id] && compatibilityMap[m.id].length > 0 ? (
-                                                        <div className="grid grid-cols-1 gap-2">
-                                                            {compatibilityMap[m.id].slice(0, 3).map(compat => (
-                                                                <div key={compat.id} className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-100 rounded-lg">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Check className="w-3 h-3 text-blue-500" />
-                                                                        <span className="text-[10px] font-bold text-gray-700 truncate max-w-[150px]">{compat.product.name}</span>
-                                                                    </div>
-                                                                    <span className="text-[8px] font-black text-blue-600 uppercase bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">{compat.category}</span>
+                                                    {(() => {
+                                                        const data = compatibilityMap[m.id] as any;
+                                                        if (!data) {
+                                                            return (
+                                                                <div className="p-6 border border-dashed border-gray-200 rounded-xl text-center">
+                                                                    <span className="text-[9px] font-bold text-gray-400 uppercase animate-pulse">Checking Compatibility...</span>
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="p-6 border border-dashed border-gray-200 rounded-xl text-center">
-                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">Checking Compatibility...</span>
-                                                        </div>
-                                                    )}
+                                                            )
+                                                        }
+                                                        if (data.error) {
+                                                            return (
+                                                                <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-center">
+                                                                    <span className="text-[9px] font-bold text-red-500 uppercase">Load Error</span>
+                                                                </div>
+                                                            )
+                                                        }
+                                                        if (Array.isArray(data) && data.length > 0) {
+                                                            return (
+                                                                <div className="grid grid-cols-1 gap-2">
+                                                                    {data.slice(0, 3).map(compat => (
+                                                                        <div key={compat.id} className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-100 rounded-lg">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Check className="w-3 h-3 text-blue-500" />
+                                                                                <span className="text-[10px] font-bold text-gray-700 truncate max-w-[150px]">{compat.product.name}</span>
+                                                                            </div>
+                                                                            <span className="text-[8px] font-black text-blue-600 uppercase bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">{compat.category}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )
+                                                        }
+                                                        return (
+                                                            <div className="p-6 border border-dashed border-gray-200 rounded-xl text-center">
+                                                                <span className="text-[9px] font-bold text-gray-400 uppercase">None Available</span>
+                                                            </div>
+                                                        )
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>

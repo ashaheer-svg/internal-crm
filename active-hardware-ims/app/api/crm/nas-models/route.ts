@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requirePermission } from '@/lib/auth'
+import { requirePermission, requireAuth } from '@/lib/auth'
 
 export async function GET() {
     try {
-        await requirePermission('settings:manage')
+        await requireAuth()
         const models = await prisma.nasModel.findMany({
             orderBy: { modelName: 'asc' }
         })
