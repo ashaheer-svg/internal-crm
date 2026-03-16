@@ -187,10 +187,9 @@ export default function PriceListPage() {
             <table className="pl-table min-w-full table-fixed text-sm" style={{ borderCollapse: 'collapse', width: '100%' }}>
               <colgroup>
                 <col style={{ width: '9%' }} />  {/* SKU */}
-                <col style={{ width: '32%' }} />  {/* Product Name */}
+                <col style={{ width: '42%' }} />  {/* Product Name (expanded from 32, absorb Model 10%) */}
                 <col style={{ width: '12%' }} />  {/* Brand */}
                 <col style={{ width: '11%' }} />  {/* Category */}
-                <col style={{ width: '10%' }} />  {/* Model */}
                 <col style={{ width: '11%' }} />  {/* Low Reseller */}
                 <col style={{ width: '11%' }} />  {/* Reseller */}
                 <col style={{ width: '4%' }} />  {/* Stock */}
@@ -202,7 +201,6 @@ export default function PriceListPage() {
                     { label: 'Product Name', align: 'left' },
                     { label: 'Brand', align: 'left' },
                     { label: 'Category', align: 'left' },
-                    { label: 'Model', align: 'left' },
                     { label: 'Low Reseller', align: 'right' },
                     { label: 'Reseller', align: 'right' },
                     { label: 'Stock', align: 'center' },
@@ -248,10 +246,6 @@ export default function PriceListPage() {
                       <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {product.category}
                       </td>
-                      {/* Model */}
-                      <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '11px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {product.model}
-                      </td>
                       {/* Low Reseller Price */}
                       <td style={{ padding: '5px 8px', borderBottom: '1px solid #e5e7eb', fontSize: '12px', fontWeight: 600, color: '#2563eb', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Currency amount={product.lowResellerPrice} className="text-blue-600" />
@@ -269,7 +263,7 @@ export default function PriceListPage() {
                 })}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
+                    <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
                       {brandSearch ? `No products matching "${brandSearch}"` : "No products found"}
                     </td>
                   </tr>
