@@ -62,7 +62,7 @@ export default function CustomerSelector({
         setLoading(true)
         try {
             const url = type ? `/api/customers?type=${type}&limit=100` : "/api/customers?limit=100"
-            const res = await fetch(url)
+            const res = await fetch(url, { cache: 'no-store' })
             if (!res.ok) throw new Error("Failed to fetch customers")
             const data = await res.json()
             setCustomers(Array.isArray(data.customers) ? data.customers : [])
@@ -79,7 +79,7 @@ export default function CustomerSelector({
         try {
             const baseUrl = `/api/customers/search?q=${encodeURIComponent(searchQuery)}`
             const url = type ? `${baseUrl}&type=${type}` : baseUrl
-            const res = await fetch(url)
+            const res = await fetch(url, { cache: 'no-store' })
             if (!res.ok) throw new Error("Search failed")
             const data = await res.json()
             setCustomers(Array.isArray(data) ? data : [])

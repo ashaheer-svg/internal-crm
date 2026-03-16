@@ -61,7 +61,7 @@ export default function SalesRepSelector({
             const url = searchQuery
                 ? `/api/sales-reps?search=${encodeURIComponent(searchQuery)}`
                 : `/api/sales-reps`
-            const res = await fetch(url)
+            const res = await fetch(url, { cache: 'no-store' })
             if (!res.ok) throw new Error("Failed to fetch")
             const data = await res.json()
 
