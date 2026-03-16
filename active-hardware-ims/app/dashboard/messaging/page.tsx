@@ -89,8 +89,8 @@ export default function MessagingPage() {
         return () => clearTimeout(timer)
     }, [searchQuery])
 
-    const fetchMessages = useCallback(async (page: number = 1) => {
-        setLoading(true)
+    const fetchMessages = useCallback(async (page: number = 1, isBackground: boolean = false) => {
+        if (!isBackground) setLoading(true)
         try {
             const params = new URLSearchParams({
                 type: tab,
@@ -118,6 +118,13 @@ export default function MessagingPage() {
     useEffect(() => {
         fetchMessages()
     }, [fetchMessages])
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchMessages(meta.page, true)
+        }, 15000) // 15 seconds
+        return () => clearInterval(interval)
+    }, [fetchMessages, meta.page])
 
     const handleReadMessage = async (messageId: string) => {
         try {
