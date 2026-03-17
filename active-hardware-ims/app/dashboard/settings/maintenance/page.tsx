@@ -13,6 +13,7 @@ export default function MaintenanceDashboard() {
     // State for sections
     const [maintEnabled, setMaintEnabled] = useState(false)
     const [health, setHealth] = useState<any>(null)
+    const [performanceLoading, setPerformanceLoading] = useState(false)
     const [email, setEmail] = useState({
         host: '',
         port: '587',
@@ -191,6 +192,27 @@ export default function MaintenanceDashboard() {
             setMsg({ type: 'error', text: "Failed to export RBAC config." })
         } finally {
             setRbacLoading(false)
+        }
+    }
+
+    const downloadPerformanceBundle = async () => {
+        setPerformanceLoading(true)
+        try {
+            const res = await fetch('/api/settings/maintenance/performance')
+            if (!res.ok) throw new Error("Download failed")
+            const blob = await res.blob()
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `performance_diagnostics_${new Date().toISOString().split('T')[0]}.tar.gz`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+        } catch (err) {
+            setMsg({ type: 'error', text: "Failed to download diagnostics bundle." })
+        } finally {
+            setPerformanceLoading(false)
         }
     }
 
@@ -383,6 +405,21 @@ export default function MaintenanceDashboard() {
                             </div>
                         </form>
                     </div>
+
+                    {/* Database Schema */}
+                    {health?.schemaString && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+                                <Database className="h-5 w-5 text-gray-400" />
+                                <h3 className="font-bold text-gray-900">Database Schema (Prisma)</h3>
+                            </div>
+                            <div className="p-6 bg-gray-900 overflow-x-auto max-h-[500px] border-t border-gray-800">
+                                <pre className="text-xs text-green-400 font-mono leading-relaxed">
+                                    {health.schemaString}
+                                </pre>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Backup & Tools Sidebar */}
@@ -464,6 +501,25 @@ export default function MaintenanceDashboard() {
                                 )}
                                 <p className="text-[10px] text-gray-400 leading-tight">
                                     VACUUM, WAL checkpoint, prune audit logs (&gt;365d) and dismissed rejections (&gt;90d).
+                                </p>
+                            </div>
+
+                            {/* Performance Diagnostics */}
+                            <div className="space-y-3 pt-3 border-t border-gray-100">
+                                <h4 className="text-xs font-bold text-red-600 uppercase tracking-widest">Diagnostics</h4>
+                                <button
+                                    onClick={downloadPerformanceBundle}
+                                    disabled={performanceLoading}
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-500 hover:text-red-700 transition-all group shadow-sm"
+                                >
+                                    <div className="flex items-center gap-3 text-sm font-medium">
+                                        <Download className="h-5 w-5 text-red-500 group-hover:scale-110 transition-transform" />
+                                        Performance Bundle (.tar.gz)
+                                    </div>
+                                    {performanceLoading && <Loader2 className="h-4 w-4 animate-spin text-red-500" />}
+                                </button>
+                                <p className="text-[10px] text-gray-400 leading-tight">
+                                    Collects CPU, RAM, RAID state, Network diagnostics & logs from the last 500 lines for AWS Lightsail logs analysis.
                                 </p>
                             </div>
                             <div className="space-y-3">

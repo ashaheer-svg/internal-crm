@@ -43,7 +43,12 @@ export async function GET() {
             dbStatus = 'DISCONNECTED'
         }
 
+        // Schema reading
+        const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma')
+        const schemaString = fs.existsSync(schemaPath) ? fs.readFileSync(schemaPath, 'utf8') : ''
+
         return NextResponse.json({
+            schemaString,
             system: {
                 uptime,
                 loadAvg,
