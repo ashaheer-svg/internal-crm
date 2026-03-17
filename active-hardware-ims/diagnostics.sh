@@ -9,12 +9,28 @@ echo "===================================================="
 echo "    System Performance Diagnostics Collector        "
 echo "===================================================="
 
-# Create staging directory
+# Create staging directory inside /tmp
 mkdir -p "$OUT_DIR"
+
+# --- 0. Dependency Check & Installation Hints ---
+echo "Checking Toolkit..."
+check_dep() {
+    local cmd=$1
+    local pkg=$2
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "⚠️  Missing: '$cmd' utility."
+        echo "   -> Install with: sudo apt install $pkg -y"
+        echo ""
+    fi
+}
+
+# Warn about missing diagnostics tools for Debian/Ubuntu
+check_dep "netstat" "net-tools"
+check_dep "mdadm" "mdadm"
+check_dep "python3" "python3"
 
 echo "[1/3] Collecting system metrics..."
 
-# 1. System Commands
 run_cmd() {
     local cmd=$1
     local file=$2
@@ -30,10 +46,15 @@ run_cmd "top -b -n 1" "cpu_usage.txt"
 run_cmd "ps aux --sort=-%cpu | head -n 20" "top_processes.txt"
 run_cmd "mdadm --detail --scan" "raid_status.txt"
 run_cmd "dmesg | tail -n 500" "dmesg.txt"
+run_cmd "ls -lah /var/log" "log_file_sizes.txt"
+
+# PM2 status if exists
+if command -v pm2 >/dev/null 2>&1; then
+    run_cmd "pm2 list" "pm2_status.txt"
+fi
 
 echo "[2/3] Tailing system logs (last 500 lines)..."
 
-# 2. Logs Tailing
 tail_log() {
     local path=$1
     local name=$2
@@ -47,8 +68,19 @@ tail_log() {
 tail_log "/var/log/syslog" "syslog.txt"
 tail_log "/var/log/messages" "messages.txt"
 tail_log "/var/log/auth.log" "auth.txt"
+tail_log "/var/log/fail2ban.log" "fail2ban.txt"
+tail_log "/var/log/dpkg.log" "dpkg_installed_packages.txt"
 tail_log "/var/log/nginx/error.log" "nginx_error.txt"
 tail_log "/var/log/nginx/access.log" "nginx_access.txt"
+
+# PM2 Application Logs
+if [ -d "$HOME/.pm2/logs" ]; then
+    echo "[*] Collecting PM2 application logs..."
+    mkdir -p "$OUT_DIR/pm2_logs"
+    for f in "$HOME/.pm2/logs"/*.log; do
+        [ -f "$f" ] && tail -n 500 "$f" > "$OUT_DIR/pm2_logs/$(basename "$f")" 2>/dev/null
+    done
+fi
 
 # Journalctl
 if command -v journalctl >/dev/null 2>&1; then
@@ -75,12 +107,5 @@ rm -rf "$OUT_DIR"
 echo ""
 echo "===================================================="
 echo "✅ Diagnostic bundle created successfully!"
-echo "File Location: $BUNDLE"
-echo "===================================================="
-echo ""
-echo "💡 To download this file instantly via browser, run:"
-echo "----------------------------------------------------"
-echo "cd /tmp && python3 -m http.server 8000"
-echo "----------------------------------------------------"
-echo "Then visit: http://[Server-IP]:8000/$(basename $BUNDLE)"
+echo "File Location (TMP Folder): $BUNDLE"
 echo "===================================================="
