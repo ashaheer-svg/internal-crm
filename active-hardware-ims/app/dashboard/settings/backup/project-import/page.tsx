@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Papa from "papaparse"
-import * as XLSX from "xlsx"
+import ExcelJS from "exceljs"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -121,14 +121,47 @@ export default function ProjectImportPage() {
             })
         } else {
             const reader = new FileReader()
-            reader.onload = evt => {
+            reader.onload = async evt => {
                 try {
-                    const wb = XLSX.read(evt.target?.result, { type: 'binary', cellDates: true })
-                    const ws = wb.Sheets[wb.SheetNames[0]]
-                    done(XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'yyyy-mm-dd' }) as RawRow[])
+                    const workbook = new ExcelJS.Workbook()
+                    const buffer = evt.target?.result as ArrayBuffer
+                    await workbook.xlsx.load(buffer)
+                    const worksheet = workbook.getWorksheet(1) || workbook.worksheets[0]
+
+                    const rows: RawRow[] = []
+                    const headers: string[] = []
+
+                    worksheet.eachRow((row, rowNumber) => {
+                        if (rowNumber === 1) {
+                            // Headers
+                            row.eachCell((cell) => { headers.push(String(cell.value || '')) })
+                        } else {
+                            const rowObj: RawRow = {}
+                            row.eachCell((cell, colNumber) => {
+                                const header = headers[colNumber - 1]
+                                if (header) {
+                                    let val = cell.value
+                                    
+                                    // Handle Formula Result objects
+                                    if (val && typeof val === 'object' && 'result' in (val as any)) {
+                                        val = (val as any).result
+                                    }
+                                    
+                                    // Format Date instances to YYYY-MM-DD
+                                    if (val instanceof Date) {
+                                        val = val.toISOString().split('T')[0]
+                                    }
+                                    
+                                    rowObj[header] = val
+                                }
+                            })
+                            rows.push(rowObj)
+                        }
+                    })
+                    done(rows)
                 } catch (e: any) { setError(e.message) }
             }
-            reader.readAsBinaryString(file)
+            reader.readAsArrayBuffer(file)
         }
         // Reset input so same file can be reselected
         e.target.value = ''
