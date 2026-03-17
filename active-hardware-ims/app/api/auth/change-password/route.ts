@@ -14,6 +14,8 @@ export async function POST(request: Request) {
                 { error: 'Current password and new password are required' },
                 { status: 400 }
             )
+        }
+
         if (currentPassword === newPassword) {
             return NextResponse.json(
                 { error: 'New password must be different from current password' },
