@@ -167,7 +167,7 @@ export default function ProductManagementPage() {
             />
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <BackButton className="mb-4" />
+                    <BackButton className="mb-4" href="/dashboard/settings" />
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Product Management</h1>
                     <p className="mt-1 text-sm text-gray-500">Admin view for managing all products.</p>
                 </div>

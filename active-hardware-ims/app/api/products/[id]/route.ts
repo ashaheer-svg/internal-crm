@@ -61,8 +61,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 category,
                 model,
                 description,
-                lowResellerPrice: Number(lowResellerPrice) || 0,
-                resellerPrice: Number(resellerPrice) || 0,
+                lowResellerPrice: lowResellerPrice !== undefined ? Number(lowResellerPrice) : undefined,
+                resellerPrice: resellerPrice !== undefined ? Number(resellerPrice) : undefined,
                 isActive: isActive !== undefined ? isActive : undefined,
                 // Handle Service Definition
                 serviceDefinition: body.isService ? {
