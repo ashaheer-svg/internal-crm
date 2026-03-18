@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
 import { logger } from '@/lib/logger'
 
 // GET - List all customers with pagination and filtering
 export async function GET(request: Request) {
     try {
-        await requireAuth()
+        await requirePermission('customers:read')
         const { searchParams } = new URL(request.url)
 
         // Pagination params
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 // POST - Create new customer
 export async function POST(request: Request) {
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('customers:create')
         const body = await request.json()
         const { name, contactName, email, phone, address, taxId, salesRepLegacy, notes, isCustomer, isSupplier, isPartner, salesRepId } = body
 

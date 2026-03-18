@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requirePermission } from '@/lib/auth'
 import { logUpdate, logDelete } from '@/lib/audit'
 import { logger } from '@/lib/logger'
 
@@ -11,7 +11,7 @@ export async function GET(
 ) {
     const { id } = await params
     try {
-        await requireAuth()
+        await requirePermission('customers:read')
 
         const customer = await prisma.customer.findUnique({
             where: { id },
@@ -45,7 +45,7 @@ export async function PATCH(
 ) {
     const { id } = await params
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('customers:update')
         const body = await request.json()
         const { name, contactName, email, phone, address, taxId, salesRepLegacy, notes, isCustomer, isSupplier, isPartner, isActive, salesRepId } = body
 
@@ -138,7 +138,7 @@ export async function DELETE(
 ) {
     const { id } = await params
     try {
-        const user = await requireAuth()
+        const user = await requirePermission('customers:delete')
 
         const customer = await prisma.customer.findUnique({
             where: { id },

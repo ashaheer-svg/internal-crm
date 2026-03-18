@@ -33,6 +33,22 @@ type Customer = {
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([])
+    const [permissions, setPermissions] = useState<string[]>([])
+
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            try {
+                const res = await fetch('/api/auth/me')
+                if (res.ok) {
+                    const data = await res.json()
+                    setPermissions(data.permissions ?? [])
+                }
+            } catch {}
+        }
+        fetchPermissions()
+    }, [])
+
+    const can = (perm: string) => permissions.includes('all:manage') || permissions.includes(perm)
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
 
@@ -160,23 +176,27 @@ export default function CustomersPage() {
                     <p className="text-sm text-gray-500 font-medium">Manage stakeholders across the supply and distribution chain</p>
                 </div>
                 <div className="flex gap-2">
-                    <Link
-                        href="/dashboard/settings/customers/import"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
-                    >
-                        <Upload className="w-4 h-4" />
-                        Import Data
-                    </Link>
-                    <button
-                        onClick={() => {
-                            setEditingCustomer(null)
-                            setShowModal(true)
-                        }}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Add New Partner
-                    </button>
+                    {can('customers:create') && (
+                        <Link
+                            href="/dashboard/settings/customers/import"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Import Data
+                        </Link>
+                    )}
+                    {can('customers:create') && (
+                        <button
+                            onClick={() => {
+                                setEditingCustomer(null)
+                                setShowModal(true)
+                            }}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Add New Partner
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -297,30 +317,36 @@ export default function CustomersPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-5 whitespace-nowrap text-right pr-6 space-x-1">
-                                            <button
-                                                onClick={() => toggleStatus(customer)}
-                                                className={cn("p-2 rounded-xl transition-all", customer.isActive ? "text-gray-400 hover:text-orange-600 hover:bg-orange-50" : "text-emerald-600 hover:bg-emerald-100")}
-                                                title={customer.isActive ? "Deactivate" : "Activate"}
-                                            >
-                                                {customer.isActive ? <Archive className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleEdit(customer)}
-                                                className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                                                title="Edit"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setDeleteCustomer(customer)
-                                                    setShowDeleteModal(true)
-                                                }}
-                                                className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            {can('customers:update') && (
+                                                <button
+                                                    onClick={() => toggleStatus(customer)}
+                                                    className={cn("p-2 rounded-xl transition-all", customer.isActive ? "text-gray-400 hover:text-orange-600 hover:bg-orange-50" : "text-emerald-600 hover:bg-emerald-100")}
+                                                    title={customer.isActive ? "Deactivate" : "Activate"}
+                                                >
+                                                    {customer.isActive ? <Archive className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                                </button>
+                                            )}
+                                            {can('customers:update') && (
+                                                <button
+                                                    onClick={() => handleEdit(customer)}
+                                                    className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
+                                            )}
+                                            {can('customers:delete') && (
+                                                <button
+                                                    onClick={() => {
+                                                        setDeleteCustomer(customer)
+                                                        setShowDeleteModal(true)
+                                                    }}
+                                                    className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

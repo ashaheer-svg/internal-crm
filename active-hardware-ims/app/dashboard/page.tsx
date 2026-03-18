@@ -133,7 +133,7 @@ function buildStatCards(stats: DashboardStats) {
             icon: Users,
             color: 'text-pink-600',
             bg: 'bg-pink-100',
-            href: '/dashboard/customers',
+            href: '/dashboard/settings/customers',
             permission: 'customers:read'
         },
         {
