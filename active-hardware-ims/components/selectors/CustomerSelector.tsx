@@ -211,32 +211,7 @@ export default function CustomerSelector({
                         )}
                     </div>
 
-                    {/* Add New Customer Link */}
-                    <div className="bg-gray-50 border-t border-gray-100 p-2">
-                        <button
-                            type="button"
-                            onClick={() => setShowAddModal(true)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-100/50 rounded-lg transition-colors"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Add New {type === 'SUPPLIER' ? 'Supplier' : (type === 'PARTNER' ? 'Partner' : 'Customer')}
-                        </button>
-                    </div>
                 </div>
-            )}
-
-            {showAddModal && (
-                <CustomerFormModal
-                    onClose={() => setShowAddModal(false)}
-                    defaultRole={type === 'ALL' ? undefined : type as any}
-                    onSave={(data) => {
-                        const newCustomer = data.customer || data
-                        setCustomers(prev => [newCustomer, ...prev])
-                        onSelect(newCustomer)
-                        setShowAddModal(false)
-                        setIsOpen(false)
-                    }}
-                />
             )}
         </div>
     )

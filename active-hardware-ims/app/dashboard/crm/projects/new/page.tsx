@@ -7,6 +7,7 @@ import FormattedNumberInput from '@/components/FormattedNumberInput'
 import CustomerSelector from '@/components/selectors/CustomerSelector'
 import SalesRepSelector from '@/components/selectors/SalesRepSelector'
 import { Plus, Briefcase, Calendar, DollarSign, Tag, AlignLeft, CheckCircle2 } from 'lucide-react'
+import CustomerFormModal from '@/app/dashboard/settings/customers/CustomerFormModal'
 
 interface ProjectCustomer {
     id: string
@@ -32,6 +33,8 @@ export default function NewProjectPage() {
     const [partners, setPartners] = useState<ProjectCustomer[]>([])
     const [salesReps, setSalesReps] = useState<SalesRep[]>([])
     const [pipelines, setPipelines] = useState<Pipeline[]>([])
+    const [showCustomerModal, setShowCustomerModal] = useState(false)
+    const [showPartnerModal, setShowPartnerModal] = useState(false)
 
     const [formData, setFormData] = useState({
         projectCode: '',
@@ -127,6 +130,22 @@ export default function NewProjectPage() {
                             className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
                         >
                             Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowCustomerModal(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                        >
+                            <Plus className="w-3.5 h-3.5 text-blue-600" />
+                            Add Client
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowPartnerModal(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                        >
+                            <Plus className="w-3.5 h-3.5 text-orange-600" />
+                            Add Partner
                         </button>
                         <button
                             onClick={handleSubmit}
@@ -326,6 +345,36 @@ export default function NewProjectPage() {
                     </section>
                 </form>
             </div>
+
+            {showCustomerModal && (
+                <CustomerFormModal
+                    onClose={() => setShowCustomerModal(false)}
+                    defaultRole="CUSTOMER"
+                    onSave={(data) => {
+                        const client = data.customer || data
+                        setSelectedClient(client)
+                        setFormData(prev => ({ 
+                            ...prev, 
+                            customerId: client.id,
+                            salesRepId: client.salesRepId || prev.salesRepId 
+                        }))
+                        setShowCustomerModal(false)
+                    }}
+                />
+            )}
+
+            {showPartnerModal && (
+                <CustomerFormModal
+                    onClose={() => setShowPartnerModal(false)}
+                    defaultRole="PARTNER"
+                    onSave={(data) => {
+                        const partner = data.customer || data
+                        setSelectedPartner(partner)
+                        setFormData(prev => ({ ...prev, partnerId: partner.id }))
+                        setShowPartnerModal(false)
+                    }}
+                />
+            )}
         </div>
     )
 }
