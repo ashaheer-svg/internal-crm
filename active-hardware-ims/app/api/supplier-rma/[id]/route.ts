@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         await requirePermission('warranty_rma:read')
         const { id } = await params
 
-        const supplierRma = await prisma.supplierRMA.findUnique({
+        const supplierRma = await (prisma as any).supplierRMA.findUnique({
             where: { id },
             include: {
                 defectiveItem: { include: { product: true } },
@@ -44,7 +44,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         if (notes !== undefined) updateData.notes = notes
         if (status) updateData.status = status // Manually override list if needed
 
-        const supplierRma = await prisma.supplierRMA.update({
+        const supplierRma = await (prisma as any).supplierRMA.update({
             where: { id },
             data: updateData
         })

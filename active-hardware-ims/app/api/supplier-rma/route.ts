@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
         const where = status ? { status } : {}
 
-        const supplierRmas = await prisma.supplierRMA.findMany({
+        const supplierRmas = await (prisma as any).supplierRMA.findMany({
             where,
             include: {
                 defectiveItem: {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         const rmaNumber = `${seq.prefix}${String(seq.nextNumber - 1).padStart(4, '0')}`
 
         // 3. Create SupplierRMA
-        const supplierRma = await prisma.supplierRMA.create({
+        const supplierRma = await (prisma as any).supplierRMA.create({
             data: {
                 rmaNumber,
                 defectiveItemId,
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
                 data: { 
                     status: 'SUPPLIER_RMA_OPEN',
                     supplierRmaId: supplierRma.id
-                }
+                } as any
             })
         }
 
