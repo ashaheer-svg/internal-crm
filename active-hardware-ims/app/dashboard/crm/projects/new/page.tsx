@@ -97,7 +97,8 @@ export default function NewProjectPage() {
                 const project = await res.json()
                 router.push(`/dashboard/crm/projects/${project.id}`)
             } else {
-                alert('Failed to create project')
+                const errorData = await res.json().catch(() => ({}))
+                alert(`Failed to create project: ${errorData.error || 'Unknown server error'}`)
             }
         } catch (error) {
             console.error(error)
