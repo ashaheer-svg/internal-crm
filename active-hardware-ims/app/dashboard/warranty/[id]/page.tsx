@@ -125,14 +125,15 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">Claim Status</h3>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => window.open(`/dashboard/warranty/${claim.id}/print-receipt`, '_blank')}
+                        <Link
+                            href={`/dashboard/warranty/${claim.id}/print-receipt`}
+                            target="_blank"
                             className="inline-flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded text-xs text-gray-700 hover:bg-gray-50 shadow-sm"
                             title="Print Goods Receipt"
                         >
                             <Printer className="w-3.5 h-3.5" />
                             Receipt
-                        </button>
+                        </Link>
                         <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>
                             {getStatusLabel(claim.status)}
                         </span>
@@ -237,14 +238,15 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                         <h3 className="text-lg font-medium text-gray-900">Supplier RMA Tracking</h3>
                     </div>
                     {((claim as any).replacementItemId || (claim as any).replacementExternalInfo) && (
-                        <button
-                            onClick={() => window.open(`/dashboard/warranty/${claim.id}/print-issue`, '_blank')}
+                        <Link
+                            href={`/dashboard/warranty/${claim.id}/print-issue`}
+                            target="_blank"
                             className="inline-flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded text-xs text-gray-700 hover:bg-gray-50 shadow-sm"
                             title="Print Goods Issue Slip"
                         >
                             <Printer className="w-3.5 h-3.5" />
                             Issue Note
-                        </button>
+                        </Link>
                     )}
                 </div>
                 {(claim as any).supplierRma ? (
