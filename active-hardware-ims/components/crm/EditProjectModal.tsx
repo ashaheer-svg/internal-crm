@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Calendar } from 'lucide-react'
+import SalesRepSelector from '@/components/selectors/SalesRepSelector'
 
 interface EditProjectModalProps {
     isOpen: boolean
@@ -12,7 +13,6 @@ interface EditProjectModalProps {
 
 export default function EditProjectModal({ isOpen, onClose, project, onSuccess }: EditProjectModalProps) {
     const [loading, setLoading] = useState(false)
-    const [salesReps, setSalesReps] = useState<any[]>([])
 
     const [formData, setFormData] = useState({
         title: '',
@@ -24,12 +24,6 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
         salesRepId: '',
         brand: ''
     })
-
-    useEffect(() => {
-        if (isOpen) {
-            fetchSalesReps()
-        }
-    }, [isOpen])
 
     useEffect(() => {
         if (project) {
@@ -46,17 +40,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
         }
     }, [project, isOpen])
 
-    async function fetchSalesReps() {
-        try {
-            const res = await fetch('/api/sales-reps')
-            if (res.ok) {
-                const data = await res.json()
-                setSalesReps(data)
-            }
-        } catch (error) {
-            console.error('Failed to fetch sales reps')
-        }
-    }
+
 
     if (!isOpen) return null
 
@@ -123,17 +107,12 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Sales Representative</label>
-                        <select
-                            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-                            value={formData.salesRepId}
-                            onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
-                        >
-                            <option value="">Select Rep</option>
-                            {salesReps.map(rep => (
-                                <option key={rep.id} value={rep.id}>{rep.name}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sales Representative</label>
+                        <SalesRepSelector
+                            label=""
+                            selectedId={formData.salesRepId}
+                            onSelect={(rep) => setFormData({ ...formData, salesRepId: rep?.id || '' })}
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
