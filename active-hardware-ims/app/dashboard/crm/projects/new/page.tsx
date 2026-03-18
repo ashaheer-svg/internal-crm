@@ -219,7 +219,11 @@ export default function NewProjectPage() {
                                     selectedCustomer={selectedClient}
                                     onSelect={(c) => {
                                         setSelectedClient(c)
-                                        setFormData(prev => ({ ...prev, customerId: c?.id || '' }))
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            customerId: c?.id || '',
+                                            salesRepId: c?.salesRepId || prev.salesRepId
+                                        }))
                                     }}
                                     placeholder="Search for an end customer..."
                                 />

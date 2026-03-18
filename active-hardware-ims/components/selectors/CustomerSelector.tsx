@@ -230,6 +230,7 @@ export default function CustomerSelector({
                     onClose={() => setShowAddModal(false)}
                     defaultRole={type === 'ALL' ? undefined : type as any}
                     onSave={(newCustomer) => {
+                        setCustomers(prev => [newCustomer, ...prev])
                         onSelect(newCustomer)
                         setShowAddModal(false)
                         setIsOpen(false)
