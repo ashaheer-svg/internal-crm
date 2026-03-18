@@ -103,6 +103,11 @@ export function Sidebar() {
             setCollapsed(JSON.parse(savedState))
         }
     }, [pathname])
+    
+    useEffect(() => {
+        const interval = setInterval(fetchUnreadCount, 15000) // Poll every 15s
+        return () => clearInterval(interval)
+    }, [])
 
     const fetchUnreadCount = async () => {
         try {

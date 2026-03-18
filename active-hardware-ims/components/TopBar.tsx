@@ -115,6 +115,9 @@ export default function TopBar() {
     useEffect(() => {
         fetchUser()
         fetchUnread()
+
+        const interval = setInterval(fetchUnread, 15000) // Poll every 15s
+        return () => clearInterval(interval)
     }, [])
 
     // Close dropdown on outside click

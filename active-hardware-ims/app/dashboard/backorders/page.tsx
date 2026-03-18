@@ -255,7 +255,6 @@ export default function BackordersPage() {
                 </div>
             )}
 
-// Removed unused code
         </div>
     )
 }
