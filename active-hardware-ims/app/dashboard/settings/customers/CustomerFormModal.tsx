@@ -155,6 +155,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
+        e.stopPropagation()
         setLoading(true)
         setError("")
 
