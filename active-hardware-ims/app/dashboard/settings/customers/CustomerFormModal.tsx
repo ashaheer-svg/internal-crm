@@ -207,7 +207,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
                 onConfirm={confirmDeleteAddress}
                 onCancel={() => setPendingDeleteAddress(null)}
             />
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold text-gray-900">
@@ -221,7 +221,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Left Column - Basic Info */}
-                        <form id="partner-form" onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-4">
                             {error && (
                                 <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                     <p className="text-sm">{error}</p>
@@ -347,7 +347,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
                                     className={inputClass}
                                 />
                             </div>
-                        </form>
+                        </div>
 
                         {/* Right Column - Delivery Addresses */}
                         <div className="border-l pl-8 space-y-4">
@@ -509,7 +509,6 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
                         Close
                     </button>
                     <button
-                        form="partner-form"
                         type="submit"
                         disabled={loading}
                         className={buttonPrimaryClass}
@@ -517,7 +516,7 @@ export default function CustomerFormModal({ customer, onSave, onClose, defaultRo
                         {loading ? "Saving..." : customer ? "Update Partner" : "Create Partner"}
                     </button>
                 </div>
-            </div>
+            </form>
         </div>
     )
 }
