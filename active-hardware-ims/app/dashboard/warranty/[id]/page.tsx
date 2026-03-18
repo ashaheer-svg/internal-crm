@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/db"
 import Link from "next/link"
-import { ArrowLeft, Package, User, FileText, Clock } from "lucide-react"
+import { ArrowLeft, Package, User, FileText, Clock, Printer } from "lucide-react"
 import { notFound } from "next/navigation"
 import StatusUpdateForm from "./StatusUpdateForm"
 import ReplacementForm from "./ReplacementForm"
 import ReplacementDetails from "./ReplacementDetails"
 import EditWarrantyButton from "./EditWarrantyButton"
+import SupplierRMAForm from "./SupplierRMAForm"
+import SupplierRMADetails from "./SupplierRMADetails"
 import { formatDate, formatDateTime } from "@/lib/utils"
 
 interface PageProps {
@@ -13,13 +15,19 @@ interface PageProps {
 }
 
 async function getWarrantyClaim(id: string) {
-    const claim = await prisma.warrantyClaim.findUnique({
+    const claim = await (prisma.warrantyClaim as any).findUnique({
         where: { id },
         include: {
             inventoryItem: {
                 include: {
                     product: true,
                     location: true
+                }
+            },
+            supplierRma: {
+                include: {
+                    supplier: true,
+                    receivedItem: { include: { product: true } }
                 }
             }
         }
@@ -57,7 +65,10 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
             case 'IN_PROGRESS':
                 return 'bg-blue-100 text-blue-800'
             case 'AWAITING_SUPPLIER':
+            case 'SUPPLIER_RMA_OPEN':
                 return 'bg-orange-100 text-orange-800'
+            case 'SUPPLIER_RMA_RESOLVED':
+                return 'bg-purple-100 text-purple-800'
             case 'RESOLVED':
                 return 'bg-green-100 text-green-800'
             case 'CLOSED':
@@ -113,9 +124,19 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
             <div className="bg-white shadow sm:rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">Claim Status</h3>
-                    <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>
-                        {getStatusLabel(claim.status)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => window.open(`/dashboard/warranty/${claim.id}/print-receipt`, '_blank')}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded text-xs text-gray-700 hover:bg-gray-50 shadow-sm"
+                            title="Print Goods Receipt"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            Receipt
+                        </button>
+                        <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>
+                            {getStatusLabel(claim.status)}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
@@ -207,6 +228,31 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                     replacementType={(claim as any).replacementType}
                 />
             )}
+
+            {/* Supplier RMA Tracking */}
+            <div className="bg-white shadow sm:rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Package className="w-5 h-5 text-gray-400" />
+                        <h3 className="text-lg font-medium text-gray-900">Supplier RMA Tracking</h3>
+                    </div>
+                    {((claim as any).replacementItemId || (claim as any).replacementExternalInfo) && (
+                        <button
+                            onClick={() => window.open(`/dashboard/warranty/${claim.id}/print-issue`, '_blank')}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded text-xs text-gray-700 hover:bg-gray-50 shadow-sm"
+                            title="Print Goods Issue Slip"
+                        >
+                            <Printer className="w-3.5 h-3.5" />
+                            Issue Note
+                        </button>
+                    )}
+                </div>
+                {(claim as any).supplierRma ? (
+                    <SupplierRMADetails rma={(claim as any).supplierRma} />
+                ) : (
+                    <SupplierRMAForm claimId={claim.id} defectiveItemId={claim.inventoryItemId} />
+                )}
+            </div>
 
             {/* Status Timeline */}
             <div className="bg-white shadow sm:rounded-lg p-6">

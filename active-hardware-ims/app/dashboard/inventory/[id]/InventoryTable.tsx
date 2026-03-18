@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { QrCode, Search } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Currency } from "@/components/Currency"
 import InventoryItemActions from "./InventoryItemActions"
@@ -24,6 +25,10 @@ type InventoryItem = {
         deliveryOrder?: {
             customerName: string
         } | null
+    } | null
+    warrantyClaim?: {
+        id: string
+        customerName: string
     } | null
 }
 
@@ -217,7 +222,14 @@ export default function InventoryTable({ inventory, locations }: InventoryTableP
                                     <Currency amount={item.unitCost || 0} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {item.deliveryOrderItem?.deliveryOrder?.customerName || '-'}
+                                    {item.warrantyClaim ? (
+                                        <Link 
+                                            href={`/dashboard/warranty/${item.warrantyClaim.id}`}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            {item.warrantyClaim.customerName} (RMA)
+                                        </Link>
+                                    ) : item.deliveryOrderItem?.deliveryOrder?.customerName || '-'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     {item.warrantyExpiry ? (

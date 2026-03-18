@@ -20,11 +20,11 @@ model User {
   createdBy          String?
 
   // RBAC Relations
-  roleId             String?
-  role               Role?     @relation(fields: [roleId], references: [id])
-  
+  roleId String?
+  role   Role?   @relation(fields: [roleId], references: [id])
+
   // Legacy string role (kept temporarily for migration mapping, will drop later)
-  legacyRole         String?   @map("role")
+  legacyRole String? @map("role")
 
   // Relations
   reservations Reservation[]
@@ -45,12 +45,15 @@ model User {
   sentMessages     Message[]        @relation("SentMessages")
   receivedMessages Message[]        @relation("ReceivedMessages")
   messageReceipts  MessageReceipt[]
- 
+
   // Build Workflow
-  builtOrders     DeliveryOrder[]  @relation("BuiltBy")
-  
+  builtOrders DeliveryOrder[] @relation("BuiltBy")
+
   // Import Queue
   pendingProjectImports PendingProjectImport[]
+
+  // Warranty/RMA Relations
+  resolvedClaims WarrantyClaim[]
 }
 
 // ------------------------------------------
@@ -58,26 +61,26 @@ model User {
 // ------------------------------------------
 
 model Role {
-  id              String           @id @default(uuid())
-  name            String           @unique
+  id              String   @id @default(uuid())
+  name            String   @unique
   description     String?
-  isSystemDefault Boolean          @default(false) // True for Admin, Sales, etc. Cannot be deleted.
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
-  users           User[]
-  permissions     RolePermission[]
-  messages        Message[]
-  projectTasks    ProjectTask[]
+  isSystemDefault Boolean  @default(false) // True for Admin, Sales, etc. Cannot be deleted.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users        User[]
+  permissions  RolePermission[]
+  messages     Message[]
+  projectTasks ProjectTask[]
 }
 
 model Permission {
-  id          String           @id @default(uuid())
-  action      String           // e.g., 'create', 'read', 'update', 'delete', 'manage'
-  resource    String           // e.g., 'quotes', 'inventory', 'users', 'roles', 'all'
+  id          String  @id @default(uuid())
+  action      String // e.g., 'create', 'read', 'update', 'delete', 'manage'
+  resource    String // e.g., 'quotes', 'inventory', 'users', 'roles', 'all'
   description String?
-  
-  roles       RolePermission[]
+
+  roles RolePermission[]
 
   @@unique([action, resource])
 }
@@ -88,8 +91,8 @@ model RolePermission {
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permissionId String
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  
-  assignedAt   DateTime   @default(now())
+
+  assignedAt DateTime @default(now())
 
   @@unique([roleId, permissionId])
 }
@@ -159,6 +162,10 @@ model Customer {
   partnerProjects CRMProject[] @relation("ProjectPartner")
   quotedBillTo    CRMQuote[]   @relation("QuoteBillTo")
   quotedShipTo    CRMQuote[]   @relation("QuoteShipTo")
+
+  // Warranty/RMA Relations
+  warrantyClaims WarrantyClaim[]
+  supplierRmas   SupplierRMA[]
 }
 
 model SalesRep {
@@ -270,6 +277,14 @@ model InventoryItem {
   deliveryOrderItemId String?
   deliveryOrderItem   DeliveryOrderItem? @relation(fields: [deliveryOrderItemId], references: [id])
 
+  // Warranty Traceability
+  warrantyClaimId String?
+  warrantyClaim   WarrantyClaim? @relation("ItemWarrantyClaim", fields: [warrantyClaimId], references: [id])
+
+  // Supplier RMA relations
+  supplierRmasAsDefective SupplierRMA[] @relation("DefectiveInSupplierRMA")
+  supplierRmasAsReceived  SupplierRMA?  @relation("ReceivedFromSupplierRMA")
+
   @@index([productId, status])
 }
 
@@ -287,9 +302,14 @@ model WarrantyClaim {
   id              String        @id @default(uuid())
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  customerName    String
-  description     String
-  status          String // PENDING, IN_PROGRESS, AWAITING_SUPPLIER, RESOLVED, CLOSED
+
+  // Optional link to CRM Customer record
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  customerName String
+  description  String
+  status       String // PENDING, IN_PROGRESS, AWAITING_SUPPLIER, RESOLVED, CLOSED
 
   // Replacement tracking
   replacementType         String? // TEMPORARY, PERMANENT, NONE
@@ -298,13 +318,59 @@ model WarrantyClaim {
   replacementReturnedAt   DateTime? // For temporary replacements
   replacementExternalInfo String? // Details for untracked loaner units (Serial/Model)
 
+  // Supplier RMA link
+  supplierRmaId String?      @unique
+  supplierRma   SupplierRMA? @relation(fields: [supplierRmaId], references: [id])
+
   // Resolution
-  resolution String? // Description of how claim was resolved
-  resolvedAt DateTime?
-  resolvedBy String?
+  resolution   String? // Description of how claim was resolved
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolvedBy   User?     @relation(fields: [resolvedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Traceability link back from items tied to this claim
+  tiedItems InventoryItem[] @relation("ItemWarrantyClaim")
+}
+
+model SupplierRMA {
+  id        String @id @default(uuid())
+  rmaNumber String @unique // e.g. SRMA-2603-0001
+
+  // The defective item being shipped to supplier
+  defectiveItemId String
+  defectiveItem   InventoryItem @relation("DefectiveInSupplierRMA", fields: [defectiveItemId], references: [id])
+
+  // Supplier (from Customer table, isSupplier = true)
+  supplierId String
+  supplier   Customer @relation(fields: [supplierId], references: [id])
+
+  supplierRmaRef String? // Supplier's own RMA/ticket number
+  shippedAt      DateTime?
+  notes          String?
+
+  // Outcome
+  outcome      String? // REPAIRED | NEW_UNIT | CREDIT_NOTE | REJECTED
+  outcomeNotes String?
+  resolvedAt   DateTime?
+
+  // If NEW_UNIT: the new inventory item received
+  receivedItemId String?        @unique
+  receivedItem   InventoryItem? @relation("ReceivedFromSupplierRMA", fields: [receivedItemId], references: [id])
+
+  // If CREDIT_NOTE: reference number and value
+  creditNoteRef   String?
+  creditNoteValue Float?
+
+  status String // PENDING, SHIPPED, AWAITING_RESPONSE, RESOLVED, REJECTED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Back-ref from WarrantyClaim
+  warrantyClaim WarrantyClaim?
 }
 
 model GoodsReceiptNote {
@@ -486,19 +552,19 @@ model DeliveryOrder {
   updatedAt       DateTime @updatedAt
   isActive        Boolean  @default(true)
 
-  quoteReference  String? // Track origin quote
+  quoteReference String? // Track origin quote
 
   salesRepId String?
   salesRep   SalesRep? @relation(fields: [salesRepId], references: [id])
- 
-  // Build Workflow
-  builtById   String?
-  builtBy     User?      @relation("BuiltBy", fields: [builtById], references: [id])
-  buildNotes  String?
-  builtAt     DateTime?
 
-  items          DeliveryOrderItem[]
-  quotes         CRMQuote[]
+  // Build Workflow
+  builtById  String?
+  builtBy    User?     @relation("BuiltBy", fields: [builtById], references: [id])
+  buildNotes String?
+  builtAt    DateTime?
+
+  items           DeliveryOrderItem[]
+  quotes          CRMQuote[]
   buildRejections BuildRejection[]
 }
 
@@ -622,8 +688,8 @@ model ServiceContractItem {
   serviceContractId String
   serviceContract   ServiceContract @relation(fields: [serviceContractId], references: [id], onDelete: Cascade)
 
-  modelName      String
-  serialNumbers  String // Comma separated or newline separated
+  modelName     String
+  serialNumbers String // Comma separated or newline separated
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -756,7 +822,7 @@ model ProjectTask {
   assignedToRole   Role?   @relation(fields: [assignedToRoleId], references: [id])
 
   attachmentUrl String?
-  
+
   createdById String
   createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 
@@ -837,28 +903,28 @@ model CRMQuoteItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
 
-  description  String
-  
+  description String
+
   // Legacy fields - kept for compatibility but will migrate to details
-  productModel String? 
-  serialNumbers String? 
+  productModel  String?
+  serialNumbers String?
 
   details CRMQuoteItemDetail[]
 
-  quantity     Int
-  unitPrice    Float
-  discount     Float  @default(0)
-  taxRate      Float  @default(0)
-  total        Float
+  quantity  Int
+  unitPrice Float
+  discount  Float @default(0)
+  taxRate   Float @default(0)
+  total     Float
 }
 
 model CRMQuoteItemDetail {
-  id              String       @id @default(uuid())
-  quoteItemId     String
-  quoteItem       CRMQuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid())
+  quoteItemId String
+  quoteItem   CRMQuoteItem @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
 
-  modelName      String
-  serialNumbers  String // Comma separated or newline separated
+  modelName     String
+  serialNumbers String // Comma separated or newline separated
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -889,28 +955,28 @@ model SystemSetting {
 }
 
 model Message {
-  id               String       @id @default(uuid())
-  subject          String
-  content          String
-  category         String       @default("GENERAL") // e.g., TASK, ALERT, UPDATE, GENERAL
-  priority         String       @default("MEDIUM")  // LOW, MEDIUM, HIGH, URGENT
-  deadline         DateTime?
-  isSystemGenerated Boolean      @default(false)
-  
-  senderId         String
-  sender           User         @relation("SentMessages", fields: [senderId], references: [id])
-  
-  recipientUserId   String?
-  recipientUser     User?        @relation("ReceivedMessages", fields: [recipientUserId], references: [id])
-  
-  recipientRoleId   String?
-  recipientRole     Role?        @relation(fields: [recipientRoleId], references: [id])
-  
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  
-  attachments      MessageAttachment[]
-  receipts         MessageReceipt[]
+  id                String    @id @default(uuid())
+  subject           String
+  content           String
+  category          String    @default("GENERAL") // e.g., TASK, ALERT, UPDATE, GENERAL
+  priority          String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  deadline          DateTime?
+  isSystemGenerated Boolean   @default(false)
+
+  senderId String
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id])
+
+  recipientUserId String?
+  recipientUser   User?   @relation("ReceivedMessages", fields: [recipientUserId], references: [id])
+
+  recipientRoleId String?
+  recipientRole   Role?   @relation(fields: [recipientRoleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments MessageAttachment[]
+  receipts    MessageReceipt[]
 
   @@index([senderId])
   @@index([recipientUserId])
@@ -931,25 +997,26 @@ model MessageAttachment {
 }
 
 model MessageReceipt {
-  id        String    @id @default(uuid())
+  id        String  @id @default(uuid())
   messageId String
-  message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  
-  viewedAt  DateTime?
-  isDone    Boolean   @default(false)
-  doneAt    DateTime?
-  comment   String?
-  
+  user      User    @relation(fields: [userId], references: [id])
+
+  viewedAt DateTime?
+  isDone   Boolean   @default(false)
+  doneAt   DateTime?
+  comment  String?
+
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
 }
+
 model PendingProjectImport {
-  id           String   @id @default(uuid())
-  date         String   // Original date string from source
-  projectTitle String?  // Project title from import file
+  id           String  @id @default(uuid())
+  date         String // Original date string from source
+  projectTitle String? // Project title from import file
   customerName String
   partnerName  String?
   brand        String?
@@ -957,51 +1024,51 @@ model PendingProjectImport {
   value        Float
   stage        String
   pipelineId   String
-  
+
   uploadedById String
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
-  
-  createdAt    DateTime @default(now())
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model NasModel {
-  id                            String   @id @default(uuid())
-  modelName                     String   @unique
-  bays                          Int
-  expansionUnitModel            String?
-  expansionBaysPerUnit          Int      @default(0)
-  maxExpansionUnitsSupported     Int      @default(0)
-  defaultRamGB                  Float    @default(0)
-  maxRamGB                      Float    @default(0)
-  supportsSATA                  Boolean  @default(true)
-  supportsSAS                   Boolean  @default(false)
-  formFactor                    String   // Desktop, Rackmount
-  powerType                     String   // Standard, Redundant
-  networkPorts                  String?  // e.g. "1GbE x2, 10GbE x2"
-  series                        String?  // Plus, XS+, SA, FS
-  targetMarket                  String?
-  productId                     String?
-  isActive                      Boolean  @default(true)
-  createdAt                     DateTime @default(now())
-  updatedAt                     DateTime @updatedAt
+  id                         String   @id @default(uuid())
+  modelName                  String   @unique
+  bays                       Int
+  expansionUnitModel         String?
+  expansionBaysPerUnit       Int      @default(0)
+  maxExpansionUnitsSupported Int      @default(0)
+  defaultRamGB               Float    @default(0)
+  maxRamGB                   Float    @default(0)
+  supportsSATA               Boolean  @default(true)
+  supportsSAS                Boolean  @default(false)
+  formFactor                 String // Desktop, Rackmount
+  powerType                  String // Standard, Redundant
+  networkPorts               String? // e.g. "1GbE x2, 10GbE x2"
+  series                     String? // Plus, XS+, SA, FS
+  targetMarket               String?
+  productId                  String?
+  isActive                   Boolean  @default(true)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
   // Relations
-  compabilityItems              NasCompatibility[]
+  compabilityItems NasCompatibility[]
 }
 
 model NasCompatibility {
-  id          String   @id @default(uuid())
-  nasModelId  String
-  nasModel    NasModel @relation(fields: [nasModelId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  category    String   // DRIVE, RAM, NETWORK, EXPANSION
-  notes       String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  nasModelId String
+  nasModel   NasModel @relation(fields: [nasModelId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  category String // DRIVE, RAM, NETWORK, EXPANSION
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([nasModelId, productId])
 }
@@ -1011,22 +1078,22 @@ model NasCompatibility {
 // ------------------------------------------
 
 model BuildRejection {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   deliveryOrderId String
   deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
 
   // Snapshot of the inventory item at time of rejection
-  inventoryItemId String   // Not a FK — item returns to AVAILABLE stock after rejection
+  inventoryItemId String // Not a FK — item returns to AVAILABLE stock after rejection
   serialNumber    String
 
   // Rejection details
-  comment         String?  // Reason given by TECHNICAL user
-  rejectedById    String
-  rejectedByName  String
-  rejectedAt      DateTime @default(now())
+  comment        String? // Reason given by TECHNICAL user
+  rejectedById   String
+  rejectedByName String
+  rejectedAt     DateTime @default(now())
 
   // Dismissal — ACC-MGR can dismiss if not a fault (e.g. wrong config, not defective)
-  dismissed       Boolean  @default(false)
+  dismissed       Boolean   @default(false)
   dismissedAt     DateTime?
   dismissedByName String?
 

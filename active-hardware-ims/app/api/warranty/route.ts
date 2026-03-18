@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     try {
         const user = await requirePermission('warranty_rma:create')
         const body = await request.json()
-        const { inventoryItemId, customerName, description } = body
+        const { inventoryItemId, customerId, customerName, description } = body
 
         // Validate required fields
         if (!inventoryItemId || !customerName || !description) {
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
             data: {
                 inventoryItemId,
                 customerName,
+                customerId: customerId || null,
                 description,
                 status: 'PENDING'
             },
@@ -80,17 +81,20 @@ export async function POST(request: Request) {
             status: 'PENDING'
         })
 
-        // Update inventory item status to RMA and log the change
+        // Update inventory item status to RMA_DEFECTIVE_RECEIVED and link claim for traceability
         const previousStatus = inventoryItem.status
         await prisma.inventoryItem.update({
             where: { id: inventoryItemId },
-            data: { status: 'RMA' }
+            data: { 
+                status: 'RMA_DEFECTIVE_RECEIVED',
+                warrantyClaimId: claim.id
+            }
         })
 
         // Log inventory status change
         await logUpdate('INVENTORY', inventoryItemId, user.id, user.name,
             { status: previousStatus, serialNumber: inventoryItem.serialNumber },
-            { status: 'RMA', reason: 'Warranty claim created' }
+            { status: 'RMA_DEFECTIVE_RECEIVED', reason: 'Warranty claim created' }
         )
 
         return NextResponse.json(claim)

@@ -13,7 +13,7 @@ interface PageProps {
 }
 
 async function getProduct(id: string) {
-    return await prisma.product.findUnique({
+    return await (prisma.product as any).findUnique({
         where: { id },
         include: {
             inventory: {
@@ -25,6 +25,9 @@ async function getProduct(id: string) {
                                 select: { customerName: true }
                             }
                         }
+                    },
+                    warrantyClaim: {
+                        select: { id: true, customerName: true }
                     }
                 },
                 orderBy: { createdAt: 'desc' }

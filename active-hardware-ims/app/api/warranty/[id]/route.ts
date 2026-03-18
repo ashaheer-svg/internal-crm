@@ -66,7 +66,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         }
 
         // Validate status
-        const validStatuses = ['PENDING', 'IN_PROGRESS', 'AWAITING_SUPPLIER', 'RESOLVED', 'CLOSED']
+        const validStatuses = ['PENDING', 'IN_PROGRESS', 'AWAITING_SUPPLIER', 'SUPPLIER_RMA_OPEN', 'SUPPLIER_RMA_RESOLVED', 'RESOLVED', 'CLOSED']
         if (status && !validStatuses.includes(status)) {
             return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
         }
@@ -88,25 +88,34 @@ export async function PATCH(request: Request, { params }: RouteParams) {
                 return NextResponse.json({ error: 'Inventory item not found' }, { status: 404 })
             }
 
-            // 1. Revert old item status to SOLD
+            // 1. Revert old item status to SOLD and clear claim back-link
             await prisma.inventoryItem.update({
                 where: { id: currentClaim.inventoryItemId },
-                data: { status: 'SOLD' }
+                data: { 
+                    status: 'SOLD',
+                    warrantyClaimId: null
+                }
             })
 
-            // 2. Set new item status to RMA
+            // 2. Set new item status to RMA_DEFECTIVE_RECEIVED and link to this claim
             await prisma.inventoryItem.update({
                 where: { id: inventoryItemId },
-                data: { status: 'RMA' }
+                data: { 
+                    status: 'RMA_DEFECTIVE_RECEIVED',
+                    warrantyClaimId: id
+                }
             })
 
             updateData.inventoryItemId = inventoryItemId
         }
 
-        // If resolving, set resolved timestamp (requires auth for resolvedBy)
+        // If resolving, set resolved timestamp and user
+        const userAction = await requirePermission('warranty_rma:update') // re-fetch for safety or use line 54
+        const user = userAction // from line 54: use existing user const if declared inside function scope
+
         if (status === 'RESOLVED' || status === 'CLOSED') {
             updateData.resolvedAt = new Date()
-            // Note: resolvedBy would require auth, skipping for now
+            updateData.resolvedById = user.id
         }
 
         const claim = await prisma.warrantyClaim.update({

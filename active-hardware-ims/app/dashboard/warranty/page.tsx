@@ -110,7 +110,10 @@ export default function WarrantyPage() {
             case 'IN_PROGRESS':
                 return 'bg-blue-100 text-blue-800'
             case 'AWAITING_SUPPLIER':
+            case 'SUPPLIER_RMA_OPEN':
                 return 'bg-orange-100 text-orange-800'
+            case 'SUPPLIER_RMA_RESOLVED':
+                return 'bg-purple-100 text-purple-800'
             case 'RESOLVED':
                 return 'bg-green-100 text-green-800'
             case 'CLOSED':
@@ -126,6 +129,10 @@ export default function WarrantyPage() {
                 return 'In Progress'
             case 'AWAITING_SUPPLIER':
                 return 'Awaiting Supplier'
+            case 'SUPPLIER_RMA_OPEN':
+                return 'Supplier RMA Open'
+            case 'SUPPLIER_RMA_RESOLVED':
+                return 'Supplier RMA Resolved'
             default:
                 return status.charAt(0) + status.slice(1).toLowerCase()
         }
@@ -135,7 +142,8 @@ export default function WarrantyPage() {
         all: claims.length,
         PENDING: claims.filter(c => c.status === 'PENDING').length,
         IN_PROGRESS: claims.filter(c => c.status === 'IN_PROGRESS').length,
-        AWAITING_SUPPLIER: claims.filter(c => c.status === 'AWAITING_SUPPLIER').length,
+        SUPPLIER_RMA_OPEN: claims.filter(c => c.status === 'SUPPLIER_RMA_OPEN').length,
+        SUPPLIER_RMA_RESOLVED: claims.filter(c => c.status === 'SUPPLIER_RMA_RESOLVED').length,
         RESOLVED: claims.filter(c => c.status === 'RESOLVED').length,
         CLOSED: claims.filter(c => c.status === 'CLOSED').length,
     }
@@ -260,10 +268,16 @@ export default function WarrantyPage() {
                         In Progress ({statusCounts.IN_PROGRESS})
                     </button>
                     <button
-                        onClick={() => setActiveTab('AWAITING_SUPPLIER')}
-                        className={`${activeTab === 'AWAITING_SUPPLIER' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                        onClick={() => setActiveTab('SUPPLIER_RMA_OPEN')}
+                        className={`${activeTab === 'SUPPLIER_RMA_OPEN' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
                     >
-                        Awaiting Supplier ({statusCounts.AWAITING_SUPPLIER})
+                        Supplier Open ({statusCounts.SUPPLIER_RMA_OPEN})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('SUPPLIER_RMA_RESOLVED')}
+                        className={`${activeTab === 'SUPPLIER_RMA_RESOLVED' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+                    >
+                        Supplier Resolved ({statusCounts.SUPPLIER_RMA_RESOLVED})
                     </button>
                     <button
                         onClick={() => setActiveTab('RESOLVED')}
