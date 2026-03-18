@@ -149,15 +149,9 @@ export async function GET(req: Request) {
         if (type === 'sent') {
             where.senderId = user.id
         } else if (type === 'inbox') {
-            where.OR = [
-                { recipientUserId: user.id },
-                {
-                    AND: [
-                        { recipientRoleId: user.roleId },
-                        { recipientRoleId: { not: null } }
-                    ]
-                }
-            ]
+            where.receipts = {
+                some: { userId: user.id }
+            }
         } else if (type === 'admin') {
             if (!user.permissions.includes('all:manage')) {
                 return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
