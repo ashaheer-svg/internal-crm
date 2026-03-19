@@ -9,6 +9,7 @@ import EditWarrantyButton from "./EditWarrantyButton"
 import SupplierRMAForm from "./SupplierRMAForm"
 import SupplierRMADetails from "./SupplierRMADetails"
 import { formatDate, formatDateTime } from "@/lib/utils"
+import BackButton from "@/components/BackButton"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -93,9 +94,7 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/warranty" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </Link>
+                    <BackButton className="p-1.5" />
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Warranty Claim</h1>
