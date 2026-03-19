@@ -44,9 +44,7 @@ export default function NewWarrantyClaimPage() {
         setSearching(true)
         try {
             // Build query parameters for server-side filtering
-            const params = new URLSearchParams({
-                status: 'SOLD,DELIVERED,RMA'
-            })
+            const params = new URLSearchParams()
 
             // Add search term if provided (searches both serial number and product name on server)
             if (searchTerm.trim()) {
@@ -175,12 +173,22 @@ export default function NewWarrantyClaimPage() {
                                         key={item.id}
                                         type="button"
                                         onClick={() => setSelectedItem(item)}
-                                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
                                     >
-                                        <p className="text-sm font-medium text-gray-900">{item.serialNumber}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {item.product.brand} {item.product.name} - {item.location.name}
-                                        </p>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{item.serialNumber}</p>
+                                            <p className="text-sm text-gray-500">
+                                                {item.product.brand} {item.product.name} - {item.location.name}
+                                            </p>
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider 
+                                            ${item.status === 'AVAILABLE' ? 'bg-green-100 border-green-200 text-green-700' : 
+                                              item.status === 'SOLD' ? 'bg-blue-100 border-blue-200 text-blue-700' :
+                                              item.status === 'RMA' ? 'bg-amber-100 border-amber-200 text-amber-700' :
+                                              'bg-gray-100 border-gray-200 text-gray-700'}
+                                        `}>
+                                            {item.status}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
