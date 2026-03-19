@@ -962,6 +962,11 @@ model Message {
   priority          String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   deadline          DateTime?
   isSystemGenerated Boolean   @default(false)
+  
+  customerName        String?
+  partnerName         String?
+  invoiceNumber       String?
+  deliveryOrderNumber String?
 
   senderId String
   sender   User   @relation("SentMessages", fields: [senderId], references: [id])

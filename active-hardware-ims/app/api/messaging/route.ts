@@ -33,6 +33,11 @@ export async function POST(req: Request) {
         const recipientUserId = formData.get('recipientUserId') as string
         const recipientRoleId = formData.get('recipientRoleId') as string
 
+        const customerName = formData.get('customerName') as string || null
+        const partnerName = formData.get('partnerName') as string || null
+        const invoiceNumber = formData.get('invoiceNumber') as string || null
+        const deliveryOrderNumber = formData.get('deliveryOrderNumber') as string || null
+
         if (!subject || !content) {
             return NextResponse.json({ error: 'Subject and content are required' }, { status: 400 })
         }
@@ -60,7 +65,11 @@ export async function POST(req: Request) {
                 deadline,
                 senderId: user.id,
                 recipientUserId: recipientUserId || null,
-                recipientRoleId: recipientRoleId || null
+                recipientRoleId: recipientRoleId || null,
+                customerName,
+                partnerName,
+                invoiceNumber,
+                deliveryOrderNumber
             }
         })
 

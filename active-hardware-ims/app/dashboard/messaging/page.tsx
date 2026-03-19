@@ -33,6 +33,10 @@ type Message = {
     priority: string
     deadline: string | null
     isSystemGenerated: boolean
+    customerName?: string | null
+    partnerName?: string | null
+    invoiceNumber?: string | null
+    deliveryOrderNumber?: string | null
     createdAt: string
     sender: { name: string; email: string }
     recipientUser?: { name: string; email: string }
@@ -383,11 +387,21 @@ export default function MessagingPage() {
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                                                     <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 uppercase tracking-tighter",
                                                         m.category === 'TASK' ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600")}>
                                                         {m.category}
                                                     </span>
+                                                    {m.customerName && (
+                                                        <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
+                                                            End Customer: {m.customerName}
+                                                        </span>
+                                                    )}
+                                                    {m.partnerName && (
+                                                        <span className="text-[10px] bg-slate-50 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
+                                                            Partner: {m.partnerName}
+                                                        </span>
+                                                    )}
                                                     <h3 className={cn("text-sm truncate pr-4 transition-colors",
                                                         isUnread ? "font-bold text-gray-900" : "text-gray-700",
                                                         !isExpanded && "group-hover:text-blue-600")}>
@@ -413,6 +427,34 @@ export default function MessagingPage() {
                                     {isExpanded && (
                                         <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
                                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
+                                                {(m.customerName || m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
+                                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                                                        {m.customerName && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">End Customer</p>
+                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.customerName}</p>
+                                                            </div>
+                                                        )}
+                                                        {m.partnerName && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
+                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.partnerName}</p>
+                                                            </div>
+                                                        )}
+                                                        {m.invoiceNumber && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Invoice #</p>
+                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.invoiceNumber}</p>
+                                                            </div>
+                                                        )}
+                                                        {m.deliveryOrderNumber && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">DO #</p>
+                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.deliveryOrderNumber}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap mb-8 leading-relaxed">
                                                     {m.content}
                                                 </div>
@@ -560,6 +602,10 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
     const [deadline, setDeadline] = useState('')
     const [content, setContent] = useState('')
     const [files, setFiles] = useState<File[]>([])
+    const [customerName, setCustomerName] = useState('')
+    const [partnerName, setPartnerName] = useState('')
+    const [invoiceNumber, setInvoiceNumber] = useState('')
+    const [deliveryOrderNumber, setDeliveryOrderNumber] = useState('')
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -610,6 +656,11 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
             formData.append('deadline', deadline)
             if (recipientType === 'USER') formData.append('recipientUserId', recipientId)
             else formData.append('recipientRoleId', recipientId)
+
+            if (customerName) formData.append('customerName', customerName)
+            if (partnerName) formData.append('partnerName', partnerName)
+            if (invoiceNumber) formData.append('invoiceNumber', invoiceNumber)
+            if (deliveryOrderNumber) formData.append('deliveryOrderNumber', deliveryOrderNumber)
 
             files.forEach(file => formData.append('files', file))
 
@@ -742,6 +793,50 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
                             value={subject}
                             onChange={(e) => setSubject(e.target.value)}
                             placeholder="Brief summary of the message..."
+                            className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 bg-gray-50 border transition-all"
+                        />
+                    </div>
+
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">End Customer (Optional)</label>
+                        <input
+                            type="text"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            placeholder="Customer Name..."
+                            className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 bg-gray-50 border transition-all"
+                        />
+                    </div>
+
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">Partner (Optional)</label>
+                        <input
+                            type="text"
+                            value={partnerName}
+                            onChange={(e) => setPartnerName(e.target.value)}
+                            placeholder="Partner Name..."
+                            className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 bg-gray-50 border transition-all"
+                        />
+                    </div>
+
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">Invoice Number (Optional)</label>
+                        <input
+                            type="text"
+                            value={invoiceNumber}
+                            onChange={(e) => setInvoiceNumber(e.target.value)}
+                            placeholder="Invoice #..."
+                            className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 bg-gray-50 border transition-all"
+                        />
+                    </div>
+
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-tighter mb-1.5 ml-1">Delivery Order # (Optional)</label>
+                        <input
+                            type="text"
+                            value={deliveryOrderNumber}
+                            onChange={(e) => setDeliveryOrderNumber(e.target.value)}
+                            placeholder="DO #..."
                             className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 bg-gray-50 border transition-all"
                         />
                     </div>
