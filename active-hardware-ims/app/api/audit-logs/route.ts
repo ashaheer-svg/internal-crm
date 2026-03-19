@@ -22,9 +22,9 @@ export async function GET(request: Request) {
         if (entityType) where.entityType = entityType
         if (search) {
             where.OR = [
-                { userName: { contains: search, mode: 'insensitive' } },
-                { entityType: { contains: search, mode: 'insensitive' } },
-                { action: { contains: search, mode: 'insensitive' } }
+                { userName: { contains: search } },
+                { entityType: { contains: search } },
+                { action: { contains: search } }
             ]
         }
 

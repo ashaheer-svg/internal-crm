@@ -25,9 +25,9 @@ export async function GET(request: Request) {
         }
         if (search) {
             where.OR = [
-                { poNumber: { contains: search, mode: 'insensitive' } },
-                { supplier: { contains: search, mode: 'insensitive' } },
-                { notes: { contains: search, mode: 'insensitive' } },
+                { poNumber: { contains: search } },
+                { supplier: { contains: search } },
+                { notes: { contains: search } },
             ]
         }
 
