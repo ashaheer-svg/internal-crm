@@ -288,6 +288,7 @@ export async function GET(request: Request) {
             saleParams: doInfo ? {
                 date: doInfo.createdAt,
                 orderNumber: doInfo.orderNumber,
+                status: doInfo.status,
                 customer: doInfo.customer?.name || doInfo.customerName || 'N/A',
                 endCustomer: doInfo.endCustomer?.name || doInfo.endCustomerName || null,
                 invoiceNumber: doInfo.invoiceNumber
