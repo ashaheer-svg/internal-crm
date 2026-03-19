@@ -24,6 +24,7 @@ type WarrantyInfo = {
     saleParams: {
         date: string
         orderNumber: string
+        status: string
         customer: string
         endCustomer: string | null
         invoiceNumber: string | null
@@ -79,6 +80,62 @@ type WarrantyInfo = {
             model: string
         }
     }>
+}
+
+function WorkflowStepper({ status }: { status?: string }) {
+    if (!status) return null
+
+    const steps = [
+        { key: 'DRAFT', label: 'Draft' },
+        { key: 'CONFIRMED', label: 'Confirmed' },
+        { key: 'READY_FOR_BUILD', label: 'Ready' },
+        { key: 'BUILDING', label: 'Building' },
+        { key: 'BUILT', label: 'Built' },
+        { key: 'COMPLETED', label: 'Completed' },
+    ]
+
+    const currentIdx = steps.findIndex(s => s.key === status)
+    if (currentIdx === -1 && status !== 'CANCELLED') return null
+
+    return (
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm no-print">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Delivery Order Workflow</h3>
+            <div className="flex items-center w-full">
+                {steps.map((step, index) => {
+                    const isCompleted = index < currentIdx
+                    const isActive = index === currentIdx
+                    const isLast = index === steps.length - 1
+
+                    return (
+                        <div key={step.key} className={`flex items-center ${!isLast ? 'flex-1' : ''}`}>
+                            <div className="relative flex flex-col items-center">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300
+                                    ${isCompleted ? 'bg-green-500 border-green-500 text-white shadow-sm' : ''}
+                                    ${isActive ? 'bg-blue-50 border-blue-500 text-blue-600 font-bold ring-4 ring-blue-100' : ''}
+                                    ${!isCompleted && !isActive ? 'bg-gray-50 border-gray-200 text-gray-400' : ''}
+                                `}>
+                                    {isCompleted ? (
+                                        <CheckCircle className="w-4 h-4" />
+                                    ) : (
+                                        <span className="text-xs">{index + 1}</span>
+                                    )}
+                                </div>
+                                <div className={`absolute top-10 text-center text-[11px] font-semibold w-max transition-colors
+                                    ${isActive ? 'text-blue-600 font-bold' : isCompleted ? 'text-green-600' : 'text-gray-400'}
+                                `}>
+                                    {step.label}
+                                </div>
+                            </div>
+                            {!isLast && (
+                                <div className={`flex-1 h-1 mx-2 rounded-full transition-all duration-500 ${isCompleted ? 'bg-green-500' : 'bg-gray-100'}`} />
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+            <div className="h-4"></div>
+        </div>
+    )
 }
 
 export default function WarrantyLookupPage() {
@@ -392,6 +449,10 @@ export default function WarrantyLookupPage() {
                     <div className="hidden print:block">
                         <DocumentHeader title="WARRANTY & SERVICE REPORT" subtitle="Complete Item Lifecycle History" />
                     </div>
+
+                    {result.saleParams && result.saleParams.orderNumber && (
+                        <WorkflowStepper status={result.saleParams.status} />
+                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:block print:space-y-6">
                         {/* Left/Main Col */}
