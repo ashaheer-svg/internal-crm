@@ -35,11 +35,53 @@ export async function POST(request: Request) {
     try {
         const user = await requirePermission('warranty_rma:create')
         const body = await request.json()
-        const { inventoryItemId, customerId, customerName, description } = body
+        const { inventoryItemId: providedItemId, customerId, customerName, description, isLegacy, sku, name, brand, model, serialNumber } = body
 
-        // Validate required fields
-        if (!inventoryItemId || !customerName || !description) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        if (!customerName || !description) {
+            return NextResponse.json({ error: 'Missing required fields: customerName and description' }, { status: 400 })
+        }
+
+        let inventoryItemId = providedItemId
+
+        if (isLegacy) {
+            if (!sku || !name || !brand || !model || !serialNumber) {
+                return NextResponse.json({ error: 'Legacy items require SKU, Name, Brand, Model, and Serial Number' }, { status: 400 })
+            }
+
+            // 1. Find or create Product
+            let product = await prisma.product.findUnique({ where: { sku: sku.trim() } })
+            if (!product) {
+                product = await prisma.product.create({
+                    data: {
+                        sku: sku.trim(),
+                        name: name.trim(),
+                        brand: brand.trim(),
+                        model: model.trim(),
+                        category: 'Legacy'
+                    }
+                })
+            }
+
+            // 2. Find location
+            const location = await prisma.location.findFirst()
+            if (!location) {
+                return NextResponse.json({ error: 'No location found to create item' }, { status: 400 })
+            }
+
+            // 3. Create Inventory Item
+            const newItem = await prisma.inventoryItem.create({
+                data: {
+                    productId: product.id,
+                    serialNumber: serialNumber.trim(),
+                    status: 'RMA_DEFECTIVE_RECEIVED',
+                    locationId: location.id
+                }
+            })
+            inventoryItemId = newItem.id
+        }
+
+        if (!inventoryItemId) {
+            return NextResponse.json({ error: 'Missing required field: inventoryItemId' }, { status: 400 })
         }
 
         // Check if inventory item exists and get current status
