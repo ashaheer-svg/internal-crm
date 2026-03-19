@@ -557,7 +557,7 @@ export default function WarrantyLookupPage() {
                                                     <p className="text-xs text-gray-800 leading-relaxed font-medium">{log.notes}</p>
                                                     <div className="mt-2 text-[9px] text-gray-400 flex items-center gap-1 font-bold">
                                                         <User className="w-2.5 h-2.5" />
-                                                        {log.performedBy.toUpperCase()}
+                                                        {log.performedBy ? log.performedBy.toUpperCase() : 'SYSTEM'}
                                                     </div>
                                                 </div>
                                             </div>
