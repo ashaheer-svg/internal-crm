@@ -215,7 +215,7 @@ export default function MessagingPage() {
     }
 
     const getPriorityColor = (priority: string) => {
-        switch (priority) {
+        switch (priority?.toUpperCase()) {
             case 'URGENT': return 'text-red-600 bg-red-50 border-red-100'
             case 'HIGH': return 'text-orange-600 bg-orange-50 border-orange-100'
             case 'MEDIUM': return 'text-blue-600 bg-blue-50 border-blue-100'
@@ -399,7 +399,7 @@ export default function MessagingPage() {
 
                                         <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                                             <div className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold border", getPriorityColor(m.priority))}>
-                                                {m.priority}
+                                                {m.priority?.toUpperCase()}
                                             </div>
                                             {isDone && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                                             <span className="text-[10px] text-gray-400 font-bold whitespace-nowrap uppercase tracking-tighter hidden sm:block">

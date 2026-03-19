@@ -17,7 +17,7 @@ export async function POST(request: Request) {
                 projectId,
                 title,
                 description,
-                priority,
+                priority: priority.toUpperCase(),
                 status: 'TODO',
                 dueDate: dueDate ? new Date(dueDate) : null,
                 assignedToId: assignedToId || null,
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
                     subject: `New CRM Task: ${title}`,
                     content: `You have been assigned a new task in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,
                     category: 'TASK',
-                    priority: priority as any,
+                    priority: priority.toUpperCase(),
                     senderId: user.id,
                     receipts: {
                         create: { userId: assignedToId }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
                         subject: `New CRM Task for Category: ${title}`,
                         content: `A new task has been assigned to your category in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,
                         category: 'TASK',
-                        priority: priority as any,
+                        priority: priority.toUpperCase(),
                         senderId: user.id,
                         recipientRoleId: assignedToRoleId,
                         receipts: {
@@ -92,7 +92,7 @@ export async function PATCH(request: Request) {
             where: { id },
             data: {
                 status,
-                priority,
+                priority: priority ? priority.toUpperCase() : undefined,
                 assignedToId: assignedToId || (assignedToId === null ? null : undefined),
                 assignedToRoleId: assignedToRoleId || (assignedToRoleId === null ? null : undefined),
                 attachmentUrl: attachmentUrl || (attachmentUrl === null ? null : undefined)
