@@ -20,6 +20,7 @@ export async function GET(request: Request) {
                 product: true,
                 invoice: {
                     select: {
+                        id: true,
                         invoiceNumber: true,
                         customerName: true,
                         customerId: true, // Add customerId
@@ -78,7 +79,8 @@ export async function GET(request: Request) {
         }
 
         // Combine and sort
-        const combined = [...backorders, ...doBackorders].sort((a, b) =>
+        const enrichedBackorders = backorders.map((b: any) => ({ ...b, type: 'INVOICE' }))
+        const combined = [...enrichedBackorders, ...doBackorders].sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
 
