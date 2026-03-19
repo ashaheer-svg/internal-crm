@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/auth'
 
 export async function GET() {
     const diagnostic: any = {
@@ -10,6 +11,7 @@ export async function GET() {
     };
 
     try {
+        await requireAuth()
         // 1. Check Tables
         const tables: any = await prisma.$queryRawUnsafe(`SELECT name FROM sqlite_master WHERE type='table';`);
         diagnostic.tables = tables.map((t: any) => t.name);

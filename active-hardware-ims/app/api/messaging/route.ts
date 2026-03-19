@@ -6,6 +6,17 @@ import { join, extname } from 'path'
 import { logCreate } from '@/lib/audit'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.zip', '.txt']
+const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png',
+    'application/zip',
+    'text/plain'
+]
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'messaging')
 
@@ -65,6 +76,11 @@ export async function POST(req: Request) {
             const ext = extname(file.name).toLowerCase()
             if (!ALLOWED_EXTENSIONS.includes(ext)) {
                 return NextResponse.json({ error: `File type ${ext} is not allowed` }, { status: 400 })
+            }
+
+            // Also validate MIME type to prevent extension spoofing
+            if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
+                return NextResponse.json({ error: `File MIME type ${file.type} is not permitted` }, { status: 400 })
             }
 
             const bytes = await file.arrayBuffer()
@@ -137,8 +153,8 @@ export async function GET(req: Request) {
         const user: any = await requireAuth()
         const { searchParams } = new URL(req.url)
         const type = searchParams.get('type') || 'inbox' // inbox, sent, admin
-        const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : null
-        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : null
+        const page = searchParams.get('page') ? Math.max(1, parseInt(searchParams.get('page')!)) : null
+        const limit = searchParams.get('limit') ? Math.min(100, Math.max(1, parseInt(searchParams.get('limit')!))) : null
         const search = searchParams.get('search')
         const sortKey = searchParams.get('sortKey') || 'createdAt'
         const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'

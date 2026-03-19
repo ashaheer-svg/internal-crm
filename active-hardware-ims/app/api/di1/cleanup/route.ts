@@ -9,8 +9,7 @@ export async function POST() {
     const results: string[] = []
 
     try {
-        // FIXME: Bypassed for development. Enforce in production!
-        // await requireRole(['ADMIN'])
+        await requireRole(['ADMIN'])
         // 1. Database Cleanup (VACUUM)
         try {
             await prisma.$executeRawUnsafe('VACUUM;')
