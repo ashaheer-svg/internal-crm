@@ -55,6 +55,8 @@ export async function POST(request: Request) {
 
         if (!user) {
             recordFailedAttempt(normalizedEmail)
+            const { logLoginFailure } = await import('@/lib/audit')
+            await logLoginFailure(null, 'System', 'User not found', { email: normalizedEmail })
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
@@ -63,6 +65,8 @@ export async function POST(request: Request) {
 
         // Check if user is active
         if (!user.isActive) {
+            const { logLoginFailure } = await import('@/lib/audit')
+            await logLoginFailure(user.id, user.name, 'Account is inactive', { email: normalizedEmail })
             return NextResponse.json(
                 { error: 'Account is inactive. Please contact administrator.' },
                 { status: 403 }
@@ -73,6 +77,8 @@ export async function POST(request: Request) {
         const isValid = await verifyPassword(password, user.password)
         if (!isValid) {
             recordFailedAttempt(normalizedEmail)
+            const { logLoginFailure } = await import('@/lib/audit')
+            await logLoginFailure(user.id, user.name, 'Invalid password', { email: normalizedEmail })
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }

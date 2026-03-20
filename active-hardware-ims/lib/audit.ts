@@ -38,7 +38,7 @@ interface AuditLogParams {
     action: AuditAction
     entityType: AuditEntityType
     entityId?: string
-    userId: string
+    userId?: string
     userName: string
     changes?: { before?: any; after?: any }
     metadata?: any
@@ -48,12 +48,12 @@ export async function logAudit(params: AuditLogParams) {
     const { action, entityType, entityId, userId, userName, changes, metadata } = params
 
     try {
-        await prisma.auditLog.create({
+        await (prisma.auditLog as any).create({
             data: {
                 action,
                 entityType,
                 entityId: entityId || null,
-                userId,
+                userId: userId || undefined,
                 userName,
                 changes: changes ? JSON.stringify(changes) : null,
                 metadata: metadata ? JSON.stringify(metadata) : null
@@ -126,6 +126,17 @@ export async function logLogin(userId: string, userName: string, metadata?: any)
         userId,
         userName,
         metadata
+    })
+}
+
+export async function logLoginFailure(userId: string | null, userName: string, reason: string, metadata?: any) {
+    await logAudit({
+        action: 'LOGIN' as any, // Kept as LOGIN or can be LOGIN_FAILED? Action is a fixed union. Let's extend it or use metadata. 
+        entityType: 'USER',
+        entityId: userId || undefined,
+        userId: userId || undefined,
+        userName,
+        metadata: { ...metadata, success: false, reason }
     })
 }
 

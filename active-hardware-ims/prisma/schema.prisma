@@ -114,8 +114,8 @@ model AuditLog {
   action     String // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
   entityType String // USER, PRODUCT, INVOICE, CUSTOMER, INVENTORY, etc.
   entityId   String? // ID of affected entity
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
   userName   String // Cached for display
   changes    String? // JSON string of before/after values
   metadata   String? // JSON string of additional context
