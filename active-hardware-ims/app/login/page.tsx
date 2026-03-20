@@ -31,9 +31,9 @@ export default function LoginPage() {
 
             // Check if user must change password
             if (data.mustChangePassword) {
-                router.push("/change-password")
+                window.location.href = "/change-password"
             } else {
-                router.push("/dashboard")
+                window.location.href = "/dashboard"
             }
         } catch (err: any) {
             setError(err.message || "Login failed")
@@ -72,7 +72,7 @@ export default function LoginPage() {
                             </label>
                             <input
                                 id="email"
-                                type="email"
+                                type="text"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
