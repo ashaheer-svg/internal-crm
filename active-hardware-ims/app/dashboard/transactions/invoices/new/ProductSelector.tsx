@@ -113,11 +113,11 @@ export default function ProductSelector({
                                     className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 transition-colors"
                                 >
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate" title={`${product.brand} ${product.name}`}>
                                                 {product.brand} {product.name}
                                             </p>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-500 truncate" title={`SKU: ${product.sku} | Cat: ${product.category}`}>
                                                 SKU: {product.sku} | Cat: {product.category} {product.model && `| Model: ${product.model}`}
                                             </p>
                                         </div>

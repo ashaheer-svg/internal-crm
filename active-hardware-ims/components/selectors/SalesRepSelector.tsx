@@ -153,8 +153,12 @@ export default function SalesRepSelector({
                                             onClick={() => handleSelect(rep)}
                                             className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${selectedId === rep.id ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-50 text-gray-700'}`}
                                         >
-                                            {rep.name}
-                                            {rep.email && <span className="block text-[10px] text-gray-400 font-normal">{rep.email}</span>}
+                                            <p className="font-medium truncate" title={rep.name}>{rep.name}</p>
+                                            {rep.email && (
+                                                <span className="block text-[10px] text-gray-400 font-normal truncate" title={rep.email}>
+                                                    {rep.email}
+                                                </span>
+                                            )}
                                         </button>
                                     </li>
                                 ))}

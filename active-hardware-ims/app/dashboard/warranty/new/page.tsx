@@ -201,9 +201,9 @@ export default function NewWarrantyClaimPage() {
                                             onClick={() => setSelectedItem(item)}
                                             className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
                                         >
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{item.serialNumber}</p>
-                                                <p className="text-sm text-gray-500">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate" title={item.serialNumber}>{item.serialNumber}</p>
+                                                <p className="text-sm text-gray-500 truncate" title={`${item.product.brand} ${item.product.name} - ${item.location.name}`}>
                                                     {item.product.brand} {item.product.name} - {item.location.name}
                                                 </p>
                                             </div>

@@ -172,11 +172,15 @@ export default function NewBulkSupplierRmaPage() {
                                         <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 ${selectedClaims.includes(c.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
                                             {selectedClaims.includes(c.id) && <Check className="w-3 h-3 text-white" />}
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="font-semibold text-sm text-gray-900">{c.inventoryItem.product.brand} {c.inventoryItem.product.name}</div>
-                                            <div className="text-xs font-mono text-gray-500">SN: {c.inventoryItem.serialNumber}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-semibold text-sm text-gray-900 truncate" title={`${c.inventoryItem.product.brand} ${c.inventoryItem.product.name}`}>
+                                                {c.inventoryItem.product.brand} {c.inventoryItem.product.name}
+                                            </div>
+                                            <div className="text-xs font-mono text-gray-500 truncate" title={c.inventoryItem.serialNumber}>
+                                                SN: {c.inventoryItem.serialNumber}
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-gray-400">
+                                        <div className="text-xs text-gray-400 truncate max-w-[120px]" title={c.customerName}>
                                             {c.customerName}
                                         </div>
                                     </div>

@@ -172,11 +172,11 @@ export default function CustomerSelector({ onSelect, selectedCustomer, type }: C
                                             onClick={() => handleSelect(customer)}
                                             className="w-full px-4 py-3 hover:bg-gray-50 text-left"
                                         >
-                                            <p className="text-sm font-medium text-gray-900">
+                                            <p className="text-sm font-medium text-gray-900 truncate" title={customer.name}>
                                                 {customer.name}
                                             </p>
                                             {(customer.email || customer.phone) && (
-                                                <p className="text-xs text-gray-500 mt-1">
+                                                <p className="text-xs text-gray-500 mt-1 truncate" title={[customer.email, customer.phone].filter(Boolean).join(" • ")}>
                                                     {[customer.email, customer.phone].filter(Boolean).join(" • ")}
                                                 </p>
                                             )}

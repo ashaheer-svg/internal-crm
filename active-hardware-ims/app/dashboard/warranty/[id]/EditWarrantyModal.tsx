@@ -183,10 +183,10 @@ export default function EditWarrantyModal({ claim, onClose, onSave }: EditWarran
                                                     setShowSearch(false)
                                                     setSearchTerm("")
                                                 }}
-                                                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex flex-col"
+                                                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex flex-col min-w-0"
                                             >
-                                                <span className="text-sm font-medium text-gray-900">{item.serialNumber}</span>
-                                                <span className="text-xs text-gray-500">{item.product.name}</span>
+                                                <span className="text-sm font-medium text-gray-900 truncate w-full" title={item.serialNumber}>{item.serialNumber}</span>
+                                                <span className="text-xs text-gray-500 truncate w-full" title={item.product.name}>{item.product.name}</span>
                                             </button>
                                         ))}
                                     </div>
