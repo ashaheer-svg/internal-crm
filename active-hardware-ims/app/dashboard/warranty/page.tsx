@@ -35,6 +35,7 @@ export default function WarrantyPage() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<string>('all')
     const [searchTerm, setSearchTerm] = useState("")
+    const [selectedClaims, setSelectedClaims] = useState<string[]>([])
 
     // Build rejection alerts
     const [buildRejections, setBuildRejections] = useState<any[]>([])
@@ -103,6 +104,23 @@ export default function WarrantyPage() {
         setFilteredClaims(filtered)
     }
 
+    const toggleClaimSelection = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (selectedClaims.includes(id)) {
+            setSelectedClaims(selectedClaims.filter(c => c !== id))
+        } else {
+            setSelectedClaims([...selectedClaims, id])
+        }
+    }
+
+    const toggleAllSelection = () => {
+        if (selectedClaims.length === filteredClaims.length) {
+            setSelectedClaims([])
+        } else {
+            setSelectedClaims(filteredClaims.map(c => c.id))
+        }
+    }
+
     const getStatusBadgeClass = (status: string) => {
         switch (status) {
             case 'PENDING':
@@ -164,6 +182,15 @@ export default function WarrantyPage() {
                     <p className="mt-1 text-sm text-gray-500">Manage warranty claims and RMA requests</p>
                 </div>
                 <div className="mt-4 sm:mt-0 flex items-center gap-2">
+                    {selectedClaims.length > 0 && (
+                        <button
+                            onClick={() => router.push(`/dashboard/supplier-rma/new?claims=${selectedClaims.join(',')}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-600 text-sm font-medium text-white hover:bg-orange-700 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Bulk Supplier RMA ({selectedClaims.length})
+                        </button>
+                    )}
                     <Link
                         href="/dashboard/warranty/new"
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
@@ -299,6 +326,14 @@ export default function WarrantyPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            <th scope="col" className="px-6 py-3 text-left">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedClaims.length === filteredClaims.length && filteredClaims.length > 0}
+                                    onChange={toggleAllSelection}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                            </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
@@ -317,6 +352,15 @@ export default function WarrantyPage() {
                                 className="hover:bg-gray-50 cursor-pointer"
                                 onClick={() => router.push(`/dashboard/warranty/${claim.id}`)}
                             >
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedClaims.includes(claim.id)}
+                                        onClick={(e) => toggleClaimSelection(claim.id, e)}
+                                        onChange={() => {}} // Controlled input requires onChange or readOnly
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {claim.id.slice(0, 8)}...
                                 </td>

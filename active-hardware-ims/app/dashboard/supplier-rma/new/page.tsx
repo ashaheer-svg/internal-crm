@@ -42,10 +42,19 @@ export default function NewBulkSupplierRmaPage() {
 
     async function fetchInitialData() {
         try {
-            // 1. Fetch Candidates (Awaiting Supplier)
-            const claimsRes = await fetch('/api/warranty?status=AWAITING_SUPPLIER')
+            const urlParams = new URLSearchParams(window.location.search)
+            const claimsParam = urlParams.get('claims')
+            const claimsList = claimsParam ? claimsParam.split(',') : []
+
+            // 1. Fetch Candidates
+            const fetchUrl = claimsList.length > 0 ? '/api/warranty' : '/api/warranty?status=AWAITING_SUPPLIER'
+            const claimsRes = await fetch(fetchUrl)
             const claimsData = await claimsRes.json()
             setClaims(claimsData)
+
+            if (claimsList.length > 0) {
+                setSelectedClaims(claimsList)
+            }
 
             // 2. Fetch Suppliers
             const suppliersRes = await fetch('/api/crm/customers?isSupplier=true')
