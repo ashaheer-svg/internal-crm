@@ -142,56 +142,58 @@ export default function SupplierRmaPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white shadow sm:rounded-lg overflow-hidden">
+            <div className="bg-white shadow sm:rounded-lg overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">RMA #</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item / Serial</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                            <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">RMA #</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Supplier</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Item / Serial</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Status</th>
+                            <th className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Created</th>
+                            <th className="relative px-4 py-2"><span className="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredCases.map((c) => (
                             <tr key={c.id} className="hover:bg-gray-50 cursor-pointer">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <td className="px-4 py-2.5 whitespace-nowrap text-xs font-medium text-gray-900">
                                     {c.rmaNumber}
-                                    {c.supplierRmaRef && <div className="text-xs text-gray-500">Ref: {c.supplierRmaRef}</div>}
+                                    {c.supplierRmaRef && <div className="text-[10px] text-gray-500">Ref: {c.supplierRmaRef}</div>}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{c.supplier.name}</td>
-                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-900 max-w-40 truncate" title={c.supplier.name}>{c.supplier.name}</td>
+                                <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500">
                                     {c.warrantyClaims && c.warrantyClaims.length > 0 ? (
                                         <div>
                                             <div className="font-semibold text-blue-600">{c.warrantyClaims.length} Item(s)</div>
-                                            <div className="text-xs text-gray-600 truncate max-w-xs">
+                                            <div className="text-[10px] text-gray-600 truncate max-w-xs">
                                                 {c.warrantyClaims.map(wc => wc.inventoryItem.product.name).join(', ')}
                                             </div>
                                         </div>
                                     ) : c.defectiveItem ? (
                                         <div>
-                                            <div className="font-semibold">{c.defectiveItem.product.brand} {c.defectiveItem.product.name}</div>
-                                            <div className="text-xs font-mono">{c.defectiveItem.serialNumber}</div>
+                                            <div className="font-semibold truncate max-w-xs" title={`${c.defectiveItem.product.brand} ${c.defectiveItem.product.name}`}>
+                                                {c.defectiveItem.product.brand} {c.defectiveItem.product.name}
+                                            </div>
+                                            <div className="text-[10px] font-mono text-gray-500">{c.defectiveItem.serialNumber}</div>
                                         </div>
                                     ) : (
                                         <div className="text-gray-400">No items</div>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs font-semibold rounded-full ${getStatusBadgeClass(c.status)}`}>
+                                <td className="px-4 py-2.5 whitespace-nowrap">
+                                    <span className={`px-1.5 py-0.5 inline-flex text-[10px] font-semibold rounded-full ${getStatusBadgeClass(c.status)}`}>
                                         {c.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(c.createdAt)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500">{formatDate(c.createdAt)}</td>
+                                <td className="px-4 py-2.5 whitespace-nowrap text-right text-xs">
                                     <button 
                                         onClick={() => window.open(`/dashboard/supplier-rma/${c.id}/print`, '_blank')}
                                         className="text-gray-400 hover:text-blue-500 mr-2"
                                         title="Print Pack Slip"
                                     >
-                                        <Printer className="w-4 h-4" />
+                                        <Printer className="w-3.5 h-3.5" />
                                     </button>
                                 </td>
                             </tr>

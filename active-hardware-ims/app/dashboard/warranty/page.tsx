@@ -322,25 +322,25 @@ export default function WarrantyPage() {
             </div>
 
             {/* Claims Table */}
-            <div className="bg-white shadow sm:rounded-lg overflow-hidden">
+            <div className="bg-white shadow sm:rounded-lg overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-left">
+                            <th scope="col" className="px-4 py-2 text-left">
                                 <input
                                     type="checkbox"
                                     checked={selectedClaims.length === filteredClaims.length && filteredClaims.length > 0}
                                     onChange={toggleAllSelection}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                                 />
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial Number</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                            <th scope="col" className="relative px-6 py-3">
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Claim ID</th>
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Customer</th>
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Product</th>
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Serial Number</th>
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Status</th>
+                            <th scope="col" className="px-4 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Created</th>
+                            <th scope="col" className="relative px-4 py-2">
                                 <span className="sr-only">Actions</span>
                             </th>
                         </tr>
@@ -352,43 +352,43 @@ export default function WarrantyPage() {
                                 className="hover:bg-gray-50 cursor-pointer"
                                 onClick={() => router.push(`/dashboard/warranty/${claim.id}`)}
                             >
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-2 whitespace-nowrap">
                                     <input
                                         type="checkbox"
                                         checked={selectedClaims.includes(claim.id)}
                                         onClick={(e) => toggleClaimSelection(claim.id, e)}
                                         onChange={() => {}} // Controlled input requires onChange or readOnly
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                                     />
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <td className="px-4 py-2 whitespace-nowrap text-xs font-medium text-gray-900">
                                     {claim.id.slice(0, 8)}...
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-900 max-w-40 truncate" title={claim.customerName}>
                                     {claim.customerName}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {claim.inventoryItem.product.brand} {claim.inventoryItem.product.name} ({claim.inventoryItem.product.category})
+                                <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 max-w-xs truncate" title={`${claim.inventoryItem.product.brand} ${claim.inventoryItem.product.name}`}>
+                                    {claim.inventoryItem.product.brand} {claim.inventoryItem.product.name}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500">
                                     <div className="flex flex-col">
                                         <span>{claim.inventoryItem.serialNumber}</span>
                                         {(claim.replacementItemId || claim.replacementExternalInfo) && (
-                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter bg-blue-50 px-1 rounded inline-block w-fit mt-0.5">
+                                            <span className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter bg-blue-50 px-1 rounded inline-block w-fit mt-0.5">
                                                 REPLACED
                                             </span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>
+                                <td className="px-4 py-2 whitespace-nowrap">
+                                    <span className={`px-1.5 py-0.5 inline-flex text-[10px] leading-4 font-semibold rounded-full ${getStatusBadgeClass(claim.status)}`}>
                                         {getStatusLabel(claim.status)}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500">
                                     {formatDate(claim.createdAt)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-4 py-2 whitespace-nowrap text-right text-xs font-medium">
                                     <Link href={`/dashboard/warranty/${claim.id}`} className="text-blue-600 hover:text-blue-900">
                                         View
                                     </Link>
