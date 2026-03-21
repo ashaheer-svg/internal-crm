@@ -8,8 +8,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         await requireAuth()
         const logs = await prisma.auditLog.findMany({
             where: {
-                targetType: 'DELIVERY_ORDER',
-                targetId: params.id
+                entityType: 'DELIVERY_ORDER',
+                entityId: params.id
             },
             orderBy: { createdAt: 'asc' }
         })

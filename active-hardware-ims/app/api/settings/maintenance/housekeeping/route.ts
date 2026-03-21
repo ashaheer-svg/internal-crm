@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         results.pragmaOptimize = 'done'
 
         // 2. WAL checkpoint — merge WAL into main DB (reduces *.db-wal file size)
-        await prisma.$executeRaw`PRAGMA wal_checkpoint(FULL)`
+        await prisma.$queryRaw`PRAGMA wal_checkpoint(FULL)`
         results.walCheckpoint = 'done'
 
         // 3. VACUUM — reclaim space from deleted records
