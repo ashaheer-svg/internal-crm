@@ -18,7 +18,13 @@ export async function GET(request: Request) {
                     include: { product: true }
                 },
                 supplier: true,
-                warrantyClaim: true
+                warrantyClaims: {
+                    include: {
+                        inventoryItem: {
+                            include: { product: true }
+                        }
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         })

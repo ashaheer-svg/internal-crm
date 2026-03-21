@@ -283,57 +283,96 @@ export default async function WarrantyClaimDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
                         </li>
-                        {claim.status !== 'PENDING' && (
+                        {/* In Progress */}
+                        {(claim.status === 'IN_PROGRESS' || claim.status === 'AWAITING_SUPPLIER' || claim.status === 'RESOLVED' || claim.status === 'CLOSED') && (
                             <li>
                                 <div className="relative pb-8">
                                     <div className="relative flex space-x-3">
                                         <div>
-                                            <span className={`h-8 w-8 rounded-full ${claim.status === 'SENT_TO_VENDOR' || claim.status === 'REPAIRED' || claim.status === 'RETURNED' ? 'bg-blue-500' : 'bg-gray-300'} flex items-center justify-center ring-8 ring-white`}>
+                                            <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
                                                 <span className="text-white text-xs font-bold">2</span>
                                             </span>
                                         </div>
                                         <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                                             <div>
-                                                <p className="text-sm text-gray-900 font-medium">Sent to Vendor</p>
-                                                <p className="text-sm text-gray-500">Status: SENT_TO_VENDOR</p>
+                                                <p className="text-sm text-gray-900 font-medium">In Progress</p>
+                                                <p className="text-sm text-gray-500">Status: IN_PROGRESS</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </li>
                         )}
-                        {(claim.status === 'REPAIRED' || claim.status === 'RETURNED') && (
+
+                        {/* Awaiting Supplier */}
+                        {(claim.status === 'AWAITING_SUPPLIER' || claim.status === 'RESOLVED' || claim.status === 'CLOSED') && (
                             <li>
                                 <div className="relative pb-8">
                                     <div className="relative flex space-x-3">
                                         <div>
-                                            <span className={`h-8 w-8 rounded-full ${claim.status === 'REPAIRED' || claim.status === 'RETURNED' ? 'bg-green-500' : 'bg-gray-300'} flex items-center justify-center ring-8 ring-white`}>
+                                            <span className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center ring-8 ring-white">
                                                 <span className="text-white text-xs font-bold">3</span>
                                             </span>
                                         </div>
                                         <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                                             <div>
-                                                <p className="text-sm text-gray-900 font-medium">Repaired</p>
-                                                <p className="text-sm text-gray-500">Status: REPAIRED</p>
+                                                <p className="text-sm text-gray-900 font-medium">Sent to Supplier / RMA Open</p>
+                                                <p className="text-sm text-gray-500">Status: AWAITING_SUPPLIER</p>
                                             </div>
+                                            {(claim as any).supplierRma?.shippedAt && (
+                                                <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                                                    {formatDate((claim as any).supplierRma.shippedAt)}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </li>
                         )}
-                        {claim.status === 'RETURNED' && (
+
+                        {/* Resolved */}
+                        {(claim.status === 'RESOLVED' || claim.status === 'CLOSED') && (
                             <li>
-                                <div className="relative">
+                                <div className="relative pb-8">
                                     <div className="relative flex space-x-3">
                                         <div>
-                                            <span className="h-8 w-8 rounded-full bg-gray-500 flex items-center justify-center ring-8 ring-white">
+                                            <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
                                                 <span className="text-white text-xs font-bold">4</span>
                                             </span>
                                         </div>
                                         <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                                             <div>
-                                                <p className="text-sm text-gray-900 font-medium">Returned to Customer</p>
-                                                <p className="text-sm text-gray-500">Status: RETURNED</p>
+                                                <p className="text-sm text-gray-900 font-medium">Claim Resolved</p>
+                                                <p className="text-sm text-gray-500">Status: RESOLVED</p>
+                                            </div>
+                                            {(claim as any).resolvedAt && (
+                                                <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                                                    {formatDate((claim as any).resolvedAt)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        )}
+
+                        {/* Closed */}
+                        {claim.status === 'CLOSED' && (
+                            <li>
+                                <div className="relative">
+                                    <div className="relative flex space-x-3">
+                                        <div>
+                                            <span className="h-8 w-8 rounded-full bg-gray-500 flex items-center justify-center ring-8 ring-white">
+                                                <span className="text-white text-xs font-bold">5</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                            <div>
+                                                <p className="text-sm text-gray-900 font-medium">Claim Closed</p>
+                                                <p className="text-sm text-gray-500">Status: CLOSED</p>
+                                            </div>
+                                            <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                                                {formatDate(claim.updatedAt)}
                                             </div>
                                         </div>
                                     </div>

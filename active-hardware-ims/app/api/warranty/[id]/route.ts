@@ -131,6 +131,20 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             }
         })
 
+        // Audit Logging
+        const { logAudit } = await import('@/lib/audit')
+        await logAudit({
+            action: 'UPDATE',
+            entityType: 'WARRANTY',
+            entityId: id,
+            userId: user.id,
+            userName: user.name,
+            changes: {
+                before: { status: currentClaim.status, resolution: currentClaim.resolution },
+                after: { status: status || currentClaim.status, resolution: updateData.resolution || currentClaim.resolution }
+            }
+        })
+
         return NextResponse.json(claim)
     } catch (error) {
         console.error('Failed to update warranty claim:', error)

@@ -13,10 +13,16 @@ type SupplierRma = {
     status: string
     createdAt: string
     supplier: { name: string }
-    defectiveItem: {
+    defectiveItem?: {
         serialNumber: string
         product: { name: string; brand: string; model: string }
-    }
+    } | null
+    warrantyClaims?: Array<{
+        inventoryItem: {
+            serialNumber: string
+            product: { name: string; brand: string; model: string }
+        }
+    }>
 }
 
 export default function SupplierRmaPage() {
@@ -59,7 +65,8 @@ export default function SupplierRmaPage() {
                 c.rmaNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (c.supplierRmaRef && c.supplierRmaRef.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 c.supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.defectiveItem.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                (c.defectiveItem && c.defectiveItem.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (c.warrantyClaims && c.warrantyClaims.some(wc => wc.inventoryItem.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())))
             )
         }
 
@@ -92,6 +99,14 @@ export default function SupplierRmaPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900">Supplier RMAs</h1>
                     <p className="mt-1 text-sm text-gray-500">Manage outbound vendor return cases</p>
+                </div>
+                <div className="mt-4 sm:mt-0 sm:flex-none">
+                    <Link
+                        href="/dashboard/supplier-rma/new"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                        Create Bulk RMA
+                    </Link>
                 </div>
             </div>
 
@@ -147,9 +162,22 @@ export default function SupplierRmaPage() {
                                     {c.supplierRmaRef && <div className="text-xs text-gray-500">Ref: {c.supplierRmaRef}</div>}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{c.supplier.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="font-semibold">{c.defectiveItem.product.brand} {c.defectiveItem.product.name}</div>
-                                    <div className="text-xs font-mono">{c.defectiveItem.serialNumber}</div>
+                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {c.warrantyClaims && c.warrantyClaims.length > 0 ? (
+                                        <div>
+                                            <div className="font-semibold text-blue-600">{c.warrantyClaims.length} Item(s)</div>
+                                            <div className="text-xs text-gray-600 truncate max-w-xs">
+                                                {c.warrantyClaims.map(wc => wc.inventoryItem.product.name).join(', ')}
+                                            </div>
+                                        </div>
+                                    ) : c.defectiveItem ? (
+                                        <div>
+                                            <div className="font-semibold">{c.defectiveItem.product.brand} {c.defectiveItem.product.name}</div>
+                                            <div className="text-xs font-mono">{c.defectiveItem.serialNumber}</div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-gray-400">No items</div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs font-semibold rounded-full ${getStatusBadgeClass(c.status)}`}>

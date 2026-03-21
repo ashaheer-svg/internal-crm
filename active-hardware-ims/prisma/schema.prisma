@@ -319,7 +319,7 @@ model WarrantyClaim {
   replacementExternalInfo String? // Details for untracked loaner units (Serial/Model)
 
   // Supplier RMA link
-  supplierRmaId String?      @unique
+  supplierRmaId String?
   supplierRma   SupplierRMA? @relation(fields: [supplierRmaId], references: [id])
 
   // Resolution
@@ -340,8 +340,8 @@ model SupplierRMA {
   rmaNumber String @unique // e.g. SRMA-2603-0001
 
   // The defective item being shipped to supplier
-  defectiveItemId String
-  defectiveItem   InventoryItem @relation("DefectiveInSupplierRMA", fields: [defectiveItemId], references: [id])
+  defectiveItemId String?
+  defectiveItem   InventoryItem? @relation("DefectiveInSupplierRMA", fields: [defectiveItemId], references: [id])
 
   // Supplier (from Customer table, isSupplier = true)
   supplierId String
@@ -369,8 +369,8 @@ model SupplierRMA {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Back-ref from WarrantyClaim
-  warrantyClaim WarrantyClaim?
+  // Back-refs
+  warrantyClaims WarrantyClaim[]
 }
 
 model GoodsReceiptNote {
@@ -562,6 +562,11 @@ model DeliveryOrder {
   builtBy    User?     @relation("BuiltBy", fields: [builtById], references: [id])
   buildNotes String?
   builtAt    DateTime?
+
+  buildInstructions    String?
+  deliveryInstructions String?
+  additionalContact    String?
+  deliveryCharges      Float   @default(0)
 
   items           DeliveryOrderItem[]
   quotes          CRMQuote[]

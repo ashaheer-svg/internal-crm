@@ -95,6 +95,11 @@ export async function POST(request: Request) {
 
         const text = await file.text();
         const rows = text.split('\n').filter(row => row.trim() !== '');
+
+        if (rows.length === 0) {
+            return NextResponse.json({ error: 'Uploaded file is empty or invalid' }, { status: 400 });
+        }
+
         const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
 
         // Validate headers

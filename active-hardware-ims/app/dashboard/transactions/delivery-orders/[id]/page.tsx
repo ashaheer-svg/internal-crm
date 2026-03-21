@@ -55,6 +55,10 @@ type DeliveryOrder = {
     additionalCosts?: number
     notes: string | null
     buildNotes: string | null
+    buildInstructions?: string | null
+    deliveryInstructions?: string | null
+    additionalContact?: string | null
+    deliveryCharges?: number
     builtBy?: { name: string } | null
     builtAt?: string | null
     createdAt: string
@@ -158,6 +162,14 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         rejectedAt: string
     }[]>([])
 
+    // ── New Additional Fields state ──
+    const [isEditingInstructions, setIsEditingInstructions] = useState(false)
+    const [buildInstructions, setBuildInstructions] = useState("")
+    const [deliveryInstructions, setDeliveryInstructions] = useState("")
+    const [additionalContact, setAdditionalContact] = useState("")
+    const [deliveryCharges, setDeliveryCharges] = useState("")
+    const [userRole, setUserRole] = useState<string | null>(null)
+
     // Service Fulfillment Modal State
     const [fulfillingItem, setFulfillingItem] = useState<DeliveryOrderItem | null>(null)
     const [serviceStartDate, setServiceStartDate] = useState("")
@@ -169,6 +181,22 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         fetchLocations()
         fetchRejections()
     }, [id])
+
+    useEffect(() => {
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => setUserRole(data.role?.name || null))
+            .catch(console.error)
+    }, [])
+
+    useEffect(() => {
+        if (order) {
+            setBuildInstructions(order.buildInstructions || "")
+            setDeliveryInstructions(order.deliveryInstructions || "")
+            setAdditionalContact(order.additionalContact || "")
+            setDeliveryCharges(order.deliveryCharges ? order.deliveryCharges.toString() : "0")
+        }
+    }, [order])
 
     async function fetchOrder() {
         try {
@@ -276,6 +304,35 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             }
 
             setFulfillingItem(null)
+            fetchOrder()
+        } catch (e: any) {
+            alert(e.message)
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
+    async function saveInstructions() {
+        if (!order) return
+        setActionLoading(true)
+        try {
+            const res = await fetch(`/api/delivery-orders/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    buildInstructions,
+                    deliveryInstructions,
+                    additionalContact,
+                    deliveryCharges: deliveryCharges ? Number(deliveryCharges) : 0
+                })
+            })
+
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || "Failed to save instructions")
+            }
+
+            setIsEditingInstructions(false)
             fetchOrder()
         } catch (e: any) {
             alert(e.message)
@@ -489,6 +546,17 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         <Printer className="w-4 h-4" />
                         Print Packing Slip
                     </Link>
+
+                    {(userRole === 'ADMIN' || userRole === 'ACC-MGR') && (isConfirmed || isReadyForBuild || isBuilding || isBuilt) && (
+                        <Link
+                            href={`/dashboard/transactions/delivery-orders/${id}/build-sheet`}
+                            target="_blank"
+                            className="px-4 py-2 text-sm bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 rounded-md shadow-sm flex items-center gap-2"
+                        >
+                            <Printer className="w-4 h-4" />
+                            Print Build Sheet
+                        </Link>
+                    )}
 
                     {/* Edit Button - Available for all Active orders */}
                     {order.isActive && (
@@ -728,6 +796,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                 </p>
                                             )}
                                         </div>
+
                                         <button
                                             onClick={() => handleDismissRejection(r.id)}
                                             title="Dismiss this alert (item is not defective)"
@@ -784,6 +853,73 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Instructions & Delivery Card */}
+                    <div className="bg-white shadow rounded-lg p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-medium text-gray-900">Instructions & Delivery</h3>
+                            {(isConfirmed || isReadyForBuild || isBuilding || isBuilt) && !isEditingInstructions && (
+                                <button onClick={() => setIsEditingInstructions(true)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                            )}
+                        </div>
+
+                        {isEditingInstructions ? (
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 uppercase">Build Instructions</label>
+                                    <textarea value={buildInstructions} onChange={e => setBuildInstructions(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded p-2 text-sm" rows={2} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 uppercase">Delivery Instructions</label>
+                                    <textarea value={deliveryInstructions} onChange={e => setDeliveryInstructions(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded p-2 text-sm" rows={2} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 uppercase">Additional Contact</label>
+                                    <input type="text" value={additionalContact} onChange={e => setAdditionalContact(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded p-2 text-sm" />
+                                </div>
+                                {(userRole === 'ADMIN' || userRole === 'ACC-MGR') && (
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Delivery Charges</label>
+                                        <input type="number" value={deliveryCharges} onChange={e => setDeliveryCharges(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded p-2 text-sm" />
+                                    </div>
+                                )}
+                                <div className="flex gap-2">
+                                    <button onClick={saveInstructions} disabled={actionLoading} className="px-3 py-1 bg-blue-600 text-white rounded text-xs">Save</button>
+                                    <button onClick={() => setIsEditingInstructions(false)} className="px-3 py-1 border rounded text-xs">Cancel</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 text-sm">
+                                {order.buildInstructions && (
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Build Instructions</p>
+                                        <p className="text-gray-700 bg-gray-50 p-2 rounded whitespace-pre-wrap">{order.buildInstructions}</p>
+                                    </div>
+                                )}
+                                {order.deliveryInstructions && (
+                                    <div className="pt-2 border-t">
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Delivery Instructions</p>
+                                        <p className="text-gray-700 bg-gray-50 p-2 rounded whitespace-pre-wrap">{order.deliveryInstructions}</p>
+                                    </div>
+                                )}
+                                {order.additionalContact && (
+                                    <div className="pt-2 border-t">
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Additional Contact</p>
+                                        <p className="text-gray-700">{order.additionalContact}</p>
+                                    </div>
+                                )}
+                                {(userRole === 'ADMIN' || userRole === 'ACC-MGR') && (
+                                    <div className="pt-2 border-t">
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Delivery Charges</p>
+                                        <p className="text-gray-900 font-medium"><Currency amount={order.deliveryCharges || 0} /></p>
+                                    </div>
+                                )}
+                                {!order.buildInstructions && !order.deliveryInstructions && !order.additionalContact && (!order.deliveryCharges || order.deliveryCharges === 0) && (
+                                    <p className="text-xs text-gray-400 italic">No instructions provided.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 

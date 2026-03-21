@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         // Handle candidates if multiple matches (combining items and AMC)
         if (items.length + amcContracts.length > 1) {
             const exactItemMatch = items.find(i => i.serialNumber.toLowerCase() === serial.toLowerCase());
-            const exactAmcMatch = amcContracts.find(c => c.coveredSerials?.toLowerCase().includes(serial.toLowerCase()));
+            const exactAmcMatch = amcContracts.find(c => c.coveredSerials?.toLowerCase()?.includes(serial.toLowerCase()));
 
             // If we don't have a singular exact match, show candidates
             if (!exactItemMatch && !exactAmcMatch) {

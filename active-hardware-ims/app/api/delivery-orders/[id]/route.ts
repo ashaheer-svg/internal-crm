@@ -111,7 +111,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress, invoiceValue, additionalCosts, invoiceNumber, salesRepId } = body
+        const { status, notes, customerId, customerName, orderNumber, items, deliveryAddress, invoiceValue, additionalCosts, invoiceNumber, salesRepId, buildInstructions, deliveryInstructions, additionalContact, deliveryCharges } = body
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
@@ -598,7 +598,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         invoiceNumber: invoiceNumber || null,
                         salesRepId: salesRepId !== undefined ? salesRepId : undefined,
                         invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
-                        additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
+                        additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined,
+                        buildInstructions: buildInstructions !== undefined ? buildInstructions : undefined,
+                        deliveryInstructions: deliveryInstructions !== undefined ? deliveryInstructions : undefined,
+                        additionalContact: additionalContact !== undefined ? additionalContact : undefined,
+                        deliveryCharges: ((user as any).role?.name === 'ADMIN' || (user as any).role?.name === 'ACC-MGR') && deliveryCharges !== undefined ? Number(deliveryCharges) : undefined
                     } as any
                 })
 
@@ -742,7 +746,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                 endCustomerName: (body as any).endCustomerName,
                 invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
                 salesRepId: salesRepId !== undefined ? salesRepId : undefined,
-                additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined
+                additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined,
+                buildInstructions: buildInstructions !== undefined ? buildInstructions : undefined,
+                deliveryInstructions: deliveryInstructions !== undefined ? deliveryInstructions : undefined,
+                additionalContact: additionalContact !== undefined ? additionalContact : undefined,
+                deliveryCharges: ((user as any).role?.name === 'ADMIN' || (user as any).role?.name === 'ACC-MGR') && deliveryCharges !== undefined ? Number(deliveryCharges) : undefined
             } as any
         })
         return NextResponse.json(updated)
