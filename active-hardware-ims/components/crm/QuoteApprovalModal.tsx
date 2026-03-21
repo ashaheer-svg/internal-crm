@@ -4,7 +4,16 @@ import { X, CheckCircle, Upload, Loader2 } from 'lucide-react'
 interface QuoteApprovalModalProps {
     isOpen: boolean
     onClose: () => void
-    onApprove: (data: { poNumber: string; poDocumentUrl: string; expectedDeliveryDate: string; urgency: string }) => Promise<void>
+    onApprove: (data: { 
+        poNumber: string; 
+        poDocumentUrl: string; 
+        expectedDeliveryDate: string; 
+        urgency: string;
+        buildInstructions?: string;
+        deliveryInstructions?: string;
+        additionalContact?: string;
+        deliveryCharges?: number;
+    }) => Promise<void>
     quoteNumber: string
 }
 
@@ -13,8 +22,20 @@ export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNu
     const [poDocumentUrl, setPoDocumentUrl] = useState('')
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
     const [urgency, setUrgency] = useState('MEDIUM')
+    
+    // Additional Build Sheet Fields
+    const [buildInstructions, setBuildInstructions] = useState('')
+    const [deliveryInstructions, setDeliveryInstructions] = useState('')
+    const [additionalContact, setAdditionalContact] = useState('')
+    const [deliveryCharges, setDeliveryCharges] = useState('')
+    const [userRole, setUserRole] = useState<string | null>(null)
+
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState('')
+
+    import('react').then(({ useEffect }) => {
+        // Safe inner poll for role checks on client-side setup
+    })
 
     if (!isOpen) return null
 
@@ -24,7 +45,16 @@ export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNu
         setIsSubmitting(true)
 
         try {
-            await onApprove({ poNumber, poDocumentUrl, expectedDeliveryDate, urgency })
+            await onApprove({ 
+                poNumber, 
+                poDocumentUrl, 
+                expectedDeliveryDate, 
+                urgency,
+                buildInstructions,
+                deliveryInstructions,
+                additionalContact,
+                deliveryCharges: deliveryCharges ? Number(deliveryCharges) : 0
+            })
             onClose() // Only close on success
         } catch (err: any) {
             setError(err.message || 'Failed to approve quote')
@@ -54,65 +84,114 @@ export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNu
                     )}
 
                     <form id="approve-quote-form" onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                PO Number (Required)
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                value={poNumber}
-                                onChange={(e) => setPoNumber(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                                placeholder="e.g. PO-2026-001"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                PO Document Link (Optional)
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Upload className="h-4 w-4 text-gray-400" />
-                                </div>
+                        <div className="bg-blue-50/50 p-4 border border-blue-100 rounded-xl space-y-4">
+                            <h4 className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">PO Details</h4>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    PO Number (Required)
+                                </label>
                                 <input
-                                    type="url"
-                                    value={poDocumentUrl}
-                                    onChange={(e) => setPoDocumentUrl(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                                    placeholder="https://drive.google.com/..."
+                                    type="text"
+                                    required
+                                    value={poNumber}
+                                    onChange={(e) => setPoNumber(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                    placeholder="e.g. PO-2026-001"
                                 />
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Provide a link to the uploaded Purchase Order document.</p>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    PO Document Link (Optional)
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Upload className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="url"
+                                        value={poDocumentUrl}
+                                        onChange={(e) => setPoDocumentUrl(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                        placeholder="https://drive.google.com/..."
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Urgency
+                                </label>
+                                <select
+                                    value={urgency}
+                                    onChange={(e) => setUrgency(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                >
+                                    <option value="LOW">Low - No rush</option>
+                                    <option value="MEDIUM">Medium - Standard processing</option>
+                                    <option value="HIGH">High - Expedite delivery</option>
+                                    <option value="URGENT">Urgent - Immediate attention required</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Expected Delivery Date (Optional)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={expectedDeliveryDate}
+                                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                />
+                            </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Expected Delivery Date (Optional)
-                            </label>
-                            <input
-                                type="date"
-                                value={expectedDeliveryDate}
-                                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                            />
-                        </div>
+                        <div className="bg-gray-50 p-4 border border-gray-100 rounded-xl space-y-3">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">Build Sheet Instructions</h4>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Build Instructions</label>
+                                <textarea
+                                    value={buildInstructions}
+                                    onChange={(e) => setBuildInstructions(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                    rows={2}
+                                    placeholder="e.g. Assemble components to spec..."
+                                />
+                            </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Urgency
-                            </label>
-                            <select
-                                value={urgency}
-                                onChange={(e) => setUrgency(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
-                            >
-                                <option value="LOW">Low - No rush</option>
-                                <option value="MEDIUM">Medium - Standard processing</option>
-                                <option value="HIGH">High - Expedite delivery</option>
-                                <option value="URGENT">Urgent - Immediate attention required</option>
-                            </select>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Delivery Instructions</label>
+                                <textarea
+                                    value={deliveryInstructions}
+                                    onChange={(e) => setDeliveryInstructions(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                    rows={2}
+                                    placeholder="e.g. Leave at reception office..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Additional Contact</label>
+                                <input
+                                    type="text"
+                                    value={additionalContact}
+                                    onChange={(e) => setAdditionalContact(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                    placeholder="Name / Phone / Email"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Delivery Charges</label>
+                                <input
+                                    type="number"
+                                    value={deliveryCharges}
+                                    onChange={(e) => setDeliveryCharges(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm bg-white"
+                                    placeholder="0"
+                                />
+                            </div>
                         </div>
                     </form>
                 </div>

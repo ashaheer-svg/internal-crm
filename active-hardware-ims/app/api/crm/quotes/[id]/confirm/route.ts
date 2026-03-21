@@ -115,6 +115,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                             saleType: quote.saleType || 'DIRECT',
                             invoiceValue: quote.subTotal, // Use Sub-total for revenue reporting
                             notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,
+                            buildInstructions: body.buildInstructions || null,
+                            deliveryInstructions: body.deliveryInstructions || null,
+                            additionalContact: body.additionalContact || null,
+                            deliveryCharges: body.deliveryCharges ? Number(body.deliveryCharges) : 0,
                             quoteReference: quote.id,
                             status: 'DRAFT',
                             items: {
