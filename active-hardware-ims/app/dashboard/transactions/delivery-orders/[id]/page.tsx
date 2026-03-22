@@ -75,12 +75,12 @@ function WorkflowStepper({ status }: { status?: string }) {
     if (!status) return null
 
     const steps = [
-        { key: 'DRAFT', label: 'Draft' },
-        { key: 'CONFIRMED', label: 'Confirmed' },
-        { key: 'READY_FOR_BUILD', label: 'Ready' },
-        { key: 'BUILDING', label: 'Building' },
-        { key: 'BUILT', label: 'Built' },
-        { key: 'COMPLETED', label: 'Completed' },
+        { key: 'DRAFT', label: 'Draft', role: 'Sales' },
+        { key: 'CONFIRMED', label: 'Confirmed', role: 'Acc-Mgr' },
+        { key: 'READY_FOR_BUILD', label: 'Ready', role: 'Technical' },
+        { key: 'BUILDING', label: 'Building', role: 'Technical' },
+        { key: 'BUILT', label: 'Built', role: 'Technical' },
+        { key: 'COMPLETED', label: 'Completed', role: 'Acc-Mgr' },
     ]
 
     const currentIdx = steps.findIndex(s => s.key === status)
@@ -109,10 +109,13 @@ function WorkflowStepper({ status }: { status?: string }) {
                                         <span className="text-xs">{index + 1}</span>
                                     )}
                                 </div>
-                                <div className={`absolute top-10 text-center text-[11px] font-semibold w-max transition-colors
+                                <div className={`absolute top-10 text-center text-[11px] font-semibold w-max transition-colors flex flex-col items-center
                                     ${isActive ? 'text-blue-600 font-bold' : isCompleted ? 'text-green-600' : 'text-gray-400'}
                                 `}>
-                                    {step.label}
+                                    <span>{step.label}</span>
+                                    <span className="text-[8px] font-medium mt-0.5 tracking-tight text-gray-400">
+                                        ({step.role})
+                                    </span>
                                 </div>
                             </div>
                             {!isLast && (
@@ -185,7 +188,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     useEffect(() => {
         fetch('/api/auth/me')
             .then(res => res.json())
-            .then(data => setUserRole(data.role?.name || null))
+            .then(data => setUserRole(data.user?.role || null))
             .catch(console.error)
     }, [])
 
@@ -547,7 +550,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         Print Packing Slip
                     </Link>
 
-                    {(userRole === 'ADMIN' || userRole === 'ACC-MGR') && (isConfirmed || isReadyForBuild || isBuilding || isBuilt) && (
+                    {(isConfirmed || isReadyForBuild || isBuilding || isBuilt) && (
                         <Link
                             href={`/dashboard/transactions/delivery-orders/${id}/build-sheet`}
                             target="_blank"
