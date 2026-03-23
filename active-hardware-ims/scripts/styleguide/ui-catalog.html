@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Hardware IMS - Design Language</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        :root { --background: #ffffff; --chrome-sidebar-bg: #111827; --chrome-card-bg: #ffffff; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto space-y-12">
+        <header class="border-b pb-6">
+            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Active Hardware IMS - Design Language</h1>
+            <p class="text-gray-500 mt-2">Static Design Tokens documentation sheet. Reference consistent layout classes here.</p>
+        </header>
+
+        <!-- Colors -->
+        <section>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎨 Color Swatches</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                        <div class="h-16 w-16 rounded-full mb-3 border shadow-sm" style="background-color: #ffffff"></div>
+                        <h4 class="font-bold text-sm text-gray-900">Background</h4>
+                        <code class="text-[10px] text-gray-500 mt-1">var(--background)</code>
+                        <p class="text-xs text-gray-400 mt-2">Main Page Canvas</p>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                        <div class="h-16 w-16 rounded-full mb-3 border shadow-sm" style="background-color: #111827"></div>
+                        <h4 class="font-bold text-sm text-gray-900">Sidebar Background</h4>
+                        <code class="text-[10px] text-gray-500 mt-1">var(--chrome-sidebar-bg)</code>
+                        <p class="text-xs text-gray-400 mt-2">Navigation Column layout background</p>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                        <div class="h-16 w-16 rounded-full mb-3 border shadow-sm" style="background-color: #ffffff"></div>
+                        <h4 class="font-bold text-sm text-gray-900">Card Background</h4>
+                        <code class="text-[10px] text-gray-500 mt-1">var(--chrome-card-bg)</code>
+                        <p class="text-xs text-gray-400 mt-2">Layout containers and content wrappers</p>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                        <div class="h-16 w-16 rounded-full mb-3 border shadow-sm" style="background-color: #2563eb"></div>
+                        <h4 class="font-bold text-sm text-gray-900">Brand Primary</h4>
+                        <code class="text-[10px] text-gray-500 mt-1">bg-blue-600</code>
+                        <p class="text-xs text-gray-400 mt-2">High emphasis action items, workflow tags</p>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+                        <div class="h-16 w-16 rounded-full mb-3 border shadow-sm" style="background-color: #16a34a"></div>
+                        <h4 class="font-bold text-sm text-gray-900">Alert Success</h4>
+                        <code class="text-[10px] text-gray-500 mt-1">bg-green-600 / bg-emerald-600</code>
+                        <p class="text-xs text-gray-400 mt-2">Completion and approvals</p>
+                    </div>
+                
+            </div>
+        </section>
+
+        <!-- Typography -->
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Text Styles</h2>
+            <div class="space-y-6">
+                
+                    <div class="border-b border-dashed pb-4 last:border-0">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Main Title - <code class="normal-case font-normal">text-3xl font-extrabold tracking-tight</code></p>
+                        <p class="text-3xl font-extrabold tracking-tight">Cockpit Page Title labels</p>
+                    </div>
+                
+                    <div class="border-b border-dashed pb-4 last:border-0">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Sub Title - <code class="normal-case font-normal">text-lg font-bold text-gray-900</code></p>
+                        <p class="text-lg font-bold text-gray-900">Standard card section headings</p>
+                    </div>
+                
+                    <div class="border-b border-dashed pb-4 last:border-0">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Body Regular - <code class="normal-case font-normal">text-sm text-gray-600</code></p>
+                        <p class="text-sm text-gray-600">Default details reads or descriptions</p>
+                    </div>
+                
+                    <div class="border-b border-dashed pb-4 last:border-0">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Caps Tag - <code class="normal-case font-normal">text-[10px] font-bold uppercase tracking-widest</code></p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest">Sub-tags, secondary badges</p>
+                    </div>
+                
+            </div>
+        </section>
+
+        <!-- Buttons -->
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Buttons</h2>
+            <div class="flex flex-wrap gap-6 items-center">
+                
+                    <div class="flex flex-col gap-2 items-start">
+                        <button class="inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm">Button Example</button>
+                        <span class="text-xs text-gray-500"><code class="text-[10px]">inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm</code></span>
+                    </div>
+                
+                    <div class="flex flex-col gap-2 items-start">
+                        <button class="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Button Example</button>
+                        <span class="text-xs text-gray-500"><code class="text-[10px]">inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm</code></span>
+                    </div>
+                
+                    <div class="flex flex-col gap-2 items-start">
+                        <button class="px-2.5 py-1 rounded-md text-[11px] font-bold border">Button Example</button>
+                        <span class="text-xs text-gray-500"><code class="text-[10px]">px-2.5 py-1 rounded-md text-[11px] font-bold border</code></span>
+                    </div>
+                
+            </div>
+        </section>
+
+        <!-- Badges -->
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Pills & Statuses</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                
+                    <div class="flex flex-col gap-2">
+                        <span class="px-2.5 py-1 text-xs rounded-full border bg-gray-100 border-gray-200 text-gray-700 font-medium">Draft</span>
+                        <code class="text-[10px] text-gray-400 text-center">bg-gray-100</code>
+                    </div>
+                
+                    <div class="flex flex-col gap-2">
+                        <span class="px-2.5 py-1 text-xs rounded-full border bg-amber-100 border-amber-200 text-amber-700 font-medium">Ready for Build</span>
+                        <code class="text-[10px] text-gray-400 text-center">bg-amber-100</code>
+                    </div>
+                
+                    <div class="flex flex-col gap-2">
+                        <span class="px-2.5 py-1 text-xs rounded-full border bg-purple-100 border-purple-200 text-purple-700 font-medium">Invoiced</span>
+                        <code class="text-[10px] text-gray-400 text-center">bg-purple-100</code>
+                    </div>
+                
+                    <div class="flex flex-col gap-2">
+                        <span class="px-2.5 py-1 text-xs rounded-full border bg-green-100 border-green-200 text-green-700 font-medium">Completed / Won</span>
+                        <code class="text-[10px] text-gray-400 text-center">bg-green-100</code>
+                    </div>
+                
+            </div>
+        </section>
+    </div>
+</body>
+</html>
