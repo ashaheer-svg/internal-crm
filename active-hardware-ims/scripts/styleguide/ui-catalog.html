@@ -2,367 +2,2086 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Active Hardware IMS - Design Language</title>
+    <title>Visual Styleguide & Inconsistencies</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        :root { --background: #ffffff; --chrome-sidebar-bg: #111827; --chrome-card-bg: #ffffff; }
-    </style>
+    <style> body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; } </style>
 </head>
 <body class="flex min-h-screen">
-    <!-- Static Sidebar Navigation Mimic -->
     <aside class="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0 p-4 space-y-4">
         <div class="flex items-center gap-2 mb-6 px-2">
             <div class="p-1.5 bg-blue-600 rounded-lg"><i data-lucide="activity" class="w-5 h-5"></i></div>
             <span class="font-black tracking-tight text-lg">Styleguide</span>
         </div>
         <nav class="space-y-1">
-            <a href="#colors" class="flex items-center gap-3 px-3 py-2 bg-blue-600 font-medium text-sm rounded-lg text-white"><i data-lucide="palette" class="w-4 p-x-1 h-4"></i> Colors</a>
-            <a href="#typography" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="type" class="w-4 h-4"></i> Typography</a>
-            <a href="#buttons" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="square" class="w-4 h-4"></i> Buttons</a>
-            <a href="#icons" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="image" class="w-4 h-4"></i> Icon Catalog</a>
-            <a href="#complex" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="layers" class="w-4 h-4"></i> Core Layouts</a>
+            <a href="#compare" class="flex items-center gap-3 px-3 py-2 bg-blue-600 font-medium text-sm rounded-lg text-white"><i data-lucide="git-branch" class="w-4 h-4"></i> Auditor Previews</a>
         </nav>
     </aside>
 
-    <main class="flex-1 p-8 space-y-12 overflow-y-auto">
-        <header class="border-b border-gray-200 pb-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Active Hardware IMS - Design Language</h1>
-                <p class="text-gray-500 mt-1">Live visual previews of component assemblies in use.</p>
-            </div>
-            <a href="https://tailwindcss.com" target="_blank" class="text-xs font-semibold px-2 py-1 bg-slate-100 border rounded text-slate-600">Tailwind V4</a>
+    <main class="flex-1 p-8 space-y-10 overflow-y-auto">
+        <header class="border-b border-gray-200 pb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">UI Inconsistencies Audit Previews</h1>
+            <p class="text-gray-500 mt-1">Found 57 items with non-standard classes alongside proposed fixes.</p>
         </header>
 
-        <!-- Colors -->
-        <section id="colors">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="palette" class="w-5 h-5 text-blue-600"></i> Palette Tokens</h2>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                
-                    <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
-                        <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: #ffffff"></div>
-                        <h4 class="font-bold text-sm text-gray-900">Background</h4>
-                        <code class="text-[11px] text-blue-600 mt-1">var(--background)</code>
-                        <p class="text-xs text-gray-400 mt-1.5">Main Page Canvas</p>
-                    </div>
-                
-                    <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
-                        <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: #111827"></div>
-                        <h4 class="font-bold text-sm text-gray-900">Sidebar Background</h4>
-                        <code class="text-[11px] text-blue-600 mt-1">var(--chrome-sidebar-bg)</code>
-                        <p class="text-xs text-gray-400 mt-1.5">Navigation Column layout background</p>
-                    </div>
-                
-                    <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
-                        <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: #ffffff"></div>
-                        <h4 class="font-bold text-sm text-gray-900">Card Background</h4>
-                        <code class="text-[11px] text-blue-600 mt-1">var(--chrome-card-bg)</code>
-                        <p class="text-xs text-gray-400 mt-1.5">Layout containers and content wrappers</p>
-                    </div>
-                
-                    <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
-                        <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: #2563eb"></div>
-                        <h4 class="font-bold text-sm text-gray-900">Brand Primary</h4>
-                        <code class="text-[11px] text-blue-600 mt-1">bg-blue-600</code>
-                        <p class="text-xs text-gray-400 mt-1.5">High emphasis action items, workflow tags</p>
-                    </div>
-                
-                    <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
-                        <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: #16a34a"></div>
-                        <h4 class="font-bold text-sm text-gray-900">Alert Success</h4>
-                        <code class="text-[11px] text-blue-600 mt-1">bg-green-600 / bg-emerald-600</code>
-                        <p class="text-xs text-gray-400 mt-1.5">Completion and approvals</p>
-                    </div>
-                
-            </div>
-        </section>
-
-        <!-- Typography -->
-        <section id="typography" class="bg-white p-6 rounded-xl border border-gray-200/70 shadow-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="type" class="w-5 h-5 text-blue-600"></i> Typography Hierarchy</h2>
-            <div class="space-y-6">
-                
-                    <div class="border-b border-dashed border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Main Title &middot; <code class="normal-case font-normal text-blue-600">text-3xl font-extrabold tracking-tight</code></p>
-                        <p class="text-3xl font-extrabold tracking-tight">Cockpit Page Title labels</p>
-                    </div>
-                
-                    <div class="border-b border-dashed border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Sub Title &middot; <code class="normal-case font-normal text-blue-600">text-lg font-bold text-gray-900</code></p>
-                        <p class="text-lg font-bold text-gray-900">Standard card section headings</p>
-                    </div>
-                
-                    <div class="border-b border-dashed border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Body Regular &middot; <code class="normal-case font-normal text-blue-600">text-sm text-gray-600</code></p>
-                        <p class="text-sm text-gray-600">Default details reads or descriptions</p>
-                    </div>
-                
-                    <div class="border-b border-dashed border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Caps Tag &middot; <code class="normal-case font-normal text-blue-600">text-[10px] font-bold uppercase tracking-widest</code></p>
-                        <p class="text-[10px] font-bold uppercase tracking-widest">Sub-tags, secondary badges</p>
-                    </div>
-                
-            </div>
-        </section>
-
-        <!-- Buttons -->
-        <section id="buttons" class="bg-white p-6 rounded-xl border border-gray-200/70 shadow-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="square" class="w-5 h-5 text-blue-600"></i> Buttons Elements</h2>
-            <div class="flex flex-wrap gap-8 items-center">
-                
-                    <div class="flex flex-col gap-2 items-start">
-                        <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm">Trigger Action</button>
-                        <span class="text-[10px] text-gray-400"><code class="text-blue-500">inline-flex items-center gap-1.5...</code></span>
-                    </div>
-                
-                    <div class="flex flex-col gap-2 items-start">
-                        <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">Trigger Action</button>
-                        <span class="text-[10px] text-gray-400"><code class="text-blue-500">inline-flex items-center gap-1.5...</code></span>
-                    </div>
-                
-                    <div class="flex flex-col gap-2 items-start">
-                        <button class="px-2.5 py-1 rounded-md text-[11px] font-bold border">Trigger Action</button>
-                        <span class="text-[10px] text-gray-400"><code class="text-blue-500">px-2.5 py-1 rounded-md...</code></span>
-                    </div>
-                
-            </div>
-        </section>
-
-        <!-- Icons -->
-        <section id="icons" class="bg-white p-6 rounded-xl border border-gray-200/70 shadow-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="image" class="w-5 h-5 text-blue-600"></i> Common Icon Guidelines</h2>
-            <div class="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="plus" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Plus</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">plus</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="printer" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Printer</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">printer</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">ArrowLeft</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">arrow-left</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="users" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Users</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">users</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="user" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">User</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">user</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="calendar" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Calendar</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">calendar</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="clock" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Clock</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">clock</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="dollar-sign" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">DollarSign</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">dollar-sign</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="file-text" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">FileText</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">file-text</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="check-circle" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">CheckCircle</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">check-circle</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="truck" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Truck</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">truck</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="alert-circle" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">AlertCircle</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">alert-circle</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="tag" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Tag</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">tag</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="download" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Download</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">download</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="trash-2" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Trash2</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">trash-2</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="refresh-cw" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">RefreshCw</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">refresh-cw</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="database" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">Database</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">database</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="log-out" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">LogOut</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">log-out</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="trending-up" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">TrendingUp</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">trending-up</code>
-                    </div>
-                
-                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
-                        <i data-lucide="bar-chart-2" class="w-6 h-6 text-gray-700 mb-2"></i>
-                        <span class="text-xs font-medium text-gray-900">BarChart3</span>
-                        <code class="text-[9px] text-gray-400 mt-0.5">bar-chart-2</code>
-                    </div>
-                
-            </div>
-        </section>
-
-        <!-- Complex Layouts -->
-        <section id="complex">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-blue-600"></i> Comprehensive Layout Assemblies</h2>
-            <div class="space-y-8">
-                
-                    <div class="space-y-2">
-                        <div class="flex flex-col mb-2">
-                            <h4 class="font-bold text-gray-900">Workflow Stepper (Delivery Orders)</h4>
-                            <p class="text-xs text-gray-500">Standard progress bar for tracking sequence milestones.</p>
+        <section id="compare" class="space-y-6">
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\build\page.tsx : line 163</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
                         </div>
-                        <div class="bg-slate-100/40 border border-slate-200/60 p-6 rounded-2xl">
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
                             
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Workflow Progress</h3>
-            <div class="flex items-center w-full">
-                <!-- Completed Step -->
-                <div class="flex items-center flex-1">
-                    <div class="relative flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-green-500 border-2 border-green-500 text-white shadow-sm">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        </div>
-                        <div class="absolute top-10 text-center text-[11px] font-semibold w-max text-green-600">
-                            <span>Draft</span>
-                        </div>
-                    </div>
-                    <div class="flex-1 h-1 mx-2 rounded-full bg-green-500"></div>
-                </div>
-
-                <!-- Active Step -->
-                <div class="flex items-center flex-1">
-                    <div class="relative flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border-2 border-blue-500 text-blue-600 font-bold ring-4 ring-blue-100">
-                            <span class="text-xs">2</span>
-                        </div>
-                        <div class="absolute top-10 text-center text-[11px] font-bold w-max text-blue-600">
-                            <span>Confirmed</span>
-                        </div>
-                    </div>
-                    <div class="flex-1 h-1 mx-2 rounded-full bg-gray-100"></div>
-                </div>
-
-                <!-- Pending Step -->
-                <div class="flex items-center">
-                    <div class="relative flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-400">
-                            <span class="text-xs">3</span>
-                        </div>
-                        <div class="absolute top-10 text-center text-[11px] font-semibold w-max text-gray-400">
-                            <span>Ready</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="h-6"></div>
-        </div>
-                        </div>
-                    </div>
-                
-                    <div class="space-y-2">
-                        <div class="flex flex-col mb-2">
-                            <h4 class="font-bold text-gray-900">Standard Data List Tabular</h4>
-                            <p class="text-xs text-gray-500">Grid based layouts for transactions and inventory rows.</p>
-                        </div>
-                        <div class="bg-slate-100/40 border border-slate-200/60 p-6 rounded-2xl">
                             
-        <div class="bg-white shadow rounded-lg border border-gray-100 overflow-hidden">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50/50 border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-3">Reference No</th>
-                        <th class="px-6 py-3">Client Name</th>
-                        <th class="px-6 py-3">Created</th>
-                        <th class="px-6 py-3">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-white border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 font-bold text-gray-900">DO-2026-0034</td>
-                        <td class="px-6 py-4">Alpha Tech Corp</td>
-                        <td class="px-6 py-4 text-gray-400">Mar 22, 2026</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded-full border bg-amber-50 border-amber-200 text-amber-700 font-medium">Ready</span>
-                        </td>
-                    </tr>
-                    <tr class="bg-white border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 font-bold text-gray-900">DO-2026-0035</td>
-                        <td class="px-6 py-4">Beta Global LLC</td>
-                        <td class="px-6 py-4 text-gray-400">Mar 23, 2026</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded-full border bg-purple-50 border-purple-200 text-purple-700 font-medium">Invoiced</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                            <input class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm font-medium" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-11 pr-4 py-2.5 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm font-medium</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-11 pr-4 py-2 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm font-medium" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-11 pr-4 py-2 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm font-medium</code>
                         </div>
                     </div>
-                
-            </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\build\[id]\page.tsx : line 354</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses heavy weight (`font-bold` instead of `font-medium`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\insights\page.tsx : line 160</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\pipeline\ListView.tsx : line 141</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\pipeline\ListView.tsx : line 304</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Badge component uses heavy tracking framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;span&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-violet-50 text-violet-700 border border-violet-100 shadow-sm uppercase tracking-wider">Current Render</span>
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-violet-50 text-violet-700 border border-violet-100 shadow-sm uppercase tracking-wider</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[11px] font-medium bg-violet-50 text-violet-700 border border-violet-100 shadow-sm uppercase tracking-wider">Proposed Render</span>
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[11px] font-medium bg-violet-50 text-violet-700 border border-violet-100 shadow-sm uppercase tracking-wider</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\pipeline\ListView.tsx : line 312</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Badge component uses heavy tracking framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;span&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            <span class="px-3.5 py-1.5 inline-flex text-[11px] font-bold rounded-xl shadow-sm uppercase tracking-wider border">Current Render</span>
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-3.5 py-1.5 inline-flex text-[11px] font-bold rounded-xl shadow-sm uppercase tracking-wider border</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            <span class="px-3.5 py-1.5 inline-flex text-[11px] font-medium rounded-lg shadow-sm uppercase tracking-wider border">Proposed Render</span>
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-3.5 py-1.5 inline-flex text-[11px] font-medium rounded-lg shadow-sm uppercase tracking-wider border</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\projects\new\page.tsx : line 150</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\projects\new\page.tsx : line 182</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full rounded-lg border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-lg border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\projects\new\page.tsx : line 194</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full rounded-xl border-gray-200 px-4 py-3 text-sm bg-gray-50/50 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-mono font-bold" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-xl border-gray-200 px-4 py-3 text-sm bg-gray-50/50 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-mono font-bold</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full rounded-lg border-gray-200 px-4 py-3 text-sm bg-gray-50/50 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-mono font-medium" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-lg border-gray-200 px-4 py-3 text-sm bg-gray-50/50 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border font-mono font-medium</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\projects\new\page.tsx : line 212</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full rounded-xl border-gray-200 pl-10 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-xl border-gray-200 pl-10 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full rounded-lg border-gray-200 pl-10 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-lg border-gray-200 pl-10 pr-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\projects\new\page.tsx : line 322</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full rounded-lg border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full rounded-lg border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\reports\page.tsx : line 337</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\reports\page.tsx : line 511</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\reports\page.tsx : line 663</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none print:overflow-visible print:mt-4</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\reports\page.tsx : line 902</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\crm\reports\page.tsx : line 936</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-0 print:rounded-none</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\inventory\page.tsx : line 211</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses heavy weight (`font-bold` instead of `font-medium`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\messaging\page.tsx : line 499</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="p-2 bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">p-2 bg-white rounded-xl border border-gray-100 shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="p-2 bg-white rounded-lg border border-gray-100 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">p-2 bg-white rounded-lg border border-gray-100 shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\messaging\page.tsx : line 877</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses heavy weight (`font-bold` instead of `font-medium`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\messaging\page.tsx : line 884</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all flex items-center no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all flex items-center</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all flex items-center no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all flex items-center</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\page.tsx : line 279</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex flex-col p-4 bg-white border border-red-100 rounded-xl hover:border-red-300 hover:shadow-lg transition-all group/card relative overflow-hidden no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col p-4 bg-white border border-red-100 rounded-xl hover:border-red-300 hover:shadow-lg transition-all group/card relative overflow-hidden</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex flex-col p-4 bg-white border border-red-100 rounded-lg hover:border-red-300 hover:shadow-lg transition-all group/card relative overflow-hidden no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col p-4 bg-white border border-red-100 rounded-lg hover:border-red-300 hover:shadow-lg transition-all group/card relative overflow-hidden</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\page.tsx : line 331</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses heavy weight (`font-bold` instead of `font-medium`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="text-[9px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">text-[9px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="text-[9px] font-medium text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">text-[9px] font-medium text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\reports\page.tsx : line 104</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="group relative flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-400 transition-all no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">group relative flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-400 transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="group relative flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-400 transition-all no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">group relative flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-400 transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\backup\project-import\page.tsx : line 850</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-3 py-3 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-3 py-3 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\customers\page.tsx : line 180</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 385</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button padding is too wide (`px-6` inflated)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 437</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all group shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all group shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all group shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-all group shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 464</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-green-500 hover:text-green-700 transition-all group shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-green-500 hover:text-green-700 transition-all group shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-green-500 hover:text-green-700 transition-all group shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-green-500 hover:text-green-700 transition-all group shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 483</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-purple-500 hover:text-purple-700 transition-all group shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-purple-500 hover:text-purple-700 transition-all group shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-500 hover:text-purple-700 transition-all group shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-500 hover:text-purple-700 transition-all group shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 510</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-500 hover:text-red-700 transition-all group shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-500 hover:text-red-700 transition-all group shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-red-500 hover:text-red-700 transition-all group shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-red-500 hover:text-red-700 transition-all group shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\maintenance\page.tsx : line 528</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-orange-500 hover:text-orange-600 transition-all group shadow-sm no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-orange-500 hover:text-orange-600 transition-all group shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-orange-500 hover:text-orange-600 transition-all group shadow-sm no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-orange-500 hover:text-orange-600 transition-all group shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\nas-features\page.tsx : line 205</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\nas-features\page.tsx : line 243</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\page.tsx : line 122</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button padding is too wide (`px-6` inflated)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm hover:border-gray-400 hover:shadow-md transition-all no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm hover:border-gray-400 hover:shadow-md transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="relative rounded-lg border border-gray-300 bg-white px-3 py-5 shadow-sm hover:border-gray-400 hover:shadow-md transition-all no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">relative rounded-lg border border-gray-300 bg-white px-3 py-5 shadow-sm hover:border-gray-400 hover:shadow-md transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\sales-reps\page.tsx : line 212</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2.5 text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2.5 text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\sales-reps\page.tsx : line 398</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses heavy weight (`font-bold` instead of `font-medium`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex-2 px-8 py-3 bg-blue-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex-2 px-8 py-3 bg-blue-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex-2 px-8 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex-2 px-8 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\users\SalesRepsTab.tsx : line 200</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all outline-none" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all outline-none</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all outline-none" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all outline-none</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\users\SalesRepsTab.tsx : line 334</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\users\SalesRepsTab.tsx : line 343</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\users\SalesRepsTab.tsx : line 352</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\settings\users\SalesRepsTab.tsx : line 364</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex-3 px-8 py-3 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex-3 px-8 py-3 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex-3 px-8 py-3 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex-3 px-8 py-3 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\stock-movements\grn\new\page.tsx : line 183</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-xl shadow-lg shadow-green-500/20 text-sm font-bold hover:bg-green-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-xl shadow-lg shadow-green-500/20 text-sm font-bold hover:bg-green-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg shadow-lg shadow-green-500/20 text-sm font-medium hover:bg-green-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg shadow-lg shadow-green-500/20 text-sm font-medium hover:bg-green-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\tools\nas-configurator\page.tsx : line 177</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\tools\nas-configurator\page.tsx : line 205</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm space-y-8 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-8 rounded-xl border border-gray-200 shadow-sm space-y-8</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm space-y-8 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-8 rounded-lg border border-gray-200 shadow-sm space-y-8</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\tools\nas-configurator\page.tsx : line 263</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[300px] p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center min-h-[300px]</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-center min-h-[300px] p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-8 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-center min-h-[300px]</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\tools\nas-configurator\page.tsx : line 365</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\delivery-orders\new\page.tsx : line 477</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\delivery-orders\new\page.tsx : line 503</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Dashboard Card uses non-standard curvature (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;div&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white shadow sm:rounded-xl p-6 space-y-4 relative z-10 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white shadow sm:rounded-xl p-6 space-y-4 relative z-10</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            
+                            
+                            <div class="bg-white shadow sm:rounded-lg p-6 space-y-4 relative z-10 p-4 text-xs">Card Sample</div>
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">bg-white shadow sm:rounded-lg p-6 space-y-4 relative z-10</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\delivery-orders\[id]\edit\page.tsx : line 321</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\delivery-orders\[id]\edit\page.tsx : line 329</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\page.tsx : line 276</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 text-xs font-medium w-full md:w-fit no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 text-xs font-medium w-full md:w-fit</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\page.tsx : line 288</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\page.tsx : line 392</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 text-xs font-bold w-full md:w-fit</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 text-xs font-medium w-full md:w-fit no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-95 text-xs font-medium w-full md:w-fit</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\page.tsx : line 404</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-indigo-500 shadow-sm transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-indigo-500 shadow-sm transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-indigo-500 shadow-sm transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-9 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-indigo-500 shadow-sm transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\page.tsx : line 506</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Input uses non-standard heavy framing (`rounded-xl`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;input&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            
+                            <input class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all" placeholder="Current Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-xl focus:ring-blue-500 shadow-sm transition-all</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            
+                            <input class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all" placeholder="Proposed Render" />
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 shadow-sm transition-all</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\transactions\purchase-orders\new\page.tsx : line 178</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button uses overly rounded corners (`rounded-xl` instead of standard `rounded-lg`)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;button&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 text-sm font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-500/20 text-sm font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50</code>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm"><code class="text-blue-600 text-xs">app\dashboard\warranty\lookup\page.tsx : line 361</code></h4>
+                            <p class="text-xs text-red-500 mt-0.5">Button padding is too wide (`px-6` inflated)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-gray-100 text-[10px] font-bold uppercase rounded-lg border text-gray-600">&lt;Link&gt;</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100/80">
+                        <!-- Before -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-red-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-red-100 border border-red-200 text-red-700 font-bold uppercase rounded-md">Original Class</span>
+                            
+                            <button class="block px-6 py-5 hover:bg-indigo-50 transition-colors no-underline">Current Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-red-400 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block px-6 py-5 hover:bg-indigo-50 transition-colors</code>
+                        </div>
+                        
+                        <!-- After -->
+                        <div class="p-6 flex flex-col items-center justify-center gap-4 bg-emerald-50/10">
+                            <span class="px-2 py-0.5 text-[9px] bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold uppercase rounded-md">Standard Fix</span>
+                            
+                            <button class="block px-3 py-5 hover:bg-indigo-50 transition-colors no-underline">Proposed Render</button>
+                            
+                            
+                            
+
+                            <code class="text-[9px] text-emerald-600 text-center whitespace-pre-wrap max-w-sm border p-1.5 bg-white rounded mt-2">block px-3 py-5 hover:bg-indigo-50 transition-colors</code>
+                        </div>
+                    </div>
+                </div>
+            
         </section>
     </main>
 
-    <script>
-        lucide.createIcons();
-    </script>
+    <script> lucide.createIcons(); </script>
 </body>
 </html>
