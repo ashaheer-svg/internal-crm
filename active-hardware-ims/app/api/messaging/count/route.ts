@@ -32,6 +32,9 @@ export async function GET() {
             total: unreadCount // Or whichever number we want to show on the badge
         })
     } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return NextResponse.json({ unreadCount: 0, pendingTasksCount: 0, count: 0 }, { status: 401 })
+        }
         console.error('Get message count error:', error)
         return NextResponse.json({ count: 0 }, { status: 500 })
     }
