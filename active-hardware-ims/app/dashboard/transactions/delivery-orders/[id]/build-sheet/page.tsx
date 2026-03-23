@@ -13,21 +13,25 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
 
     const [order, setOrder] = useState<any>(null)
     const [auditLogs, setAuditLogs] = useState<any[]>([])
+    const [rejectedSerials, setRejectedSerials] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         Promise.all([
             fetch(`/api/delivery-orders/${id}`).then(res => res.json()),
-            fetch(`/api/delivery-orders/${id}/audit`).then(res => res.json())
-        ]).then(([orderData, auditData]) => {
+            fetch(`/api/delivery-orders/${id}/audit`).then(res => res.json()),
+            fetch(`/api/delivery-orders/${id}/build-rejections`).then(res => res.json())
+        ]).then(([orderData, auditData, rejectionsData]) => {
             setOrder(orderData)
             setAuditLogs(Array.isArray(auditData) ? auditData : [])
+            setRejectedSerials(rejectionsData.rejections || [])
             setLoading(false)
         }).catch(err => {
             console.error(err)
             setLoading(false)
         })
     }, [id])
+
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading Build Sheet...</div>
     if (!order) return <div className="p-8 text-center text-red-500">Order not found</div>
@@ -54,20 +58,34 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Top Grid: Customer & Order Info */}
-            <div className="grid grid-cols-2 gap-6 text-sm">
-                <div className="border border-gray-200 p-4 rounded-lg space-y-2">
-                    <h3 className="font-bold text-gray-800 uppercase text-xs border-b pb-1">Customer / Partner</h3>
-                    <p className="font-semibold text-gray-900">{order.customerName}</p>
-                    {order.deliveryAddress && (
-                        <p className="text-gray-600 whitespace-pre-wrap text-xs">{order.deliveryAddress}</p>
-                    )}
-                    {order.endCustomerName && (
-                        <div className="pt-1 border-t mt-1">
-                            <span className="text-xs text-gray-400">End Customer:</span>
-                            <p className="font-semibold text-gray-800">{order.endCustomerName}</p>
-                        </div>
-                    )}
+            <div className={`grid ${order.endCustomerName ? 'grid-cols-3' : 'grid-cols-2'} gap-6 text-sm`}>
+                {/* Card 1: Bill To (Customer or Partner) */}
+                <div className="border border-gray-200 p-4 rounded-lg space-y-2 bg-white shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 className="font-bold text-gray-800 uppercase text-xs border-b pb-1">
+                            {order.saleType === "PARTNER" ? "Bill To (Partner)" : "Customer Info"}
+                        </h3>
+                        <p className="font-semibold text-gray-900 mt-1">{order.customerName}</p>
+                        {order.deliveryAddress && order.saleType !== "PARTNER" && (
+                            <p className="text-gray-600 whitespace-pre-wrap text-xs mt-1 leading-relaxed">{order.deliveryAddress}</p>
+                        )}
+                    </div>
                 </div>
+
+                {/* Card 2: Ship To (End Customer) for Partner Sales */}
+                {order.endCustomerName && (
+                    <div className="border border-indigo-200 p-4 rounded-lg space-y-2 bg-indigo-50/40 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 className="font-bold text-indigo-800 uppercase text-xs border-b border-indigo-200 pb-1 flex items-center gap-1">
+                                Ship To (End Customer)
+                            </h3>
+                            <p className="font-semibold text-gray-900 mt-1">{order.endCustomerName}</p>
+                            {order.deliveryAddress && (
+                                <p className="text-gray-600 whitespace-pre-wrap text-xs mt-1 leading-relaxed">{order.deliveryAddress}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="border border-gray-200 p-4 rounded-lg space-y-2">
                     <h3 className="font-bold text-gray-800 uppercase text-xs border-b pb-1">Order Details</h3>
@@ -105,6 +123,35 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                         <div>
                             <span className="text-xs font-bold text-yellow-600">General Notes:</span>
                             <p className="text-sm text-gray-800 whitespace-pre-wrap bg-white p-2 border rounded mt-1 shadow-sm">{order.notes}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Build Notes & Comments while building */}
+            {(order.buildNotes || (typeof rejectedSerials !== 'undefined' && rejectedSerials.length > 0)) && (
+                <div className="border border-gray-200 rounded-lg p-4 bg-blue-50/10 space-y-3">
+                    <h3 className="font-bold text-gray-800 uppercase text-xs border-b pb-1">Technician Log & Build Comments</h3>
+                    {order.buildNotes && (
+                        <div>
+                            <span className="text-xs font-bold text-gray-600">General Build Notes:</span>
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap bg-white p-2 border rounded mt-1 shadow-sm font-medium">{order.buildNotes}</p>
+                        </div>
+                    )}
+                    {rejectedSerials && rejectedSerials.length > 0 && (
+                        <div className="space-y-1.5">
+                            <span className="text-xs font-bold text-red-600">Build Anomalies & Rejections:</span>
+                            <div className="grid grid-cols-1 gap-2 mt-1">
+                                {rejectedSerials.map((rej: any, idx: number) => (
+                                    <div key={idx} className="bg-red-50/80 p-2 border border-red-100 rounded text-xs text-red-800 flex flex-col gap-0.5 shadow-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-black font-mono tracking-tight">{rej.serialNumber}</span>
+                                            <span className="text-[10px] text-gray-400">Rejected by {rej.rejectedByName}</span>
+                                        </div>
+                                        <p className="italic text-gray-600 mt-0.5">"{rej.comment || "No comment provided"}"</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
