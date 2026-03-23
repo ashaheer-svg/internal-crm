@@ -147,23 +147,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </h1>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => setShowEditModal(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                         >
                             Edit Project
                         </button>
                         <button
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/hardware`)}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-sm font-black text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
                             Hardware Quote
                         </button>
                         <button
                             onClick={() => router.push(`/dashboard/crm/projects/${project.id}/quotes/new/service`)}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-sm font-black text-white hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
                             Service Quote
