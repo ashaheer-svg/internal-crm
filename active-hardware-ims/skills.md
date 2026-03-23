@@ -4,8 +4,8 @@ Use this guide to ensure that all future references and rendering operations mad
 
 ## 1. Components & Standard Prefabs
 ### Standard Buttons
-- **Standard (Primary)**: `inline-flex items-center px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm` (_Standard primary forms trigger_)
-- **Bordered Action**: `inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm` (_Filters and secondary routes actions_)
+- **Standard (Primary)**: `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 shadow-sm` (_Standard primary forms trigger_)
+- **Bordered Action**: `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm` (_Filters and secondary routes actions_)
 - **Pill/Densitied**: `px-2.5 py-1 rounded-md text-[11px] font-bold border` (_Filtering toggles lists densities_)
 
 ### Status Headers / Pill Highlights
