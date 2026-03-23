@@ -80,6 +80,7 @@ function WorkflowStepper({ status }: { status?: string }) {
         { key: 'READY_FOR_BUILD', label: 'Ready', role: 'Technical' },
         { key: 'BUILDING', label: 'Building', role: 'Technical' },
         { key: 'BUILT', label: 'Built', role: 'Technical' },
+        { key: 'INVOICED', label: 'Invoiced', role: 'Acc-Mgr' },
         { key: 'COMPLETED', label: 'Completed', role: 'Acc-Mgr' },
     ]
 
@@ -178,6 +179,16 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [serviceStartDate, setServiceStartDate] = useState("")
     const [serviceEndDate, setServiceEndDate] = useState("")
     const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
+
+    const [invoiceNumberInput, setInvoiceNumberInput] = useState("")
+
+    const totalCost = order ? order.items.reduce((acc, item) => {
+        const itemCost = item.reservedItems.reduce((sum, res) => sum + (res.unitCost || 0), 0)
+        return acc + itemCost
+    }, 0) : 0
+
+    const totalRevenue = order ? order.items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0) : 0
+    const grossProfit = totalRevenue - totalCost
 
     useEffect(() => {
         fetchOrder()
@@ -493,6 +504,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const isReadyForBuild = order.status === 'READY_FOR_BUILD'
     const isBuilding = order.status === 'BUILDING'
     const isBuilt = order.status === 'BUILT'
+    const isInvoiced = order.status === 'INVOICED'
     const isCompleted = order.status === 'COMPLETED'
     const isCancelled = order.status === 'CANCELLED'
 
@@ -530,6 +542,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 ${order.status === 'READY_FOR_BUILD' ? 'bg-amber-100 border-amber-200 text-amber-700' : ''}
                                 ${order.status === 'BUILDING' ? 'bg-blue-100 border-blue-200 text-blue-700' : ''}
                                 ${order.status === 'BUILT' ? 'bg-indigo-100 border-indigo-200 text-indigo-700' : ''}
+                                ${order.status === 'INVOICED' ? 'bg-purple-100 border-purple-200 text-purple-700' : ''}
                                 ${order.status === 'COMPLETED' ? 'bg-green-100 border-green-200 text-green-700' : ''}
                                 ${order.status === 'CANCELLED' ? 'bg-red-100 border-red-200 text-red-700' : ''}
                             `}>
@@ -602,9 +615,20 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
 
                             {isBuilt && (
                                 <button
+                                    onClick={() => handleStatusChange('INVOICED')}
+                                    disabled={actionLoading}
+                                    className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    <Hammer className="w-4 h-4" />
+                                    Proceed to Invoicing
+                                </button>
+                            )}
+
+                            {isInvoiced && (
+                                <button
                                     onClick={() => handleStatusChange('COMPLETED')}
                                     disabled={actionLoading}
-                                    className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    className="px-4 py-2 text-sm bg-green-600 text-white hover:bg-green-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-1"
                                     title={!isAllFulfilled ? "Unfulfilled items will be backordered" : ""}
                                 >
                                     <Truck className="w-4 h-4" />
@@ -624,6 +648,104 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                     </button>
                 </div>
             </div>
+
+            {order && <WorkflowStepper status={order.status} />}
+
+            {order && (isInvoiced || isCompleted) && (
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4 no-print">
+                    <div className="flex justify-between items-center border-b pb-3">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <Currency amount={0} className="hidden" />
+                            Financial Review & Invoicing
+                        </h3>
+                        {isInvoiced && (
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="text"
+                                    placeholder="Enter Invoice Number"
+                                    defaultValue={order.invoiceNumber || ""}
+                                    onChange={(e) => setInvoiceNumberInput(e.target.value)}
+                                    className="px-3 py-1.5 text-sm border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <button 
+                                    onClick={async () => {
+                                        const value = invoiceNumberInput.trim() || order.invoiceNumber || ""
+                                        if (!value) { alert("Please enter a valid Invoice Number"); return; }
+                                        setActionLoading(true)
+                                        try {
+                                            const res = await fetch(`/api/delivery-orders/${id}`, {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ invoiceNumber: value })
+                                            })
+                                            if (!res.ok) throw new Error("Failed to save")
+                                            await fetchOrder()
+                                            alert("Invoice number saved")
+                                        } catch (e: any) { alert(e.message) } finally { setActionLoading(false) }
+                                    }}
+                                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        )}
+                        {isCompleted && order.invoiceNumber && (
+                            <span className="text-sm font-medium text-gray-600">
+                                Invoice: <span className="font-bold text-gray-900">{order.invoiceNumber}</span>
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b">
+                                    <th className="py-2 px-3">Item</th>
+                                    <th className="py-2 px-3 text-right">Qty</th>
+                                    <th className="py-2 px-3 text-right">Avg Unit Cost</th>
+                                    <th className="py-2 px-3 text-right">Unit Price</th>
+                                    <th className="py-2 px-3 text-right">Margin / Unit</th>
+                                    <th className="py-2 px-3 text-right">Row GP</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {order.items.map(item => {
+                                    const itemCost = item.reservedItems.reduce((sum, res) => sum + (res.unitCost || 0), 0)
+                                    const avgCost = item.reservedItems.length > 0 ? itemCost / item.reservedItems.length : 0
+                                    const margin = item.unitPrice - avgCost
+                                    const rowGP = margin * item.quantity
+
+                                    return (
+                                        <tr key={item.id} className="hover:bg-gray-50/50">
+                                            <td className="py-2 px-3 font-medium text-gray-800">{item.product.name}</td>
+                                            <td className="py-2 px-3 text-right">{item.quantity}</td>
+                                            <td className="py-2 px-3 text-right text-gray-500"><Currency amount={avgCost} /></td>
+                                            <td className="py-2 px-3 text-right text-gray-900"><Currency amount={item.unitPrice} /></td>
+                                            <td className="py-2 px-3 text-right text-amber-600 font-medium"><Currency amount={margin} /></td>
+                                            <td className="py-2 px-3 text-right font-bold text-green-600"><Currency amount={rowGP} /></td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="flex justify-end gap-6 border-t border-dashed pt-3">
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Total Revenue</span>
+                            <p className="text-lg font-bold text-gray-900"><Currency amount={totalRevenue} /></p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Total Cost</span>
+                            <p className="text-lg font-bold text-gray-500"><Currency amount={totalCost} /></p>
+                        </div>
+                        <div className="text-right bg-green-50 px-3 py-1 rounded-md border border-green-100">
+                            <span className="text-xs text-green-600 font-medium">Gross Profit</span>
+                            <p className="text-xl font-black text-green-700"><Currency amount={grossProfit} /></p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {order && <WorkflowStepper status={order.status} />}
 

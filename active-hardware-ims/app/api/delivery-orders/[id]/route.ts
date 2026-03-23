@@ -534,7 +534,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             // Simple status update for other transitions
             await prisma.deliveryOrder.update({
                 where: { id: params.id },
-                data: { status }
+                data: { 
+                    status: status || order.status,
+                    invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : order.invoiceNumber
+                }
             })
 
             // Notify for CONFIRMED/READY_FOR_BUILD

@@ -58,7 +58,7 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Top Grid: Customer & Order Info */}
-            <div className={`grid ${order.endCustomerName ? 'grid-cols-3' : 'grid-cols-2'} gap-6 text-sm`}>
+            <div className={`grid ${order.saleType === 'PARTNER' ? 'grid-cols-3' : 'grid-cols-2'} gap-6 text-sm`}>
                 {/* Card 1: Bill To (Customer or Partner) */}
                 <div className="border border-gray-200 p-4 rounded-lg space-y-2 bg-white shadow-sm flex flex-col justify-between">
                     <div>
@@ -73,13 +73,13 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {/* Card 2: Ship To (End Customer) for Partner Sales */}
-                {order.endCustomerName && (
+                {order.saleType === 'PARTNER' && (
                     <div className="border border-indigo-200 p-4 rounded-lg space-y-2 bg-indigo-50/40 shadow-sm flex flex-col justify-between">
                         <div>
                             <h3 className="font-bold text-indigo-800 uppercase text-xs border-b border-indigo-200 pb-1 flex items-center gap-1">
                                 Ship To (End Customer)
                             </h3>
-                            <p className="font-semibold text-gray-900 mt-1">{order.endCustomerName}</p>
+                            <p className="font-semibold text-gray-900 mt-1">{order.endCustomerName || 'Unassigned'}</p>
                             {order.deliveryAddress && (
                                 <p className="text-gray-600 whitespace-pre-wrap text-xs mt-1 leading-relaxed">{order.deliveryAddress}</p>
                             )}
@@ -98,6 +98,9 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                         
                         <span className="text-gray-400">Current Status:</span>
                         <span className="font-bold text-gray-800">{formatStatus(order.status)}</span>
+
+                        <span className="text-gray-400">Invoice Number:</span>
+                        <span className="font-mono text-gray-800">{order.invoiceNumber || 'N/A'}</span>
 
                         {order.additionalContact && (
                             <>
