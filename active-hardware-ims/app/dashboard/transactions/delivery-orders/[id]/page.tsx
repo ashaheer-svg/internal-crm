@@ -747,8 +747,6 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 </div>
             )}
 
-            {order && <WorkflowStepper status={order.status} />}
-
             {/* Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Items List */}
