@@ -30,10 +30,31 @@ const UI_SPEC = {
         { name: "Ready for Build", classes: "bg-amber-100 border-amber-200 text-amber-700", usage: "Allocation approved, ready for queue" },
         { name: "Invoiced", classes: "bg-purple-100 border-purple-200 text-purple-700", usage: "Financial breakdown saved" },
         { name: "Completed / Won", classes: "bg-green-100 border-green-200 text-green-700", usage: "Fulfillment completed" }
+    ],
+    Icons: [
+        { name: "Plus", icon: "plus" },
+        { name: "Printer", icon: "printer" },
+        { name: "ArrowLeft", icon: "arrow-left" },
+        { name: "Users", icon: "users" },
+        { name: "User", icon: "user" },
+        { name: "Calendar", icon: "calendar" },
+        { name: "Clock", icon: "clock" },
+        { name: "DollarSign", icon: "dollar-sign" },
+        { name: "FileText", icon: "file-text" },
+        { name: "CheckCircle", icon: "check-circle" },
+        { name: "Truck", icon: "truck" },
+        { name: "AlertCircle", icon: "alert-circle" },
+        { name: "Tag", icon: "tag" },
+        { name: "Download", icon: "download" },
+        { name: "Trash2", icon: "trash-2" },
+        { name: "RefreshCw", icon: "refresh-cw" },
+        { name: "Database", icon: "database" },
+        { name: "LogOut", icon: "log-out" },
+        { name: "TrendingUp", icon: "trending-up" },
+        { name: "BarChart3", icon: "bar-chart-2" }
     ]
 };
 
-// Raw HTML fragments for complex structures to load statically.
 const COMPLEX_LAYOUTS = [
     {
         name: "Workflow Stepper (Delivery Orders)",
@@ -117,20 +138,6 @@ const COMPLEX_LAYOUTS = [
                 </tbody>
             </table>
         </div>`
-    },
-    {
-        name: "Card Dashboard Metrics",
-        description: "Highlights KPIs totals or quick metadata items.",
-        html: `
-        <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center gap-4">
-            <div class="p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                <i data-lucide="dollar-sign" class="w-5 h-5 text-blue-600"></i>
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Expected Revenue</p>
-                <p class="text-lg font-black text-gray-900 leading-tight">$450,200.00</p>
-            </div>
-        </div>`
     }
 ];
 
@@ -158,9 +165,10 @@ function generateHTML() {
             <span class="font-black tracking-tight text-lg">Styleguide</span>
         </div>
         <nav class="space-y-1">
-            <a href="#colors" class="flex items-center gap-3 px-3 py-2 bg-blue-600 font-medium text-sm rounded-lg text-white"><i data-lucide="palette" class="w-4 h-4"></i> Colors</a>
+            <a href="#colors" class="flex items-center gap-3 px-3 py-2 bg-blue-600 font-medium text-sm rounded-lg text-white"><i data-lucide="palette" class="w-4 p-x-1 h-4"></i> Colors</a>
             <a href="#typography" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="type" class="w-4 h-4"></i> Typography</a>
             <a href="#buttons" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="square" class="w-4 h-4"></i> Buttons</a>
+            <a href="#icons" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="image" class="w-4 h-4"></i> Icon Catalog</a>
             <a href="#complex" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-800 text-sm font-medium rounded-lg text-gray-300"><i data-lucide="layers" class="w-4 h-4"></i> Core Layouts</a>
         </nav>
     </aside>
@@ -177,7 +185,7 @@ function generateHTML() {
         <!-- Colors -->
         <section id="colors">
             <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="palette" class="w-5 h-5 text-blue-600"></i> Palette Tokens</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 ${UI_SPEC.Colors.map(c => `
                     <div class="bg-white p-4 rounded-xl border border-gray-200/60 shadow-sm flex flex-col items-center text-center">
                         <div class="h-12 w-12 rounded-full mb-3 border shadow-inner" style="background-color: ${c.hex.split(' ')[0]}"></div>
@@ -215,9 +223,23 @@ function generateHTML() {
             </div>
         </section>
 
+        <!-- Icons -->
+        <section id="icons" class="bg-white p-6 rounded-xl border border-gray-200/70 shadow-sm">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="image" class="w-5 h-5 text-blue-600"></i> Common Icon Guidelines</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                ${UI_SPEC.Icons.map(i => `
+                    <div class="flex flex-col items-center justify-center p-3 border rounded-lg border-gray-100 hover:bg-gray-50/50">
+                        <i data-lucide="${i.icon}" class="w-6 h-6 text-gray-700 mb-2"></i>
+                        <span class="text-xs font-medium text-gray-900">${i.name}</span>
+                        <code class="text-[9px] text-gray-400 mt-0.5">${i.icon}</code>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+
         <!-- Complex Layouts -->
         <section id="complex">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-blue-600"></i> Comprehensive Layout Layouts</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5 text-blue-600"></i> Comprehensive Layout Assemblies</h2>
             <div class="space-y-8">
                 ${COMPLEX_LAYOUTS.map(l => `
                     <div class="space-y-2">
