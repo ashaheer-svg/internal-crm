@@ -31,7 +31,7 @@ export default function DiagnosticPage() {
         setCleaning(true)
         setCleanupResult(null)
         try {
-            const res = await fetch('/api/diagnostic/cleanup', { method: 'POST' })
+            const res = await fetch('/api/di1/cleanup', { method: 'POST' })
             const result = await res.json()
             setCleanupResult(result)
         } catch (e: any) {
@@ -42,7 +42,7 @@ export default function DiagnosticPage() {
     }
 
     useEffect(() => {
-        fetch('/api/diagnostic')
+        fetch('/api/di1')
             .then(res => res.json())
             .then(data => {
                 setData(data)
@@ -74,7 +74,7 @@ export default function DiagnosticPage() {
                 </h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <a
-                        href="/api/diagnostic/download-db"
+                        href="/api/di1/download-db"
                         style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             padding: '8px 16px',
@@ -389,9 +389,9 @@ function DbToolsSection() {
         try {
             let res
             if (action === 'seed') {
-                res = await fetch('/api/diagnostic/seed', { method: 'POST' })
+                res = await fetch('/api/di1/seed', { method: 'POST' })
             } else {
-                res = await fetch('/api/diagnostic/db-tools', {
+                res = await fetch('/api/di1/db-tools', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action })
@@ -536,7 +536,7 @@ function TableManager() {
 
     useEffect(() => {
         // Load models
-        fetch('/api/diagnostic/models')
+        fetch('/api/di1/models')
             .then(res => res.json())
             .then(data => {
                 if (data.models) setModels(data.models)
@@ -553,7 +553,7 @@ function TableManager() {
 
     function loadRecords(p: number) {
         setLoading(true)
-        fetch(`/api/diagnostic/models?model=${selectedModel}&page=${p}`)
+        fetch(`/api/di1/models?model=${selectedModel}&page=${p}`)
             .then(res => res.json())
             .then(data => {
                 if (data.data) {
@@ -581,7 +581,7 @@ function TableManager() {
             // Better to let user manually remove fields they don't want to update from the JSON.
             // But ID is definitely immutable in update query usually.
 
-            const res = await fetch('/api/diagnostic/models', {
+            const res = await fetch('/api/di1/models', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -606,7 +606,7 @@ function TableManager() {
 
     async function handleDelete(id: string) {
         if (!confirm('Are you sure you want to delete this record?')) return
-        const res = await fetch(`/api/diagnostic/models?model=${selectedModel}&id=${id}`, {
+        const res = await fetch(`/api/di1/models?model=${selectedModel}&id=${id}`, {
             method: 'DELETE'
         })
         if (res.ok) {
