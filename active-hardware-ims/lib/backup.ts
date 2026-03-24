@@ -11,9 +11,23 @@ const gunzip = promisify(zlib.gunzip)
  * Get the absolute path to the SQLite database file
  */
 export function getDatabasePath(): string {
-    // The database file is in the prisma directory
-    const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
-    return dbPath
+    const databaseUrl = process.env.DATABASE_URL
+    const defaultPath = path.join(process.cwd(), 'prisma', 'dev.db')
+
+    if (!databaseUrl || !databaseUrl.startsWith('file:')) {
+        return defaultPath
+    }
+
+    const filePath = databaseUrl.replace('file:', '')
+    
+    // Prisma relative paths are relative to the schema.prisma location (usually in ./prisma folder)
+    if (filePath.startsWith('./') || !filePath.includes('/')) {
+        const filename = path.basename(filePath)
+        return path.join(process.cwd(), 'prisma', filename)
+    }
+
+    // fallback or absolute
+    return path.resolve(process.cwd(), 'prisma', filePath)
 }
 
 /**
