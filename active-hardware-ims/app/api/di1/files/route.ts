@@ -12,10 +12,12 @@ export async function GET(request: Request) {
         const downloadFile = searchParams.get('download')
         const rootType = searchParams.get('root') || 'styleguide' // 'styleguide' or 'public'
 
-        // 1. Define safe restricted root directories
+        // 1. Define roots supporting project-wide and ancestor traversal layouts
         const roots: Record<string, string> = {
             styleguide: path.join(process.cwd(), 'scripts', 'styleguide'),
-            public: path.join(process.cwd(), 'public')
+            public: path.join(process.cwd(), 'public'),
+            project: path.normalize(process.cwd()),
+            workspace: path.normalize(path.join(process.cwd(), '..', '..'))
         }
 
         const rootDir = roots[rootType] || roots.styleguide

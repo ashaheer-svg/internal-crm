@@ -761,7 +761,7 @@ function TableManager() {
 
 function FileManagerSection() {
     const [path, setPath] = useState('')
-    const [root, setRoot] = useState<'styleguide' | 'public'>('styleguide')
+    const [root, setRoot] = useState<'styleguide' | 'public' | 'project' | 'workspace'>('styleguide')
     const [files, setFiles] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -809,7 +809,7 @@ function FileManagerSection() {
             </h3>
 
             {/* Root Selection Tabs */}
-            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px', flexWrap: 'wrap' }}>
                 <button
                     onClick={() => { setRoot('styleguide'); setPath(''); }}
                     style={{
@@ -830,7 +830,29 @@ function FileManagerSection() {
                         fontWeight: 'bold', fontSize: '13px'
                     }}
                 >
-                    Public folder
+                    Public
+                </button>
+                <button
+                    onClick={() => { setRoot('project'); setPath(''); }}
+                    style={{
+                        padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid #ccc',
+                        backgroundColor: root === 'project' ? '#0d6efd' : 'white',
+                        color: root === 'project' ? 'white' : '#333',
+                        fontWeight: 'bold', fontSize: '13px'
+                    }}
+                >
+                    Project Root
+                </button>
+                <button
+                    onClick={() => { setRoot('workspace'); setPath(''); }}
+                    style={{
+                        padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid #ccc',
+                        backgroundColor: root === 'workspace' ? '#0d6efd' : 'white',
+                        color: root === 'workspace' ? 'white' : '#333',
+                        fontWeight: 'bold', fontSize: '13px'
+                    }}
+                >
+                    Workspace (2 levels up)
                 </button>
             </div>
 
