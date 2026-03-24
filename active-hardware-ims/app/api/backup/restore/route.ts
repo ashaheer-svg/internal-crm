@@ -9,32 +9,49 @@ export async function POST(request: Request) {
     try {
         const user = await requirePermission('settings:manage')
 
-        const formData = await request.formData()
-        const file = formData.get('file') as File
+        const body = await request.json().catch(() => ({}))
+        const tempId = body.tempId
 
-        if (!file) {
-            return NextResponse.json(
-                { error: 'No file provided' },
-                { status: 400 }
-            )
+        let tempPath = ""
+        let filename = "Uploaded Backup"
+
+        if (tempId) {
+            tempPath = path.join(process.cwd(), 'prisma', tempId)
+            if (!fs.existsSync(tempPath)) {
+                return NextResponse.json(
+                    { error: 'Temporary validation file expired or not found. Please re-upload.' },
+                    { status: 404 }
+                )
+            }
+            filename = tempId // Use tempId for audit log
+        } else {
+            // Traditional upload fallback
+            const formData = await request.formData()
+            const file = formData.get('file') as File
+
+            if (!file) {
+                return NextResponse.json(
+                    { error: 'No file provided' },
+                    { status: 400 }
+                )
+            }
+
+            const bytes = await file.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+
+            // Validate it's a SQLite database
+            const isValid = await validateDatabaseFile(buffer)
+            if (!isValid) {
+                return NextResponse.json(
+                    { error: 'Invalid database file. Please upload a valid SQLite database (.db or .db.gz).' },
+                    { status: 400 }
+                )
+            }
+
+            tempPath = path.join(process.cwd(), 'prisma', `temp_restore_${Date.now()}.db`)
+            await fs.promises.writeFile(tempPath, buffer)
+            filename = file.name
         }
-
-        // Convert file to buffer
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-
-        // Validate it's a SQLite database (compressed or uncompressed)
-        const isValid = await validateDatabaseFile(buffer)
-        if (!isValid) {
-            return NextResponse.json(
-                { error: 'Invalid database file. Please upload a valid SQLite database (.db or .db.gz).' },
-                { status: 400 }
-            )
-        }
-
-        // Save uploaded file temporarily
-        const tempPath = path.join(process.cwd(), 'prisma', `temp_restore_${Date.now()}.db.gz`)
-        await fs.promises.writeFile(tempPath, buffer)
 
         try {
             // Restore database
@@ -42,8 +59,7 @@ export async function POST(request: Request) {
 
             // Log restore action
             await logRestore(user.id, user.name, {
-                filename: file.name,
-                size: buffer.length,
+                filename: filename,
                 timestamp: new Date().toISOString()
             })
 

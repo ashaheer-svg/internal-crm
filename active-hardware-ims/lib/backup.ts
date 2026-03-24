@@ -118,6 +118,15 @@ export async function restoreDatabaseFromBackup(backupPath: string): Promise<voi
         // Disconnect Prisma client
         await prisma.$disconnect()
 
+        // Clean up any stale journal files to prevent overriding the restored database
+        const walPath = dbPath + '-wal'
+        const shmPath = dbPath + '-shm'
+        const journalPath = dbPath + '-journal'
+
+        if (fs.existsSync(walPath)) await fs.promises.unlink(walPath).catch(() => { })
+        if (fs.existsSync(shmPath)) await fs.promises.unlink(shmPath).catch(() => { })
+        if (fs.existsSync(journalPath)) await fs.promises.unlink(journalPath).catch(() => { })
+
         // Write database file
         await fs.promises.writeFile(dbPath, dbBuffer)
 
