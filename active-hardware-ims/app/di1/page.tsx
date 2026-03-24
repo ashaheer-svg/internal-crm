@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { logoutAllUsers } from '@/app/actions/auth-actions'
-import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut, Database, RotateCcw, CheckCircle, Wrench, ChevronLeft, ChevronRight, Edit, Save, X, RefreshCcw as RefreshIcon } from 'lucide-react'
+import { Download, Trash2, RefreshCw, Activity, HardDrive, Cpu, Terminal, LogOut, Database, RotateCcw, CheckCircle, Wrench, ChevronLeft, ChevronRight, Edit, Save, X, RefreshCcw as RefreshIcon, Folder, File } from 'lucide-react'
 
 export default function DiagnosticPage() {
     const [data, setData] = useState<any>(null)
@@ -74,7 +74,7 @@ export default function DiagnosticPage() {
                 </h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <a
-                        href="/api/di1/download-db"
+                        href="/api/di1/database"
                         style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             padding: '8px 16px',
@@ -149,6 +149,9 @@ export default function DiagnosticPage() {
 
             {/* Table Manager */}
             <TableManager />
+
+            {/* File Manager */}
+            <FileManagerSection />
 
             <p style={{ color: '#666' }}>Generated: {data?.timestamp}</p>
 
@@ -752,6 +755,154 @@ function TableManager() {
                     </div>
                 </div>
             )}
+        </div>
+    )
+}
+
+function FileManagerSection() {
+    const [path, setPath] = useState('')
+    const [root, setRoot] = useState<'styleguide' | 'public'>('styleguide')
+    const [files, setFiles] = useState<any[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        loadFiles()
+    }, [path, root])
+
+    function loadFiles() {
+        setLoading(true)
+        setError('')
+        fetch(`/api/di1/files?root=${root}&path=${encodeURIComponent(path)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) setError(data.error)
+                else setFiles(data.files || [])
+            })
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false))
+    }
+
+    const handleDownload = (fileName: string) => {
+        const downloadUrl = `/api/di1/files?root=${root}&path=${encodeURIComponent(path)}&download=${encodeURIComponent(fileName)}`
+        window.open(downloadUrl, '_blank')
+    }
+
+    const navigateBack = () => {
+        const parts = path.split('/').filter(Boolean)
+        parts.pop()
+        setPath(parts.join('/'))
+    }
+
+    const formatBytes = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes'
+        const k = 1024
+        const sizes = ['Bytes', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    return (
+        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e9ecef', borderRadius: '8px', border: '1px solid #ced4da' }}>
+            <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Folder size={20} /> File Explorer
+            </h3>
+
+            {/* Root Selection Tabs */}
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
+                <button
+                    onClick={() => { setRoot('styleguide'); setPath(''); }}
+                    style={{
+                        padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid #ccc',
+                        backgroundColor: root === 'styleguide' ? '#0d6efd' : 'white',
+                        color: root === 'styleguide' ? 'white' : '#333',
+                        fontWeight: 'bold', fontSize: '13px'
+                    }}
+                >
+                    Styleguide
+                </button>
+                <button
+                    onClick={() => { setRoot('public'); setPath(''); }}
+                    style={{
+                        padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid #ccc',
+                        backgroundColor: root === 'public' ? '#0d6efd' : 'white',
+                        color: root === 'public' ? 'white' : '#333',
+                        fontWeight: 'bold', fontSize: '13px'
+                    }}
+                >
+                    Public folder
+                </button>
+            </div>
+
+            {/* Breadcrumb / Path toolbar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', backgroundColor: 'white', padding: '10px', borderRadius: '4px', border: '1px solid #dee2e6', fontSize: '13px' }}>
+                <strong>Path:</strong> 
+                <span style={{ fontFamily: 'monospace', color: '#0d6efd' }}>/{root}/{path}</span>
+                {path && (
+                    <button onClick={navigateBack} style={{ marginLeft: 'auto', padding: '2px 8px', fontSize: '12px', cursor: 'pointer' }}>
+                        ⬆ Up a Dir
+                    </button>
+                )}
+            </div>
+
+            {error && (
+                <div style={{ color: '#dc3545', padding: '10px', backgroundColor: '#f8d7da', borderRadius: '4px', marginBottom: '10px' }}>
+                    {error}
+                </div>
+            )}
+
+            {/* Files List Layout */}
+            <div style={{ backgroundColor: 'white', borderRadius: '4px', border: '1px solid #dee2e6', overflow: 'hidden' }}>
+                {loading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Scanning directory...</div>
+                ) : files.length === 0 ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Empty or no items found</div>
+                ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                                <th style={{ padding: '10px', textAlign: 'left' }}>Item Name</th>
+                                <th style={{ padding: '10px', textAlign: 'left' }}>Type</th>
+                                <th style={{ padding: '10px', textAlign: 'left' }}>Size</th>
+                                <th style={{ padding: '10px', textAlign: 'center' }}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {files.map(f => (
+                                <tr key={f.name} style={{ borderBottom: '1px solid #dee2e6' }}>
+                                    <td style={{ padding: '10px', fontWeight: f.isDir ? 'bold' : 'normal' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            {f.isDir ? <Folder size={16} style={{ color: '#ffc107' }} /> : <File size={16} style={{ color: '#0dcaf0' }} />}
+                                            {f.isDir ? (
+                                                <button 
+                                                    onClick={() => setPath(f.path)}
+                                                    style={{ border: 'none', background: 'none', color: '#0d6efd', cursor: 'pointer', padding: 0, fontWeight: 'bold' }}
+                                                >
+                                                    {f.name}/
+                                                </button>
+                                            ) : (
+                                                <span>{f.name}</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '10px', color: '#666' }}>{f.isDir ? 'Folder' : 'File'}</td>
+                                    <td style={{ padding: '10px', color: '#666' }}>{f.isDir ? '--' : formatBytes(f.size)}</td>
+                                    <td style={{ padding: '10px', textAlign: 'center' }}>
+                                        {!f.isDir && (
+                                            <button 
+                                                onClick={() => handleDownload(f.name)}
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '12px', backgroundColor: '#198754', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                            >
+                                                <Download size={14} /> Download
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
         </div>
     )
 }
