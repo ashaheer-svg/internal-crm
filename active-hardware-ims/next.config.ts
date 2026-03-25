@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
-  },
-  output: 'standalone',
-  productionBrowserSourceMaps: false,
+  }
 };
 
 export default nextConfig;
