@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Upload, Download, FileText, CheckCircle, AlertCircle, Info } from "lucide-react"
 import BackButton from "@/components/BackButton"
+import ImportSummaryModal from "@/components/ImportSummaryModal"
 
 type ImportResult = {
     success: boolean
@@ -20,6 +21,7 @@ export default function BulkImportPage() {
     const [result, setResult] = useState<ImportResult | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [previewData, setPreviewData] = useState<any[] | null>(null)
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false)
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -166,6 +168,7 @@ export default function BulkImportPage() {
                 }
 
                 setResult(finalResult)
+                setIsSummaryOpen(true) // Open summary modal
 
                 if (errorCount === 0) {
                     setMessage({
@@ -176,7 +179,7 @@ export default function BulkImportPage() {
                 } else {
                     setMessage({
                         type: 'error',
-                        text: `Import finished with ${errorCount} errors. See details below.`
+                        text: `Import completed. Check summary details.`
                     })
                 }
             }
@@ -401,52 +404,20 @@ export default function BulkImportPage() {
                 </div>
             )}
 
-            {/* Results */}
+            {/* Import Summary Modal */}
             {result && (
-                <div className="bg-white shadow rounded-lg p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Import Results</h2>
-
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-600">Total Rows</p>
-                            <p className="text-2xl font-bold text-gray-900">{result.totalRows}</p>
-                        </div>
-                        <div className="bg-green-50 p-4 rounded-lg">
-                            <p className="text-sm text-green-600">Successful</p>
-                            <p className="text-2xl font-bold text-green-900">{result.successCount}</p>
-                        </div>
-                        <div className="bg-red-50 p-4 rounded-lg">
-                            <p className="text-sm text-red-600">Failed</p>
-                            <p className="text-2xl font-bold text-red-900">{result.errorCount}</p>
-                        </div>
-                    </div>
-
-                    {result.errors.length > 0 && (
-                        <div>
-                            <h3 className="text-md font-semibold text-gray-900 mb-3">Errors</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Row</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {result.errors.map((error, idx) => (
-                                            <tr key={idx}>
-                                                <td className="px-4 py-2 text-sm text-gray-900">{error.row}</td>
-                                                <td className="px-4 py-2 text-sm text-gray-900">{error.sku}</td>
-                                                <td className="px-4 py-2 text-sm text-red-600">{error.error}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                <ImportSummaryModal 
+                    isOpen={isSummaryOpen}
+                    onClose={() => setIsSummaryOpen(false)}
+                    totalRows={result.totalRows}
+                    successCount={result.successCount}
+                    errorCount={result.errorCount}
+                    errors={result.errors.map(e => ({
+                        row: e.row,
+                        identifier: e.sku !== 'BATCH' ? `SKU: ${e.sku}` : undefined,
+                        error: e.error
+                    }))}
+                />
             )}
 
             {/* Instructions */}
