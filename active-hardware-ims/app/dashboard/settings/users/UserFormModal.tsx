@@ -27,7 +27,7 @@ export default function UserFormModal({ user, onClose, onSuccess }: Props) {
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        roleId: (user as any)?.role?.id || '', // Relational role ID
+        roleId: (user as any)?.roleId || '', // Directly map from backend provided projection
         isActive: user?.isActive ?? true,
         password: '',
         salesRepId: user?.salesRepId || ''
