@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:safe": "node --max-old-space-size=1536 ./node_modules/next/dist/bin/next build",
-    "build:debug": "node --max-old-space-size=1536 ./node_modules/next/dist/bin/next build > build_debug.log 2>&1",
+    "build:safe": "next build",
+    "build:debug": "next build > build_debug.log 2>&1",
     "start": "next start",
     "lint": "eslint"
   },
