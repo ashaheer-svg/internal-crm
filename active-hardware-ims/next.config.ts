@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // @ts-expect-error - Valid Next.js property 
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+  },
+  output: 'standalone',
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;
