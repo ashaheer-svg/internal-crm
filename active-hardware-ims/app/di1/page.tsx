@@ -9,6 +9,7 @@ export default function DiagnosticPage() {
     const [loading, setLoading] = useState(true)
     const [cleanupResult, setCleanupResult] = useState<any>(null)
     const [cleaning, setCleaning] = useState(false)
+    const [users, setUsers] = useState<any[]>([]) // Added state for users
 
     async function handleLogoutAll() {
         if (!confirm("Are you sure you want to log out ALL users? This will invalidate all active sessions immediately.")) {
@@ -52,7 +53,16 @@ export default function DiagnosticPage() {
                 setData({ error: err.message })
                 setLoading(false)
             })
+
+        fetchUsers() // Fetch users on load
     }, [])
+
+    function fetchUsers() {
+        fetch('/api/users')
+            .then(res => res.json())
+            .then(data => setUsers(data.users || []))
+            .catch(console.error)
+    }
 
     if (loading) {
         return (
@@ -149,6 +159,9 @@ export default function DiagnosticPage() {
 
             {/* Table Manager */}
             <TableManager />
+
+            {/* Inactive User Purge */}
+            <InactiveUsersSection users={users} onRefresh={fetchUsers} />
 
             {/* File Manager */}
             <FileManagerSection />
@@ -925,6 +938,88 @@ function FileManagerSection() {
                     </table>
                 )}
             </div>
+        </div>
+    )
+}
+
+function InactiveUsersSection({ users, onRefresh }: { users: any[], onRefresh: () => void }) {
+    const [deletingId, setDeletingId] = useState('')
+    const [error, setError] = useState('')
+
+    const inactiveUsers = users.filter(u => !u.isActive)
+
+    async function handleDelete(id: string) {
+        if (!confirm("⚠️ Are you sure you want to PERMANENTLY delete this inactive user? This wipes their history, logs, and messages. This CANNOT be undone.")) return
+
+        setDeletingId(id)
+        setError('')
+
+        try {
+            const res = await fetch(`/api/di1/users/${id}`, { method: 'DELETE' })
+            const data = await res.json()
+
+            if (res.ok) {
+                alert('User completely purged successfully')
+                onRefresh()
+            } else {
+                setError(data.error || 'Failed to delete user')
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error deleting user')
+        } finally {
+            setDeletingId('')
+        }
+    }
+
+    return (
+        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#f8d7da', borderRadius: '8px', border: '1px solid #f5c2c7' }}>
+            <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#842029' }}>
+                <Trash2 size={20} /> Inactive User Purge (Dangerous Tool)
+            </h3>
+            <p style={{ fontSize: '12px', color: '#842029', marginBottom: '15px' }}>
+                Full deletion is destructive and bypasses soft-deletes. If deletion fails with record references warnings, reassign ownerships using the **Transfer Records** setting modal first.
+            </p>
+
+            {error && (
+                <div style={{ padding: '10px', backgroundColor: '#fdf1f2', border: '1px solid #f5c2c7', borderRadius: '4px', color: '#dc3545', marginBottom: '15px', fontSize: '13px' }}>
+                    <strong>Error:</strong> {error}
+                </div>
+            )}
+
+            {inactiveUsers.length === 0 ? (
+                <div style={{ padding: '15px', textAlign: 'center', backgroundColor: 'white', borderRadius: '4px', border: '1px solid #dee2e6', color: '#666' }}>
+                    No inactive users currently on system.
+                </div>
+            ) : (
+                <div style={{ backgroundColor: 'white', borderRadius: '4px', border: '1px solid #dee2e6', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                                <th style={{ padding: '10px', textAlign: 'left' }}>User Name</th>
+                                <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
+                                <th style={{ padding: '10px', textAlign: 'center' }}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {inactiveUsers.map(u => (
+                                <tr key={u.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                                    <td style={{ padding: '10px' }}>{u.name}</td>
+                                    <td style={{ padding: '10px', color: '#666' }}>{u.email}</td>
+                                    <td style={{ padding: '10px', textAlign: 'center' }}>
+                                        <button 
+                                            onClick={() => handleDelete(u.id)}
+                                            disabled={deletingId === u.id}
+                                            style={{ padding: '6px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', opacity: deletingId === u.id ? 0.7 : 1 }}
+                                        >
+                                            {deletingId === u.id ? 'Purging...' : 'Full Delete'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     )
 }
