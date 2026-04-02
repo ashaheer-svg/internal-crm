@@ -10,8 +10,10 @@ type ImportResult = {
     totalRows: number
     successCount: number
     errorCount: number
+    skippedCount: number
     errors: Array<{ row: number; sku: string; error: string }>
     createdProducts: Array<{ sku: string; name: string }>
+    updatedProducts: Array<{ sku: string; name: string }>
 }
 
 export default function BulkImportPage() {
@@ -25,17 +27,19 @@ export default function BulkImportPage() {
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
-        if (file) {
-            if (!file.name.endsWith('.csv')) {
-                setMessage({ type: 'error', text: 'Please select a CSV file' })
-                return
-            }
-            setSelectedFile(file)
-            setMessage(null)
-            setResult(null)
-            setPreviewData(null)
-            setProgress(null)
+
+        if (!file) return
+
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            setMessage({ type: 'error', text: 'Please select a CSV file' })
+            return
         }
+
+        setSelectedFile(file)
+        setMessage(null)
+        setResult(null)
+        setPreviewData(null)
+        setProgress(null)
     }
 
     function chunkArray<T>(array: T[], size: number): T[][] {
@@ -50,21 +54,22 @@ export default function BulkImportPage() {
         try {
             const res = await fetch('/api/products/bulk-import')
 
-            if (!res.ok) {
-                throw new Error('Failed to download template')
-            }
+            if (!res.ok) throw new Error('Failed to download template')
 
             const blob = await res.blob()
             const url = window.URL.createObjectURL(blob)
+
             const a = document.createElement('a')
             a.href = url
             a.download = 'product_import_template.csv'
+
             document.body.appendChild(a)
             a.click()
+
             window.URL.revokeObjectURL(url)
             document.body.removeChild(a)
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message })
+            setMessage({ type: 'error', text: error.message || 'Download failed' })
         }
     }
 
@@ -87,9 +92,7 @@ export default function BulkImportPage() {
                 const formData = new FormData()
                 formData.append('file', selectedFile)
 
-                const url = '/api/products/bulk-import?preview=true'
-
-                const res = await fetch(url, {
+                const res = await fetch('/api/products/bulk-import?preview=true', {
                     method: 'POST',
                     body: formData
                 })
@@ -97,19 +100,22 @@ export default function BulkImportPage() {
                 const data = await res.json()
 
                 if (!res.ok) {
-                    throw new Error(data.error || 'Failed to parse file')
+                    throw new Error(data?.error || 'Failed to parse file')
                 }
 
-                if (data.preview && Array.isArray(data.preview)) {
+                if (Array.isArray(data?.preview)) {
                     setPreviewData(data.preview)
-                    if (data.errors && data.errors.length > 0) {
+
+                    if (data.errors?.length > 0) {
                         setResult({
                             success: false,
-                            totalRows: data.totalRows,
-                            successCount: data.successCount,
-                            errorCount: data.errorCount,
+                            totalRows: data.totalRows || 0,
+                            successCount: data.successCount || 0,
+                            errorCount: data.errorCount || 0,
+                            skippedCount: data.skippedCount || 0,
                             errors: data.errors,
-                            createdProducts: []
+                            createdProducts: [],
+                            updatedProducts: []
                         })
                     }
                 } else {
@@ -117,38 +123,55 @@ export default function BulkImportPage() {
                 }
 
             } else {
-                // ... Chunked Import Logic ...
-                if (!previewData) return
+                if (!previewData || previewData.length === 0) return
 
                 const chunks = chunkArray(previewData, 50)
+
                 let successCount = 0
                 let errorCount = 0
+                let skippedCount = 0
                 const allErrors: any[] = []
+
                 let processedDocs = 0
 
                 for (let i = 0; i < chunks.length; i++) {
                     const chunk = chunks[i]
 
-                    const res = await fetch('/api/products/bulk-import', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ products: chunk })
-                    })
+                    try {
+                        const res = await fetch('/api/products/bulk-import', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ products: chunk })
+                        })
 
-                    const data = await res.json()
+                        const data = await res.json()
 
-                    if (!res.ok) {
-                        // If a chunk fails entirely
-                        errorCount += chunk.length
-                        allErrors.push({ row: i, sku: 'BATCH', error: `Batch ${i + 1} failed: ${data.error || res.statusText}` })
-                    } else {
-                        successCount += data.successCount
-                        errorCount += data.errorCount
-                        if (data.errors && Array.isArray(data.errors)) {
-                            allErrors.push(...data.errors)
+                        if (!res.ok) {
+                            errorCount += chunk.length
+                            allErrors.push({
+                                row: i,
+                                sku: 'BATCH',
+                                error: `Batch ${i + 1} failed: ${data?.error || res.statusText}`
+                            })
+                        } else {
+                            successCount += data?.successCount || 0
+                            errorCount += data?.errorCount || 0
+                            skippedCount += data?.skippedCount || 0
+
+                            if (Array.isArray(data?.errors)) {
+                                allErrors.push(...data.errors)
+                            }
                         }
+
+                    } catch (err: any) {
+                        errorCount += chunk.length
+                        allErrors.push({
+                            row: i,
+                            sku: 'BATCH',
+                            error: `Batch ${i + 1} crashed: ${err.message}`
+                        })
                     }
 
                     processedDocs += chunk.length
@@ -163,8 +186,10 @@ export default function BulkImportPage() {
                     totalRows: previewData.length,
                     successCount,
                     errorCount,
+                    skippedCount,
                     errors: allErrors,
-                    createdProducts: [] // We don't track created details for bulk to save memory
+                    createdProducts: [],
+                    updatedProducts: []
                 }
 
                 setResult(finalResult)
@@ -185,7 +210,7 @@ export default function BulkImportPage() {
             }
 
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message })
+            setMessage({ type: 'error', text: error.message || 'Upload failed' })
             setProgress(null)
         } finally {
             setUploading(false)
@@ -234,7 +259,7 @@ export default function BulkImportPage() {
                         <div
                             className="bg-blue-600 h-4 rounded-full transition-all duration-300"
                             style={{ width: `${progress}%` }}
-                        ></div>
+                        />
                     </div>
                     <p className="text-sm text-gray-500 mt-2 text-right">{progress}% Complete</p>
                 </div>
@@ -406,6 +431,62 @@ export default function BulkImportPage() {
 
             {/* Import Summary Modal */}
             {result && (
+                <div className="bg-white shadow rounded-lg p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Import Results</h2>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600">Total Rows</p>
+                            <p className="text-2xl font-bold text-gray-900">{result.totalRows}</p>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg">
+                            <p className="text-sm text-green-600">New Products</p>
+                            <p className="text-2xl font-bold text-green-900">{result.createdProducts.length || (result.successCount - (result.updatedProducts?.length || 0))}</p>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                            <p className="text-sm text-blue-600">Updated (Price Changed)</p>
+                            <p className="text-2xl font-bold text-blue-900">{result.updatedProducts?.length || 0}</p>
+                        </div>
+                        {(result.skippedCount > 0) && (
+                            <div className="bg-yellow-50 p-4 rounded-lg">
+                                <p className="text-sm text-yellow-600">Skipped (No Change)</p>
+                                <p className="text-2xl font-bold text-yellow-900">{result.skippedCount}</p>
+                            </div>
+                        )}
+                        {result.errorCount > 0 && (
+                            <div className="bg-red-50 p-4 rounded-lg">
+                                <p className="text-sm text-red-600">Failed</p>
+                                <p className="text-2xl font-bold text-red-900">{result.errorCount}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {result.errors.length > 0 && (
+                        <div>
+                            <h3 className="text-md font-semibold text-red-700 mb-3">Error Details</h3>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Row</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {result.errors.map((error, idx) => (
+                                            <tr key={idx}>
+                                                <td className="px-4 py-2 text-sm text-gray-900">{error.row}</td>
+                                                <td className="px-4 py-2 text-sm text-gray-900">{error.sku}</td>
+                                                <td className="px-4 py-2 text-sm text-red-600">{error.error}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
                 <ImportSummaryModal 
                     isOpen={isSummaryOpen}
                     onClose={() => setIsSummaryOpen(false)}
@@ -455,7 +536,9 @@ export default function BulkImportPage() {
                     <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Important Notes</h3>
                         <ul className="list-disc list-inside space-y-1 ml-2">
-                            <li>SKU must be unique - duplicates will be rejected</li>
+                            <li>If a SKU already exists and the prices are different, the prices will be updated</li>
+                            <li>If a SKU already exists and the prices are the same, it will be skipped</li>
+                            <li>If a SKU does not exist, a new product will be created</li>
                             <li>All price and numeric fields must be non-negative numbers</li>
                             <li>Use decimal point (.) for prices, not comma</li>
                             <li>Maximum file size: 5MB</li>

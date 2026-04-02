@@ -8,8 +8,10 @@ type ImportResult = {
     totalRows: number
     successCount: number
     errorCount: number
+    skippedCount: number // Products with no price change — not imported
     errors: Array<{ row: number; sku: string; error: string }>
     createdProducts: Array<{ sku: string; name: string }>
+    updatedProducts: Array<{ sku: string; name: string }>
 }
 
 function parseCSV(text: string): any[] {
@@ -79,18 +81,25 @@ export async function POST(request: Request) {
                 }
 
                 try {
-                    await prisma.product.create({
-                        data: {
+                    await prisma.product.upsert({
+                        where: { sku: item.sku },
+                        // Update only the prices if the SKU already exists
+                        update: {
+                            lowResellerPrice: item.lowResellerPrice,
+                            resellerPrice: item.resellerPrice,
+                        },
+                        // Create a new product if the SKU does not exist
+                        create: {
                             sku: item.sku,
                             name: item.name,
                             brand: item.brand,
-                            category: item.category,
+                            category: item.category || 'General',
                             model: item.model,
-                            description: item.description,
-                            minStock: item.minStock,
-                            warrantyMonths: item.warrantyMonths,
-                            lowResellerPrice: item.lowResellerPrice,
-                            resellerPrice: item.resellerPrice,
+                            description: item.description || null,
+                            minStock: item.minStock || 0,
+                            warrantyMonths: item.warrantyMonths || 0,
+                            lowResellerPrice: item.lowResellerPrice || 0,
+                            resellerPrice: item.resellerPrice || 0,
                             serviceDefinition: item.isService ? {
                                 create: {
                                     type: item.serviceType || 'LICENSE'
@@ -152,16 +161,24 @@ export async function POST(request: Request) {
             totalRows: rows.length,
             successCount: 0,
             errorCount: 0,
+            skippedCount: 0,
             errors: [],
             createdProducts: [],
+            updatedProducts: [],
             preview: []
         }
 
-        // Get existing SKUs to check for duplicates
-        const existingProducts = await prisma.product.findMany({
-            select: { sku: true }
+        // Get existing products with prices to check for updates
+        const existingProducts: {
+            sku: string
+            lowResellerPrice: number
+            resellerPrice: number
+        }[] = await prisma.product.findMany({
+            select: { sku: true, lowResellerPrice: true, resellerPrice: true }
         })
-        const existingSKUs = new Set(existingProducts.map(p => p.sku))
+        const existingProductMap = new Map<string, { sku: string, lowResellerPrice: number, resellerPrice: number }>(
+            existingProducts.map(p => [p.sku, p])
+        )
 
         // Auto-create Categories from CSV
         if (!isPreview) {
@@ -196,10 +213,7 @@ export async function POST(request: Request) {
                 if (!row.brand) throw new Error('Brand is required')
                 if (!row.model) throw new Error('Model is required')
 
-                // Check for duplicate SKU in database
-                if (existingSKUs.has(row.sku)) {
-                    throw new Error(`SKU already exists in database`)
-                }
+                const existingProduct = existingProductMap.get(row.sku)
 
                 // Parse numeric fields
                 const minStock = row.minstock ? parseInt(row.minstock) : 0
@@ -245,19 +259,43 @@ export async function POST(request: Request) {
                     result.preview?.push(productData);
                     result.successCount++;
                     // In preview, we pretend we added it to check for duplicates within the file itself
-                    existingSKUs.add(row.sku);
+                    existingProductMap.set(row.sku, { sku: row.sku, lowResellerPrice, resellerPrice });
                 } else {
-                    // Create product
-                    const product = await prisma.product.create({
-                        data: productData
-                    })
+                    if (existingProduct) {
+                        // Check if prices are different
+                        if (existingProduct.lowResellerPrice !== lowResellerPrice || existingProduct.resellerPrice !== resellerPrice) {
+                            // Update product
+                            const product = await prisma.product.update({
+                                where: { sku: row.sku },
+                                data: {
+                                    ...productData,
+                                    serviceDefinition: undefined // Don't allow updating service definition through bulk import for now? 
+                                    // Actually, if it's there, should we? 
+                                    // Let's keep it simple as the user requested "update the new price"
+                                }
+                            })
+                            result.successCount++
+                            result.updatedProducts.push({
+                                sku: product.sku,
+                                name: product.name
+                            })
+                        } else {
+                            // Prices are the same, skip — no import needed
+                            result.skippedCount++
+                        }
+                    } else {
+                        // Create product
+                        const product = await prisma.product.create({
+                            data: productData
+                        })
 
-                    result.successCount++
-                    result.createdProducts.push({
-                        sku: product.sku,
-                        name: product.name
-                    })
-                    existingSKUs.add(row.sku)
+                        result.successCount++
+                        result.createdProducts.push({
+                            sku: product.sku,
+                            name: product.name
+                        })
+                        existingProductMap.set(row.sku, { sku: product.sku, lowResellerPrice, resellerPrice })
+                    }
                 }
 
             } catch (error: any) {
