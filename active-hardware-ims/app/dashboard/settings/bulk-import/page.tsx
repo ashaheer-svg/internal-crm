@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Upload, Download, FileText, CheckCircle, AlertCircle, Info } from "lucide-react"
 import BackButton from "@/components/BackButton"
+import ImportSummaryModal from "@/components/ImportSummaryModal"
 
 type ImportResult = {
     success: boolean
@@ -22,6 +23,7 @@ export default function BulkImportPage() {
     const [result, setResult] = useState<ImportResult | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [previewData, setPreviewData] = useState<any[] | null>(null)
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false)
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -191,6 +193,7 @@ export default function BulkImportPage() {
                 }
 
                 setResult(finalResult)
+                setIsSummaryOpen(true) // Open summary modal
 
                 if (errorCount === 0) {
                     setMessage({
@@ -201,7 +204,7 @@ export default function BulkImportPage() {
                 } else {
                     setMessage({
                         type: 'error',
-                        text: `Import finished with ${errorCount} errors. See details below.`
+                        text: `Import completed. Check summary details.`
                     })
                 }
             }
@@ -426,7 +429,7 @@ export default function BulkImportPage() {
                 </div>
             )}
 
-            {/* Results */}
+            {/* Import Summary Modal */}
             {result && (
                 <div className="bg-white shadow rounded-lg p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Import Results</h2>
@@ -484,6 +487,18 @@ export default function BulkImportPage() {
                         </div>
                     )}
                 </div>
+                <ImportSummaryModal 
+                    isOpen={isSummaryOpen}
+                    onClose={() => setIsSummaryOpen(false)}
+                    totalRows={result.totalRows}
+                    successCount={result.successCount}
+                    errorCount={result.errorCount}
+                    errors={result.errors.map(e => ({
+                        row: e.row,
+                        identifier: e.sku !== 'BATCH' ? `SKU: ${e.sku}` : undefined,
+                        error: e.error
+                    }))}
+                />
             )}
 
             {/* Instructions */}

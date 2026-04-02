@@ -20,6 +20,13 @@ interface Quote {
         orderNumber: string
         status: string
     }
+    items?: {
+        productId: string
+        quantity: number
+        product?: {
+            sku: string
+        }
+    }[]
 }
 
 interface QuoteSectionProps {
@@ -31,6 +38,7 @@ interface QuoteSectionProps {
 export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSectionProps) {
     const router = useRouter()
     const [approvingQuote, setApprovingQuote] = useState<Quote | null>(null)
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc') // Added date sort state
 
     const handleApprove = async (quoteId: string, data: any) => {
         const res = await fetch(`/api/crm/quotes/${quoteId}/confirm`, {
@@ -71,7 +79,26 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Project Quotes</h3>
+                <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-medium text-gray-900">Project Quotes</h3>
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                        <button
+                            onClick={() => setSortOrder('desc')}
+                            className={`px-2 py-1 text-xs font-medium hover:bg-gray-50 flex items-center gap-1.5 transition-colors ${sortOrder === 'desc' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600'}`}
+                            title="Sort Newest First"
+                        >
+                            Newest
+                        </button>
+                        <div className="w-px h-4 bg-gray-200"></div>
+                        <button
+                            onClick={() => setSortOrder('asc')}
+                            className={`px-2 py-1 text-xs font-medium hover:bg-gray-50 flex items-center gap-1.5 transition-colors ${sortOrder === 'asc' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600'}`}
+                            title="Sort Oldest First"
+                        >
+                            Oldest
+                        </button>
+                    </div>
+                </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/new/hardware`)}
@@ -97,8 +124,19 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
             ) : (
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                     <ul className="divide-y divide-gray-200">
-                        {quotes.map((quote) => (
-                            <li key={quote.id} className={`p-4 flex items-center justify-between hover:bg-opacity-50 transition-colors ${quote.status === 'ACCEPTED' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}>
+                        {[...quotes].sort((a, b) => {
+                            const dateA = new Date(a.createdAt).getTime();
+                            const dateB = new Date(b.createdAt).getTime();
+                            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+                        }).map((quote) => (
+                            <li 
+                                key={quote.id} 
+                                className={`p-4 flex items-center justify-between hover:bg-opacity-50 transition-colors ${quote.status === 'ACCEPTED' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
+                                title={quote.items && quote.items.length > 0 
+                                    ? `📌 Items in Quote:\n${quote.items.map(i => `• ${i.product?.sku || 'N/A'}: ${i.quantity} qty`).join('\n')}`
+                                    : 'No hardware items in quote'
+                                }
+                            >
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-3">
                                         <button

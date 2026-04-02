@@ -11,9 +11,23 @@ const gunzip = promisify(zlib.gunzip)
  * Get the absolute path to the SQLite database file
  */
 export function getDatabasePath(): string {
-    // The database file is in the prisma directory
-    const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
-    return dbPath
+    const databaseUrl = process.env.DATABASE_URL
+    const defaultPath = path.join(process.cwd(), 'prisma', 'dev.db')
+
+    if (!databaseUrl || !databaseUrl.startsWith('file:')) {
+        return defaultPath
+    }
+
+    const filePath = databaseUrl.replace('file:', '')
+    
+    // Prisma relative paths are relative to the schema.prisma location (usually in ./prisma folder)
+    if (filePath.startsWith('./') || !filePath.includes('/')) {
+        const filename = path.basename(filePath)
+        return path.join(process.cwd(), 'prisma', filename)
+    }
+
+    // fallback or absolute
+    return path.resolve(process.cwd(), 'prisma', filePath)
 }
 
 /**
@@ -103,6 +117,15 @@ export async function restoreDatabaseFromBackup(backupPath: string): Promise<voi
 
         // Disconnect Prisma client
         await prisma.$disconnect()
+
+        // Clean up any stale journal files to prevent overriding the restored database
+        const walPath = dbPath + '-wal'
+        const shmPath = dbPath + '-shm'
+        const journalPath = dbPath + '-journal'
+
+        if (fs.existsSync(walPath)) await fs.promises.unlink(walPath).catch(() => { })
+        if (fs.existsSync(shmPath)) await fs.promises.unlink(shmPath).catch(() => { })
+        if (fs.existsSync(journalPath)) await fs.promises.unlink(journalPath).catch(() => { })
 
         // Write database file
         await fs.promises.writeFile(dbPath, dbBuffer)

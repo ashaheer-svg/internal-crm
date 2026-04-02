@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:safe": "next build",
+    "build:debug": "next build > build_debug.log 2>&1",
     "start": "next start",
     "lint": "eslint"
   },

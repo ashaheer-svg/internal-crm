@@ -47,6 +47,7 @@ async function handleReset() {
             await tx.cRMProject.deleteMany({})
             await tx.cRMStage.deleteMany({})
             await tx.cRMPipeline.deleteMany({})
+            await tx.pendingProjectImport.deleteMany({})
 
             // 2. Messaging
             await tx.messageReceipt.deleteMany({})
@@ -66,6 +67,7 @@ async function handleReset() {
             await tx.invoice.deleteMany({})
             await tx.reservation.deleteMany({})
             await tx.warrantyClaim.deleteMany({})
+            await tx.supplierRMA.deleteMany({})
             await tx.inventoryItem.deleteMany({})
             await tx.gRNItem.deleteMany({})
             await tx.goodsReceiptNote.deleteMany({})
@@ -82,6 +84,7 @@ async function handleReset() {
 
             // 6. Generic Settings & Logs
             await tx.transactionLog.deleteMany({})
+            await tx.nasModel.deleteMany({})
             await tx.category.deleteMany({})
             await tx.sequence.deleteMany({})
             await tx.taxConfiguration.deleteMany({})
