@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth() // Need user for logging
         const body = await request.json()
-        const { poNumber, supplier, items, notes } = body
+        const { poNumber, supplier, items, notes, poDate } = body
 
         if (!supplier || !items || items.length === 0) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -110,6 +110,7 @@ export async function POST(request: Request) {
                 totalAmount,
                 status: 'DRAFT',
                 notes,
+                createdAt: poDate ? new Date(poDate) : undefined,
                 items: {
                     create: items.map((item: any) => ({
                         productId: item.productId,

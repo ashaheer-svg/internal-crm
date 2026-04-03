@@ -40,6 +40,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
     const [poNumber, setPoNumber] = useState("")
     const [supplier, setSupplier] = useState("")
     const [notes, setNotes] = useState("")
+    const [poDate, setPoDate] = useState("")
     const [items, setItems] = useState<POItem[]>([])
     const [isReadOnlyItems, setIsReadOnlyItems] = useState(false)
 
@@ -56,6 +57,9 @@ export default function EditPurchaseOrderPage({ params }: Props) {
             setPoNumber(data.poNumber)
             setSupplier(data.supplier)
             setNotes(data.notes || "")
+            if (data.createdAt) {
+                setPoDate(data.createdAt.split("T")[0])
+            }
 
             // Map items
             const poItems = data.items.map((item: any) => ({
@@ -148,6 +152,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
             const body: any = {
                 supplier,
                 notes,
+                poDate,
             }
 
             // Only send items if they are editable
@@ -217,7 +222,7 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                 <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
                     <h2 className="text-lg font-medium text-gray-900">Purchase Order Details</h2>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">PO Number</label>
                             <input
@@ -225,6 +230,17 @@ export default function EditPurchaseOrderPage({ params }: Props) {
                                 disabled
                                 value={poNumber}
                                 className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm shadow-sm cursor-not-allowed"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Purchase Order Date</label>
+                            <input
+                                type="date"
+                                required
+                                value={poDate}
+                                onChange={(e) => setPoDate(e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                             />
                         </div>
 

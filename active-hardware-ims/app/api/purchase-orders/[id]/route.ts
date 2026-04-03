@@ -35,7 +35,7 @@ export async function PUT(
     try {
         const { id } = await params
         const body = await request.json()
-        const { supplier, notes, items, status } = body
+        const { supplier, notes, items, status, poDate } = body
 
         // Fetch current PO to check status
         const currentPo = await prisma.purchaseOrder.findUnique({
@@ -72,7 +72,8 @@ export async function PUT(
                     supplier,
                     notes,
                     status,
-                    totalAmount
+                    totalAmount,
+                    createdAt: poDate ? new Date(poDate) : undefined
                 }
             })
 
