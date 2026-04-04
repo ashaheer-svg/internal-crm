@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Plus, Edit, Trash2, LogOut } from "lucide-react"
+import { Users, Plus, Edit, Trash2, LogOut, RefreshCw } from "lucide-react"
 import UserFormModal from "./UserFormModal"
+import UserTransferModal from "@/components/crm/UserTransferModal"
 import { logoutAllUsers } from "@/app/actions/auth-actions"
 import { formatDate } from "@/lib/utils"
 import ConfirmModal from "@/components/ConfirmModal"
@@ -22,6 +23,7 @@ export default function UsersTab() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [transferringUser, setTransferringUser] = useState<{ id: string, name: string } | null>(null) // State for transfer
     const [pendingAction, setPendingAction] = useState<null | {
         title: string; message: string; variant?: 'danger' | 'warning'; loading?: boolean; onConfirm: () => void
     }>(null)
@@ -207,6 +209,13 @@ export default function UsersTab() {
                                             <Edit className="h-4 w-4" />
                                         </button>
                                         <button
+                                            onClick={() => setTransferringUser({ id: user.id, name: user.name })}
+                                            className="p-2 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                                            title="Transfer Records"
+                                        >
+                                            <RefreshCw className="h-4 w-4" />
+                                        </button>
+                                        <button
                                             onClick={() => handleDelete(user.id, user.name)}
                                             className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                             title="Deactivate User"
@@ -233,6 +242,21 @@ export default function UsersTab() {
                         setShowModal(false)
                         setEditingUser(null)
                         fetchUsers()
+                    }}
+                />
+            )}
+
+            {/* User Transfer Modal */}
+            {transferringUser && (
+                <UserTransferModal
+                    isOpen={true}
+                    onClose={() => setTransferringUser(null)}
+                    fromUserId={transferringUser.id}
+                    fromUserName={transferringUser.name}
+                    onSuccess={() => {
+                        setTransferringUser(null)
+                        fetchUsers()
+                        alert("Records transferred successfully")
                     }}
                 />
             )}

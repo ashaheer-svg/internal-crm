@@ -41,7 +41,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                         items: {
                             select: {
                                 productId: true,
-                                quantity: true
+                                quantity: true,
+                                product: {
+                                    select: {
+                                        sku: true
+                                    }
+                                }
                             }
                         }
                     }

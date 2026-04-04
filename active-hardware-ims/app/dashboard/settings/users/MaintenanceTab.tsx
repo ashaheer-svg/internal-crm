@@ -3,12 +3,19 @@
 import { useState } from "react"
 import { Download, Upload, AlertCircle, CheckCircle2, Loader2, Database } from "lucide-react"
 import ConfirmModal from "@/components/ConfirmModal"
+import ImportSummaryModal from "@/components/ImportSummaryModal"
 
 export default function MaintenanceTab() {
     const [exportLoading, setExportLoading] = useState(false)
     const [importLoading, setImportLoading] = useState(false)
     const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
     const [pendingImport, setPendingImport] = useState<null | { content: string; fileName: string }>(null)
+    const [summaryModal, setSummaryModal] = useState<{
+        isOpen: boolean;
+        successCount: number;
+        errorCount: number;
+        errors: any[];
+    }>({ isOpen: false, successCount: 0, errorCount: 0, errors: [] })
 
     async function handleExport() {
         setExportLoading(true)
@@ -63,7 +70,12 @@ export default function MaintenanceTab() {
             })
             const result = await res.json()
             if (res.ok) {
-                setStatus({ type: 'success', message: result.message || 'Configuration imported successfully.' })
+                setSummaryModal({
+                    isOpen: true,
+                    successCount: result.successCount || 0,
+                    errorCount: result.errorCount || 0,
+                    errors: result.errors || []
+                })
             } else {
                 throw new Error(result.error || 'Import failed')
             }
@@ -76,6 +88,15 @@ export default function MaintenanceTab() {
 
     return (
         <div className="space-y-6 max-w-4xl">
+            <ImportSummaryModal
+                isOpen={summaryModal.isOpen}
+                onClose={() => setSummaryModal(prev => ({ ...prev, isOpen: false }))}
+                title="RBAC Import Results"
+                totalRows={summaryModal.successCount + summaryModal.errorCount}
+                successCount={summaryModal.successCount}
+                errorCount={summaryModal.errorCount}
+                errors={summaryModal.errors}
+            />
             <ConfirmModal
                 open={!!pendingImport}
                 title="Restore RBAC Configuration"

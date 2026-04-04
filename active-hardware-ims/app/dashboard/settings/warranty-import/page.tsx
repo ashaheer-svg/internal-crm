@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Upload, Download, FileText, CheckCircle, AlertCircle, Info, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import ImportSummaryModal from "@/components/ImportSummaryModal"
 
 export default function WarrantyImportPage() {
     const [uploading, setUploading] = useState(false)
@@ -11,6 +12,7 @@ export default function WarrantyImportPage() {
     const [result, setResult] = useState<any | null>(null)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
     const [previewData, setPreviewData] = useState<any[] | null>(null)
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false)
 
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -127,7 +129,13 @@ export default function WarrantyImportPage() {
 
                 setPreviewData(null)
                 setProgress(null)
-                setResult({ errors: allErrors })
+                setResult({ 
+                    totalRows: previewData.length,
+                    successCount,
+                    errorCount,
+                    errors: allErrors 
+                })
+                setIsSummaryOpen(true) // Open summary modal
 
                 if (errorCount === 0) {
                     setMessage({
@@ -138,7 +146,7 @@ export default function WarrantyImportPage() {
                 } else {
                     setMessage({
                         type: 'error',
-                        text: `Import completed with issues. Success: ${successCount}, Failed: ${errorCount}`
+                        text: `Import completed. Check summary details.`
                     })
                 }
             }
@@ -314,12 +322,23 @@ export default function WarrantyImportPage() {
                     </div>
                 </div>
             )}
+            {/* Import Summary Modal */}
+            {result && !previewData && (
+                <ImportSummaryModal 
+                    isOpen={isSummaryOpen}
+                    onClose={() => setIsSummaryOpen(false)}
+                    totalRows={result.totalRows || 0}
+                    successCount={result.successCount || 0}
+                    errorCount={result.errorCount || 0}
+                    errors={result.errors || []}
+                />
+            )}
 
-            {/* Results Detail */}
-            {result && result.errors && result.errors.length > 0 && (
+            {/* Parsing Errors Detail (Preview Mode only) */}
+            {result && previewData && result.errors && result.errors.length > 0 && (
                 <div className="bg-white shadow rounded-lg p-6">
                     <h3 className="text-md font-semibold text-red-600 mb-3">
-                        {previewData ? "Parsing Errors (Will be skipped)" : "Import Errors"}
+                        Parsing Errors (Will be skipped)
                     </h3>
                     <div className="bg-red-50 p-4 rounded-md text-sm text-red-700 font-mono space-y-1 max-h-40 overflow-y-auto">
                         {result.errors.map((err: string, i: number) => (

@@ -11,6 +11,7 @@ export async function POST() {
         // Delete all data in order (respecting foreign key constraints)
         await prisma.$transaction(async (tx) => {
             // 1. CRM & Projects
+            await tx.pendingProjectImport.deleteMany({})
             await tx.cRMQuoteItem.deleteMany({})
             await tx.cRMQuote.deleteMany({})
             await tx.cRMActivity.deleteMany({})

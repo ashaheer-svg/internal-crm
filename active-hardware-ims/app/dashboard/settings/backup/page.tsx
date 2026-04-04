@@ -28,6 +28,16 @@ export default function BackupPage() {
     const [importingCustomers, setImportingCustomers] = useState(false)
     const [customerFile, setCustomerFile] = useState<File | null>(null)
 
+    // Validation State
+    const [validating, setValidating] = useState(false)
+    const [validationResult, setValidationResult] = useState<{
+        tempId: string;
+        stats: { users: number; customers: number; products: number; deliveryOrders: number };
+        backupTimestamp: string;
+        filename: string;
+    } | null>(null)
+    const [showValidationModal, setShowValidationModal] = useState(false)
+
     // Legacy Data Migration State
     const [importingLegacy, setImportingLegacy] = useState(false)
     const [legacyFile, setLegacyFile] = useState<File | null>(null)
@@ -87,20 +97,63 @@ export default function BackupPage() {
         }
     }
 
+    async function handleValidateBackup(file: File) {
+        setValidating(true)
+        setMessage(null)
+        setValidationResult(null)
+
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const res = await fetch('/api/backup/validate', {
+                method: 'POST',
+                body: formData
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to validate backup')
+            }
+
+            setValidationResult(data)
+            setShowValidationModal(true)
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message })
+            setSelectedFile(null)
+        } finally {
+            setValidating(false)
+        }
+    }
+
     async function handleRestoreBackup() {
-        if (!selectedFile || !confirmRestore) return
+        if (!confirmRestore) return
 
         setUploading(true)
         setMessage(null)
 
         try {
-            const formData = new FormData()
-            formData.append('file', selectedFile)
+            const payload = validationResult?.tempId 
+                ? { tempId: validationResult.tempId }
+                : null;
 
-            const res = await fetch('/api/backup/restore', {
-                method: 'POST',
-                body: formData
-            })
+            let res;
+            if (payload) {
+                res = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+            } else {
+                if (!selectedFile) return;
+                const formData = new FormData()
+                formData.append('file', selectedFile)
+                res = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    body: formData
+                })
+            }
 
             const data = await res.json()
 
@@ -110,9 +163,10 @@ export default function BackupPage() {
 
             setMessage({ type: 'success', text: data.message })
             setSelectedFile(null)
+            setValidationResult(null)
+            setShowValidationModal(false)
             setConfirmRestore(false)
 
-            // Reload page after 2 seconds
             setTimeout(() => {
                 window.location.reload()
             }, 2000)
@@ -133,6 +187,9 @@ export default function BackupPage() {
             setSelectedFile(file)
             setConfirmRestore(false)
             setMessage(null)
+            
+            // Trigger Validation
+            handleValidateBackup(file)
         }
     }
 
@@ -291,6 +348,72 @@ export default function BackupPage() {
                 onConfirm={async () => { const action = pendingImport?.action; setPendingImport(null); if (action) await action() }}
                 onCancel={() => setPendingImport(null)}
             />
+
+            {/* Validation & Stats Summary Modal */}
+            {showValidationModal && validationResult && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <CheckCircle className="h-8 w-8 text-green-600" />
+                            <h3 className="text-lg font-semibold text-gray-900">Backup Validated</h3>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-4">
+                            This backup file appears compatible. Please review the contents before restoring.
+                        </p>
+
+                        <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                            <h4 className="text-sm font-bold text-gray-700 mb-2 border-b pb-1">Backup Details:</h4>
+                            <ul className="text-xs space-y-1 text-gray-600 mb-3">
+                                <li><strong>File:</strong> {validationResult.filename}</li>
+                                <li><strong>Created At:</strong> {validationResult.backupTimestamp !== "Unknown" ? formatDateTime(validationResult.backupTimestamp) : "Unknown"}</li>
+                            </ul>
+                            
+                            <h4 className="text-sm font-bold text-gray-700 mb-2 border-b pb-1">Data Volume Breakdown:</h4>
+                            <ul className="text-xs space-y-2 text-gray-600">
+                                <li className="flex justify-between"><span>👥 Users</span> <span className="font-bold">{validationResult.stats.users}</span></li>
+                                <li className="flex justify-between"><span>🤝 Customers</span> <span className="font-bold">{validationResult.stats.customers}</span></li>
+                                <li className="flex justify-between"><span>📦 Products</span> <span className="font-bold">{validationResult.stats.products}</span></li>
+                                <li className="flex justify-between"><span>📋 Delivery Orders</span> <span className="font-bold">{validationResult.stats.deliveryOrders}</span></li>
+                            </ul>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={confirmRestore}
+                                    onChange={(e) => setConfirmRestore(e.target.checked)}
+                                    className="h-4 w-4 text-red-600 border-gray-300 rounded"
+                                />
+                                <span className="text-sm text-gray-700">
+                                    I understand this will replace ALL current data
+                                </span>
+                            </label>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowValidationModal(false)
+                                    setConfirmRestore(false)
+                                    setSelectedFile(null)
+                                }}
+                                className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRestoreBackup}
+                                disabled={!confirmRestore || uploading}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
+                            >
+                                {uploading ? 'Restoring...' : 'Confirm Restore'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div>
                 <BackButton className="mb-4" />
                 <h1 className="text-2xl font-bold text-gray-900">Database Backup & Restore</h1>

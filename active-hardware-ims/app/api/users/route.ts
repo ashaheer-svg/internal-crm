@@ -44,6 +44,7 @@ export async function GET() {
             }
         })
 
+        console.log(`[API] Returning ${mappedUsers.length} users to frontend`)
         return NextResponse.json({ users: mappedUsers })
     } catch (error: any) {
         console.error('List users error:', error)

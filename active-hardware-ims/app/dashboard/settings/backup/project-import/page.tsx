@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils"
 import Papa from "papaparse"
 import ExcelJS from "exceljs"
+import ImportSummaryModal from "@/components/ImportSummaryModal"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,8 @@ export default function ProjectImportPage() {
     const [resolving, setResolving] = useState(false)
     const [committing, setCommitting] = useState(false)
     const [commitResult, setCommitResult] = useState<{ count: number } | null>(null)
+    const [commitErrors, setCommitErrors] = useState<string[]>([])
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -318,6 +321,7 @@ export default function ProjectImportPage() {
     async function handleCommit() {
         setCommitting(true)
         setError(null)
+        setCommitErrors([])
         try {
             // Build entity resolutions map
             const entityResolutions: Record<string, any> = {}
@@ -336,8 +340,21 @@ export default function ProjectImportPage() {
                 body: JSON.stringify({ pipelineId, rows: mappedRows, entityResolutions })
             })
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Import failed')
+            
+            if (!res.ok) {
+                // If backend returns distinct row-level errors, show them in summary modal
+                if (data.errors && Array.isArray(data.errors)) {
+                    setCommitErrors(data.errors)
+                    setCommitResult({ count: data.successCount || 0 })
+                    setIsSummaryOpen(true)
+                    setStep('done')
+                    return
+                }
+                throw new Error(data.error || 'Import failed')
+            }
+            
             setCommitResult({ count: data.count })
+            setIsSummaryOpen(true)
             setStep('done')
         } catch (e: any) {
             setError(e.message)
@@ -866,14 +883,14 @@ export default function ProjectImportPage() {
                             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-gray-900">Import Complete!</h2>
+                            <h2 className="text-2xl font-black text-gray-900">Import Process Finished!</h2>
                             <p className="text-base text-gray-500 mt-2">
                                 <strong className="text-gray-800">{commitResult.count}</strong> legacy projects have been imported to the CRM pipeline.
                             </p>
                         </div>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => { setStep('upload'); setRawRows([]); setResolutions([]); setMappedRows([]); setCommitResult(null); setError(null) }}
+                                onClick={() => { setStep('upload'); setRawRows([]); setResolutions([]); setMappedRows([]); setCommitResult(null); setError(null); setIsSummaryOpen(false) }}
                                 className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                             >
                                 Import Another File
@@ -889,6 +906,18 @@ export default function ProjectImportPage() {
             {/* Overlay to close popover */}
             {activePopover && (
                 <div className="fixed inset-0 z-[9998]" onClick={closePopover} />
+            )}
+
+            {/* Import Summary Modal */}
+            {step === 'done' && commitResult && (
+                <ImportSummaryModal 
+                    isOpen={isSummaryOpen}
+                    onClose={() => setIsSummaryOpen(false)}
+                    totalRows={mappedRows.length}
+                    successCount={commitResult.count || 0}
+                    errorCount={commitErrors.length}
+                    errors={commitErrors}
+                />
             )}
         </div>
     )
