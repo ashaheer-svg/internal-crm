@@ -4,8 +4,8 @@ import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Printer, CheckCircle, AlertTriangle } from "lucide-react"
-import { Currency } from "@/components/Currency"
-import { formatDate, formatStatus } from "@/lib/utils"
+// import { Currency } from "@/components/Currency"
+import { formatStatus } from "@/lib/utils"
 
 export default function BuildSheetPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -22,6 +22,7 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
             fetch(`/api/delivery-orders/${id}/audit`).then(res => res.json()),
             fetch(`/api/delivery-orders/${id}/build-rejections`).then(res => res.json())
         ]).then(([orderData, auditData, rejectionsData]) => {
+            console.log(orderData)
             setOrder(orderData)
             setAuditLogs(Array.isArray(auditData) ? auditData : [])
             setRejectedSerials(rejectionsData.rejections || [])
