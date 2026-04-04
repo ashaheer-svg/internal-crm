@@ -515,6 +515,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         return item.reservedItems.length >= item.quantity
     })
 
+    // At least one inventory item (serial number) has been allocated
+    const hasAllocatedInventory = order.items.some(item => item.reservedItems.length > 0)
+
     return (
         <div className="max-w-6xl mx-auto space-y-6">
 
@@ -597,8 +600,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                     )}
                                     <button
                                         onClick={() => handleStatusChange('READY_FOR_BUILD')}
-                                        disabled={actionLoading}
+                                        disabled={actionLoading || !hasAllocatedInventory}
                                         className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                        title={!hasAllocatedInventory ? "At least one inventory item must be allocated to proceed" : ""}
                                     >
                                         <Hammer className="w-4 h-4" />
                                         Ready for Build
