@@ -36,6 +36,7 @@ interface NavItem {
 const navigation: NavItem[] = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "General Lookup", href: "/dashboard/warranty/lookup", icon: Search, permission: 'general_lookup:read' },
+    { name: "GRN Lookup", href: "/dashboard/inventory/grn-lookup", icon: Search, permission: 'grn_lookup:read' },
     { name: "Inventory", href: "/dashboard/inventory", icon: Package, permission: 'inventory:read' },
     { name: "CRM", href: "/dashboard/crm", icon: Users, permission: 'customers:read' },
     { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
