@@ -41,7 +41,7 @@ const navigation: NavItem[] = [
     { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
     { name: "Technical Build Queue", href: "/dashboard/build", icon: Hammer, permission: 'build:read' },
-    { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'backorders:read' },
+    // { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'backorders:read' },
     { name: "Stock Movements", href: "/dashboard/stock-movements", icon: ArrowRightLeft, permission: 'stock_movements:read' },
     { name: "Locations", href: "/dashboard/locations", icon: MapPin, permission: 'locations:read' },
     { name: "Warranty & RMA", href: "/dashboard/warranty", icon: ClipboardList, permission: 'warranty_rma:read' },
