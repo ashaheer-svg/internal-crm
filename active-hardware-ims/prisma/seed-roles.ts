@@ -12,7 +12,7 @@ const DEFAULT_ROLES = [
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations', 'backorders', 'stock_movements',
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations', 'backorders', 'stock_movements', 'grn_lookup',
     'reports:inventory-valuation', 'reports:stock-movement', 'reports:sales', 'reports:purchase', 'reports:warranty', 'reports:location', 'reports:backorder', 'reports:profitability'
 ]
 
@@ -173,6 +173,7 @@ async function main() {
                 { action: 'read', resource: 'audit_logs' },
                 // Lookup
                 { action: 'read', resource: 'general_lookup' },
+                { action: 'read', resource: 'grn_lookup' },
             ],
             TECHNICAL: [
                 // Build Queue — read queue, mark as built, reject items
@@ -184,10 +185,12 @@ async function main() {
                 { action: 'manage', resource: 'inventory' }, // needed to reject serials during build
                 { action: 'read', resource: 'locations' },
                 { action: 'read', resource: 'general_lookup' },
+                { action: 'read', resource: 'grn_lookup' },
             ],
             VIEWER: [
                 { action: 'read', resource: 'reports' },
                 { action: 'read', resource: 'general_lookup' },
+                { action: 'read', resource: 'grn_lookup' },
                 { action: 'read', resource: 'inventory' },
                 { action: 'read', resource: 'customers' },
                 { action: 'read', resource: 'invoices' },
