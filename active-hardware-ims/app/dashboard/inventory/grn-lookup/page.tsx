@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, FileText, Package, Calendar, User, DollarSign, X, Eye } from "lucide-react"
+import { Search, FileText, Package, Calendar, User, X, Eye } from "lucide-react"
 
 // Types
 type Product = {
@@ -38,7 +38,7 @@ export default function GRNLookupPage() {
     const [grns, setGrns] = useState<GRNInfo[]>([])
     const [loadingList, setLoadingList] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
-    
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedGrn, setSelectedGrn] = useState<GRNDetails | null>(null)
@@ -78,8 +78,8 @@ export default function GRNLookupPage() {
         }
     }
 
-    const filteredGrns = grns.filter(g => 
-        g.grnNumber.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filteredGrns = grns.filter(g =>
+        g.grnNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         g.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
         g.status.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -87,7 +87,7 @@ export default function GRNLookupPage() {
     function closeModal() {
         setIsModalOpen(false)
         // Optionally clear selected GRN so old data isn't shown on next open briefly
-        setTimeout(() => setSelectedGrn(null), 200) 
+        setTimeout(() => setSelectedGrn(null), 200)
     }
 
     function formatDate(dateStr: string) {
@@ -119,7 +119,7 @@ export default function GRNLookupPage() {
 
             {/* Search and Table Card */}
             <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden text-sm">
-                
+
                 {/* Search Bar */}
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                     <div className="relative w-full max-w-xl">
@@ -159,8 +159,8 @@ export default function GRNLookupPage() {
                                 </tr>
                             ) : (
                                 filteredGrns.map(g => (
-                                    <tr 
-                                        key={g.id} 
+                                    <tr
+                                        key={g.id}
                                         onClick={() => handleSelectGrn(g.grnNumber)}
                                         className="hover:bg-blue-50 cursor-pointer transition-colors group"
                                     >
@@ -181,7 +181,7 @@ export default function GRNLookupPage() {
                                             </span>
                                         </td>
                                         <td className="py-3 px-6 text-right">
-                                            <button 
+                                            <button
                                                 className="inline-flex items-center gap-1 px-3 py-1 text-sm bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
                                                 onClick={(e) => {
                                                     e.stopPropagation()
@@ -208,7 +208,7 @@ export default function GRNLookupPage() {
             {/* Modal Dialog */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm transition-opacity">
-                    <div 
+                    <div
                         className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -227,7 +227,7 @@ export default function GRNLookupPage() {
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">Goods Receipt Note Details</p>
                             </div>
-                            <button 
+                            <button
                                 onClick={closeModal}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -293,7 +293,7 @@ export default function GRNLookupPage() {
                                                         <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase">
                                                             <th className="py-3 px-4 font-semibold">Product</th>
                                                             <th className="py-3 px-4 font-semibold text-right">Quantity</th>
-                                                            <th className="py-3 px-4 font-semibold text-right">Unit Cost</th>
+                                                            <th className="py-3 px-4 font-semibold text-right">Unit Cost (Rs.)</th>
                                                             <th className="py-3 px-4 font-semibold">Serial Numbers</th>
                                                         </tr>
                                                     </thead>
@@ -310,7 +310,6 @@ export default function GRNLookupPage() {
                                                                     </td>
                                                                     <td className="py-4 px-4 text-right text-gray-600 align-top">
                                                                         <div className="flex items-center justify-end gap-1">
-                                                                            <DollarSign className="w-3 h-3 text-gray-400" />
                                                                             {item.unitCost?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                         </div>
                                                                     </td>
