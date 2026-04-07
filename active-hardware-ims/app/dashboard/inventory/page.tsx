@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Plus, Printer, Search, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import SortIcon from "@/components/SortIcon"
@@ -22,6 +23,7 @@ type Product = {
 }
 
 export default function InventoryPage() {
+    const router = useRouter()
     const [products, setProducts] = useState<Product[]>([])
     const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 20, totalPages: 0 })
     const [loading, setLoading] = useState(true)
@@ -180,19 +182,19 @@ export default function InventoryPage() {
                                         <SortIcon sort={sort} column="status" label="Status" onSort={handleSort} />
                                     </th>
                                     <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
-                                        <SortIcon sort={sort} column="stock" label="Total Stock" onSort={handleSort} />
+                                        <SortIcon sort={sort} column="minStock" label="Min Stock" onSort={handleSort} />
                                     </th>
-                                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                        <span className="sr-only">Edit</span>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider leading-none">
+                                        <SortIcon sort={sort} column="stock" label="Available Stock" onSort={handleSort} />
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {products.map((product) => (
                                     <tr key={product.id} className={cn(
-                                        "transition-colors group",
+                                        "transition-colors group cursor-pointer",
                                         product._count.inventory < product.minStock ? "bg-red-50 hover:bg-red-400" : "hover:bg-gray-50/80"
-                                    )}>
+                                    )} onDoubleClick={() => router.push(`/dashboard/inventory/${product.id}`)}>
                                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-6">{product.sku}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 font-medium">{product.name}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.brand}</td>
@@ -208,15 +210,11 @@ export default function InventoryPage() {
                                                 {product.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 font-medium">
+                                            {product.minStock?.toLocaleString() || 0}
+                                        </td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-bold">
                                             {product._count.inventory.toLocaleString()}
-                                        </td>
-                                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Link href={`/dashboard/inventory/${product.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors">
-                                                    Manage Details
-                                                </Link>
-                                            </div>
                                         </td>
                                     </tr>
                                 ))}
