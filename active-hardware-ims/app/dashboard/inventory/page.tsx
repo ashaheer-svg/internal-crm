@@ -15,6 +15,7 @@ type Product = {
     category: string
     model: string
     isActive: boolean
+    minStock: number
     _count: {
         inventory: number
     }
@@ -53,6 +54,7 @@ export default function InventoryPage() {
             }
 
             const data = await res.json()
+            console.log('products', data.products)
             setProducts(data.products)
             setMeta(data.meta || { total: data.products.length, page: 1, limit: 20, totalPages: 1 })
         } catch (error) {
@@ -187,7 +189,10 @@ export default function InventoryPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100 bg-white">
                                 {products.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50/80 transition-colors group">
+                                    <tr key={product.id} className={cn(
+                                        "transition-colors group",
+                                        product._count.inventory < product.minStock ? "bg-red-50 hover:bg-red-400" : "hover:bg-gray-50/80"
+                                    )}>
                                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-6">{product.sku}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600 font-medium">{product.name}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.brand}</td>
