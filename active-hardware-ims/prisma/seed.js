@@ -1,32 +1,32 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Seeding database...')
+    console.log('Seeding database...');
 
     // Check if admin user already exists
     const existingAdmin = await prisma.user.findUnique({
         where: { email: 'admin@activehardware.com' }
-    })
+    });
 
     if (existingAdmin) {
-        console.log('Admin user already exists')
+        console.log('Admin user already exists');
         
         // Reset the password to default
-        const hashedPassword = await bcrypt.hash('Admin@123', 10)
+        const hashedPassword = await bcrypt.hash('Admin@123', 10);
         await prisma.user.update({
             where: { email: 'admin@activehardware.com' },
             data: { 
                 password: hashedPassword,
                 mustChangePassword: true 
             }
-        })
-        console.log('Admin password has been reset to default: Admin@123')
+        });
+        console.log('Admin password has been reset to default: Admin@123');
         
         // Ensure 'Sold' location exists even if admin exists
-        const soldLocation = await prisma.location.findFirst({ where: { name: 'Sold' } })
+        const soldLocation = await prisma.location.findFirst({ where: { name: 'Sold' } });
         if (!soldLocation) {
             await prisma.location.create({
                 data: {
@@ -34,22 +34,22 @@ async function main() {
                     address: 'Virtual Location',
                     type: 'VIRTUAL'
                 }
-            })
-            console.log("Created 'Sold' location")
+            });
+            console.log("Created 'Sold' location");
         }
-        return
+        return;
     }
 
     // Create default admin user
-    const hashedPassword = await bcrypt.hash('Admin@123', 10)
+    const hashedPassword = await bcrypt.hash('Admin@123', 10);
 
     // Fetch admin role to assign to the new user
     const adminRole = await prisma.role.findFirst({
         where: { name: 'ADMIN' }
-    })
+    });
 
     if (!adminRole) {
-        throw new Error('ADMIN role not found. Please run seed-roles.ts first.')
+        throw new Error('ADMIN role not found. Please run seed-roles first.');
     }
 
     const admin = await prisma.user.create({
@@ -61,18 +61,18 @@ async function main() {
             isActive: true,
             mustChangePassword: true
         }
-    })
+    });
 
-    console.log('Created admin user:', admin.email)
-    console.log('Default password: Admin@123')
-    console.log('Please change the password on first login')
+    console.log('Created admin user:', admin.email);
+    console.log('Default password: Admin@123');
+    console.log('Please change the password on first login');
 }
 
 main()
     .catch((e) => {
-        console.error(e)
-        process.exit(1)
+        console.error(e);
+        process.exit(1);
     })
     .finally(async () => {
-        await prisma.$disconnect()
-    })
+        await prisma.$disconnect();
+    });
