@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User, Printer, RefreshCw } from "lucide-react"
+import { Search, Package, Calendar, Clock, AlertTriangle, CheckCircle, FileText, User, Printer, RefreshCw, X } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import DocumentHeader from "@/components/DocumentHeader"
@@ -148,6 +148,12 @@ export default function WarrantyLookupPage() {
     const [candidates, setCandidates] = useState<any[] | null>(null)
     const [error, setError] = useState("")
 
+    // Invoice Modal State
+    const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
+    const [invoiceDetails, setInvoiceDetails] = useState<any | null>(null)
+    const [invoiceLoading, setInvoiceLoading] = useState(false)
+    const [invoiceError, setInvoiceError] = useState("")
+
     // Project Search State
     const [projectQuery, setProjectQuery] = useState("")
     const [projects, setProjects] = useState<any[] | null>(null)
@@ -232,6 +238,23 @@ export default function WarrantyLookupPage() {
             return { status: 'EXPIRING_SOON', color: 'text-yellow-700', bg: 'bg-yellow-100', text: `Expires in ${diffDays} days (${formatDate(expiry)})` }
         } else {
             return { status: 'ACTIVE', color: 'text-green-700', bg: 'bg-green-100', text: `Valid until ${formatDate(expiry)}` }
+        }
+    }
+
+    async function fetchInvoice(invoiceNumber: string) {
+        setInvoiceModalOpen(true)
+        setInvoiceLoading(true)
+        setInvoiceError("")
+        setInvoiceDetails(null)
+        try {
+            const res = await fetch(`/api/invoices/by-number?number=${encodeURIComponent(invoiceNumber)}`)
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || "Failed to fetch invoice")
+            setInvoiceDetails(data)
+        } catch (err: any) {
+            setInvoiceError(err.message)
+        } finally {
+            setInvoiceLoading(false)
         }
     }
 
@@ -449,6 +472,7 @@ export default function WarrantyLookupPage() {
             {/* Results */}
             {result && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+
                     <div className="hidden print:block">
                         <DocumentHeader title="WARRANTY & SERVICE REPORT" subtitle="Complete Item Lifecycle History" />
                     </div>
@@ -528,7 +552,17 @@ export default function WarrantyLookupPage() {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase">Invoice Ref</p>
-                                                        <p className="text-xs font-bold text-gray-700">{result.saleParams.invoiceNumber || 'NOT INVOICED'}</p>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <p className="text-xs font-bold text-gray-700">{result.saleParams?.invoiceNumber || 'NOT INVOICED'}</p>
+                                                            {result.saleParams?.invoiceNumber && (
+                                                                <button
+                                                                    onClick={() => fetchInvoice(result.saleParams!.invoiceNumber!)}
+                                                                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 hover:bg-blue-100 transition-colors uppercase font-bold"
+                                                                >
+                                                                    View
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -634,6 +668,150 @@ export default function WarrantyLookupPage() {
                 </div>
             )}
             <DocumentFooter />
+
+            {/* Invoice Details Modal */}
+            {invoiceModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm no-print">
+                    <div
+                        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                    <FileText className="w-5 h-5 text-blue-600" />
+                                    Invoice Details
+                                    {invoiceDetails && (
+                                        <span className="text-blue-600 font-mono ml-2">#{invoiceDetails.invoiceNumber}</span>
+                                    )}
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1 italic">Showing all items aggregated for this invoice number</p>
+                            </div>
+                            <button
+                                onClick={() => { setInvoiceModalOpen(false); setInvoiceDetails(null); }}
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 overflow-y-auto flex-1 bg-white">
+                            {invoiceLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-gray-500 gap-4">
+                                    <RefreshCw className="w-10 h-10 text-blue-500 animate-spin" />
+                                    <p className="font-bold uppercase tracking-widest text-xs">Fetching Invoice Data...</p>
+                                </div>
+                            ) : invoiceError ? (
+                                <div className="p-8 text-center">
+                                    <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                                    <p className="text-red-700 font-bold">{invoiceError}</p>
+                                    <button
+                                        onClick={() => setInvoiceModalOpen(false)}
+                                        className="mt-4 px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 font-medium"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            ) : invoiceDetails ? (
+                                <div className="space-y-8">
+                                    {/* Meta Section */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-inner">
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Customer Name</span>
+                                            <div className="flex items-center gap-2 text-gray-900 font-bold">
+                                                <User className="w-4 h-4 text-blue-500" />
+                                                {invoiceDetails.customerName}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Sales Rep</span>
+                                            <p className="text-gray-900 font-bold text-sm">
+                                                {invoiceDetails.salesRep?.name || "Unassigned"}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Internal Date</span>
+                                            <p className="text-sm font-semibold text-gray-700">{formatDate(invoiceDetails.createdAt)}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Items Table */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-4 px-2">
+                                            <h3 className="text-sm font-black text-gray-700 uppercase tracking-widest flex items-center gap-2">
+                                                <Package className="w-4 h-4 text-blue-500" />
+                                                Line Items
+                                            </h3>
+                                            <span className="text-[10px] font-bold text-gray-400">Total {invoiceDetails.items?.length || 0} products</span>
+                                        </div>
+                                        <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left border-collapse text-sm">
+                                                    <thead>
+                                                        <tr className="bg-gray-50 border-b text-gray-500 text-[10px] font-black uppercase tracking-widest">
+                                                            <th className="py-4 px-6">Product Information</th>
+                                                            <th className="py-4 px-6">Delivery Order</th>
+                                                            <th className="py-4 px-6 text-center">Qty</th>
+                                                            <th className="py-4 px-6 text-right">Unit Price</th>
+                                                            <th className="py-4 px-6">Serial Number</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {invoiceDetails.items?.map((item: any) => (
+                                                            <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                                                                <td className="py-4 px-6">
+                                                                    <p className="font-bold text-gray-900">{item.productName}</p>
+                                                                    <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tight">
+                                                                        SKU: {item.product?.sku || 'N/A'}
+                                                                    </p>
+                                                                </td>
+                                                                <td className="py-4 px-6">
+                                                                    <span className="text-[10px] font-mono font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase">
+                                                                        {item.source || 'N/A'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-4 px-6 text-center">
+                                                                    <span className="bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-700">
+                                                                        {item.quantity}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-4 px-6 text-right font-mono font-bold text-gray-700">
+                                                                    {item.unitPrice?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                                </td>
+                                                                <td className="py-4 px-6">
+                                                                    <p className={`font-mono text-xs font-black ${item.serialNumber ? 'text-blue-600' : 'text-gray-300 italic'}`}>
+                                                                        {item.serialNumber || 'No Serial'}
+                                                                    </p>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Notes */}
+                                    {invoiceDetails.notes && (
+                                        <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100/50">
+                                            <h4 className="text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <FileText className="w-3 h-3" />
+                                                Remarks / Internal Notes
+                                            </h4>
+                                            <p className="text-sm text-gray-700 italic leading-relaxed">
+                                                "{invoiceDetails.notes}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -95,6 +95,7 @@ export default function RolesTab() {
     }
 
     // Group permissions by resource for the matrix rows
+    // This dynamically handles new resources like 'grn_lookup' added via seeding
     const resources = Array.from(new Set(permissions.map(p => p.resource))).sort()
     const STANDARD_ACTIONS = ['create', 'read', 'update', 'delete', 'manage']
 
@@ -207,6 +208,7 @@ export default function RolesTab() {
                         {resources.map(resource => (
                             <tr key={resource as string} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-3 py-1.5 whitespace-nowrap text-[11px] font-semibold text-gray-800 sticky left-0 bg-white/95 backdrop-blur border-r capitalize">
+                                    {/* Displays resource name, e.g., 'grn_lookup' becomes 'grn lookup' */}
                                     {(resource as string).replace('_', ' ')}
                                 </td>
                                 {roles.map(role => (
