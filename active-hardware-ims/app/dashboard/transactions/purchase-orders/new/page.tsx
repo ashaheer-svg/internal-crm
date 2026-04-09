@@ -37,6 +37,8 @@ export default function NewPurchaseOrderPage() {
     const [items, setItems] = useState<POItem[]>([])
     const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
 
+    const [poDate, setPoDate] = useState(new Date().toISOString().split("T")[0])
+
     const [suppliers, setSuppliers] = useState<{ id: string, name: string }[]>([])
 
     useEffect(() => {
@@ -125,6 +127,7 @@ export default function NewPurchaseOrderPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     poNumber,
+                    poDate,
                     supplier,
                     notes,
                     items: items.map(i => ({
@@ -220,6 +223,20 @@ export default function NewPurchaseOrderPage() {
                                     value={poNumber}
                                     onChange={(e) => setPoNumber(e.target.value)}
                                     className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-mono font-bold"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    Purchase Order Date
+                                </label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={poDate}
+                                    onChange={(e) => setPoDate(e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm"
                                 />
                             </div>
 

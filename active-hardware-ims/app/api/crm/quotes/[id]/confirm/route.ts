@@ -114,6 +114,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                             endCustomerName: quote.saleType === 'PARTNER' ? ((quote as any).shipTo?.name || quote.project.customer?.name) : null,
                             saleType: quote.saleType || 'DIRECT',
                             invoiceValue: quote.subTotal, // Use Sub-total for revenue reporting
+                            salesRepId: quote.project.salesRepId || null,
                             notes: `Converted from Quote ${quote.quoteNumber}. PO: ${body.poNumber || 'N/A'}.`,
                             buildInstructions: body.buildInstructions || null,
                             deliveryInstructions: body.deliveryInstructions || null,

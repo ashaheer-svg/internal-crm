@@ -187,7 +187,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         return acc + itemCost
     }, 0) : 0
 
-    const totalRevenue = order ? order.items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0) : 0
+    const totalRevenue = order ? order.items.reduce((acc, item) => {
+        const effectiveQty = item.product?.serviceDefinition
+            ? (item.serviceStartDate ? item.quantity : 0)
+            : item.reservedItems.length
+        return acc + (item.unitPrice * effectiveQty)
+    }, 0) : 0
     const grossProfit = totalRevenue - totalCost
 
     useEffect(() => {
@@ -515,6 +520,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         return item.reservedItems.length >= item.quantity
     })
 
+    // At least one inventory item (serial number) has been allocated
+    const hasAllocatedInventory = order.items.some(item => item.reservedItems.length > 0)
+
     return (
         <div className="max-w-6xl mx-auto space-y-6">
 
@@ -597,8 +605,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                     )}
                                     <button
                                         onClick={() => handleStatusChange('READY_FOR_BUILD')}
-                                        disabled={actionLoading}
+                                        disabled={actionLoading || !hasAllocatedInventory}
                                         className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                        title={!hasAllocatedInventory ? "At least one inventory item must be allocated to proceed" : ""}
                                     >
                                         <Hammer className="w-4 h-4" />
                                         Ready for Build
@@ -709,23 +718,31 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {order.items.map(item => {
-                                    const itemCost = item.reservedItems.reduce((sum, res) => sum + (res.unitCost || 0), 0)
-                                    const avgCost = item.reservedItems.length > 0 ? itemCost / item.reservedItems.length : 0
-                                    const margin = item.unitPrice - avgCost
-                                    const rowGP = margin * item.quantity
+                                {order.items
+                                    .map(item => {
+                                        const effectiveQty = item.product?.serviceDefinition
+                                            ? (item.serviceStartDate ? item.quantity : 0)
+                                            : item.reservedItems.length
+                                        return { ...item, effectiveQty }
+                                    })
+                                    .filter(item => item.effectiveQty > 0)
+                                    .map(item => {
+                                        const itemCost = item.reservedItems.reduce((sum, res) => sum + (res.unitCost || 0), 0)
+                                        const avgCost = item.reservedItems.length > 0 ? itemCost / item.reservedItems.length : 0
+                                        const margin = item.unitPrice - avgCost
+                                        const rowGP = margin * item.effectiveQty
 
-                                    return (
-                                        <tr key={item.id} className="hover:bg-gray-50/50">
-                                            <td className="py-2 px-3 font-medium text-gray-800">{item.product.name}</td>
-                                            <td className="py-2 px-3 text-right">{item.quantity}</td>
-                                            <td className="py-2 px-3 text-right text-gray-500"><Currency amount={avgCost} /></td>
-                                            <td className="py-2 px-3 text-right text-gray-900"><Currency amount={item.unitPrice} /></td>
-                                            <td className="py-2 px-3 text-right text-amber-600 font-medium"><Currency amount={margin} /></td>
-                                            <td className="py-2 px-3 text-right font-bold text-green-600"><Currency amount={rowGP} /></td>
-                                        </tr>
-                                    )
-                                })}
+                                        return (
+                                            <tr key={item.id} className="hover:bg-gray-50/50">
+                                                <td className="py-2 px-3 font-medium text-gray-800">{item.product.name}</td>
+                                                <td className="py-2 px-3 text-right">{item.effectiveQty}</td>
+                                                <td className="py-2 px-3 text-right text-gray-500"><Currency amount={avgCost} /></td>
+                                                <td className="py-2 px-3 text-right text-gray-900"><Currency amount={item.unitPrice} /></td>
+                                                <td className="py-2 px-3 text-right text-amber-600 font-medium"><Currency amount={margin} /></td>
+                                                <td className="py-2 px-3 text-right font-bold text-green-600"><Currency amount={rowGP} /></td>
+                                            </tr>
+                                        )
+                                    })}
                             </tbody>
                         </table>
                     </div>

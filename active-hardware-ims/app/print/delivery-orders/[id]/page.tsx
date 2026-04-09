@@ -5,6 +5,7 @@ import PrintButton from "@/components/PrintButton"
 
 import DocumentHeader from "@/components/DocumentHeader"
 import DocumentFooter from "@/components/DocumentFooter"
+import console from "console"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -215,12 +216,18 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {order.items.map((item: any) => {
-                            const reservedSerials = item.reservedItems.map((i: any) => i.serialNumber)
-                            const detailSerials = item.details.flatMap((d: any) => d.serialNumbers.split(',').map((s: string) => s.trim()))
-                            const allSerials = Array.from(new Set([...reservedSerials, ...detailSerials])).filter(Boolean)
+                        {order.items.map((item) => {
+                            const reservedSerials = item.reservedItems.map((i) => i.serialNumber)
+                            // const detailSerials = item.details.flatMap((d: any) => d.serialNumbers.split(',').map((s: string) => s.trim()))
+                            const allSerials = Array.from(new Set([...reservedSerials])).filter(Boolean)
                             
                             const shippedQty = allSerials.length || item.reservedItems.length
+
+                            console.log('allSerials', allSerials);
+                            // console.log('reservedSerials', reservedSerials);
+                            // console.log('detailSerials', detailSerials);
+                            console.log('shippedQty', shippedQty);
+                            
                             
                             return (
                                 <tr key={item.id}>

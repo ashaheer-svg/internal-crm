@@ -487,19 +487,11 @@ export default function BulkImportPage() {
                         </div>
                     )}
                 </div>
-                <ImportSummaryModal 
-                    isOpen={isSummaryOpen}
-                    onClose={() => setIsSummaryOpen(false)}
-                    totalRows={result.totalRows}
-                    successCount={result.successCount}
-                    errorCount={result.errorCount}
-                    errors={result.errors.map(e => ({
-                        row: e.row,
-                        identifier: e.sku !== 'BATCH' ? `SKU: ${e.sku}` : undefined,
-                        error: e.error
-                    }))}
-                />
+    
             )}
+
+
+            
 
             {/* Instructions */}
             <div className="bg-white shadow rounded-lg p-6">
