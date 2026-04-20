@@ -769,7 +769,7 @@ model Message {
   priority            String              @default("MEDIUM")
   deadline            DateTime?
   isSystemGenerated   Boolean             @default(false)
-  senderId            String
+  senderId            String?
   recipientUserId     String?
   recipientRoleId     String?
   createdAt           DateTime            @default(now())
@@ -780,7 +780,7 @@ model Message {
   partnerName         String?
   recipientRole       Role?               @relation(fields: [recipientRoleId], references: [id])
   recipientUser       User?               @relation("ReceivedMessages", fields: [recipientUserId], references: [id])
-  sender              User                @relation("SentMessages", fields: [senderId], references: [id])
+  sender              User?               @relation("SentMessages", fields: [senderId], references: [id], onDelete: SetNull)
   attachments         MessageAttachment[]
   receipts            MessageReceipt[]
 
@@ -810,7 +810,7 @@ model MessageReceipt {
   isDone    Boolean   @default(false)
   doneAt    DateTime?
   comment   String?
-  user      User      @relation(fields: [userId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
