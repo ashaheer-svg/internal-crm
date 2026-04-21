@@ -15,9 +15,8 @@ export async function GET(request: Request) {
         const where: any = {}
         if (search) {
             where.OR = [
-                { name: { contains: search } },
-                { email: { contains: search } },
-                { phone: { contains: search } },
+                { name: { startsWith: search } },
+                { email: { startsWith: search } }
             ]
         }
 
