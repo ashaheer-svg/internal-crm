@@ -249,8 +249,11 @@ export async function GET(req: Request) {
                 prisma.message.count({ where: { ...statsWhere, category: 'TASK' } })
             ])
 
+            // Resolve missing customer names from database if needed
+            const enhancedMessages = await resolveCustomerNames(messages)
+
             return NextResponse.json({
-                messages,
+                messages: enhancedMessages,
                 stats: { unreadCount, urgentCount, taskCount, total }, // Send global total
                 meta: {
                     total: filteredTotal, // Meta total should be the filtered one for pagination controls
@@ -267,6 +270,8 @@ export async function GET(req: Request) {
             include
         })
 
+        const enhancedMessages = await resolveCustomerNames(messages)
+
         // For non-paginated (all)
         const unreadWhereAll = { 
             ...statsWhere, 
@@ -274,7 +279,7 @@ export async function GET(req: Request) {
         }
 
         return NextResponse.json({ 
-            messages, 
+            messages: enhancedMessages, 
             stats: {
                 unreadCount: await prisma.message.count({ where: unreadWhereAll }), 
                 urgentCount: await prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }), 
@@ -286,4 +291,54 @@ export async function GET(req: Request) {
         console.error('List messages error:', error)
         return NextResponse.json({ error: error.message || 'Failed to list messages' }, { status: 500 })
     }
+}
+
+async function resolveCustomerNames(messages: any[]) {
+    // Collect unique DO and Invoice numbers from subjects if metadata is missing
+    const doNumbers = new Set<string>()
+    const invNumbers = new Set<string>()
+
+    messages.forEach(m => {
+        if (!m.customerName) {
+            // Try to parse from subject
+            const doMatch = m.subject.match(/DO-\d+-\d+/)
+            if (doMatch) doNumbers.add(doMatch[0])
+
+            const invMatch = m.subject.match(/INV-\d+/)
+            if (invMatch) invNumbers.add(invMatch[0])
+        }
+    })
+
+    if (doNumbers.size === 0 && invNumbers.size === 0) return messages
+
+    // Fetch correctly matched customer names
+    const [doResults, invResults] = await Promise.all([
+        doNumbers.size > 0 ? prisma.deliveryOrder.findMany({
+            where: { orderNumber: { in: Array.from(doNumbers) } },
+            select: { orderNumber: true, customerName: true }
+        }) : [],
+        invNumbers.size > 0 ? prisma.invoice.findMany({
+            where: { invoiceNumber: { in: Array.from(invNumbers) } },
+            select: { invoiceNumber: true, customerName: true }
+        }) : []
+    ])
+
+    const nameMap = new Map<string, string>()
+    doResults.forEach((r: any) => nameMap.set(r.orderNumber, r.customerName))
+    invResults.forEach((r: any) => nameMap.set(r.invoiceNumber, r.customerName))
+
+    // Apply names to messages
+    return messages.map(m => {
+        if (!m.customerName) {
+            const doMatch = m.subject.match(/DO-\d+-\d+/)
+            if (doMatch && nameMap.has(doMatch[0])) {
+                return { ...m, customerName: nameMap.get(doMatch[0]) }
+            }
+            const invMatch = m.subject.match(/INV-\d+/)
+            if (invMatch && nameMap.has(invMatch[0])) {
+                return { ...m, customerName: nameMap.get(invMatch[0]) }
+            }
+        }
+        return m
+    })
 }

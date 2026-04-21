@@ -414,16 +414,21 @@ export default function MessagingPage() {
                                                     </span>
                                                 </div>
 
+                                                {/* Customer Name Column */}
+                                                <div className="flex items-center gap-2 md:w-48 flex-shrink-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                        <UsersIcon className="w-4 h-4 text-blue-500" />
+                                                    </div>
+                                                    <span className={cn("text-sm truncate", isUnread ? "font-bold text-gray-900" : "text-gray-600 font-medium")}>
+                                                        {m.customerName || "—"}
+                                                    </span>
+                                                </div>
+
                                                 <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                                                     <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 uppercase tracking-tighter",
                                                         m.category === 'TASK' ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600")}>
                                                         {m.category}
                                                     </span>
-                                                    {m.customerName && (
-                                                        <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
-                                                            End Customer: {m.customerName}
-                                                        </span>
-                                                    )}
                                                     {m.partnerName && (
                                                         <span className="text-[10px] bg-slate-50 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
                                                             Partner: {m.partnerName}
@@ -454,14 +459,8 @@ export default function MessagingPage() {
                                     {isExpanded && (
                                         <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
                                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
-                                                {(m.customerName || m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
-                                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                                                        {m.customerName && (
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">End Customer</p>
-                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.customerName}</p>
-                                                            </div>
-                                                        )}
+                                                {(m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
+                                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">                                                        
                                                         {m.partnerName && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
@@ -728,6 +727,7 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
                 </div>
             )}
 
+            {/* New Message Form */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2">
