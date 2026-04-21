@@ -168,13 +168,14 @@ export async function GET(req: Request) {
         const sortKey = searchParams.get('sortKey') || 'createdAt'
         const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
         const category = searchParams.get('category')
+        const unreadFilter = searchParams.get('unread') === 'true'
+        const priorityFilter = searchParams.get('priority')
 
-        const where: any = {}
-
+        const statsWhere: any = {}
         if (type === 'sent') {
-            where.senderId = user.id
+            statsWhere.senderId = user.id
         } else if (type === 'inbox') {
-            where.receipts = {
+            statsWhere.receipts = {
                 some: { userId: user.id }
             }
         } else if (type === 'admin') {
@@ -184,16 +185,29 @@ export async function GET(req: Request) {
         }
 
         if (category && category !== 'ALL') {
-            where.category = category
+            statsWhere.category = category
         }
 
         if (search) {
-            where.OR = [
-                ...(where.OR || []),
+            statsWhere.OR = [
                 { subject: { contains: search } },
                 { content: { contains: search } },
                 { sender: { name: { contains: search } } },
             ]
+        }
+
+        // listWhere starts as statsWhere
+        const listWhere: any = { ...statsWhere }
+
+        // Apply list-only filters
+        if (unreadFilter) {
+            listWhere.receipts = {
+                some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null }
+            }
+        }
+
+        if (priorityFilter) {
+            listWhere.priority = priorityFilter
         }
 
         const orderBy: any = {}
@@ -212,69 +226,60 @@ export async function GET(req: Request) {
         if (page && limit) {
             const skip = (page - 1) * limit
             
-            // Build where for unread
-            const unreadWhere = {
-                ...where,
+            // Build unread query for stats (always based on statsWhere)
+            const statsUnreadWhere = {
+                ...statsWhere,
                 receipts: {
                     some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null }
                 }
             }
 
-            const [messages, total, unreadCount, urgentCount, taskCount] = await Promise.all([
+            const [messages, total, filteredTotal, unreadCount, urgentCount, taskCount] = await Promise.all([
                 prisma.message.findMany({
-                    where,
+                    where: listWhere,
                     orderBy,
                     skip,
                     take: limit,
                     include
                 }),
-                prisma.message.count({ where }),
-                prisma.message.count({ where: unreadWhere }),
-                prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
-                prisma.message.count({ where: { ...where, category: 'TASK' } })
+                prisma.message.count({ where: statsWhere }), // Global total for this tab/search
+                prisma.message.count({ where: listWhere }),  // Filtered total (for pagination)
+                prisma.message.count({ where: statsUnreadWhere }),
+                prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }),
+                prisma.message.count({ where: { ...statsWhere, category: 'TASK' } })
             ])
-
-            console.log('messages', messages);
-            console.log('unreadCount', unreadCount);
-            console.log('urgentCount', urgentCount);
-            console.log('taskCount', taskCount);
-            console.log('total', total);
-            console.log('page', page);
-            console.log('limit', limit);
-            console.log('totalPages', Math.ceil(total / limit));
 
             return NextResponse.json({
                 messages,
-                stats: { unreadCount, urgentCount, taskCount },
+                stats: { unreadCount, urgentCount, taskCount, total }, // Send global total
                 meta: {
-                    total,
+                    total: filteredTotal, // Meta total should be the filtered one for pagination controls
                     page,
                     limit,
-                    totalPages: Math.ceil(total / limit)
+                    totalPages: Math.ceil(filteredTotal / limit)
                 }
             })
         }
 
         const messages = await prisma.message.findMany({
-            where,
+            where: listWhere,
             orderBy,
             include
         })
 
         // For non-paginated (all)
-        const unreadWhereAll = { ...where, receipts: { some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null } } }
-        const stats = {
-            unreadCount: await prisma.message.count({ where: unreadWhereAll }),
-            urgentCount: await prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
-            pathCount: await prisma.message.count({ where: { ...where, category: 'TASK' } }) // match key name below
+        const unreadWhereAll = { 
+            ...statsWhere, 
+            receipts: { some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null } } 
         }
 
         return NextResponse.json({ 
             messages, 
             stats: {
-                unreadCount: stats.unreadCount, 
-                urgentCount: stats.urgentCount, 
-                taskCount: await prisma.message.count({ where: { ...where, category: 'TASK' } })
+                unreadCount: await prisma.message.count({ where: unreadWhereAll }), 
+                urgentCount: await prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }), 
+                taskCount: await prisma.message.count({ where: { ...statsWhere, category: 'TASK' } }),
+                total: await prisma.message.count({ where: statsWhere })
             } 
         })
     } catch (error: any) {

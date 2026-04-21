@@ -71,6 +71,8 @@ export default function MessagingPage() {
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
     const [sort, setSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+    const [unreadFilter, setUnreadFilter] = useState(false)
+    const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
 
     // Resolution state
     const [resolutionComment, setResolutionComment] = useState('')
@@ -103,7 +105,9 @@ export default function MessagingPage() {
                 search: debouncedSearch,
                 sortKey: sort.key,
                 sortDir: sort.direction,
-                category: categoryFilter
+                category: categoryFilter,
+                unread: unreadFilter ? 'true' : 'false',
+                ...(priorityFilter ? { priority: priorityFilter } : {})
             })
             const res = await fetch(`/api/messaging?${params}`)
             if (res.ok) {
@@ -117,7 +121,7 @@ export default function MessagingPage() {
         } finally {
             setLoading(false)
         }
-    }, [tab, debouncedSearch, sort, categoryFilter])
+    }, [tab, debouncedSearch, sort, categoryFilter, unreadFilter, priorityFilter])
 
     useEffect(() => {
         fetchMessages()
@@ -199,6 +203,7 @@ export default function MessagingPage() {
     const unreadCount = stats.unreadCount
     const urgentCount = stats.urgentCount
     const taskCount = stats.taskCount
+    const totalCount = (stats as any).total || meta.total
 
     const toggleExpand = (id: string, isUnread: boolean) => {
         const newExpanded = new Set(expandedIds)
@@ -262,20 +267,42 @@ export default function MessagingPage() {
             {/* Summary Bar */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Messages', count: meta.total, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-                    { label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
-                ].map((stat, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
-                        <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
+                    { id: 'all', label: 'Total Messages', count: totalCount, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50', active: !unreadFilter && !priorityFilter && categoryFilter === 'ALL' },
+                    { id: 'unread', label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50', active: unreadFilter },
+                    { id: 'urgent', label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', active: priorityFilter === 'URGENT' },
+                    { id: 'task', label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50', active: categoryFilter === 'TASK' },
+                ].map((stat) => (
+                    <button
+                        key={stat.id}
+                        onClick={() => {
+                            if (stat.id === 'all') {
+                                setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL');
+                            } else if (stat.id === 'unread') {
+                                setUnreadFilter(!unreadFilter); setPriorityFilter(null); setCategoryFilter('ALL');
+                            } else if (stat.id === 'urgent') {
+                                setPriorityFilter(priorityFilter === 'URGENT' ? null : 'URGENT'); setUnreadFilter(false); setCategoryFilter('ALL');
+                            } else if (stat.id === 'task') {
+                                setCategoryFilter(categoryFilter === 'TASK' ? 'ALL' : 'TASK'); setUnreadFilter(false); setPriorityFilter(null);
+                            }
+                        }}
+                        className={cn(
+                            "bg-white p-4 rounded-2xl border transition-all flex items-center gap-3 text-left w-full group relative overflow-hidden",
+                            stat.active ? "border-blue-500 shadow-md ring-2 ring-blue-500/10" : "border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200"
+                        )}
+                    >
+                        {stat.active && (
+                            <div className="absolute top-0 right-0 p-1">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            </div>
+                        )}
+                        <div className={cn("p-2.5 rounded-xl transition-colors", stat.bg, stat.color, stat.active && "bg-blue-600 text-white")}>
                             <stat.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 group-hover:text-gray-500">{stat.label}</p>
                             <p className="text-xl font-bold text-gray-900 leading-none">{stat.count}</p>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
 
@@ -284,20 +311,20 @@ export default function MessagingPage() {
                 <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/30">
                     <div className="flex bg-gray-200 p-1 rounded-xl w-fit">
                         <button
-                            onClick={() => setTab('inbox')}
+                            onClick={() => { setTab('inbox'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                             className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'inbox' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                         >
                             Inbox
                         </button>
                         <button
-                            onClick={() => setTab('sent')}
+                            onClick={() => { setTab('sent'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                             className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'sent' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                         >
                             Sent
                         </button>
                         {(currentUser?.role === 'ADMIN' || currentUser?.permissions?.includes('all:manage')) && (
                             <button
-                                onClick={() => setTab('admin')}
+                                onClick={() => { setTab('admin'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                                 className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'admin' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                             >
                                 Admin Feed
