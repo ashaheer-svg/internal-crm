@@ -13,6 +13,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
             include: {
+                buildRejections: true,
+                builtBy: { select: { name: true } },
                 items: {
                     include: {
                         product: {

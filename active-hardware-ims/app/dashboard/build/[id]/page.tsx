@@ -14,6 +14,15 @@ interface BuildOrder {
     status: string
     createdAt: string
     buildNotes: string | null
+    builtAt?: string | null
+    builtBy?: { name: string } | null
+    buildRejections?: {
+        id: string
+        serialNumber: string
+        comment: string
+        rejectedByName: string
+        rejectedAt: string
+    }[]
     items: {
         id: string
         quantity: number
@@ -96,6 +105,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     const handleToggleVerify = (serialId: string) => {
+        if (order?.status !== 'BUILDING' && order?.status !== 'READY_FOR_BUILD') return
         setVerifyingSerials((prev: Record<string, boolean>) => ({
             ...prev,
             [serialId]: !prev[serialId]
@@ -209,6 +219,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     // Ensure there is actually something to finalize (order not empty and items are correct)
     const canFinalize = order.items.length > 0 && allVerified
 
+    const isReadOnly = order.status !== 'BUILDING' && order.status !== 'READY_FOR_BUILD'
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <ConfirmModal
@@ -272,15 +284,17 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                                     Period: {formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}
                                                 </span>
                                             )}
-                                            <button
-                                                onClick={() => handleOpenServiceFulfill(item)}
-                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
-                                            >
-                                                {item.serviceStartDate
-                                                    ? (item.product.serviceDefinition?.type === 'RENTAL' ? 'Edit Rental' : 'Edit Service')
-                                                    : (item.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service')
-                                                }
-                                            </button>
+                                            {!isReadOnly && (
+                                                <button
+                                                    onClick={() => handleOpenServiceFulfill(item)}
+                                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
+                                                >
+                                                    {item.serviceStartDate
+                                                        ? (item.product.serviceDefinition?.type === 'RENTAL' ? 'Edit Rental' : 'Edit Service')
+                                                        : (item.product.serviceDefinition?.type === 'RENTAL' ? 'Fulfill Rental' : 'Fulfill Service')
+                                                    }
+                                                </button>
+                                            )}
                                         </div>
                                     ) : !item.reservedItems || item.reservedItems.length === 0 ? (
                                         <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded border border-amber-100 text-xs italic">
@@ -295,28 +309,36 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                                     className={`flex items-center justify-between p-3 rounded border transition-all ${verifyingSerials[sn.id] ? 'bg-green-50 border-green-200 shadow-sm' : 'bg-gray-50 border-gray-200'}`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={!!verifyingSerials[sn.id]}
-                                                            onChange={() => handleToggleVerify(sn.id)}
-                                                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                                        />
+                                                        {isReadOnly ? (
+                                                            <div className="w-5 h-5 flex items-center justify-center">
+                                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                                            </div>
+                                                        ) : (
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!!verifyingSerials[sn.id]}
+                                                                onChange={() => handleToggleVerify(sn.id)}
+                                                                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                            />
+                                                        )}
                                                         <div>
                                                             <span className="font-mono text-sm font-bold text-gray-800">{sn.serialNumber}</span>
                                                             <p className="text-[10px] text-gray-400">Warehouse: {sn.location?.name || 'Default'}</p>
                                                         </div>
                                                     </div>
 
-                                                    <button
-                                                        onClick={() => {
-                                                            setRejectionTarget({ id: sn.id, serialNumber: sn.serialNumber })
-                                                            setRejectionComment("")
-                                                        }}
-                                                        className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-white transition-colors"
-                                                        title="Reject Incompatible SN"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
+                                                    {!isReadOnly && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setRejectionTarget({ id: sn.id, serialNumber: sn.serialNumber })
+                                                                setRejectionComment("")
+                                                            }}
+                                                            className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-white transition-colors"
+                                                            title="Reject Incompatible SN"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -325,6 +347,34 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                             ))}
                         </div>
                     </div>
+
+                    {/* Rejected Items Block */}
+                    {order.buildRejections && order.buildRejections.length > 0 && (
+                        <div className="bg-white shadow rounded-lg overflow-hidden border border-red-200 mt-6">
+                            <div className="px-6 py-4 border-b border-red-200 bg-red-50 text-red-900">
+                                <h2 className="font-bold flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                    Rejected Items ({order.buildRejections.length})
+                                </h2>
+                            </div>
+                            <div className="divide-y divide-red-100">
+                                {order.buildRejections.map(rej => (
+                                    <div key={rej.id} className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-start bg-white">
+                                        <div className="md:col-span-1">
+                                            <span className="font-mono text-sm font-bold text-red-800 bg-red-50 border border-red-100 px-2 py-1 rounded inline-block mb-1">{rej.serialNumber}</span>
+                                            <p className="text-[10px] text-red-500 font-medium tracking-wide">
+                                                BY {rej.rejectedByName?.toUpperCase() || 'UNKNOWN'} <br/>
+                                                {formatDate(rej.rejectedAt || new Date().toISOString())}
+                                            </p>
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <p className="text-sm text-gray-700 font-medium italic">{rej.comment || 'No reason specified'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-6">
@@ -335,35 +385,48 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                             Technical Notes
                         </h3>
                         <textarea
-                            placeholder="Add build notes, technician comments, or any issues encountered..."
-                            className="w-full min-h-[150px] p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            placeholder={isReadOnly ? "No build notes provided." : "Add build notes, technician comments, or any issues encountered..."}
+                            className="w-full min-h-[150px] p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50 disabled:text-gray-700"
                             value={buildNotes}
+                            disabled={isReadOnly}
                             onChange={(e) => setBuildNotes(e.target.value)}
                         />
                     </div>
 
                     {/* Finalize Action */}
-                    <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
-                        <div className="space-y-4">
-                            {!allVerified && (
-                                <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-3 rounded text-xs border border-amber-100">
-                                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                    <span>Please verify ALL allocated serial numbers and ensure all services have been fulfilled before finalizing.</span>
-                                </div>
-                            )}
-                            <button
-                                onClick={handleCompleteBuild}
-                                disabled={actionLoading || !canFinalize}
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
-                            >
-                                <Hammer className="w-5 h-5" />
-                                {actionLoading ? 'Finalizing...' : 'Finalize & Send to Ship'}
-                            </button>
-                            <p className="text-[10px] text-gray-400 text-center italic">
-                                This will mark the order as BUILT and notify the Accounts Manager.
-                            </p>
+                    {isReadOnly ? (
+                        <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
+                            <div className="flex flex-col items-center justify-center text-center py-4">
+                                <CheckCircle className="w-12 h-12 text-emerald-500 mb-3" />
+                                <h3 className="font-bold text-gray-900 text-lg">Build Completed</h3>
+                                <p className="text-gray-500 text-sm mt-1">
+                                    By {order.builtBy?.name || 'Technician'} on {order.builtAt ? formatDate(order.builtAt) : 'Unknown Date'}
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
+                            <div className="space-y-4">
+                                {!allVerified && (
+                                    <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-3 rounded text-xs border border-amber-100">
+                                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                                        <span>Please verify ALL allocated serial numbers and ensure all services have been fulfilled before finalizing.</span>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handleCompleteBuild}
+                                    disabled={actionLoading || !canFinalize}
+                                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-bold shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+                                >
+                                    <Hammer className="w-5 h-5" />
+                                    {actionLoading ? 'Finalizing...' : 'Finalize & Send to Ship'}
+                                </button>
+                                <p className="text-[10px] text-gray-400 text-center italic">
+                                    This will mark the order as BUILT and notify the Accounts Manager.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

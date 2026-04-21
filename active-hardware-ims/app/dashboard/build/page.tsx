@@ -47,7 +47,7 @@ export default function BuildListingPage() {
         setLoading(true)
         try {
             const params = new URLSearchParams({
-                status: 'READY_FOR_BUILD,BUILDING',
+                status: 'READY_FOR_BUILD,BUILDING,BUILT',
                 page: page.toString(),
                 limit: '10',
                 sortKey: sort.key === 'date' ? 'createdAt' : sort.key === 'number' ? 'orderNumber' : sort.key === 'customer' ? 'customerName' : sort.key,
@@ -77,7 +77,7 @@ export default function BuildListingPage() {
     // Fetch tab counts when refresh or search changes
     const fetchCounts = useCallback(async () => {
         try {
-            const buildStatuses = 'READY_FOR_BUILD,BUILDING'
+            const buildStatuses = 'READY_FOR_BUILD,BUILDING,BUILT'
             const [all, hardware, service] = await Promise.all([
                 fetch(`/api/delivery-orders?status=${buildStatuses}&limit=1&buildType=ALL`).then(r => r.json()),
                 fetch(`/api/delivery-orders?status=${buildStatuses}&limit=1&buildType=HARDWARE`).then(r => r.json()),
@@ -212,9 +212,11 @@ export default function BuildListingPage() {
                                                 "p-3 rounded-2xl shadow-sm transition-all group-hover:scale-110",
                                                 order.hasServiceItem
                                                     ? 'bg-purple-50 text-purple-600 border border-purple-100'
-                                                    : order.status === 'BUILDING'
-                                                        ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                                                        : 'bg-amber-50 text-amber-600 border border-amber-100'
+                                                    : order.status === 'BUILT'
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                        : order.status === 'BUILDING'
+                                                            ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                                                            : 'bg-amber-50 text-amber-600 border border-amber-100'
                                             )}>
                                                 {order.hasServiceItem ? <Wrench className="w-6 h-6" /> : <Hammer className="w-6 h-6" />}
                                             </div>
@@ -244,9 +246,11 @@ export default function BuildListingPage() {
                                             <div className="flex items-center gap-3">
                                                 <span className={cn(
                                                     "px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border",
-                                                    order.status === 'BUILDING'
-                                                        ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                                        : 'bg-amber-50 border-amber-200 text-amber-700'
+                                                    order.status === 'BUILT'
+                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                        : order.status === 'BUILDING'
+                                                            ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                                            : 'bg-amber-50 border-amber-200 text-amber-700'
                                                 )}>
                                                     {formatStatus(order.status)}
                                                 </span>
