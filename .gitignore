@@ -1,3 +1,10 @@
 /Active Hardware.txt
 /New Text Document.txt
 active-hardware-ims.zip
+
+
+prisma/dev.db
+*.db-journal
+build_debug.log
+*.log
+migrations-bk/
