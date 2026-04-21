@@ -234,6 +234,15 @@ export async function GET(req: Request) {
                 prisma.message.count({ where: { ...where, category: 'TASK' } })
             ])
 
+            console.log('messages', messages);
+            console.log('unreadCount', unreadCount);
+            console.log('urgentCount', urgentCount);
+            console.log('taskCount', taskCount);
+            console.log('total', total);
+            console.log('page', page);
+            console.log('limit', limit);
+            console.log('totalPages', Math.ceil(total / limit));
+
             return NextResponse.json({
                 messages,
                 stats: { unreadCount, urgentCount, taskCount },

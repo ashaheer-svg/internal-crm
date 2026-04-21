@@ -184,11 +184,11 @@ export default function RAIDConfiguratorPage() {
                 </div>
                 <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
                     <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
-                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Total Raw</span>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Total Cap</span>
                         <span className="text-xs font-bold text-gray-900">{driveCount * driveCapacity} TB</span>
                     </div>
                     <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
-                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Net Usable</span>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block leading-tight">Usable Cap</span>
                         <span className="text-xs font-bold text-blue-600">~{results.usable.toFixed(1)} TB</span>
                     </div>
                     <div className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-100 text-center min-w-[80px]">
@@ -206,7 +206,7 @@ export default function RAIDConfiguratorPage() {
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3"><HardDrive className="w-6 h-6 text-blue-600" /><h2 className="text-lg font-bold text-gray-900">Storage Parameters</h2></div>
                             <div className="flex bg-gray-100 p-1 rounded-lg gap-1.5">
-                                <button onClick={() => setDriveType("SATA")} className={cn("px-5 py-1.5 rounded-md text-[10px] font-bold transition-all", driveType === "SATA" ? "bg-white text-blue-600 shadow-sm border border-gray-200" : "text-gray-400 border border-transparent")}>SATA</button>
+                                <button onClick={() => setDriveType("SATA")} className={cn("px-5 py-1.5 rounded-md text-[10px] font-bold transition-all", driveType === "SATA" ? "bg-white text-blue-600 shadow-sm border border-gray-200" : "text-gray-400 border border-transparent")}>SATA HDD</button>
                                 <button onClick={() => setDriveType("SAS")} className={cn("px-5 py-1.5 rounded-md text-[10px] font-bold transition-all", driveType === "SAS" ? "bg-white text-purple-600 shadow-sm border border-gray-200" : "text-gray-400 border border-transparent")}>SAS/DualPort</button>
                             </div>
                         </div>
@@ -225,8 +225,7 @@ export default function RAIDConfiguratorPage() {
                                         max="100"
                                         value={driveCount}
                                         onChange={(e) => setDriveCount(Math.max(1, parseInt(e.target.value) || 0))}
-                                        className="w-20 px-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center"
-                                    />
+                                        className="w-full max-w-[80px] py-2 px-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"                                    />
                                     <div className="flex flex-wrap gap-1">
                                         {[2, 4, 8, 12, 16, 24].map(b => (
                                             <button key={b} onClick={() => setDriveCount(b)} className={cn("px-2 py-1.5 rounded text-[8px] font-bold transition-all border", driveCount === b ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-500 border-gray-200")}>{b}</button>
