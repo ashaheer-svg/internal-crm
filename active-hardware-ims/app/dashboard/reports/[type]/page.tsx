@@ -140,8 +140,10 @@ export default function IndividualReportPage({ params }: PageProps) {
                             <dd className={`text-sm font-bold text-gray-900 mt-1 ${isProfitability ? 'print:text-[10pt]' : 'print:text-xs'}`}>
                                 {typeof value === 'object'
                                     ? JSON.stringify(value)
-                                    : typeof value === 'number' && key.toLowerCase().includes('total') && !key.toLowerCase().includes('count')
-                                        ? formatCurrency(value)
+                                    : (typeof value === 'number' &&
+                                        (key.toLowerCase().includes('total') || key.toLowerCase().includes('amount') || key.toLowerCase().includes('value') || key.toLowerCase().includes('revenue') || key.toLowerCase().includes('profit') || key.toLowerCase().includes('cost') || key.toLowerCase().includes('grand')) &&
+                                        !['products', 'quantity', 'items', 'invoices', 'pos', 'locations', 'backorders', 'count', 'ordered', 'fulfilled', 'pending', 'inward', 'outward', 'change'].some(x => key.toLowerCase().includes(x))
+                                    ) ? formatCurrency(value)
                                         : value != null ? value.toLocaleString() : 'N/A'}
                             </dd>
                         </div>

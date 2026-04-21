@@ -253,7 +253,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                 <div key={item.id} className="p-6">
                                     <div className="mb-4">
                                         <h3 className="text-sm font-bold text-gray-900">{item.product.name}</h3>
-                                        <p className="text-xs text-gray-500">{item.product.brand} {item.product.model} · Qty: {item.quantity}</p>
+                                        <p className="text-xs text-gray-500">{item.product.brand} {item.product.model} · Qty: {item.product.serviceDefinition ? item.quantity : (item.reservedItems?.length ?? 0)}</p>
                                     </div>
 
                                     {item.product?.serviceDefinition ? (
