@@ -50,10 +50,12 @@ export async function POST(
         }
 
         // Update replacement item, log transaction, and update warranty claim in a single transaction
-        const updatedClaim = await prisma.$transaction(async (tx) => {
+        const { updatedClaim, repItem } = await prisma.$transaction(async (tx) => {
+            let repItem = null;
+
             if ((claim as any).replacementItemId) {
                 // Return replacement item to available status
-                const repItem = await tx.inventoryItem.update({
+                repItem = await tx.inventoryItem.update({
                     where: { id: (claim as any).replacementItemId },
                     data: {
                         status: 'AVAILABLE',
@@ -74,20 +76,6 @@ export async function POST(
                         notes: `Returned temporary replacement for claim ${claimId}. Original unit: ${claim.inventoryItem.serialNumber}.`
                     }
                 })
-
-                // Log replacement item status change for inventory auditing
-                await logUpdate('INVENTORY', (claim as any).replacementItemId, user.id, user.name,
-                    {
-                        status: 'LOANED',
-                        warrantyExpiry: claim.inventoryItem.warrantyExpiry,
-                        serialNumber: repItem.serialNumber
-                    },
-                    {
-                        status: 'AVAILABLE',
-                        warrantyExpiry: null,
-                        reason: `Temporary replacement returned for claim ${claimId}`
-                    }
-                )
             }
 
             // Update warranty claim
@@ -103,19 +91,35 @@ export async function POST(
                 }
             })
 
-            // Log warranty claim update
-            await logUpdate('WARRANTY', claimId, user.id, user.name,
+            return { updatedClaim: uClaim, repItem }
+        }, { timeout: 15000 })
+
+        // Log replacement item status change for inventory auditing
+        if ((claim as any).replacementItemId && repItem) {
+            await logUpdate('INVENTORY', (claim as any).replacementItemId, user.id, user.name,
                 {
-                    replacementReturnedAt: null
+                    status: 'LOANED',
+                    warrantyExpiry: claim.inventoryItem.warrantyExpiry,
+                    serialNumber: repItem.serialNumber
                 },
                 {
-                    replacementReturnedAt: new Date(),
-                    notes: notes || ((claim as any).replacementExternalInfo ? `Untracked unit (${(claim as any).replacementExternalInfo}) returned` : 'Replacement returned')
+                    status: 'AVAILABLE',
+                    warrantyExpiry: null,
+                    reason: `Temporary replacement returned for claim ${claimId}`
                 }
             )
+        }
 
-            return uClaim
-        })
+        // Log warranty claim update
+        await logUpdate('WARRANTY', claimId, user.id, user.name,
+            {
+                replacementReturnedAt: null
+            },
+            {
+                replacementReturnedAt: new Date(),
+                notes: notes || ((claim as any).replacementExternalInfo ? `Untracked unit (${(claim as any).replacementExternalInfo}) returned` : 'Replacement returned')
+            }
+        )
 
         return NextResponse.json({
             claim: updatedClaim,

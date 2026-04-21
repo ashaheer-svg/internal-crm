@@ -17,6 +17,9 @@ export async function GET(request: Request, { params }: RouteParams) {
             include: { serviceDefinition: true }
         })
 
+        console.log("product", product);
+        console.log("Kiriyen peniyen ithirewa. Sathuta raja wewa...")
+
         if (!product) {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 })
         }
