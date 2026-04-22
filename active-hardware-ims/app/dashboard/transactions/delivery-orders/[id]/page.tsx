@@ -935,13 +935,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                             )}
                                         </div>
 
-                                        <button
+                                        {/* <button
                                             onClick={() => handleDismissRejection(r.id)}
                                             title="Dismiss this alert (item is not defective)"
                                             className="flex-shrink-0 text-xs px-2 py-1 rounded border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                                         >
                                             Dismiss
-                                        </button>
+                                        </button> */}
                                     </li>
                                 ))}
                             </ul>
