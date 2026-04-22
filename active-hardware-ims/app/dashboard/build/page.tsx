@@ -28,6 +28,7 @@ export default function BuildListingPage() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
+    const [showBuilt, setShowBuilt] = useState(false)
     const [activeTab, setActiveTab] = useState<TabFilter>('ALL')
     const [sort, setSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' })
 
@@ -47,7 +48,7 @@ export default function BuildListingPage() {
         setLoading(true)
         try {
             const params = new URLSearchParams({
-                status: 'READY_FOR_BUILD,BUILDING,BUILT',
+                status: showBuilt ? 'READY_FOR_BUILD,BUILDING,BUILT' : 'READY_FOR_BUILD,BUILDING',
                 page: page.toString(),
                 limit: '10',
                 sortKey: sort.key === 'date' ? 'createdAt' : sort.key === 'number' ? 'orderNumber' : sort.key === 'customer' ? 'customerName' : sort.key,
@@ -72,12 +73,12 @@ export default function BuildListingPage() {
         } finally {
             setLoading(false)
         }
-    }, [activeTab, sort, debouncedSearch])
+    }, [activeTab, sort, debouncedSearch, showBuilt])
 
     // Fetch tab counts when refresh or search changes
     const fetchCounts = useCallback(async () => {
         try {
-            const buildStatuses = 'READY_FOR_BUILD,BUILDING,BUILT'
+            const buildStatuses = showBuilt ? 'READY_FOR_BUILD,BUILDING,BUILT' : 'READY_FOR_BUILD,BUILDING'
             const [all, hardware, service] = await Promise.all([
                 fetch(`/api/delivery-orders?status=${buildStatuses}&limit=1&buildType=ALL`).then(r => r.json()),
                 fetch(`/api/delivery-orders?status=${buildStatuses}&limit=1&buildType=HARDWARE`).then(r => r.json()),
@@ -91,7 +92,7 @@ export default function BuildListingPage() {
         } catch (e) {
             console.error("Failed to fetch counts", e)
         }
-    }, [])
+    }, [showBuilt])
 
     useEffect(() => {
         fetchOrders()
@@ -157,7 +158,7 @@ export default function BuildListingPage() {
             </div>
 
             {/* Search and Controls */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 mb-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
@@ -168,12 +169,23 @@ export default function BuildListingPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <button
-                    onClick={() => { fetchOrders(); fetchCounts(); }}
-                    className="px-6 py-2.5 text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all active:scale-95 shadow-sm"
-                >
-                    Refresh Queue
-                </button>
+                <div className="flex flex-col md:flex-row md:items-center gap-4 md:border-l border-gray-100 md:pl-4">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-gray-700 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-100 transition-all select-none whitespace-nowrap">
+                        <input
+                            type="checkbox"
+                            checked={showBuilt}
+                            onChange={(e) => setShowBuilt(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all"
+                        />
+                        Show Built Queue
+                    </label>
+                    <button
+                        onClick={() => { fetchOrders(); fetchCounts(); }}
+                        className="px-6 py-2.5 text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all active:scale-95 shadow-sm whitespace-nowrap"
+                    >
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -197,10 +209,18 @@ export default function BuildListingPage() {
             ) : (
                 <div className="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-100">
                     <div className="bg-gray-50/50 border-b border-gray-100 px-6 py-3 flex items-center gap-6">
-                        <SortIcon sort={sort} column="number" label="Order #" onSort={handleSort} />
-                        <SortIcon sort={sort} column="customer" label="Customer" onSort={handleSort} />
-                        <SortIcon sort={sort} column="date" label="Date" onSort={handleSort} />
-                        <SortIcon sort={sort} column="status" label="Status" onSort={handleSort} />
+                        <div className="w-20">
+                            <SortIcon sort={sort} column="number" label="Order #" onSort={handleSort} />
+                        </div>
+                        <div className="flex-1">
+                            <SortIcon sort={sort} column="customer" label="Customer" onSort={handleSort} />
+                        </div>
+                        <div className="w-25">
+                            <SortIcon sort={sort} column="date" label="Date" onSort={handleSort} />
+                        </div>
+                        <div className="w-30">
+                            <SortIcon sort={sort} column="status" label="Status" onSort={handleSort} />
+                        </div>
                     </div>
                     <ul className="divide-y divide-gray-50">
                         {orders.map((order) => (
@@ -235,7 +255,7 @@ export default function BuildListingPage() {
 
                                         <div className="flex items-center gap-8">
                                             <div className="text-right hidden md:block">
-                                                <div className="flex items-center justify-end gap-1.5 text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                                <div className="flex items-center justify-end gap-3 text-xs text-gray-400 font-bold uppercase tracking-widest">
                                                     <Clock className="w-3 h-3" />
                                                     {formatDate(order.createdAt)}
                                                 </div>
