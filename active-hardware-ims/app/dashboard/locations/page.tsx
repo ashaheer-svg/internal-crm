@@ -144,7 +144,7 @@ export default function LocationsPage() {
         <div className="space-y-6">
             <BackButton />
             <div className="sm:flex sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Locations</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-background">Locations</h1>
                 <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
                     <button
                         onClick={() => {

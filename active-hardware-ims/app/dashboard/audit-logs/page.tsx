@@ -90,7 +90,7 @@ export default function AuditLogsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">System Audit Trail</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">System Audit Trail</h1>
                     <p className="text-sm text-gray-500 font-medium">Monitoring all administrative activities and record mutations</p>
                 </div>
             </div>

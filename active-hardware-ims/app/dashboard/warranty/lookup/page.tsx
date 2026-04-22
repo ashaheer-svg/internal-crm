@@ -271,7 +271,7 @@ export default function WarrantyLookupPage() {
                 }
             `}</style>
             <div className="no-print">
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">General Lookup</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-background">General Lookup</h1>
                 <p className="mt-1 text-sm text-gray-500">
                     Search for inventory items by serial number or find CRM projects by customer, partner, or project name.
                 </p>

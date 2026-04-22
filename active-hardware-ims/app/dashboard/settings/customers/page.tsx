@@ -172,8 +172,8 @@ export default function CustomersPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Partner & Customer Network</h1>
-                    <p className="text-sm text-gray-500 font-medium">Manage stakeholders across the supply and distribution chain</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Partner & Customer Network</h1>
+                    <p className="text-sm text-gray-400 font-medium">Manage stakeholders across the supply and distribution chain</p>
                 </div>
                 <div className="flex gap-2">
                     {can('customers:create') && (

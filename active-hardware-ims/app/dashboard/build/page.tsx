@@ -123,7 +123,7 @@ export default function BuildListingPage() {
                         <Hammer className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Technical Build Queue</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">Technical Build Queue</h1>
                         <p className="text-sm text-gray-500 font-medium">Verify and prepare orders for delivery</p>
                     </div>
                 </div>

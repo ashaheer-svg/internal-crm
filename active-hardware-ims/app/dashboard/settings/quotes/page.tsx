@@ -132,7 +132,7 @@ export default function QuoteSettingsPage() {
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Quote Configuration</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-background">Quote Configuration</h1>
             </div>
 
             <div className="bg-white shadow sm:rounded-lg">

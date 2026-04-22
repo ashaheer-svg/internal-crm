@@ -229,7 +229,7 @@ export default function MaintenanceDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-background flex items-center gap-2">
                         <Activity className="h-6 w-6 text-blue-600" />
                         Maintenance & System Health
                     </h1>

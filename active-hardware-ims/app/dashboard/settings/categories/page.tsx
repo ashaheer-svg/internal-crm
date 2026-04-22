@@ -117,7 +117,7 @@ export default function CategoriesPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Categories</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Categories</h1>
                     <p className="text-sm text-gray-500">Manage product categories for your inventory.</p>
                 </div>
                 <button

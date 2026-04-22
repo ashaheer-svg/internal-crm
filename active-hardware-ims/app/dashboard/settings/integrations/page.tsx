@@ -63,7 +63,7 @@ export default function IntegrationsSettingsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton />
-                    <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">Integrations</h1>
+                    <h1 className="mt-4 text-2xl font-bold tracking-tight text-background">Integrations</h1>
                     <p className="text-gray-500">Manage third-party services and connections.</p>
                 </div>
                 <button

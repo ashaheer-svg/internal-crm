@@ -115,7 +115,7 @@ const settingsLinks = [
 export default function SettingsPage() {
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-background">Settings</h1>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {settingsLinks.map((link) => (

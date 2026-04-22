@@ -207,7 +207,7 @@ export default function ServiceDashboardClient({
                         <Clock className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Service Management</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">Service Management</h1>
                         <p className="text-sm text-gray-500 font-medium">Monitor active contracts and upcoming renewals</p>
                     </div>
                 </div>

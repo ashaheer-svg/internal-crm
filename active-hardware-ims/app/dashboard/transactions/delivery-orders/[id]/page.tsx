@@ -543,7 +543,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-background flex items-center gap-3">
                             {order.orderNumber}
                             <span className={`px-2 py-1 text-xs rounded-full border 
                                 ${order.status === 'DRAFT' ? 'bg-gray-100 border-gray-200 text-gray-700' : ''}
