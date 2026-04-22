@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, JSX } from "react"
+import { useRouter } from "next/navigation"
 import {
     Mail,
     Send,
@@ -58,6 +59,7 @@ type Message = {
 }
 
 export default function MessagingPage() {
+    const router = useRouter()
     const [messages, setMessages] = useState<Message[]>([])
     const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 10, totalPages: 0 })
     const [stats, setStats] = useState({ unreadCount: 0, urgentCount: 0, taskCount: 0 })
@@ -216,6 +218,56 @@ export default function MessagingPage() {
         setExpandedIds(newExpanded)
     }
 
+    const handleNavigateToDO = async (orderNumber: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        try {
+            const res = await fetch(`/api/delivery-orders?search=${encodeURIComponent(orderNumber)}&limit=1&includeInactive=true`)
+            if (res.ok) {
+                const data = await res.json()
+                const orders = data.deliveryOrders || data
+                const match = Array.isArray(orders)
+                    ? orders.find((o: any) => o.orderNumber === orderNumber)
+                    : null
+                if (match) {
+                    router.push(`/dashboard/transactions/delivery-orders/${match.id}`)
+                } else {
+                    setNotification({ type: 'error', message: `Delivery Order "${orderNumber}" not found in system records.` })
+                    setTimeout(() => setNotification(null), 3000)
+                }
+            }
+        } catch {
+            setNotification({ type: 'error', message: 'Failed to navigate to Delivery Order.' })
+            setTimeout(() => setNotification(null), 3000)
+        }
+    }
+
+    const linkifyContent = (text: string) => {
+        if (!text) return text
+        // DO-YYMM-NNNN format
+        const doRegex = /DO-\d{4}-\d{4}/g
+        const parts = text.split(doRegex)
+        const matches = text.match(doRegex)
+
+        if (!matches) return text
+
+        const result: (string | JSX.Element)[] = []
+        parts.forEach((part, i) => {
+            result.push(part)
+            if (matches && matches[i]) {
+                result.push(
+                    <button
+                        key={i}
+                        onClick={(e) => handleNavigateToDO(matches[i], e)}
+                        className="text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all mx-1"
+                    >
+                        {matches[i]}
+                    </button>
+                )
+            }
+        })
+        return result
+    }
+
     const handleSort = (key: string) => {
         setSort(prev => ({
             key,
@@ -241,7 +293,7 @@ export default function MessagingPage() {
                         <Mail className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Communication Center</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">Communication Center</h1>
                         <p className="text-sm text-gray-500 font-medium">Manage team updates and critical tasks</p>
                     </div>
                 </div>
@@ -460,7 +512,7 @@ export default function MessagingPage() {
                                         <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
                                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
                                                 {(m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
-                                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">                                                        
+                                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
                                                         {m.partnerName && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
@@ -476,13 +528,18 @@ export default function MessagingPage() {
                                                         {m.deliveryOrderNumber && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">DO #</p>
-                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.deliveryOrderNumber}</p>
+                                                                <button
+                                                                    onClick={(e) => handleNavigateToDO(m.deliveryOrderNumber!, e)}
+                                                                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-1 hover:underline transition-all text-left"
+                                                                >
+                                                                    {m.deliveryOrderNumber}
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                                 <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap mb-8 leading-relaxed">
-                                                    {m.content}
+                                                    {linkifyContent(m.content)}
                                                 </div>
 
                                                 {m.attachments.length > 0 && (
