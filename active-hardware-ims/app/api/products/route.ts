@@ -64,7 +64,12 @@ export async function GET(request: Request) {
                             id: true,
                             serialNumber: true,
                             status: true,
-                            locationId: true
+                            locationId: true,
+                            location: {
+                                select: {
+                                    name: true
+                                }
+                            }
                         }
                     }
                 }
