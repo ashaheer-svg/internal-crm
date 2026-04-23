@@ -175,6 +175,35 @@ export async function GET(req: Request) {
         if (type === 'sent') {
             statsWhere.senderId = user.id
         } else if (type === 'inbox') {
+            // Auto-backfill: create missing receipts for role-targeted messages.
+            // This fixes the case where a user belongs to a role but had no receipt
+            // because they were assigned to the role AFTER the message was sent,
+            // or because the role had no active users at the time of sending.
+            if (user.roleId) {
+                // Determine which role messages this user should see.
+                // A TECH-MGR should see their own messages AND those sent to TECHNICAL.
+                const targetRoleIds = [user.roleId]
+                
+                // If user is a Tech Manager, also pull in Technical role messages
+                if (user.role?.name === 'TECH-MGR') {
+                    const techRole = await prisma.role.findUnique({ where: { name: 'TECHNICAL' } })
+                    if (techRole) targetRoleIds.push(techRole.id)
+                }
+
+                const missingReceipts = await prisma.message.findMany({
+                    where: {
+                        recipientRoleId: { in: targetRoleIds },
+                        receipts: { none: { userId: user.id } }
+                    },
+                    select: { id: true }
+                })
+                if (missingReceipts.length > 0) {
+                    await prisma.messageReceipt.createMany({
+                        data: missingReceipts.map(m => ({ messageId: m.id, userId: user.id }))
+                    })
+                }
+            }
+
             statsWhere.receipts = {
                 some: { userId: user.id }
             }

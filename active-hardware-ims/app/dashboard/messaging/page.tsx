@@ -207,6 +207,8 @@ export default function MessagingPage() {
     const taskCount = stats.taskCount
     const totalCount = (stats as any).total || meta.total
 
+    const isTechnicalUser = currentUser?.role === 'TECHNICAL' || currentUser?.role === 'TECH-MGR'
+
     const toggleExpand = (id: string, isUnread: boolean) => {
         const newExpanded = new Set(expandedIds)
         if (newExpanded.has(id)) {
@@ -254,15 +256,19 @@ export default function MessagingPage() {
         parts.forEach((part, i) => {
             result.push(part)
             if (matches && matches[i]) {
-                result.push(
-                    <button
-                        key={i}
-                        onClick={(e) => handleNavigateToDO(matches[i], e)}
-                        className="text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all mx-1"
-                    >
-                        {matches[i]}
-                    </button>
-                )
+                if (isTechnicalUser) {
+                    result.push(<span key={i} className="font-bold mx-1">{matches[i]}</span>)
+                } else {
+                    result.push(
+                        <button
+                            key={i}
+                            onClick={(e) => handleNavigateToDO(matches[i], e)}
+                            className="text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all mx-1"
+                        >
+                            {matches[i]}
+                        </button>
+                    )
+                }
             }
         })
         return result
@@ -528,12 +534,16 @@ export default function MessagingPage() {
                                                         {m.deliveryOrderNumber && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">DO #</p>
-                                                                <button
-                                                                    onClick={(e) => handleNavigateToDO(m.deliveryOrderNumber!, e)}
-                                                                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-1 hover:underline transition-all text-left"
-                                                                >
-                                                                    {m.deliveryOrderNumber}
-                                                                </button>
+                                                                {isTechnicalUser ? (
+                                                                    <p className="text-xs font-semibold text-gray-800 mt-1">{m.deliveryOrderNumber}</p>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={(e) => handleNavigateToDO(m.deliveryOrderNumber!, e)}
+                                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-1 hover:underline transition-all text-left"
+                                                                    >
+                                                                        {m.deliveryOrderNumber}
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
