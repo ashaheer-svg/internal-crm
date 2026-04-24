@@ -198,7 +198,7 @@ function WarrantyClaimForm() {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Warranty Claim</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">New Warranty Claim</h1>
                     <p className="text-sm text-gray-500">Create a new RMA request for a defective item</p>
                 </div>
             </div>

@@ -144,7 +144,7 @@ export default function NewServiceAgreementPage() {
                 <Link href="/dashboard/services" className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Service Agreement</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-background">New Service Agreement</h1>
             </div>
 
             <form onSubmit={onSubmit} className="bg-white shadow sm:rounded-lg p-6 space-y-6">

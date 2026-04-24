@@ -111,7 +111,7 @@ export default function EditServicePackagePage() {
             <div className="flex items-center gap-4">
                 <BackButton className="p-2 hover:bg-gray-200 rounded-full" label="" />
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Service Package</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Edit Service Package</h1>
                     <p className="text-sm text-gray-500">{sku}</p>
                 </div>
                 <div className="flex items-center">

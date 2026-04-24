@@ -238,7 +238,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-2xl font-bold text-background flex items-center gap-2">
                             Build: {order.orderNumber}
                             <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full border border-blue-200 font-bold uppercase tracking-wider">
                                 {order.status.replace(/_/g, ' ')}
