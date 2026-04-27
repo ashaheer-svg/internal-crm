@@ -95,7 +95,7 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                         <span className="font-semibold text-gray-800">{order.salesRep?.name || 'Unassigned'}</span>
                         
                         <span className="text-gray-400">Quote Ref:</span>
-                        <span className="font-mono text-gray-800">{order.quoteReference || 'N/A'}</span>
+                        <span className="font-mono text-gray-800">{order.quotes?.[0]?.quoteNumber || order.quoteReference || 'N/A'}</span>
                         
                         <span className="text-gray-400">Current Status:</span>
                         <span className="font-bold text-gray-800">{formatStatus(order.status)}</span>
