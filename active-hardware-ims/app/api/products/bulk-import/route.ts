@@ -83,8 +83,15 @@ export async function POST(request: Request) {
                 try {
                     await prisma.product.upsert({
                         where: { sku: item.sku },
-                        // Update only the prices if the SKU already exists
+                        // Update only the detail if the SKU already exists
                         update: {
+                            name: item.name,
+                            brand: item.brand,
+                            category: item.category || 'General',
+                            model: item.model,
+                            description: item.description || null,
+                            minStock: item.minStock || 0,
+                            warrantyMonths: item.warrantyMonths || 0,
                             lowResellerPrice: item.lowResellerPrice,
                             resellerPrice: item.resellerPrice,
                         },
@@ -168,15 +175,33 @@ export async function POST(request: Request) {
             preview: []
         }
 
-        // Get existing products with prices to check for updates
+        // Get existing products with metadata to check for updates
         const existingProducts: {
             sku: string
+            name: string
+            brand: string
+            model: string
+            category: string
+            description: string | null
+            minStock: number
+            warrantyMonths: number
             lowResellerPrice: number
             resellerPrice: number
         }[] = await prisma.product.findMany({
-            select: { sku: true, lowResellerPrice: true, resellerPrice: true }
+            select: { 
+                sku: true, 
+                name: true,
+                brand: true,
+                model: true,
+                category: true,
+                description: true,
+                minStock: true,
+                warrantyMonths: true,
+                lowResellerPrice: true, 
+                resellerPrice: true 
+            }
         })
-        const existingProductMap = new Map<string, { sku: string, lowResellerPrice: number, resellerPrice: number }>(
+        const existingProductMap = new Map<string, typeof existingProducts[0]>(
             existingProducts.map(p => [p.sku, p])
         )
 
@@ -259,19 +284,39 @@ export async function POST(request: Request) {
                     result.preview?.push(productData);
                     result.successCount++;
                     // In preview, we pretend we added it to check for duplicates within the file itself
-                    existingProductMap.set(row.sku, { sku: row.sku, lowResellerPrice, resellerPrice });
+                    existingProductMap.set(row.sku, { 
+                        sku: row.sku, 
+                        name: row.name,
+                        brand: row.brand,
+                        model: row.model,
+                        category: row.category || 'General',
+                        description: row.description || null,
+                        minStock,
+                        warrantyMonths,
+                        lowResellerPrice, 
+                        resellerPrice 
+                    });
                 } else {
                     if (existingProduct) {
-                        // Check if prices are different
-                        if (existingProduct.lowResellerPrice !== lowResellerPrice || existingProduct.resellerPrice !== resellerPrice) {
+                        // Check if ANY field has changed
+                        const hasChanges = 
+                            existingProduct.name !== productData.name ||
+                            existingProduct.brand !== productData.brand ||
+                            existingProduct.category !== productData.category ||
+                            existingProduct.model !== productData.model ||
+                            existingProduct.description !== productData.description ||
+                            existingProduct.minStock !== productData.minStock ||
+                            existingProduct.warrantyMonths !== productData.warrantyMonths ||
+                            existingProduct.lowResellerPrice !== productData.lowResellerPrice ||
+                            existingProduct.resellerPrice !== productData.resellerPrice
+
+                        if (hasChanges) {
                             // Update product
                             const product = await prisma.product.update({
                                 where: { sku: row.sku },
                                 data: {
                                     ...productData,
                                     serviceDefinition: undefined // Don't allow updating service definition through bulk import for now? 
-                                    // Actually, if it's there, should we? 
-                                    // Let's keep it simple as the user requested "update the new price"
                                 }
                             })
                             result.successCount++
@@ -279,8 +324,13 @@ export async function POST(request: Request) {
                                 sku: product.sku,
                                 name: product.name
                             })
+                            // Update map for duplicate prevention within same file
+                            existingProductMap.set(row.sku, {
+                                ...product,
+                                description: product.description || null
+                            })
                         } else {
-                            // Prices are the same, skip — no import needed
+                            // No changes detected, skip
                             result.skippedCount++
                         }
                     } else {
@@ -294,7 +344,10 @@ export async function POST(request: Request) {
                             sku: product.sku,
                             name: product.name
                         })
-                        existingProductMap.set(row.sku, { sku: product.sku, lowResellerPrice, resellerPrice })
+                        existingProductMap.set(product.sku, {
+                            ...product,
+                            description: product.description || null
+                        })
                     }
                 }
 
