@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, AlertCircle, Package, Printer, Search } from "lucide-react"
+import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, AlertCircle, Package, Printer, Search, FileText, Pencil } from "lucide-react"
 import Link from "next/link"
 import ServiceRenewalModal from "./ServiceRenewalModal"
 import SortIcon from "@/components/SortIcon"
@@ -392,10 +392,10 @@ export default function ServiceDashboardClient({
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Link href={`/dashboard/services/contracts/${contract.id}/edit`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Edit Contract">
-                                                <AlertCircle className="w-4 h-4 rotate-180" />
+                                                <Pencil className="w-4 h-4 rotate-180" />
                                             </Link>
                                             <Link href={`/dashboard/services/contracts/${contract.id}/agreement`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" target="_blank" title="View Agreement">
-                                                <Printer className="w-4 h-4 text-blue-500" />
+                                                <FileText className="w-4 h-4 text-blue-500" />
                                             </Link>
                                             <Link href={`/dashboard/services/contracts/${contract.id}/print`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" target="_blank" title="Print Certificate">
                                                 <Printer className="w-4 h-4" />
@@ -451,7 +451,6 @@ export default function ServiceDashboardClient({
                                 <th className="px-6 py-3 text-left">
                                     <SortIcon sort={sort.rentals} column="customer" label="Current User" onSort={(key) => handleSort('rentals', key)} />
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest bg-white">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 bg-white">
