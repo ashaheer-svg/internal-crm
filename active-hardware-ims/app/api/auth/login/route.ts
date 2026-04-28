@@ -8,15 +8,10 @@ const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
 const loginAttempts = new Map<string, { count: number, lockedUntil: number | null }>()
 
-// Helper to clean up old entries periodically to prevent memory leaks in long-running processes
-setInterval(() => {
-    const now = Date.now()
-    for (const [key, data] of Array.from(loginAttempts.entries())) {
-        if (data.lockedUntil && data.lockedUntil < now) {
-            loginAttempts.delete(key)
-        }
-    }
-}, 60 * 60 * 1000)
+// Note: No module-level setInterval here — Next.js re-executes module-level
+// side effects on every HMR hot reload in dev mode, which causes page reloads.
+// The loginAttempts Map is in-memory only; it resets on server restart.
+// Expired locks are also cleared inline at line 46 when the same email retries.
 
 export async function POST(request: Request) {
     try {
