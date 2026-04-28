@@ -18,6 +18,14 @@ interface BuildQueueOrder {
         items: number
     }
     hasServiceItem?: boolean
+    items?: {
+        id: string
+        licenseKey?: string | null
+        product: {
+            name: string
+            category?: string
+        }
+    }[]
 }
 
 type TabFilter = 'ALL' | 'HARDWARE' | 'SERVICE'
@@ -250,6 +258,16 @@ export default function BuildListingPage() {
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-gray-500 font-medium group-hover:text-blue-600 transition-colors">{order.customerName}</p>
+                                                {order.items?.some(i => i.licenseKey) && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {order.items.filter(i => i.licenseKey).map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1 bg-blue-50 text-[10px] text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 font-mono">
+                                                                <span className="opacity-50">{item.product.name}:</span>
+                                                                <span className="font-bold">{item.licenseKey}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

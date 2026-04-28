@@ -30,6 +30,7 @@ interface BuildOrder {
             name: string
             brand: string
             model: string
+            category?: string
             serviceDefinition?: {
                 type: string
                 durationValue: number
@@ -43,6 +44,8 @@ interface BuildOrder {
         }[]
         serviceStartDate?: string | null
         serviceEndDate?: string | null
+        unitCost?: number | null
+        licenseKey?: string | null
     }[]
 }
 
@@ -63,6 +66,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const [serviceStartDate, setServiceStartDate] = useState("")
     const [serviceEndDate, setServiceEndDate] = useState("")
     const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
+    const [serviceLicenseKey, setServiceLicenseKey] = useState("")
 
     // Rejection Reason Modal State
     const [rejectionTarget, setRejectionTarget] = useState<{ id: string; serialNumber: string } | null>(null)
@@ -138,7 +142,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     const handleOpenServiceFulfill = (item: any) => {
         setFulfillingItem(item)
         setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
-        setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
+        setServiceUnitCost(item.unitCost ? item.unitCost.toString() : "")
+        setServiceLicenseKey(item.licenseKey || "")
 
         if (item.serviceEndDate) {
             setServiceEndDate(item.serviceEndDate.split('T')[0])
@@ -159,7 +164,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 body: JSON.stringify({
                     startDate: serviceStartDate,
                     endDate: serviceEndDate,
-                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined
+                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined,
+                    licenseKey: serviceLicenseKey || undefined
                 })
             })
 
@@ -280,9 +286,16 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                                 }
                                             </span>
                                             {item.serviceStartDate && (
-                                                <span className="text-[10px] text-gray-500 font-mono">
-                                                    Period: {formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] text-gray-500 font-mono">
+                                                        Period: {formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}
+                                                    </span>
+                                                    {item.licenseKey && (
+                                                        <span className="text-[10px] text-blue-600 font-bold font-mono">
+                                                            License: {item.licenseKey}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                             {!isReadOnly && (
                                                 <button
@@ -484,6 +497,20 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                 </div>
                                 <p className="mt-1 text-[10px] text-gray-500 italic">Actual procurement cost for this service.</p>
                             </div>
+
+                            {fulfillingItem.product.category?.toUpperCase().startsWith('LICEN') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">License Key</label>
+                                    <input
+                                        type="text"
+                                        value={serviceLicenseKey}
+                                        onChange={(e) => setServiceLicenseKey(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border font-mono"
+                                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                                    />
+                                    <p className="mt-1 text-[10px] text-gray-500 italic">Enter the license key</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
