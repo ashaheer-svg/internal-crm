@@ -28,6 +28,7 @@ type DeliveryOrderItem = {
         name: string
         brand: string
         model: string
+        category?: string
         serviceDefinition?: {
             type: string
             durationValue: number
@@ -39,6 +40,7 @@ type DeliveryOrderItem = {
     isBackorder: boolean
     serviceStartDate?: string | null
     serviceEndDate?: string | null
+    licenseKey?: string | null
     reservedItems: InventoryItem[]
     details?: { modelName: string; serialNumbers: string }[]
 }
@@ -179,6 +181,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [serviceStartDate, setServiceStartDate] = useState("")
     const [serviceEndDate, setServiceEndDate] = useState("")
     const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
+    const [serviceLicenseKey, setServiceLicenseKey] = useState("")
 
     const [invoiceNumberInput, setInvoiceNumberInput] = useState("")
 
@@ -313,7 +316,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 body: JSON.stringify({
                     startDate: serviceStartDate,
                     endDate: serviceEndDate,
-                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined
+                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined,
+                    licenseKey: serviceLicenseKey || undefined
                 })
             })
 
@@ -364,6 +368,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         setFulfillingItem(item)
         setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
         setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
+        setServiceLicenseKey(item.licenseKey || "")
 
         // Default end date (e.g. +1 year) if not set
         if (item.serviceEndDate) {
@@ -879,6 +884,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                             <span>{item.product.serviceDefinition?.type === 'RENTAL' ? 'Rental Period:' : 'Service Period:'}</span>
                                                             <span className="font-medium">{formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}</span>
                                                         </div>
+                                                        {item.licenseKey && (
+                                                            <div className="flex justify-between mt-1 pt-1 border-t border-blue-100">
+                                                                <span>License Key:</span>
+                                                                <span className="font-mono font-bold text-blue-800">{item.licenseKey}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -1273,6 +1284,20 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 </div>
                                 <p className="mt-1 text-[10px] text-gray-500 italic">Actual procurement cost for this service.</p>
                             </div>
+
+                            {fulfillingItem.product.category?.toUpperCase().startsWith('LICEN') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">License Key</label>
+                                    <input
+                                        type="text"
+                                        value={serviceLicenseKey}
+                                        onChange={(e) => setServiceLicenseKey(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border font-mono"
+                                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                                    />
+                                    <p className="mt-1 text-[10px] text-gray-500 italic">Enter the license key</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">

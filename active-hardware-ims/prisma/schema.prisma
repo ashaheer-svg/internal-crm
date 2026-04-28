@@ -492,6 +492,7 @@ model DeliveryOrderItem {
   serviceEndDate    DateTime?
   serviceStartDate  DateTime?
   unitCost          Float?
+  licenseKey        String?
   backorderItem     BackorderItem?            @relation(fields: [backorderItemId], references: [id])
   product           Product                   @relation(fields: [productId], references: [id])
   deliveryOrder     DeliveryOrder             @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
