@@ -113,7 +113,7 @@ export async function GET() {
             pendingMessages: pendingMessages.map(m => ({
                 id: m.id,
                 subject: m.subject,
-                sender: m.sender.name,
+                sender: m.sender?.name || 'System',
                 priority: m.priority,
                 category: m.category,
                 deadline: m.deadline,
