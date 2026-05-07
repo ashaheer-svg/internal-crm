@@ -416,8 +416,8 @@ export default function BackupPage() {
             )}
             <div>
                 <BackButton className="mb-4" />
-                <h1 className="text-2xl font-bold text-gray-900">Database Backup & Restore</h1>
-                <p className="text-sm text-gray-600 mt-1">Manage your database backups and restore operations</p>
+                <h1 className="text-2xl font-bold text-background">Database Backup & Restore</h1>
+                <p className="text-sm text-gray-400 mt-1">Manage your database backups and restore operations</p>
             </div>
 
             {/* Message Display */}

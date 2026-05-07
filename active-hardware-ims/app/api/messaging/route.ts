@@ -168,13 +168,43 @@ export async function GET(req: Request) {
         const sortKey = searchParams.get('sortKey') || 'createdAt'
         const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc'
         const category = searchParams.get('category')
+        const unreadFilter = searchParams.get('unread') === 'true'
+        const priorityFilter = searchParams.get('priority')
 
-        const where: any = {}
-
+        const statsWhere: any = {}
         if (type === 'sent') {
-            where.senderId = user.id
+            statsWhere.senderId = user.id
         } else if (type === 'inbox') {
-            where.receipts = {
+            // Auto-backfill: create missing receipts for role-targeted messages.
+            // This fixes the case where a user belongs to a role but had no receipt
+            // because they were assigned to the role AFTER the message was sent,
+            // or because the role had no active users at the time of sending.
+            if (user.roleId) {
+                // Determine which role messages this user should see.
+                // A TECH-MGR should see their own messages AND those sent to TECHNICAL.
+                const targetRoleIds = [user.roleId]
+                
+                // If user is a Tech Manager, also pull in Technical role messages
+                if (user.role?.name === 'TECH-MGR') {
+                    const techRole = await prisma.role.findUnique({ where: { name: 'TECHNICAL' } })
+                    if (techRole) targetRoleIds.push(techRole.id)
+                }
+
+                const missingReceipts = await prisma.message.findMany({
+                    where: {
+                        recipientRoleId: { in: targetRoleIds },
+                        receipts: { none: { userId: user.id } }
+                    },
+                    select: { id: true }
+                })
+                if (missingReceipts.length > 0) {
+                    await prisma.messageReceipt.createMany({
+                        data: missingReceipts.map(m => ({ messageId: m.id, userId: user.id }))
+                    })
+                }
+            }
+
+            statsWhere.receipts = {
                 some: { userId: user.id }
             }
         } else if (type === 'admin') {
@@ -184,16 +214,29 @@ export async function GET(req: Request) {
         }
 
         if (category && category !== 'ALL') {
-            where.category = category
+            statsWhere.category = category
         }
 
         if (search) {
-            where.OR = [
-                ...(where.OR || []),
+            statsWhere.OR = [
                 { subject: { contains: search } },
                 { content: { contains: search } },
                 { sender: { name: { contains: search } } },
             ]
+        }
+
+        // listWhere starts as statsWhere
+        const listWhere: any = { ...statsWhere }
+
+        // Apply list-only filters
+        if (unreadFilter) {
+            listWhere.receipts = {
+                some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null }
+            }
+        }
+
+        if (priorityFilter) {
+            listWhere.priority = priorityFilter
         }
 
         const orderBy: any = {}
@@ -205,6 +248,7 @@ export async function GET(req: Request) {
             recipientRole: true,
             attachments: true,
             receipts: {
+                where: { user: { isNot: null } },
                 include: { user: { select: { name: true } } }
             }
         }
@@ -212,73 +256,119 @@ export async function GET(req: Request) {
         if (page && limit) {
             const skip = (page - 1) * limit
             
-            // Build where for unread
-            const unreadWhere = {
-                ...where,
+            // Build unread query for stats (always based on statsWhere)
+            const statsUnreadWhere = {
+                ...statsWhere,
                 receipts: {
                     some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null }
                 }
             }
 
-            const [messages, total, unreadCount, urgentCount, taskCount] = await Promise.all([
+            const [messages, total, filteredTotal, unreadCount, urgentCount, taskCount] = await Promise.all([
                 prisma.message.findMany({
-                    where,
+                    where: listWhere,
                     orderBy,
                     skip,
                     take: limit,
                     include
                 }),
-                prisma.message.count({ where }),
-                prisma.message.count({ where: unreadWhere }),
-                prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
-                prisma.message.count({ where: { ...where, category: 'TASK' } })
+                prisma.message.count({ where: statsWhere }), // Global total for this tab/search
+                prisma.message.count({ where: listWhere }),  // Filtered total (for pagination)
+                prisma.message.count({ where: statsUnreadWhere }),
+                prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }),
+                prisma.message.count({ where: { ...statsWhere, category: 'TASK' } })
             ])
 
-            console.log('messages', messages);
-            console.log('unreadCount', unreadCount);
-            console.log('urgentCount', urgentCount);
-            console.log('taskCount', taskCount);
-            console.log('total', total);
-            console.log('page', page);
-            console.log('limit', limit);
-            console.log('totalPages', Math.ceil(total / limit));
+            // Resolve missing customer names from database if needed
+            const enhancedMessages = await resolveCustomerNames(messages)
 
             return NextResponse.json({
-                messages,
-                stats: { unreadCount, urgentCount, taskCount },
+                messages: enhancedMessages,
+                stats: { unreadCount, urgentCount, taskCount, total }, // Send global total
                 meta: {
-                    total,
+                    total: filteredTotal, // Meta total should be the filtered one for pagination controls
                     page,
                     limit,
-                    totalPages: Math.ceil(total / limit)
+                    totalPages: Math.ceil(filteredTotal / limit)
                 }
             })
         }
 
         const messages = await prisma.message.findMany({
-            where,
+            where: listWhere,
             orderBy,
             include
         })
 
+        const enhancedMessages = await resolveCustomerNames(messages)
+
         // For non-paginated (all)
-        const unreadWhereAll = { ...where, receipts: { some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null } } }
-        const stats = {
-            unreadCount: await prisma.message.count({ where: unreadWhereAll }),
-            urgentCount: await prisma.message.count({ where: { ...where, priority: 'URGENT' } }),
-            pathCount: await prisma.message.count({ where: { ...where, category: 'TASK' } }) // match key name below
+        const unreadWhereAll = { 
+            ...statsWhere, 
+            receipts: { some: type === 'admin' ? { viewedAt: null } : { userId: user.id, viewedAt: null } } 
         }
 
         return NextResponse.json({ 
-            messages, 
+            messages: enhancedMessages, 
             stats: {
-                unreadCount: stats.unreadCount, 
-                urgentCount: stats.urgentCount, 
-                taskCount: await prisma.message.count({ where: { ...where, category: 'TASK' } })
+                unreadCount: await prisma.message.count({ where: unreadWhereAll }), 
+                urgentCount: await prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }), 
+                taskCount: await prisma.message.count({ where: { ...statsWhere, category: 'TASK' } }),
+                total: await prisma.message.count({ where: statsWhere })
             } 
         })
     } catch (error: any) {
         console.error('List messages error:', error)
         return NextResponse.json({ error: error.message || 'Failed to list messages' }, { status: 500 })
     }
+}
+
+async function resolveCustomerNames(messages: any[]) {
+    // Collect unique DO and Invoice numbers from subjects if metadata is missing
+    const doNumbers = new Set<string>()
+    const invNumbers = new Set<string>()
+
+    messages.forEach(m => {
+        if (!m.customerName) {
+            // Try to parse from subject
+            const doMatch = m.subject.match(/DO-\d+-\d+/)
+            if (doMatch) doNumbers.add(doMatch[0])
+
+            const invMatch = m.subject.match(/INV-\d+/)
+            if (invMatch) invNumbers.add(invMatch[0])
+        }
+    })
+
+    if (doNumbers.size === 0 && invNumbers.size === 0) return messages
+
+    // Fetch correctly matched customer names
+    const [doResults, invResults] = await Promise.all([
+        doNumbers.size > 0 ? prisma.deliveryOrder.findMany({
+            where: { orderNumber: { in: Array.from(doNumbers) } },
+            select: { orderNumber: true, customerName: true }
+        }) : [],
+        invNumbers.size > 0 ? prisma.invoice.findMany({
+            where: { invoiceNumber: { in: Array.from(invNumbers) } },
+            select: { invoiceNumber: true, customerName: true }
+        }) : []
+    ])
+
+    const nameMap = new Map<string, string>()
+    doResults.forEach((r: any) => nameMap.set(r.orderNumber, r.customerName))
+    invResults.forEach((r: any) => nameMap.set(r.invoiceNumber, r.customerName))
+
+    // Apply names to messages
+    return messages.map(m => {
+        if (!m.customerName) {
+            const doMatch = m.subject.match(/DO-\d+-\d+/)
+            if (doMatch && nameMap.has(doMatch[0])) {
+                return { ...m, customerName: nameMap.get(doMatch[0]) }
+            }
+            const invMatch = m.subject.match(/INV-\d+/)
+            if (invMatch && nameMap.has(invMatch[0])) {
+                return { ...m, customerName: nameMap.get(invMatch[0]) }
+            }
+        }
+        return m
+    })
 }

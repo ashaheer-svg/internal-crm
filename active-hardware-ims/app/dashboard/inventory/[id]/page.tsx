@@ -58,7 +58,7 @@ export default async function ProductDetailsPage({ params, searchParams }: PageP
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{product.name}</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">{product.name}</h1>
                         <p className="text-sm text-gray-500">SKU: {product.sku} | Brand: {product.brand} | Category: {product.category}</p>
                     </div>
                 </div>

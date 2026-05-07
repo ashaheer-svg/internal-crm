@@ -9,6 +9,10 @@ interface SystemMessageOptions {
     recipientUserId?: string;
     recipientRoleId?: string;
     deadline?: Date;
+    customerName?: string | null;
+    deliveryOrderNumber?: string | null;
+    invoiceNumber?: string | null;
+    partnerName?: string | null;
 }
 
 /**
@@ -24,7 +28,11 @@ export async function sendSystemMessage(options: SystemMessageOptions) {
         senderId,
         recipientUserId,
         recipientRoleId,
-        deadline
+        deadline,
+        customerName,
+        deliveryOrderNumber,
+        invoiceNumber,
+        partnerName
     } = options;
 
     // Use a default system user if senderId is not provided
@@ -53,7 +61,11 @@ export async function sendSystemMessage(options: SystemMessageOptions) {
             isSystemGenerated: true,
             senderId: finalSenderId,
             recipientUserId: recipientUserId || null,
-            recipientRoleId: recipientRoleId || null
+            recipientRoleId: recipientRoleId || null,
+            customerName: customerName || null,
+            deliveryOrderNumber: deliveryOrderNumber || null,
+            invoiceNumber: invoiceNumber || null,
+            partnerName: partnerName || null
         }
     });
 

@@ -120,7 +120,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                             deliveryInstructions: body.deliveryInstructions || null,
                             additionalContact: body.additionalContact || null,
                             deliveryCharges: body.deliveryCharges ? Number(body.deliveryCharges) : 0,
-                            quoteReference: quote.id,
+                            quoteReference: quote.quoteNumber,
                             status: 'DRAFT',
                             items: {
                                 create: quote.items

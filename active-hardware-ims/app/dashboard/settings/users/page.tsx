@@ -25,7 +25,7 @@ export default function UserManagementPage() {
             <div className="flex items-center gap-4">
                 <BackButton />
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">User Management</h1>
+                    <h1 className="text-2xl font-bold text-background tracking-tight">User Management</h1>
                     <p className="text-sm text-gray-500 mt-1">Manage system users, custom roles, access permissions, and sales staff</p>
                 </div>
             </div>

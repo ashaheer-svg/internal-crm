@@ -10,6 +10,15 @@ type Product = {
     brand: string
     category: string
     model: string
+    resellerPrice?: number
+    _count?: {
+        inventory: number
+    }
+    inventory?: {
+        location: {
+            name: string
+        }
+    }[]
 }
 
 type ProductSelectorProps = {
@@ -133,13 +142,34 @@ export default function ProductSelector({
                                             <p className="text-sm font-semibold text-gray-900 truncate">
                                                 {product.brand} {product.name}
                                             </p>
-                                            <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0">
-                                                {product.sku}
-                                            </span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                {product._count && (
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${product._count.inventory > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        Stock: {product._count.inventory}
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                                                    {product.sku}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-0.5 truncate uppercase tracking-tight">
-                                            {product.category} {product.model && `• ${product.model}`}
-                                        </p>
+                                        <div className="flex justify-between items-center mt-0.5">
+                                            <p className="text-xs text-gray-500 truncate uppercase tracking-tight">
+                                                {product.category} {product.model && `• ${product.model}`}
+                                            </p>
+                                            {product.inventory && product.inventory.length > 0 && (
+                                                <div className="text-[9px] text-gray-400 flex items-center gap-1">
+                                                    <Box className="h-2.5 w-2.5" />
+                                                    {Object.entries(
+                                                        product.inventory.reduce((acc: Record<string, number>, item) => {
+                                                            const loc = item.location.name;
+                                                            acc[loc] = (acc[loc] || 0) + 1;
+                                                            return acc;
+                                                        }, {})
+                                                    ).map(([loc, count]) => `${loc} (${count})`).join(', ')}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </button>
                             ))}

@@ -125,7 +125,7 @@ export default function ServiceCatalogPage() {
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Service Catalog</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Service Catalog</h1>
                 </div>
                 <div className="flex items-center gap-2">
                     <label className="inline-flex items-center cursor-pointer">
@@ -136,7 +136,7 @@ export default function ServiceCatalogPage() {
                             className="sr-only peer"
                         />
                         <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span className="ms-3 text-sm font-medium text-gray-700">Show Inactive</span>
+                        <span className="ms-3 text-sm font-medium text-gray-200">Show Inactive</span>
                     </label>
                 </div>
                 <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function ServiceCatalogPage() {
                         href="/dashboard/services/catalog/new"
                         className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4 mr-2 " />
                         Add Service Package
                     </Link>
                 </div>

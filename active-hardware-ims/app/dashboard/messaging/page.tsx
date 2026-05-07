@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, JSX } from "react"
+import { useRouter } from "next/navigation"
 import {
     Mail,
     Send,
@@ -58,6 +59,7 @@ type Message = {
 }
 
 export default function MessagingPage() {
+    const router = useRouter()
     const [messages, setMessages] = useState<Message[]>([])
     const [meta, setMeta] = useState<any>({ total: 0, page: 1, limit: 10, totalPages: 0 })
     const [stats, setStats] = useState({ unreadCount: 0, urgentCount: 0, taskCount: 0 })
@@ -71,6 +73,8 @@ export default function MessagingPage() {
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
     const [sort, setSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
+    const [unreadFilter, setUnreadFilter] = useState(false)
+    const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
 
     // Resolution state
     const [resolutionComment, setResolutionComment] = useState('')
@@ -103,7 +107,9 @@ export default function MessagingPage() {
                 search: debouncedSearch,
                 sortKey: sort.key,
                 sortDir: sort.direction,
-                category: categoryFilter
+                category: categoryFilter,
+                unread: unreadFilter ? 'true' : 'false',
+                ...(priorityFilter ? { priority: priorityFilter } : {})
             })
             const res = await fetch(`/api/messaging?${params}`)
             if (res.ok) {
@@ -117,7 +123,7 @@ export default function MessagingPage() {
         } finally {
             setLoading(false)
         }
-    }, [tab, debouncedSearch, sort, categoryFilter])
+    }, [tab, debouncedSearch, sort, categoryFilter, unreadFilter, priorityFilter])
 
     useEffect(() => {
         fetchMessages()
@@ -199,6 +205,9 @@ export default function MessagingPage() {
     const unreadCount = stats.unreadCount
     const urgentCount = stats.urgentCount
     const taskCount = stats.taskCount
+    const totalCount = (stats as any).total || meta.total
+
+    const isTechnicalUser = currentUser?.role === 'TECHNICAL' || currentUser?.role === 'TECH-MGR'
 
     const toggleExpand = (id: string, isUnread: boolean) => {
         const newExpanded = new Set(expandedIds)
@@ -209,6 +218,60 @@ export default function MessagingPage() {
             if (isUnread) handleReadMessage(id)
         }
         setExpandedIds(newExpanded)
+    }
+
+    const handleNavigateToDO = async (orderNumber: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        try {
+            const res = await fetch(`/api/delivery-orders?search=${encodeURIComponent(orderNumber)}&limit=1&includeInactive=true`)
+            if (res.ok) {
+                const data = await res.json()
+                const orders = data.deliveryOrders || data
+                const match = Array.isArray(orders)
+                    ? orders.find((o: any) => o.orderNumber === orderNumber)
+                    : null
+                if (match) {
+                    router.push(`/dashboard/transactions/delivery-orders/${match.id}`)
+                } else {
+                    setNotification({ type: 'error', message: `Delivery Order "${orderNumber}" not found in system records.` })
+                    setTimeout(() => setNotification(null), 3000)
+                }
+            }
+        } catch {
+            setNotification({ type: 'error', message: 'Failed to navigate to Delivery Order.' })
+            setTimeout(() => setNotification(null), 3000)
+        }
+    }
+
+    const linkifyContent = (text: string) => {
+        if (!text) return text
+        // DO-YYMM-NNNN format
+        const doRegex = /DO-\d{4}-\d{4}/g
+        const parts = text.split(doRegex)
+        const matches = text.match(doRegex)
+
+        if (!matches) return text
+
+        const result: (string | JSX.Element)[] = []
+        parts.forEach((part, i) => {
+            result.push(part)
+            if (matches && matches[i]) {
+                if (isTechnicalUser) {
+                    result.push(<span key={i} className="font-bold mx-1">{matches[i]}</span>)
+                } else {
+                    result.push(
+                        <button
+                            key={i}
+                            onClick={(e) => handleNavigateToDO(matches[i], e)}
+                            className="text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all mx-1"
+                        >
+                            {matches[i]}
+                        </button>
+                    )
+                }
+            }
+        })
+        return result
     }
 
     const handleSort = (key: string) => {
@@ -236,7 +299,7 @@ export default function MessagingPage() {
                         <Mail className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Communication Center</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">Communication Center</h1>
                         <p className="text-sm text-gray-500 font-medium">Manage team updates and critical tasks</p>
                     </div>
                 </div>
@@ -262,20 +325,42 @@ export default function MessagingPage() {
             {/* Summary Bar */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Messages', count: meta.total, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
-                    { label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
-                ].map((stat, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
-                        <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
+                    { id: 'all', label: 'Total Messages', count: totalCount, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50', active: !unreadFilter && !priorityFilter && categoryFilter === 'ALL' },
+                    { id: 'unread', label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50', active: unreadFilter },
+                    { id: 'urgent', label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', active: priorityFilter === 'URGENT' },
+                    { id: 'task', label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50', active: categoryFilter === 'TASK' },
+                ].map((stat) => (
+                    <button
+                        key={stat.id}
+                        onClick={() => {
+                            if (stat.id === 'all') {
+                                setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL');
+                            } else if (stat.id === 'unread') {
+                                setUnreadFilter(!unreadFilter); setPriorityFilter(null); setCategoryFilter('ALL');
+                            } else if (stat.id === 'urgent') {
+                                setPriorityFilter(priorityFilter === 'URGENT' ? null : 'URGENT'); setUnreadFilter(false); setCategoryFilter('ALL');
+                            } else if (stat.id === 'task') {
+                                setCategoryFilter(categoryFilter === 'TASK' ? 'ALL' : 'TASK'); setUnreadFilter(false); setPriorityFilter(null);
+                            }
+                        }}
+                        className={cn(
+                            "bg-white p-4 rounded-2xl border transition-all flex items-center gap-3 text-left w-full group relative overflow-hidden",
+                            stat.active ? "border-blue-500 shadow-md ring-2 ring-blue-500/10" : "border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200"
+                        )}
+                    >
+                        {stat.active && (
+                            <div className="absolute top-0 right-0 p-1">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            </div>
+                        )}
+                        <div className={cn("p-2.5 rounded-xl transition-colors", stat.bg, stat.color, stat.active && "bg-blue-600 text-white")}>
                             <stat.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 group-hover:text-gray-500">{stat.label}</p>
                             <p className="text-xl font-bold text-gray-900 leading-none">{stat.count}</p>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
 
@@ -284,20 +369,20 @@ export default function MessagingPage() {
                 <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/30">
                     <div className="flex bg-gray-200 p-1 rounded-xl w-fit">
                         <button
-                            onClick={() => setTab('inbox')}
+                            onClick={() => { setTab('inbox'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                             className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'inbox' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                         >
                             Inbox
                         </button>
                         <button
-                            onClick={() => setTab('sent')}
+                            onClick={() => { setTab('sent'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                             className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'sent' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                         >
                             Sent
                         </button>
                         {(currentUser?.role === 'ADMIN' || currentUser?.permissions?.includes('all:manage')) && (
                             <button
-                                onClick={() => setTab('admin')}
+                                onClick={() => { setTab('admin'); setUnreadFilter(false); setPriorityFilter(null); setCategoryFilter('ALL'); }}
                                 className={cn("px-4 py-1.5 text-xs font-bold rounded-lg transition-all", tab === 'admin' ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
                             >
                                 Admin Feed
@@ -387,16 +472,21 @@ export default function MessagingPage() {
                                                     </span>
                                                 </div>
 
+                                                {/* Customer Name Column */}
+                                                <div className="flex items-center gap-2 md:w-48 flex-shrink-0">
+                                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                        <UsersIcon className="w-4 h-4 text-blue-500" />
+                                                    </div>
+                                                    <span className={cn("text-sm truncate", isUnread ? "font-bold text-gray-900" : "text-gray-600 font-medium")}>
+                                                        {m.customerName || "—"}
+                                                    </span>
+                                                </div>
+
                                                 <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                                                     <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 uppercase tracking-tighter",
                                                         m.category === 'TASK' ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600")}>
                                                         {m.category}
                                                     </span>
-                                                    {m.customerName && (
-                                                        <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
-                                                            End Customer: {m.customerName}
-                                                        </span>
-                                                    )}
                                                     {m.partnerName && (
                                                         <span className="text-[10px] bg-slate-50 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
                                                             Partner: {m.partnerName}
@@ -427,14 +517,8 @@ export default function MessagingPage() {
                                     {isExpanded && (
                                         <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
                                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
-                                                {(m.customerName || m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
+                                                {(m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
                                                     <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                                                        {m.customerName && (
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">End Customer</p>
-                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.customerName}</p>
-                                                            </div>
-                                                        )}
                                                         {m.partnerName && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>
@@ -450,13 +534,22 @@ export default function MessagingPage() {
                                                         {m.deliveryOrderNumber && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">DO #</p>
-                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.deliveryOrderNumber}</p>
+                                                                {isTechnicalUser ? (
+                                                                    <p className="text-xs font-semibold text-gray-800 mt-1">{m.deliveryOrderNumber}</p>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={(e) => handleNavigateToDO(m.deliveryOrderNumber!, e)}
+                                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 mt-1 hover:underline transition-all text-left"
+                                                                    >
+                                                                        {m.deliveryOrderNumber}
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                                 <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap mb-8 leading-relaxed">
-                                                    {m.content}
+                                                    {linkifyContent(m.content)}
                                                 </div>
 
                                                 {m.attachments.length > 0 && (
@@ -494,14 +587,14 @@ export default function MessagingPage() {
                                                         Recipient Progress
                                                     </h4>
                                                     <div className="space-y-3">
-                                                        {m.receipts.map((receipt: any) => (
+                                                        {m.receipts.filter((receipt: any) => receipt.user != null).map((receipt: any) => (
                                                             <div key={receipt.userId} className="flex items-start gap-4 text-sm bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
                                                                 <div className="p-2 bg-white rounded-xl border border-gray-100 shadow-sm">
                                                                     <User className="w-4 h-4 text-gray-400" />
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <div className="flex justify-between items-center">
-                                                                        <span className="font-bold text-gray-900">{receipt.user.name}</span>
+                                                                        <span className="font-bold text-gray-900">{receipt.user?.name ?? 'Unknown User'}</span>
                                                                         <div className="flex items-center gap-2">
                                                                             {receipt.viewedAt ? (
                                                                                 <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">
@@ -701,6 +794,7 @@ function NewMessageForm({ onClose, onSuccess }: { onClose: () => void, onSuccess
                 </div>
             )}
 
+            {/* New Message Form */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                     <div className="col-span-2">

@@ -46,7 +46,7 @@ export default function StockMovementsPage() {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Stock Movements</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Stock Movements</h1>
                     <p className="mt-1 text-sm text-gray-500">Manage inward receipts, outward issues, and internal transfers</p>
                 </div>
             </div>

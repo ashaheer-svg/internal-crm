@@ -102,7 +102,7 @@ export default function RentalAssetsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <BackButton className="mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900">Rental Asset Manager</h1>
+                    <h1 className="text-2xl font-bold text-background">Rental Asset Manager</h1>
                 </div>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}

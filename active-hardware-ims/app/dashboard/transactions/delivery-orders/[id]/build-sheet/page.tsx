@@ -95,7 +95,7 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                         <span className="font-semibold text-gray-800">{order.salesRep?.name || 'Unassigned'}</span>
                         
                         <span className="text-gray-400">Quote Ref:</span>
-                        <span className="font-mono text-gray-800">{order.quoteReference || 'N/A'}</span>
+                        <span className="font-mono text-gray-800">{order.quotes?.[0]?.quoteNumber || order.quoteReference || 'N/A'}</span>
                         
                         <span className="text-gray-400">Current Status:</span>
                         <span className="font-bold text-gray-800">{formatStatus(order.status)}</span>
@@ -110,6 +110,19 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                             </>
                         )}
                     </div>
+
+                    {order.items?.some((i: any) => i.licenseKey) && (
+                        <div className="mt-3 pt-2 border-t border-gray-100">
+                            <span className="text-blue-600 ">License Key:</span>
+                            <div className="space-y-1">
+                                {order.items.filter((i: any) => i.licenseKey).map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between text-[10px]">
+                                        <span className="font-mono text-sm font-bold text-gray-800">{item.licenseKey || 'N/A'}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

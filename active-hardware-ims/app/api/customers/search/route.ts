@@ -10,9 +10,9 @@ export async function GET(request: Request) {
 
         const where: any = {
             OR: [
-                { name: { contains: query } },
-                { email: { contains: query } },
-                { phone: { contains: query } }
+                { name: { startsWith: query } },
+                { email: { startsWith: query } },
+                { phone: { startsWith: query } }
             ],
             isActive: true
         }

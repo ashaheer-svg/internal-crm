@@ -19,6 +19,7 @@ interface Quote {
         id: string
         orderNumber: string
         status: string
+        isActive?: boolean
     }
     items?: {
         productId: string
@@ -156,12 +157,22 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                                         {quote.deliveryOrder && (
                                             <button
                                                 onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
-                                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold border transition-colors ${quote.deliveryOrder.status === 'COMPLETED' ? 'bg-green-600 text-white border-green-700' : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'}`}
-                                                title={`View linked Delivery Order (${quote.deliveryOrder.status})`}
+                                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold border transition-colors ${
+                                                    quote.deliveryOrder.isActive === false 
+                                                        ? 'bg-red-50 text-red-700 border-red-200'
+                                                        : quote.deliveryOrder.status === 'COMPLETED' 
+                                                            ? 'bg-green-600 text-white border-green-700' 
+                                                            : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                                                }`}
+                                                title={`View linked Delivery Order (${quote.deliveryOrder.isActive === false ? 'DEACTIVATED' : quote.deliveryOrder.status})`}
                                             >
                                                 <Package className="w-3 h-3" />
                                                 {quote.deliveryOrder.orderNumber}
-                                                {quote.deliveryOrder.status === 'COMPLETED' && <span className="text-[10px] ml-1 uppercase">Shipped</span>}
+                                                {quote.deliveryOrder.isActive === false ? (
+                                                    <span className="text-[10px] ml-1 uppercase">Deactivated</span>
+                                                ) : quote.deliveryOrder.status === 'COMPLETED' ? (
+                                                    <span className="text-[10px] ml-1 uppercase">Shipped</span>
+                                                ) : null}
                                             </button>
                                         )}
                                     </div>

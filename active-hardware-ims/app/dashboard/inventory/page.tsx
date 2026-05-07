@@ -81,7 +81,7 @@ export default function InventoryPage() {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inventory Management</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Inventory Management</h1>
                     <p className="text-sm text-gray-500 mt-1">Track and manage your physical stock and service components</p>
                 </div>
                 <div className="flex items-center gap-4 mt-4 sm:mt-0">

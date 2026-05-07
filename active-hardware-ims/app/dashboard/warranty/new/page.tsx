@@ -12,6 +12,7 @@ type InventoryItem = {
     status: string
     product: {
         id: string
+        sku: string
         name: string
         brand: string
         model: string
@@ -19,25 +20,48 @@ type InventoryItem = {
     location: {
         name: string
     }
+    deliveryOrderItem?: {
+        deliveryOrder: {
+            customer?: any
+            endCustomer?: any
+            customerName: string
+            endCustomerName?: string
+        }
+    }
 }
 
 export default function NewWarrantyClaimPage() {
     return (
+<<<<<<< HEAD
         <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading form...</div>}>
             <NewWarrantyClaimForm />
+=======
+        <Suspense fallback={<div>Loading...</div>}>
+            <WarrantyClaimForm />
+>>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
         </Suspense>
     )
 }
 
+<<<<<<< HEAD
 function NewWarrantyClaimForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const serialFromUrl = searchParams.get("serial")
     
     const [searchTerm, setSearchTerm] = useState("")
+=======
+function WarrantyClaimForm() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const initialSerial = searchParams.get('serial')
+
+    const [searchTerm, setSearchTerm] = useState(initialSerial || "")
+>>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+    const [customerName, setCustomerName] = useState("")
     const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
     const [searching, setSearching] = useState(false)
@@ -47,7 +71,7 @@ function NewWarrantyClaimForm() {
     const [name, setName] = useState("")
     const [brand, setBrand] = useState("")
     const [model, setModel] = useState("")
-    const [serialNumber, setSerialNumber] = useState("")
+    const [serialNumber, setSerialNumber] = useState(initialSerial || "")
 
     useEffect(() => {
         // Lower threshold to 2 characters for better UX
@@ -59,6 +83,7 @@ function NewWarrantyClaimForm() {
     }, [searchTerm])
 
     useEffect(() => {
+<<<<<<< HEAD
         const serial = serialFromUrl
         if (!serial) return
 
@@ -91,6 +116,15 @@ function NewWarrantyClaimForm() {
 
         prefillFromSerial()
     }, [serialFromUrl])
+=======
+        if (initialSerial && inventoryItems.length > 0 && !selectedItem) {
+            const item = inventoryItems.find(i => i.serialNumber === initialSerial)
+            if (item) {
+                handleSelectItem(item)
+            }
+        }
+    }, [inventoryItems, initialSerial, selectedItem])
+>>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
 
     async function searchInventory() {
         setSearching(true)
@@ -136,17 +170,38 @@ function NewWarrantyClaimForm() {
         }
     }
 
+    function handleSelectItem(item: InventoryItem) {
+        setSelectedItem(item)
+        
+        // Pre-fill legacy fields just in case user switches
+        setSku(item.product.sku || "")
+        setName(item.product.name)
+        setBrand(item.product.brand)
+        setModel(item.product.model)
+        setSerialNumber(item.serialNumber)
+
+        if (item.deliveryOrderItem?.deliveryOrder) {
+            const order = item.deliveryOrderItem.deliveryOrder
+            const customer = order.endCustomer || order.customer
+            if (customer) {
+                setSelectedCustomer(customer)
+                setCustomerName(customer.name)
+            } else {
+                setCustomerName(order.endCustomerName || order.customerName)
+            }
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
-        const isInvalid = !isLegacy ? (!selectedItem || !description) : (!sku || !name || !brand || !model || !serialNumber || !description)
+        const isInvalid = (!description || !customerName) || (!isLegacy ? !selectedItem : (!sku || !name || !brand || !model || !serialNumber))
         if (isInvalid) {
-            alert(isLegacy ? 'Please fill in all legacy fields and a description' : 'Please select an item and provide a description')
+            alert('Please fill in all required fields including customer name and description.')
             return
         }
-
-        // Use selected customer name if available, otherwise use a default
-        const customerNameToSubmit = selectedCustomer?.name || 'Walk-in Customer'
+        //if customer is not selected, use walk-in customer
+        const customerNameToSubmit = customerName || 'Walk-in Customer'
 
         setLoading(true)
 
@@ -156,6 +211,7 @@ function NewWarrantyClaimForm() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     inventoryItemId: selectedItem?.id,
+                    customerId: selectedCustomer?.id,
                     customerName: customerNameToSubmit,
                     description,
                     isLegacy,
@@ -192,7 +248,7 @@ function NewWarrantyClaimForm() {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Warranty Claim</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">New Warranty Claim</h1>
                     <p className="text-sm text-gray-500">Create a new RMA request for a defective item</p>
                 </div>
             </div>
@@ -206,7 +262,13 @@ function NewWarrantyClaimForm() {
                             <input
                                 type="checkbox"
                                 checked={isLegacy}
-                                onChange={(e) => { setIsLegacy(e.target.checked); setSelectedItem(null); }}
+                                onChange={(e) => { 
+                                    setIsLegacy(e.target.checked); 
+                                    setSelectedItem(null);
+                                    if (e.target.checked && searchTerm && !serialNumber) {
+                                        setSerialNumber(searchTerm);
+                                    }
+                                }}
                                 className="sr-only peer"
                             />
                             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -252,7 +314,7 @@ function NewWarrantyClaimForm() {
                                         <button
                                             key={item.id}
                                             type="button"
-                                            onClick={() => setSelectedItem(item)}
+                                            onClick={() => handleSelectItem(item)}
                                             className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
                                         >
                                             <div className="flex-1 min-w-0">
@@ -342,7 +404,10 @@ function NewWarrantyClaimForm() {
                         <CustomerSelector
                             type="ALL"
                             selectedCustomer={selectedCustomer}
-                            onSelect={setSelectedCustomer}
+                            onSelect={(c) => {
+                                setSelectedCustomer(c)
+                                if (c) setCustomerName(c.name)
+                            }}
                         />
                     </div>
                 </div>
