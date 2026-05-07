@@ -14,7 +14,9 @@ const getDatabaseUrl = () => {
   // Only override if we are in production and it's a RELATIVE file url (starts with file:.)
   if (isProd && envUrl?.startsWith('file:.') && !envUrl.startsWith('file:/')) {
     try {
-      const dbPath = path.resolve(process.cwd(), 'prisma', 'prod.db')
+      const relPath = envUrl.replace('file:', '')
+      const filename = relPath.startsWith('./') ? relPath.substring(2) : relPath
+      const dbPath = path.resolve(process.cwd(), 'prisma', path.basename(filename))
       const absoluteUrl = `file:${dbPath}`
       console.log('--- [DB] PRODUCTION FORCED ABSOLUTE URL ---')
       console.log('Original:', envUrl)

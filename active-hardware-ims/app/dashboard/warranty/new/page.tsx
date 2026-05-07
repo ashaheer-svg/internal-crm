@@ -32,32 +32,17 @@ type InventoryItem = {
 
 export default function NewWarrantyClaimPage() {
     return (
-<<<<<<< HEAD
         <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading form...</div>}>
             <NewWarrantyClaimForm />
-=======
-        <Suspense fallback={<div>Loading...</div>}>
-            <WarrantyClaimForm />
->>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
         </Suspense>
     )
 }
 
-<<<<<<< HEAD
 function NewWarrantyClaimForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const serialFromUrl = searchParams.get("serial")
-    
-    const [searchTerm, setSearchTerm] = useState("")
-=======
-function WarrantyClaimForm() {
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const initialSerial = searchParams.get('serial')
-
-    const [searchTerm, setSearchTerm] = useState(initialSerial || "")
->>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
+    const [searchTerm, setSearchTerm] = useState(serialFromUrl || "")
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
@@ -71,7 +56,7 @@ function WarrantyClaimForm() {
     const [name, setName] = useState("")
     const [brand, setBrand] = useState("")
     const [model, setModel] = useState("")
-    const [serialNumber, setSerialNumber] = useState(initialSerial || "")
+    const [serialNumber, setSerialNumber] = useState(serialFromUrl || "")
 
     useEffect(() => {
         // Lower threshold to 2 characters for better UX
@@ -83,7 +68,6 @@ function WarrantyClaimForm() {
     }, [searchTerm])
 
     useEffect(() => {
-<<<<<<< HEAD
         const serial = serialFromUrl
         if (!serial) return
 
@@ -102,7 +86,7 @@ function WarrantyClaimForm() {
                 const match = data.find((item: InventoryItem) => item.serialNumber === serial)
 
                 if (match) {
-                    setSelectedItem(match)
+                    handleSelectItem(match)
                 } else {
                     setSearchTerm(serial)
                 }
@@ -116,15 +100,6 @@ function WarrantyClaimForm() {
 
         prefillFromSerial()
     }, [serialFromUrl])
-=======
-        if (initialSerial && inventoryItems.length > 0 && !selectedItem) {
-            const item = inventoryItems.find(i => i.serialNumber === initialSerial)
-            if (item) {
-                handleSelectItem(item)
-            }
-        }
-    }, [inventoryItems, initialSerial, selectedItem])
->>>>>>> 2dfa5422d2d5214c0cbaf208f3d65ea047c5bdfb
 
     async function searchInventory() {
         setSearching(true)
