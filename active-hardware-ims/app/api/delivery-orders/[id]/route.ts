@@ -27,7 +27,9 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
                     }
                 },
                 salesRep: true,
-                quotes: true
+                quotes: true,
+                customer: { select: { id: true, taxId: true, name: true } },
+                endCustomer: { select: { id: true, taxId: true, name: true } }
             } as any
         })
 

@@ -71,6 +71,14 @@ type DeliveryOrder = {
         name: string
     } | null
     items: DeliveryOrderItem[]
+    customer?: { id: string; taxId: string | null; name: string } | null
+    endCustomer?: { id: string; taxId: string | null; name: string } | null
+    quotes?: {
+        taxAmount: number
+        taxDetails: string | null
+        subTotal: number
+        totalAmount: number
+    }[]
 }
 
 function WorkflowStepper({ status }: { status?: string }) {
@@ -525,6 +533,23 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         return item.reservedItems.length >= item.quantity
     })
 
+    // --- VAT/Tax Logic ---
+    const linkedQuote = order.quotes?.[0] ?? null
+    const vatNumber = order.endCustomer?.taxId || order.customer?.taxId || null
+    
+    let vatEntries: { name: string; rate: number; amount: number }[] = []
+    if (linkedQuote?.taxDetails) {
+        try {
+            const parsed = JSON.parse(linkedQuote.taxDetails)
+            if (Array.isArray(parsed)) {
+                vatEntries = parsed
+            }
+        } catch {}
+    }
+    
+    const showVat = !!(vatNumber && vatEntries.length > 0)
+    // ---------------------
+
     return (
         <div className="max-w-6xl mx-auto space-y-6">
 
@@ -761,6 +786,55 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         <div className="text-right bg-green-50 px-3 py-1 rounded-md border border-green-100">
                             <span className="text-xs text-green-600 font-medium">Gross Profit</span>
                             <p className="text-xl font-black text-green-700"><Currency amount={grossProfit} /></p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showVat && linkedQuote && (
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4 no-print">
+                    <div className="flex justify-between items-center border-b pb-3">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            🧾 Tax & VAT Distribution
+                        </h3>
+                        <span className="text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">
+                            Tax Reg. No: <span className="font-bold text-gray-900">{vatNumber}</span>
+                        </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b">
+                                    <th className="py-2 px-3">Tax Name</th>
+                                    <th className="py-2 px-3 text-right">Rate</th>
+                                    <th className="py-2 px-3 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {vatEntries.map((tax, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50/50">
+                                        <td className="py-2 px-3 font-medium text-gray-800">{tax.name}</td>
+                                        <td className="py-2 px-3 text-right text-gray-500">{tax.rate}%</td>
+                                        <td className="py-2 px-3 text-right font-medium text-gray-900"><Currency amount={tax.amount} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="flex justify-end gap-6 border-t border-gray-200 pt-3">
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Subtotal (Excl. Tax)</span>
+                            <p className="text-sm font-medium text-gray-700"><Currency amount={linkedQuote.subTotal} /></p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Total Tax</span>
+                            <p className="text-sm font-medium text-gray-700"><Currency amount={linkedQuote.taxAmount} /></p>
+                        </div>
+                        <div className="text-right bg-blue-50 px-3 py-1 rounded-md border border-blue-100">
+                            <span className="text-xs text-blue-600 font-medium">Total (Incl. Tax)</span>
+                            <p className="text-lg font-black text-blue-700"><Currency amount={linkedQuote.totalAmount} /></p>
                         </div>
                     </div>
                 </div>
