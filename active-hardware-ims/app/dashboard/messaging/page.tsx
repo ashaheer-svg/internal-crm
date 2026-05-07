@@ -587,14 +587,14 @@ export default function MessagingPage() {
                                                         Recipient Progress
                                                     </h4>
                                                     <div className="space-y-3">
-                                                        {m.receipts.map((receipt: any) => (
+                                                        {m.receipts.filter((receipt: any) => receipt.user != null).map((receipt: any) => (
                                                             <div key={receipt.userId} className="flex items-start gap-4 text-sm bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
                                                                 <div className="p-2 bg-white rounded-xl border border-gray-100 shadow-sm">
                                                                     <User className="w-4 h-4 text-gray-400" />
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <div className="flex justify-between items-center">
-                                                                        <span className="font-bold text-gray-900">{receipt.user.name}</span>
+                                                                        <span className="font-bold text-gray-900">{receipt.user?.name ?? 'Unknown User'}</span>
                                                                         <div className="flex items-center gap-2">
                                                                             {receipt.viewedAt ? (
                                                                                 <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">
