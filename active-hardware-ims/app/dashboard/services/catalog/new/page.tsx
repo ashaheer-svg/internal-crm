@@ -105,6 +105,7 @@ export default function NewServicePackagePage() {
                                 placeholder="e.g. SVC-GOLD-1Y"
                             />
                         </div>
+                        <p className="mt-1 text-xs text-gray-400">Must be unique across all products and services.</p>
                     </div>
 
                     <div className="sm:col-span-3">

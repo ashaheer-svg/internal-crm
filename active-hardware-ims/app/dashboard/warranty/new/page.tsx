@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Search } from "lucide-react"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
@@ -22,7 +22,18 @@ type InventoryItem = {
 }
 
 export default function NewWarrantyClaimPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading form...</div>}>
+            <NewWarrantyClaimForm />
+        </Suspense>
+    )
+}
+
+function NewWarrantyClaimForm() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const serialFromUrl = searchParams.get("serial")
+    
     const [searchTerm, setSearchTerm] = useState("")
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
@@ -30,6 +41,7 @@ export default function NewWarrantyClaimPage() {
     const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
     const [searching, setSearching] = useState(false)
+    const [prefillLoading, setPrefillLoading] = useState(false)
     const [isLegacy, setIsLegacy] = useState(false)
     const [sku, setSku] = useState("")
     const [name, setName] = useState("")
@@ -45,6 +57,40 @@ export default function NewWarrantyClaimPage() {
             setInventoryItems([])
         }
     }, [searchTerm])
+
+    useEffect(() => {
+        const serial = serialFromUrl
+        if (!serial) return
+
+        async function prefillFromSerial() {
+            setPrefillLoading(true)
+            try {
+                const params = new URLSearchParams()
+                params.append('serialNumber', serial)
+                const res = await fetch(`/api/inventory?${params.toString()}`)
+                
+                if (!res.ok) {
+                    throw new Error(`API returned ${res.status}`)
+                }
+                
+                const data = await res.json()
+                const match = data.find((item: InventoryItem) => item.serialNumber === serial)
+
+                if (match) {
+                    setSelectedItem(match)
+                } else {
+                    setSearchTerm(serial)
+                }
+            } catch (error) {
+                console.error("Failed to pre-fill from serial:", error)
+                setSearchTerm(serial)
+            } finally {
+                setPrefillLoading(false)
+            }
+        }
+
+        prefillFromSerial()
+    }, [serialFromUrl])
 
     async function searchInventory() {
         setSearching(true)
@@ -170,6 +216,14 @@ export default function NewWarrantyClaimPage() {
 
                     {!isLegacy ? (
                         <div className="space-y-4">
+                            {prefillLoading && (
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-500 animate-pulse">
+                                        Loading item for serial: <span className="font-mono">{serialFromUrl}</span>…
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Search by Serial Number or Product Name
@@ -234,6 +288,11 @@ export default function NewWarrantyClaimPage() {
                                             <p className="text-sm text-gray-700">
                                                 <span className="font-semibold">Location:</span> {selectedItem.location.name}
                                             </p>
+                                            {serialFromUrl && selectedItem.serialNumber === serialFromUrl && (
+                                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-2 inline-block">
+                                                    ⚠ Pre-filled from build rejection alert. Please verify item details before submitting.
+                                                </p>
+                                            )}
                                         </div>
                                         <button
                                             type="button"

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { logCreate } from '@/lib/audit'
+import { Prisma } from '@prisma/client'
 
 export async function GET(request: Request) {
     try {
@@ -101,6 +102,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
+        // Check for existing SKU
+        const existing = await prisma.product.findUnique({ where: { sku } })
+        if (existing) {
+            return NextResponse.json(
+                { error: `A product or service with SKU "${sku}" already exists.` },
+                { status: 409 }
+            )
+        }
+
         const product = await prisma.product.create({
             data: {
                 sku,
@@ -133,6 +143,13 @@ export async function POST(request: Request) {
 
         return NextResponse.json(product)
     } catch (error: any) {
+        console.error('Error in POST /api/products:', error)
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            return NextResponse.json(
+                { error: `A product or service with this SKU already exists.` },
+                { status: 409 }
+            )
+        }
         return NextResponse.json(
             { error: error.message || 'Failed to create product' },
             { status: error.message === 'Unauthorized' ? 401 : 500 }
