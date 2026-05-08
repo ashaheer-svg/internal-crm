@@ -127,7 +127,9 @@ export default function MessagingPage() {
 
     // Lightweight stats-only refresh — updates badge counts WITHOUT replacing the message list.
     // Use this after read/done actions to avoid wiping the user's current view.
-    const fetchStats = useCallback(async () => {
+    // If the server reports MORE messages than are currently loaded (e.g. new role-targeted messages
+    // became accessible via the backfill), a silent list refresh is triggered to pull them in.
+    const fetchStats = useCallback(async (currentMessagesCount?: number) => {
         try {
             const params = new URLSearchParams({
                 type: tab,
@@ -143,11 +145,18 @@ export default function MessagingPage() {
             if (res.ok) {
                 const data = await res.json()
                 if (data.stats) setStats(data.stats)
+                // If the server total exceeds what is currently displayed, new messages are
+                // available (e.g. the role backfill just created receipts for this user).
+                // Trigger a silent background refresh to pull the new messages into the list.
+                if (currentMessagesCount !== undefined && (data.stats?.total ?? 0) > currentMessagesCount) {
+                    fetchMessages(1, true)
+                }
             }
         } catch (error) {
             console.error('Failed to refresh stats:', error)
         }
-    }, [tab])
+    }, [tab, fetchMessages])
+
 
     useEffect(() => {
         fetchMessages()
@@ -156,16 +165,18 @@ export default function MessagingPage() {
     // Smart polling: if the user is actively reading (any message expanded),
     // only refresh stats — never wipe the message list mid-read.
     // When nothing is expanded it is safe to do a full background reload.
+    // Either way, pass the current message count so fetchStats can detect new arrivals.
     useEffect(() => {
         const interval = setInterval(() => {
             if (expandedIds.size > 0) {
-                fetchStats()
+                fetchStats(messages.length)
             } else {
                 fetchMessages(meta.page, true)
             }
         }, 15000)
         return () => clearInterval(interval)
-    }, [fetchMessages, fetchStats, meta.page, expandedIds])
+    }, [fetchMessages, fetchStats, meta.page, expandedIds, messages.length])
+
 
     const handleReadMessage = async (messageId: string) => {
         try {

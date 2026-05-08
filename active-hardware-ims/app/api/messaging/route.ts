@@ -248,7 +248,6 @@ export async function GET(req: Request) {
             recipientRole: true,
             attachments: true,
             receipts: {
-                where: { user: { isNot: null } },
                 include: { user: { select: { name: true } } }
             }
         }
