@@ -73,7 +73,7 @@ export async function POST(req: Request) {
             }
         })
 
-        // Handle Attachments
+        // Handle Attachments shdgjhdjdhfjd
         const files = formData.getAll('files') as File[]
         for (const file of files) {
             if (!file.name || file.size === 0) continue
