@@ -276,7 +276,7 @@ export async function GET(req: Request) {
                 prisma.message.count({ where: listWhere }),  // Filtered total (for pagination)
                 prisma.message.count({ where: statsUnreadWhere }),
                 prisma.message.count({ where: { ...statsUnreadWhere, priority: 'URGENT' } }),
-                prisma.message.count({ where: { ...statsWhere, category: 'TASK' } })
+                prisma.message.count({ where: { ...statsUnreadWhere, category: 'TASK' } })
             ])
 
             // Resolve missing customer names from database if needed
@@ -313,7 +313,7 @@ export async function GET(req: Request) {
             stats: {
                 unreadCount: await prisma.message.count({ where: unreadWhereAll }), 
                 urgentCount: await prisma.message.count({ where: { ...unreadWhereAll, priority: 'URGENT' } }), 
-                taskCount: await prisma.message.count({ where: { ...statsWhere, category: 'TASK' } }),
+                taskCount: await prisma.message.count({ where: { ...unreadWhereAll, category: 'TASK' } }),
                 total: await prisma.message.count({ where: statsWhere })
             } 
         })
