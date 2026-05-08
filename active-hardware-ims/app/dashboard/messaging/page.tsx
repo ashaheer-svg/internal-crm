@@ -517,8 +517,14 @@ export default function MessagingPage() {
                                     {isExpanded && (
                                         <div className="px-12 pb-6 animate-in slide-in-from-top-2 duration-300">
                                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-2">
-                                                {(m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
+                                                {(m.customerName || m.partnerName || m.invoiceNumber || m.deliveryOrderNumber) && (
                                                     <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                                                        {m.customerName && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer</p>
+                                                                <p className="text-xs font-semibold text-gray-800 mt-1">{m.customerName}</p>
+                                                            </div>
+                                                        )}
                                                         {m.partnerName && (
                                                             <div>
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Partner</p>

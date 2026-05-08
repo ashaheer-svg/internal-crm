@@ -330,7 +330,11 @@ async function resolveCustomerNames(messages: any[]) {
 
     messages.forEach(m => {
         if (!m.customerName) {
-            // Try to parse from subject
+            // 1. Check explicit metadata fields first
+            if (m.deliveryOrderNumber) doNumbers.add(m.deliveryOrderNumber)
+            if (m.invoiceNumber) invNumbers.add(m.invoiceNumber)
+
+            // 2. Fallback: parse from subject
             const doMatch = m.subject.match(/DO-\d+-\d+/)
             if (doMatch) doNumbers.add(doMatch[0])
 
@@ -360,6 +364,15 @@ async function resolveCustomerNames(messages: any[]) {
     // Apply names to messages
     return messages.map(m => {
         if (!m.customerName) {
+            // Check fields first
+            if (m.deliveryOrderNumber && nameMap.has(m.deliveryOrderNumber)) {
+                return { ...m, customerName: nameMap.get(m.deliveryOrderNumber) }
+            }
+            if (m.invoiceNumber && nameMap.has(m.invoiceNumber)) {
+                return { ...m, customerName: nameMap.get(m.invoiceNumber) }
+            }
+
+            // Fallback: Check subject matches
             const doMatch = m.subject.match(/DO-\d+-\d+/)
             if (doMatch && nameMap.has(doMatch[0])) {
                 return { ...m, customerName: nameMap.get(doMatch[0]) }
