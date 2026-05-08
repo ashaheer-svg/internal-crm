@@ -327,7 +327,7 @@ export default function MessagingPage() {
                 {[
                     { id: 'all', label: 'Total Messages', count: totalCount, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50', active: !unreadFilter && !priorityFilter && categoryFilter === 'ALL' },
                     { id: 'unread', label: 'Unread', count: unreadCount, icon: Inbox, color: 'text-orange-600', bg: 'bg-orange-50', active: unreadFilter },
-                    { id: 'urgent', label: 'Urgent', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', active: priorityFilter === 'URGENT' },
+                    { id: 'urgent', label: 'Urgent Unread', count: urgentCount, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', active: priorityFilter === 'URGENT' && unreadFilter },
                     { id: 'task', label: 'Tasks', count: taskCount, icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50', active: categoryFilter === 'TASK' },
                 ].map((stat) => (
                     <button
@@ -338,7 +338,8 @@ export default function MessagingPage() {
                             } else if (stat.id === 'unread') {
                                 setUnreadFilter(!unreadFilter); setPriorityFilter(null); setCategoryFilter('ALL');
                             } else if (stat.id === 'urgent') {
-                                setPriorityFilter(priorityFilter === 'URGENT' ? null : 'URGENT'); setUnreadFilter(false); setCategoryFilter('ALL');
+                                const isActivating = priorityFilter !== 'URGENT';
+                                setPriorityFilter(isActivating ? 'URGENT' : null); setUnreadFilter(isActivating); setCategoryFilter('ALL');
                             } else if (stat.id === 'task') {
                                 setCategoryFilter(categoryFilter === 'TASK' ? 'ALL' : 'TASK'); setUnreadFilter(false); setPriorityFilter(null);
                             }

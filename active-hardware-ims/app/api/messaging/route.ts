@@ -275,7 +275,7 @@ export async function GET(req: Request) {
                 prisma.message.count({ where: statsWhere }), // Global total for this tab/search
                 prisma.message.count({ where: listWhere }),  // Filtered total (for pagination)
                 prisma.message.count({ where: statsUnreadWhere }),
-                prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }),
+                prisma.message.count({ where: { ...statsUnreadWhere, priority: 'URGENT' } }),
                 prisma.message.count({ where: { ...statsWhere, category: 'TASK' } })
             ])
 
@@ -312,7 +312,7 @@ export async function GET(req: Request) {
             messages: enhancedMessages, 
             stats: {
                 unreadCount: await prisma.message.count({ where: unreadWhereAll }), 
-                urgentCount: await prisma.message.count({ where: { ...statsWhere, priority: 'URGENT' } }), 
+                urgentCount: await prisma.message.count({ where: { ...unreadWhereAll, priority: 'URGENT' } }), 
                 taskCount: await prisma.message.count({ where: { ...statsWhere, category: 'TASK' } }),
                 total: await prisma.message.count({ where: statsWhere })
             } 
