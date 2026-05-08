@@ -125,16 +125,47 @@ export default function MessagingPage() {
         }
     }, [tab, debouncedSearch, sort, categoryFilter, unreadFilter, priorityFilter])
 
+    // Lightweight stats-only refresh — updates badge counts WITHOUT replacing the message list.
+    // Use this after read/done actions to avoid wiping the user's current view.
+    const fetchStats = useCallback(async () => {
+        try {
+            const params = new URLSearchParams({
+                type: tab,
+                page: '1',
+                limit: '1',
+                search: '',
+                sortKey: 'date',
+                sortDir: 'desc',
+                category: 'ALL',
+                unread: 'false'
+            })
+            const res = await fetch(`/api/messaging?${params}`)
+            if (res.ok) {
+                const data = await res.json()
+                if (data.stats) setStats(data.stats)
+            }
+        } catch (error) {
+            console.error('Failed to refresh stats:', error)
+        }
+    }, [tab])
+
     useEffect(() => {
         fetchMessages()
     }, [fetchMessages])
 
+    // Smart polling: if the user is actively reading (any message expanded),
+    // only refresh stats — never wipe the message list mid-read.
+    // When nothing is expanded it is safe to do a full background reload.
     useEffect(() => {
         const interval = setInterval(() => {
-            fetchMessages(meta.page, true)
-        }, 15000) // 15 seconds
+            if (expandedIds.size > 0) {
+                fetchStats()
+            } else {
+                fetchMessages(meta.page, true)
+            }
+        }, 15000)
         return () => clearInterval(interval)
-    }, [fetchMessages, meta.page])
+    }, [fetchMessages, fetchStats, meta.page, expandedIds])
 
     const handleReadMessage = async (messageId: string) => {
         try {
@@ -143,6 +174,8 @@ export default function MessagingPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'read' })
             })
+            // Optimistic local update — mark the receipt as viewed in local state.
+            // This is instant and keeps the message in view (no list wipe).
             setMessages(prev => prev.map(m => {
                 if (m.id === messageId) {
                     return {
@@ -154,8 +187,10 @@ export default function MessagingPage() {
                 }
                 return m
             }))
-            // Refetch stats from server to stay in sync across tabs
-            fetchMessages(meta.page)
+            // Only refresh badge counts — do NOT reload the message list.
+            // A full reload here would remove the just-read message from filtered views
+            // (e.g. Unread filter) causing the message to vanish mid-read.
+            fetchStats()
         } catch (error) {
             console.error('Failed to mark as read:', error)
         }
@@ -190,8 +225,8 @@ export default function MessagingPage() {
                     }
                     return m
                 }))
-                // Refetch stats from server to stay in sync across tabs
-                fetchMessages(meta.page)
+                // Only refresh badge counts — same reason as in handleReadMessage.
+                fetchStats()
                 setNotification({ type: 'success', message: "Task completed successfully!" })
                 setTimeout(() => setNotification(null), 3000)
             }
