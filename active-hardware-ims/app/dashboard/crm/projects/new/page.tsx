@@ -74,6 +74,23 @@ export default function NewProjectPage() {
         }).catch(err => {
             console.error(err)
         })
+
+        // Auto-fill Sales Rep if the logged-in user is a sales role
+        fetch('/api/auth/me')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data?.user) {
+                    const role = data.user.role
+                    const repId = data.user.salesRepId
+                    if (repId && (role === 'SALES' || role === 'SALES-MGR')) {
+                        setFormData(prev => ({
+                            ...prev,
+                            salesRepId: prev.salesRepId || repId
+                        }))
+                    }
+                }
+            })
+            .catch(err => console.error('Failed to fetch current user:', err))
     }, [])
 
     const handlePartnerChange = (partnerId: string) => {
