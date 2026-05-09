@@ -103,7 +103,7 @@ export default function GRNLookupPage() {
             {/* Header section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold flex items-center gap-3 text-background">
                         <FileText className="w-6 h-6 text-blue-600" />
                         GRN Lookup
                     </h1>

@@ -38,7 +38,7 @@ export default async function PurchaseOrderDetailPage({ params }: PageProps) {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{po.poNumber}</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-background">{po.poNumber}</h1>
                         <p className="text-sm text-gray-500">Purchase Order</p>
                     </div>
                 </div>

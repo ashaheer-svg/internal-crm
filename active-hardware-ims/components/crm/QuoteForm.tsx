@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Save, ArrowLeft, X } from 'lucide-react'
+import { Plus, Trash2, Save, ArrowLeft, X, Box } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import ProductSelector from "@/components/selectors/ProductSelector"
 import CustomerSelector from "@/components/selectors/CustomerSelector"
@@ -21,6 +21,8 @@ export interface QuoteItem {
     discount?: number // Percentage
     taxRate?: number
     total: number
+    availableStock?: number
+    locations?: string
 }
 
 interface QuoteFormProps {
@@ -184,7 +186,17 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             unitPrice: product.resellerPrice || 0,
             discount: 0,
             total: product.resellerPrice || 0,
-            details: mode === 'SERVICE' ? [{ modelName: product.model || '', serialNumbers: '' }] : []
+            details: mode === 'SERVICE' ? [{ modelName: product.model || '', serialNumbers: '' }] : [],
+            availableStock: product._count?.inventory,
+            locations: product.inventory && product.inventory.length > 0
+                ? Object.entries(
+                    product.inventory.reduce((acc: Record<string, number>, item: any) => {
+                        const loc = item.location.name;
+                        acc[loc] = (acc[loc] || 0) + 1;
+                        return acc;
+                    }, {})
+                ).map(([loc, count]) => `${loc} (${count})`).join(', ')
+                : undefined
         }
         setItems(prev => [...prev, newItem])
     }
@@ -456,6 +468,19 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                                     placeholder="Item description..."
                                                 />
+                                                {item.productId && item.availableStock !== undefined && (
+                                                    <div className="flex items-center gap-2 mt-1 px-1">
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.availableStock > 0 ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+                                                            In Stock: {item.availableStock}
+                                                        </span>
+                                                        {item.locations && (
+                                                            <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                <Box className="h-2.5 w-2.5" />
+                                                                {item.locations}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 {mode === 'SERVICE' && (
                                                     <div className="col-span-2 space-y-3 mt-2">
                                                         <div className="flex items-center justify-between">

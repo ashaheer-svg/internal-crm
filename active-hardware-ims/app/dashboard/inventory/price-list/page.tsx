@@ -107,7 +107,7 @@ export default function PriceListPage() {
           <div className="flex justify-between items-center">
             <div>
               <BackButton className="mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900">Price List</h1>
+              <h1 className="text-2xl font-bold text-background">Price List</h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 {filteredProducts.length} of {products.length} products
               </p>

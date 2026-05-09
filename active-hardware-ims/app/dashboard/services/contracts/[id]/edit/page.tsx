@@ -142,7 +142,7 @@ export default function EditServiceContractPage() {
             <div className="flex items-center gap-4">
                 <BackButton className="p-2 hover:bg-gray-200 rounded-full" label="" />
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Service Contract</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Edit Service Contract</h1>
                     <p className="text-sm text-gray-500">
                         {contract.customer.name} - {contract.product.name}
                     </p>

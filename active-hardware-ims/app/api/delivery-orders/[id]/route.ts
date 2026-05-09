@@ -13,6 +13,8 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
             include: {
+                buildRejections: true,
+                builtBy: { select: { name: true } },
                 items: {
                     include: {
                         product: {
@@ -24,7 +26,10 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
                         details: true
                     }
                 },
-                salesRep: true
+                salesRep: true,
+                quotes: true,
+                customer: { select: { id: true, taxId: true, name: true } },
+                endCustomer: { select: { id: true, taxId: true, name: true } }
             } as any
         })
 
@@ -155,10 +160,21 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                             })
                         }
                     }
-                    // Update status
+                    // Update status and other common fields
                     await tx.deliveryOrder.update({
                         where: { id: params.id },
-                        data: { status: 'CANCELLED' }
+                        data: { 
+                            status: 'CANCELLED',
+                            notes: notes !== undefined ? notes : undefined,
+                            deliveryAddress: deliveryAddress !== undefined ? deliveryAddress : undefined,
+                            invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : undefined,
+                            salesRepId: salesRepId !== undefined ? salesRepId : undefined,
+                            additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined,
+                            invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
+                            saleType: (body as any).saleType,
+                            endCustomerId: (body as any).endCustomerId,
+                            endCustomerName: (body as any).endCustomerName,
+                        } as any
                     })
                 })
 
@@ -184,8 +200,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         `Items:\n${itemsList}\n` +
                         `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
 
-                    if (techRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
-                    if (salesMgrRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                    const metadata = {
+                        deliveryOrderNumber: order.orderNumber,
+                        customerName: (body as any).endCustomerName || order.endCustomerName || customerName || order.customerName,
+                        partnerName: ((body as any).saleType || order.saleType) === 'PARTNER' ? (customerName || order.customerName) : null,
+                        invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : (order.invoiceNumber || null)
+                    };
+                    if (techRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
                 } catch (err) {
                     console.error('Failed to send cancellation notification:', err);
                 }
@@ -446,10 +468,21 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         }
                     }
 
-                    // 4. Update Status
+                    // 4. Update Status and common fields
                     await tx.deliveryOrder.update({
                         where: { id: params.id },
-                        data: { status: 'COMPLETED' }
+                        data: { 
+                            status: 'COMPLETED',
+                            notes: notes !== undefined ? notes : undefined,
+                            deliveryAddress: deliveryAddress !== undefined ? deliveryAddress : undefined,
+                            invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : undefined,
+                            salesRepId: salesRepId !== undefined ? salesRepId : undefined,
+                            additionalCosts: additionalCosts !== undefined ? Number(additionalCosts) : undefined,
+                            invoiceValue: invoiceValue !== undefined ? Number(invoiceValue) : undefined,
+                            saleType: (body as any).saleType,
+                            endCustomerId: (body as any).endCustomerId,
+                            endCustomerName: (body as any).endCustomerName,
+                        } as any
                     })
                 }, {
                     maxWait: 10000,
@@ -478,9 +511,15 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         `Items:\n${itemsList}\n` +
                         `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
 
-                    if (order.salesRepId) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientUserId: order.salesRepId, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
-                    if (techRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
-                    if (salesMgrRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id });
+                    const metadata = {
+                        deliveryOrderNumber: order.orderNumber,
+                        customerName: (body as any).endCustomerName || order.endCustomerName || customerName || order.customerName,
+                        partnerName: ((body as any).saleType || order.saleType) === 'PARTNER' ? (customerName || order.customerName) : null,
+                        invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : (order.invoiceNumber || null)
+                    };
+                    if (order.salesRepId) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientUserId: order.salesRepId, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id, ...metadata });
+                    if (techRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id, ...metadata });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO COMPLETED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'MEDIUM', senderId: user.id, ...metadata });
                 } catch (err) {
                     console.error('Failed to send completion notification:', err);
                 }
@@ -555,8 +594,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         `Items:\n${itemsList}\n` +
                         `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
 
-                    if (techRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
-                    if (salesMgrRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id });
+                    const metadata = {
+                        deliveryOrderNumber: order.orderNumber,
+                        customerName: (body as any).endCustomerName || order.endCustomerName || customerName || order.customerName,
+                        partnerName: ((body as any).saleType || order.saleType) === 'PARTNER' ? (customerName || order.customerName) : null,
+                        invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : (order.invoiceNumber || null)
+                    };
+                    if (techRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+                    if (salesMgrRole) await sendSystemMessage({ subject: `DO ${status}: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
                 } catch (err) {
                     console.error('Failed to send status update notification:', err);
                 }

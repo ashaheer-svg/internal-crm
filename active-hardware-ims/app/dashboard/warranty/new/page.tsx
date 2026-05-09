@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Search } from "lucide-react"
 import CustomerSelector from "@/app/dashboard/transactions/invoices/new/CustomerSelector"
@@ -12,6 +12,7 @@ type InventoryItem = {
     status: string
     product: {
         id: string
+        sku: string
         name: string
         brand: string
         model: string
@@ -19,23 +20,43 @@ type InventoryItem = {
     location: {
         name: string
     }
+    deliveryOrderItem?: {
+        deliveryOrder: {
+            customer?: any
+            endCustomer?: any
+            customerName: string
+            endCustomerName?: string
+        }
+    }
 }
 
 export default function NewWarrantyClaimPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading form...</div>}>
+            <NewWarrantyClaimForm />
+        </Suspense>
+    )
+}
+
+function NewWarrantyClaimForm() {
     const router = useRouter()
-    const [searchTerm, setSearchTerm] = useState("")
+    const searchParams = useSearchParams()
+    const serialFromUrl = searchParams.get("serial")
+    const [searchTerm, setSearchTerm] = useState(serialFromUrl || "")
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+    const [customerName, setCustomerName] = useState("")
     const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
     const [searching, setSearching] = useState(false)
+    const [prefillLoading, setPrefillLoading] = useState(false)
     const [isLegacy, setIsLegacy] = useState(false)
     const [sku, setSku] = useState("")
     const [name, setName] = useState("")
     const [brand, setBrand] = useState("")
     const [model, setModel] = useState("")
-    const [serialNumber, setSerialNumber] = useState("")
+    const [serialNumber, setSerialNumber] = useState(serialFromUrl || "")
 
     useEffect(() => {
         // Lower threshold to 2 characters for better UX
@@ -45,6 +66,40 @@ export default function NewWarrantyClaimPage() {
             setInventoryItems([])
         }
     }, [searchTerm])
+
+    useEffect(() => {
+        const serial = serialFromUrl
+        if (!serial) return
+
+        async function prefillFromSerial() {
+            setPrefillLoading(true)
+            try {
+                const params = new URLSearchParams()
+                params.append('serialNumber', serial)
+                const res = await fetch(`/api/inventory?${params.toString()}`)
+                
+                if (!res.ok) {
+                    throw new Error(`API returned ${res.status}`)
+                }
+                
+                const data = await res.json()
+                const match = data.find((item: InventoryItem) => item.serialNumber === serial)
+
+                if (match) {
+                    handleSelectItem(match)
+                } else {
+                    setSearchTerm(serial)
+                }
+            } catch (error) {
+                console.error("Failed to pre-fill from serial:", error)
+                setSearchTerm(serial)
+            } finally {
+                setPrefillLoading(false)
+            }
+        }
+
+        prefillFromSerial()
+    }, [serialFromUrl])
 
     async function searchInventory() {
         setSearching(true)
@@ -90,17 +145,38 @@ export default function NewWarrantyClaimPage() {
         }
     }
 
+    function handleSelectItem(item: InventoryItem) {
+        setSelectedItem(item)
+        
+        // Pre-fill legacy fields just in case user switches
+        setSku(item.product.sku || "")
+        setName(item.product.name)
+        setBrand(item.product.brand)
+        setModel(item.product.model)
+        setSerialNumber(item.serialNumber)
+
+        if (item.deliveryOrderItem?.deliveryOrder) {
+            const order = item.deliveryOrderItem.deliveryOrder
+            const customer = order.endCustomer || order.customer
+            if (customer) {
+                setSelectedCustomer(customer)
+                setCustomerName(customer.name)
+            } else {
+                setCustomerName(order.endCustomerName || order.customerName)
+            }
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
-        const isInvalid = !isLegacy ? (!selectedItem || !description) : (!sku || !name || !brand || !model || !serialNumber || !description)
+        const isInvalid = (!description || !customerName) || (!isLegacy ? !selectedItem : (!sku || !name || !brand || !model || !serialNumber))
         if (isInvalid) {
-            alert(isLegacy ? 'Please fill in all legacy fields and a description' : 'Please select an item and provide a description')
+            alert('Please fill in all required fields including customer name and description.')
             return
         }
-
-        // Use selected customer name if available, otherwise use a default
-        const customerNameToSubmit = selectedCustomer?.name || 'Walk-in Customer'
+        //if customer is not selected, use walk-in customer
+        const customerNameToSubmit = customerName || 'Walk-in Customer'
 
         setLoading(true)
 
@@ -110,6 +186,7 @@ export default function NewWarrantyClaimPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     inventoryItemId: selectedItem?.id,
+                    customerId: selectedCustomer?.id,
                     customerName: customerNameToSubmit,
                     description,
                     isLegacy,
@@ -146,7 +223,7 @@ export default function NewWarrantyClaimPage() {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Warranty Claim</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">New Warranty Claim</h1>
                     <p className="text-sm text-gray-500">Create a new RMA request for a defective item</p>
                 </div>
             </div>
@@ -160,7 +237,13 @@ export default function NewWarrantyClaimPage() {
                             <input
                                 type="checkbox"
                                 checked={isLegacy}
-                                onChange={(e) => { setIsLegacy(e.target.checked); setSelectedItem(null); }}
+                                onChange={(e) => { 
+                                    setIsLegacy(e.target.checked); 
+                                    setSelectedItem(null);
+                                    if (e.target.checked && searchTerm && !serialNumber) {
+                                        setSerialNumber(searchTerm);
+                                    }
+                                }}
                                 className="sr-only peer"
                             />
                             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -170,6 +253,14 @@ export default function NewWarrantyClaimPage() {
 
                     {!isLegacy ? (
                         <div className="space-y-4">
+                            {prefillLoading && (
+                                <div className="mb-4">
+                                    <p className="text-sm text-gray-500 animate-pulse">
+                                        Loading item for serial: <span className="font-mono">{serialFromUrl}</span>…
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Search by Serial Number or Product Name
@@ -198,7 +289,7 @@ export default function NewWarrantyClaimPage() {
                                         <button
                                             key={item.id}
                                             type="button"
-                                            onClick={() => setSelectedItem(item)}
+                                            onClick={() => handleSelectItem(item)}
                                             className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
                                         >
                                             <div className="flex-1 min-w-0">
@@ -234,6 +325,11 @@ export default function NewWarrantyClaimPage() {
                                             <p className="text-sm text-gray-700">
                                                 <span className="font-semibold">Location:</span> {selectedItem.location.name}
                                             </p>
+                                            {serialFromUrl && selectedItem.serialNumber === serialFromUrl && (
+                                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-2 inline-block">
+                                                    ⚠ Pre-filled from build rejection alert. Please verify item details before submitting.
+                                                </p>
+                                            )}
                                         </div>
                                         <button
                                             type="button"
@@ -283,7 +379,10 @@ export default function NewWarrantyClaimPage() {
                         <CustomerSelector
                             type="ALL"
                             selectedCustomer={selectedCustomer}
-                            onSelect={setSelectedCustomer}
+                            onSelect={(c) => {
+                                setSelectedCustomer(c)
+                                if (c) setCustomerName(c.name)
+                            }}
                         />
                     </div>
                 </div>

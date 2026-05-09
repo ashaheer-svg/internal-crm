@@ -27,7 +27,7 @@ export async function POST(
             return NextResponse.json({ error: 'Start date cannot be after end date' }, { status: 400 })
         }
 
-        const { unitCost } = body // Optional for now, but good to handle
+        const { unitCost, licenseKey } = body // Optional for now, but good to handle
 
         // Verify the item belongs to the order and is a service
         const item = await prisma.deliveryOrderItem.findFirst({
@@ -65,6 +65,7 @@ export async function POST(
                 serviceStartDate: start,
                 serviceEndDate: end,
                 unitCost: unitCost !== undefined ? Number(unitCost) : undefined,
+                licenseKey: licenseKey || undefined,
                 quantityFulfilled: item.quantity // Mark as fully fulfilled for services
             }
         })
@@ -72,7 +73,7 @@ export async function POST(
         // Audit Log
         const { logUpdate } = await import('@/lib/audit')
         await logUpdate('DELIVERY_ORDER_ITEM', itemId, user.id, user.name,
-            { serviceStartDate: startDate, serviceEndDate: endDate, unitCost },
+            { serviceStartDate: startDate, serviceEndDate: endDate, unitCost, licenseKey },
             { orderNumber: item.deliveryOrder.orderNumber, sku: item.product.sku }
         )
 

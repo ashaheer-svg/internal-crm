@@ -120,7 +120,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                             deliveryInstructions: body.deliveryInstructions || null,
                             additionalContact: body.additionalContact || null,
                             deliveryCharges: body.deliveryCharges ? Number(body.deliveryCharges) : 0,
-                            quoteReference: quote.id,
+                            quoteReference: quote.quoteNumber,
                             status: 'DRAFT',
                             items: {
                                 create: quote.items
@@ -214,9 +214,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
                         if (usersInRole.length > 0) {
                             await (tx as any).message.create({
                                 data: {
-                                    subject: `DO Created: Quote ${quote.quoteNumber} Approved`,
+                                    subject: `DO Created: ${doNumber} (Quote ${quote.quoteNumber}) Approved`,
                                     content: description,
                                     category: 'TASK',
+                                    customerName: (quote as any).billTo?.name || quote.project.customer?.name || 'Unknown',
+                                    deliveryOrderNumber: doNumber,
                                     priority: body.urgency === 'URGENT' ? 'URGENT' : 'NORMAL',
                                     senderId: user.id,
                                     recipientRoleId: accMgrRole.id,

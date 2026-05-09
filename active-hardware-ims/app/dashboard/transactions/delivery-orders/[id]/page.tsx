@@ -28,6 +28,7 @@ type DeliveryOrderItem = {
         name: string
         brand: string
         model: string
+        category?: string
         serviceDefinition?: {
             type: string
             durationValue: number
@@ -39,6 +40,7 @@ type DeliveryOrderItem = {
     isBackorder: boolean
     serviceStartDate?: string | null
     serviceEndDate?: string | null
+    licenseKey?: string | null
     reservedItems: InventoryItem[]
     details?: { modelName: string; serialNumbers: string }[]
 }
@@ -69,6 +71,14 @@ type DeliveryOrder = {
         name: string
     } | null
     items: DeliveryOrderItem[]
+    customer?: { id: string; taxId: string | null; name: string } | null
+    endCustomer?: { id: string; taxId: string | null; name: string } | null
+    quotes?: {
+        taxAmount: number
+        taxDetails: string | null
+        subTotal: number
+        totalAmount: number
+    }[]
 }
 
 function WorkflowStepper({ status }: { status?: string }) {
@@ -179,6 +189,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [serviceStartDate, setServiceStartDate] = useState("")
     const [serviceEndDate, setServiceEndDate] = useState("")
     const [serviceUnitCost, setServiceUnitCost] = useState<string>("")
+    const [serviceLicenseKey, setServiceLicenseKey] = useState("")
 
     const [invoiceNumberInput, setInvoiceNumberInput] = useState("")
 
@@ -313,7 +324,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 body: JSON.stringify({
                     startDate: serviceStartDate,
                     endDate: serviceEndDate,
-                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined
+                    unitCost: serviceUnitCost ? Number(serviceUnitCost) : undefined,
+                    licenseKey: serviceLicenseKey || undefined
                 })
             })
 
@@ -364,6 +376,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         setFulfillingItem(item)
         setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
         setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
+        setServiceLicenseKey(item.licenseKey || "")
 
         // Default end date (e.g. +1 year) if not set
         if (item.serviceEndDate) {
@@ -520,8 +533,22 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         return item.reservedItems.length >= item.quantity
     })
 
-    // At least one inventory item (serial number) has been allocated
-    const hasAllocatedInventory = order.items.some(item => item.reservedItems.length > 0)
+    // --- VAT/Tax Logic ---
+    const linkedQuote = order.quotes?.[0] ?? null
+    const vatNumber = order.endCustomer?.taxId || order.customer?.taxId || null
+    
+    let vatEntries: { name: string; rate: number; amount: number }[] = []
+    if (linkedQuote?.taxDetails) {
+        try {
+            const parsed = JSON.parse(linkedQuote.taxDetails)
+            if (Array.isArray(parsed)) {
+                vatEntries = parsed
+            }
+        } catch {}
+    }
+    
+    const showVat = !!(vatNumber && vatEntries.length > 0)
+    // ---------------------
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -543,7 +570,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-background flex items-center gap-3">
                             {order.orderNumber}
                             <span className={`px-2 py-1 text-xs rounded-full border 
                                 ${order.status === 'DRAFT' ? 'bg-gray-100 border-gray-200 text-gray-700' : ''}
@@ -605,9 +632,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                     )}
                                     <button
                                         onClick={() => handleStatusChange('READY_FOR_BUILD')}
-                                        disabled={actionLoading || !hasAllocatedInventory}
+                                        disabled={actionLoading}
                                         className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
-                                        title={!hasAllocatedInventory ? "At least one inventory item must be allocated to proceed" : ""}
+                                        title=""
                                     >
                                         <Hammer className="w-4 h-4" />
                                         Ready for Build
@@ -764,6 +791,55 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 </div>
             )}
 
+            {showVat && linkedQuote && (
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4 no-print">
+                    <div className="flex justify-between items-center border-b pb-3">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            🧾 Tax & VAT Distribution
+                        </h3>
+                        <span className="text-sm font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">
+                            Tax Reg. No: <span className="font-bold text-gray-900">{vatNumber}</span>
+                        </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b">
+                                    <th className="py-2 px-3">Tax Name</th>
+                                    <th className="py-2 px-3 text-right">Rate</th>
+                                    <th className="py-2 px-3 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {vatEntries.map((tax, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50/50">
+                                        <td className="py-2 px-3 font-medium text-gray-800">{tax.name}</td>
+                                        <td className="py-2 px-3 text-right text-gray-500">{tax.rate}%</td>
+                                        <td className="py-2 px-3 text-right font-medium text-gray-900"><Currency amount={tax.amount} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="flex justify-end gap-6 border-t border-gray-200 pt-3">
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Subtotal (Excl. Tax)</span>
+                            <p className="text-sm font-medium text-gray-700"><Currency amount={linkedQuote.subTotal} /></p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs text-gray-400">Total Tax</span>
+                            <p className="text-sm font-medium text-gray-700"><Currency amount={linkedQuote.taxAmount} /></p>
+                        </div>
+                        <div className="text-right bg-blue-50 px-3 py-1 rounded-md border border-blue-100">
+                            <span className="text-xs text-blue-600 font-medium">Total (Incl. Tax)</span>
+                            <p className="text-lg font-black text-blue-700"><Currency amount={linkedQuote.totalAmount} /></p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Items List */}
@@ -882,6 +958,12 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                             <span>{item.product.serviceDefinition?.type === 'RENTAL' ? 'Rental Period:' : 'Service Period:'}</span>
                                                             <span className="font-medium">{formatDate(item.serviceStartDate)} - {formatDate(item.serviceEndDate!)}</span>
                                                         </div>
+                                                        {item.licenseKey && (
+                                                            <div className="flex justify-between mt-1 pt-1 border-t border-blue-100">
+                                                                <span>License Key:</span>
+                                                                <span className="font-mono font-bold text-blue-800">{item.licenseKey}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -935,13 +1017,13 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                             )}
                                         </div>
 
-                                        <button
+                                        {/* <button
                                             onClick={() => handleDismissRejection(r.id)}
                                             title="Dismiss this alert (item is not defective)"
                                             className="flex-shrink-0 text-xs px-2 py-1 rounded border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                                         >
                                             Dismiss
-                                        </button>
+                                        </button> */}
                                     </li>
                                 ))}
                             </ul>
@@ -1276,6 +1358,20 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 </div>
                                 <p className="mt-1 text-[10px] text-gray-500 italic">Actual procurement cost for this service.</p>
                             </div>
+
+                            {fulfillingItem.product.category?.toUpperCase().startsWith('LICEN') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">License Key</label>
+                                    <input
+                                        type="text"
+                                        value={serviceLicenseKey}
+                                        onChange={(e) => setServiceLicenseKey(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border font-mono"
+                                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                                    />
+                                    <p className="mt-1 text-[10px] text-gray-500 italic">Enter the license key</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">

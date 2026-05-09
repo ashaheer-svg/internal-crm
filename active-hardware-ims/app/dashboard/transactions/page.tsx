@@ -237,7 +237,7 @@ function TransactionsContent() {
         <div className="space-y-6 flex flex-col min-h-screen pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Enterprise Transactions</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Enterprise Transactions</h1>
                     <p className="text-sm text-gray-500 font-medium">unified procurement, fulfillment, and movement history</p>
                 </div>
             </div>

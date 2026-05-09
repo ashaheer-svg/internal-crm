@@ -25,7 +25,17 @@ export async function GET(request: Request) {
             where,
             include: {
                 product: true,
-                location: true
+                location: true,
+                deliveryOrderItem: {
+                    include: {
+                        deliveryOrder: {
+                            include: {
+                                customer: true,
+                                endCustomer: true
+                            }
+                        }
+                    }
+                }
             },
             orderBy: { createdAt: 'asc' }
         })

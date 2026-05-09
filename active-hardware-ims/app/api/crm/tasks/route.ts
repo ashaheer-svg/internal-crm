@@ -27,7 +27,10 @@ export async function POST(request: Request) {
             },
             include: {
                 project: {
-                    select: { title: true }
+                    select: { 
+                        title: true,
+                        customer: { select: { name: true } }
+                    }
                 }
             }
         })
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
                     subject: `New CRM Task: ${title}`,
                     content: `You have been assigned a new task in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,
                     category: 'TASK',
+                    customerName: task.project.customer?.name || null,
                     priority: priority.toUpperCase(),
                     senderId: user.id,
                     receipts: {
@@ -61,6 +65,7 @@ export async function POST(request: Request) {
                         subject: `New CRM Task for Category: ${title}`,
                         content: `A new task has been assigned to your category in project "${task.project.title}":\n\n${title}${description ? `\n\n${description}` : ''}`,
                         category: 'TASK',
+                        customerName: task.project.customer?.name || null,
                         priority: priority.toUpperCase(),
                         senderId: user.id,
                         recipientRoleId: assignedToRoleId,

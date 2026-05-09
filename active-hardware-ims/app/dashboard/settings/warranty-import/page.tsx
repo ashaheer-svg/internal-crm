@@ -166,7 +166,7 @@ export default function WarrantyImportPage() {
                     <ArrowLeft className="h-5 w-5 text-gray-500" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Import Historical Warranty Data</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-background">Import Historical Warranty Data</h1>
                     <p className="mt-1 text-sm text-gray-500">
                         Upload past sales data to track warranty for items sold before this system was used.
                     </p>

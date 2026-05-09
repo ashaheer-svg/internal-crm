@@ -129,7 +129,7 @@ export default function EditProductPage({ params }: PageProps) {
                 <Link href={`/dashboard/inventory/${productId}`} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Edit Product</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-background">Edit Product</h1>
             </div>
 
             <form onSubmit={onSubmit} className="bg-white shadow sm:rounded-lg p-6 space-y-6">
