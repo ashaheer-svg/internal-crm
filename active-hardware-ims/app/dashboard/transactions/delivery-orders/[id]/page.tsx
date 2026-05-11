@@ -976,8 +976,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                 <div className="text-sm font-medium text-gray-900">
                                                     <Currency amount={item.unitPrice * item.quantity} />
                                                 </div>
-                                                <div className="text-xs text-gray-500">
-                                                    {item.quantity} x <Currency amount={item.unitPrice} />
+                                                <div className="text-xs text-gray-500 whitespace-nowrap flex items-center justify-end gap-1">
+                                                    <span>{item.quantity} x</span> <Currency amount={item.unitPrice} />
                                                 </div>
                                             </div>
                                         </div>
