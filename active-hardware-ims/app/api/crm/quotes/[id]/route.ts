@@ -23,6 +23,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                         }
                     }
                 },
+                deliveryOrder: true,
                 createdBy: true
             } as any
         })
@@ -153,8 +154,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                 await (tx as any).cRMQuote.update({
                     where: { id },
                     data: {
-                        status: 'SENT',
-                        deliveryOrderId: null
+                        status: 'SENT'
                     }
                 })
             }

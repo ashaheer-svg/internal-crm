@@ -68,8 +68,15 @@ export default function NewDeliveryOrderPage() {
     const [notes, setNotes] = useState("")
     const [invoiceValue, setInvoiceValue] = useState<number>(0)
     const [invoiceNumber, setInvoiceNumber] = useState<string>("")
+    const [poNumber, setPoNumber] = useState<string>("")
     const [additionalCosts, setAdditionalCosts] = useState<number>(0)
     const [salesRepId, setSalesRepId] = useState<string>("")
+    
+    // Additional Build Sheet Fields
+    const [buildInstructions, setBuildInstructions] = useState("")
+    const [deliveryInstructions, setDeliveryInstructions] = useState("")
+    const [additionalContact, setAdditionalContact] = useState("")
+    const [deliveryCharges, setDeliveryCharges] = useState<number>(0)
     const [salesReps, setSalesReps] = useState<any[]>([])
 
     // Address Selection
@@ -138,6 +145,12 @@ export default function NewDeliveryOrderPage() {
                     }
 
                     setInvoiceValue(quote.subTotal)
+                    
+                    if (quote.poNumber) setPoNumber(quote.poNumber)
+                    if (quote.deliveryOrder?.buildInstructions) setBuildInstructions(quote.deliveryOrder.buildInstructions)
+                    if (quote.deliveryOrder?.deliveryInstructions) setDeliveryInstructions(quote.deliveryOrder.deliveryInstructions)
+                    if (quote.deliveryOrder?.additionalContact) setAdditionalContact(quote.deliveryOrder.additionalContact)
+                    if (quote.deliveryOrder?.deliveryCharges) setDeliveryCharges(quote.deliveryOrder.deliveryCharges)
 
                     let newNotes = `Converted from Quote #${quote.quoteNumber}`
                     if (quote.poNumber) newNotes += `\nPO: ${quote.poNumber}`
@@ -428,6 +441,11 @@ export default function NewDeliveryOrderPage() {
                 additionalCosts: Number(additionalCosts),
                 salesRepId: salesRepId || null,
                 notes,
+                poNumber,
+                buildInstructions,
+                deliveryInstructions,
+                additionalContact,
+                deliveryCharges,
                 backorderId, // Include backorder ID
                 quoteReference: searchParams.get('quoteId'), // Include origin quote reference
                 items
@@ -591,6 +609,16 @@ export default function NewDeliveryOrderPage() {
                                     />
                                 </div>
                                 <div className="sm:col-span-1">
+                                    <label className="block text-sm font-bold text-gray-700 mb-1.5">PO Number</label>
+                                    <input
+                                        type="text"
+                                        value={poNumber}
+                                        onChange={(e) => setPoNumber(e.target.value)}
+                                        className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border shadow-sm font-medium"
+                                        placeholder="e.g. PO-2024-001"
+                                    />
+                                </div>
+                                <div className="sm:col-span-1">
                                     <SalesRepSelector
                                         label="Assigned Representative"
                                         onSelect={(rep) => setSalesRepId(rep?.id ?? "")}
@@ -606,6 +634,48 @@ export default function NewDeliveryOrderPage() {
                                         className="w-full rounded-xl border-gray-200 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none border bg-gray-50/30"
                                         placeholder="Special handling instructions..."
                                     />
+                                </div>
+
+                                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <div className="sm:col-span-1">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Build Instructions</label>
+                                        <textarea
+                                            rows={2}
+                                            value={buildInstructions}
+                                            onChange={(e) => setBuildInstructions(e.target.value)}
+                                            className="w-full rounded-lg border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none border"
+                                            placeholder="Assembly requirements..."
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-1">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Delivery Instructions</label>
+                                        <textarea
+                                            rows={2}
+                                            value={deliveryInstructions}
+                                            onChange={(e) => setDeliveryInstructions(e.target.value)}
+                                            className="w-full rounded-lg border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none border"
+                                            placeholder="Drop-off details..."
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-1">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Additional Contact</label>
+                                        <input
+                                            type="text"
+                                            value={additionalContact}
+                                            onChange={(e) => setAdditionalContact(e.target.value)}
+                                            className="w-full rounded-lg border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none border"
+                                            placeholder="Name / Phone"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-1">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Delivery Charges</label>
+                                        <FormattedNumberInput
+                                            value={deliveryCharges}
+                                            onChange={setDeliveryCharges}
+                                            className="w-full rounded-lg border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none border"
+                                            placeholder="0"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Delivery Address Selection */}

@@ -14,12 +14,18 @@ interface Quote {
     createdAt: string
     totalAmount: number
     poNumber?: string
+    poDocumentUrl?: string
+    expectedDeliveryDate?: string | Date | null
     urgency?: string
     deliveryOrder?: {
         id: string
         orderNumber: string
         status: string
         isActive?: boolean
+        buildInstructions?: string | null
+        deliveryInstructions?: string | null
+        additionalContact?: string | null
+        deliveryCharges?: number | null
     }
     items?: {
         productId: string
@@ -264,6 +270,16 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                     onClose={() => setApprovingQuote(null)}
                     quoteNumber={approvingQuote.quoteNumber}
                     onApprove={async (data) => await handleApprove(approvingQuote.id, data)}
+                    initialData={{
+                        poNumber: approvingQuote.poNumber,
+                        poDocumentUrl: approvingQuote.poDocumentUrl,
+                        expectedDeliveryDate: approvingQuote.expectedDeliveryDate,
+                        urgency: approvingQuote.urgency,
+                        buildInstructions: approvingQuote.deliveryOrder?.buildInstructions || undefined,
+                        deliveryInstructions: approvingQuote.deliveryOrder?.deliveryInstructions || undefined,
+                        additionalContact: approvingQuote.deliveryOrder?.additionalContact || undefined,
+                        deliveryCharges: approvingQuote.deliveryOrder?.deliveryCharges || undefined
+                    }}
                 />
             )}
         </div>

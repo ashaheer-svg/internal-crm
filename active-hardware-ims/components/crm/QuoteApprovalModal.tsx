@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, CheckCircle, Upload, Loader2 } from 'lucide-react'
 
 interface QuoteApprovalModalProps {
@@ -15,9 +15,19 @@ interface QuoteApprovalModalProps {
         deliveryCharges?: number;
     }) => Promise<void>
     quoteNumber: string
+    initialData?: {
+        poNumber?: string;
+        poDocumentUrl?: string;
+        expectedDeliveryDate?: string | Date | null;
+        urgency?: string;
+        buildInstructions?: string;
+        deliveryInstructions?: string;
+        additionalContact?: string;
+        deliveryCharges?: number;
+    }
 }
 
-export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNumber }: QuoteApprovalModalProps) {
+export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNumber, initialData }: QuoteApprovalModalProps) {
     const [poNumber, setPoNumber] = useState('')
     const [poDocumentUrl, setPoDocumentUrl] = useState('')
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
@@ -28,14 +38,28 @@ export default function QuoteApprovalModal({ isOpen, onClose, onApprove, quoteNu
     const [deliveryInstructions, setDeliveryInstructions] = useState('')
     const [additionalContact, setAdditionalContact] = useState('')
     const [deliveryCharges, setDeliveryCharges] = useState('')
-    const [userRole, setUserRole] = useState<string | null>(null)
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState('')
 
-    import('react').then(({ useEffect }) => {
-        // Safe inner poll for role checks on client-side setup
-    })
+    useEffect(() => {
+        if (isOpen && initialData) {
+            if (initialData.poNumber) setPoNumber(initialData.poNumber)
+            if (initialData.poDocumentUrl) setPoDocumentUrl(initialData.poDocumentUrl)
+            if (initialData.urgency) setUrgency(initialData.urgency)
+            if (initialData.buildInstructions) setBuildInstructions(initialData.buildInstructions)
+            if (initialData.deliveryInstructions) setDeliveryInstructions(initialData.deliveryInstructions)
+            if (initialData.additionalContact) setAdditionalContact(initialData.additionalContact)
+            if (initialData.deliveryCharges) setDeliveryCharges(initialData.deliveryCharges.toString())
+            
+            if (initialData.expectedDeliveryDate) {
+                const date = new Date(initialData.expectedDeliveryDate)
+                if (!isNaN(date.getTime())) {
+                    setExpectedDeliveryDate(date.toISOString().split('T')[0])
+                }
+            }
+        }
+    }, [isOpen, initialData])
 
     if (!isOpen) return null
 

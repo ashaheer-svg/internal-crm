@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId, quoteReference } = body
+        const { orderNumber, customerId, customerName, saleType, endCustomerId, endCustomerName, notes, items, invoiceNumber, salesRepId, quoteReference, additionalCosts } = body
 
         if (!customerName) {
             return NextResponse.json({ error: 'Customer Name is required' }, { status: 400 })
@@ -182,11 +182,16 @@ export async function POST(request: Request) {
                     deliveryAddress: body.deliveryAddress,
                     invoiceValue: (Number(body.invoiceValue) || items.reduce((sum: number, i: any) => sum + (Number(i.unitPrice) * Number(i.quantity)), 0)) || 0,
                     invoiceNumber: invoiceNumber || null,
+                    poNumber: body.poNumber || null,
                     salesRepId: salesRepId || null,
-                    additionalCosts: Number(body.additionalCosts) || 0,
+                    additionalCosts: Number(additionalCosts) || 0,
                     notes,
                     status: 'DRAFT',
                     quoteReference: quoteReference || null,
+                    buildInstructions: body.buildInstructions || null,
+                    deliveryInstructions: body.deliveryInstructions || null,
+                    additionalContact: body.additionalContact || null,
+                    deliveryCharges: body.deliveryCharges ? Number(body.deliveryCharges) : 0,
                     items: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
