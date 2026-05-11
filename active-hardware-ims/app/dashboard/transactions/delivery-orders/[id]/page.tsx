@@ -630,15 +630,17 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                             Cancel Order
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => handleStatusChange('READY_FOR_BUILD')}
-                                        disabled={actionLoading}
-                                        className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
-                                        title=""
-                                    >
-                                        <Hammer className="w-4 h-4" />
-                                        Ready for Build
-                                    </button>
+                                    {(userRole === 'ACC-MGR' || userRole === 'ACC-ASSISTANT' || userRole === 'ADMIN') && (
+                                        <button
+                                            onClick={() => handleStatusChange('READY_FOR_BUILD')}
+                                            disabled={actionLoading}
+                                            className="px-4 py-2 text-sm bg-amber-600 text-white hover:bg-amber-700 rounded-md shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                            title=""
+                                        >
+                                            <Hammer className="w-4 h-4" />
+                                            Ready for Build
+                                        </button>
+                                    )}
                                 </>
                             )}
 
@@ -675,13 +677,15 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                     )}
 
                     {/* Delete Actions */}
-                    <button
-                        onClick={() => handleDelete(order.isActive ? 'soft' : 'hard')}
-                        className="p-2 text-gray-400 hover:text-red-600"
-                        title={order.isActive ? "Move to Trash" : "Delete Permanently"}
-                    >
-                        <Trash2 className="w-5 h-5" />
-                    </button>
+                    {(userRole === 'ACC-MGR' || userRole === 'ACC-ASSISTANT' || userRole === 'ADMIN') && (
+                        <button
+                            onClick={() => handleDelete(order.isActive ? 'soft' : 'hard')}
+                            className="p-2 text-gray-400 hover:text-red-600"
+                            title={order.isActive ? "Move to Trash" : "Delete Permanently"}
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
             </div>
 
