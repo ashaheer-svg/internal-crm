@@ -156,7 +156,7 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                                         </span>
                                         {quote.deliveryOrder && (
                                             <button
-                                                onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
+                                                // onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
                                                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold border transition-colors ${
                                                     quote.deliveryOrder.isActive === false 
                                                         ? 'bg-red-50 text-red-700 border-red-200'
