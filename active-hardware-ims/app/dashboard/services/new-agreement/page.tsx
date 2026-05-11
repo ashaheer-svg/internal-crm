@@ -231,7 +231,7 @@ export default function NewServiceAgreementPage() {
                                 <span className="text-gray-500 sm:text-sm">Rs.</span>
                             </div>
                             <input
-                                type="number"
+                                type="integer"
                                 min="0"
                                 step="0.01"
                                 value={contractValue}
