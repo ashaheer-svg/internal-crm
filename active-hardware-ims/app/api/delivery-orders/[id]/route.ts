@@ -46,13 +46,13 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
-        await requireAuth()
+        const user = await requireAuth()
         const { searchParams } = new URL(request.url)
         const type = searchParams.get('type') // 'soft' | 'hard'
 
         const order = await prisma.deliveryOrder.findUnique({
             where: { id: params.id },
-            include: { items: { include: { reservedItems: true } } }
+            include: { items: { include: { reservedItems: true, product: true } } }
         })
 
         if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
@@ -103,6 +103,32 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
                 data: { isActive: false, status: 'CANCELLED' }
             })
         })
+
+        // Notify TECHNICAL and SALES-MGR for Deactivation
+        try {
+            const [techRole, salesMgrRole] = await Promise.all([
+                prisma.role.findUnique({ where: { name: 'TECHNICAL' } }),
+                prisma.role.findUnique({ where: { name: 'SALES-MGR' } })
+            ]);
+
+            const itemsList = order.items.map(i => `- ${i.product?.name || 'Item'} (Qty: ${i.quantity})`).join('\n');
+            const content = `Delivery Order ${order.orderNumber} has been DEACTIVATED (Moved to Trash).\n\n` +
+                `End Customer: ${order.endCustomerName || order.customerName}\n` +
+                `Partner: ${order.customerName}\n` +
+                `Items:\n${itemsList}\n` +
+                `Expected Delivery: ${order.updatedAt ? format(new Date(order.updatedAt), 'dd MMM yyyy') : 'N/A'}`;
+
+            const metadata = {
+                deliveryOrderNumber: order.orderNumber,
+                customerName: order.endCustomerName || order.customerName,
+                partnerName: order.saleType === 'PARTNER' ? order.customerName : null,
+                invoiceNumber: order.invoiceNumber || null
+            };
+            if (techRole) await sendSystemMessage({ subject: `DO DEACTIVATED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+            if (salesMgrRole) await sendSystemMessage({ subject: `DO DEACTIVATED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+        } catch (err) {
+            console.error('Failed to send deactivation notification:', err);
+        }
 
         return NextResponse.json({ success: true, message: 'Moved to trash and stock released' })
 

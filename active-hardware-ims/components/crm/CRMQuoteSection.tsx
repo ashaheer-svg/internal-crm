@@ -158,7 +158,7 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                                             <button
                                                 // onClick={() => router.push(`/dashboard/transactions/delivery-orders/${quote.deliveryOrder?.id}`)}
                                                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold border transition-colors ${
-                                                    quote.deliveryOrder.isActive === false 
+                                                    (quote.deliveryOrder.isActive === false || quote.deliveryOrder.status === 'CANCELLED')
                                                         ? 'bg-red-50 text-red-700 border-red-200'
                                                         : quote.deliveryOrder.status === 'COMPLETED' 
                                                             ? 'bg-green-600 text-white border-green-700' 
@@ -170,6 +170,8 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                                                 {quote.deliveryOrder.orderNumber}
                                                 {quote.deliveryOrder.isActive === false ? (
                                                     <span className="text-[10px] ml-1 uppercase">Deactivated</span>
+                                                ) : quote.deliveryOrder.status === 'CANCELLED' ? (
+                                                    <span className="text-[10px] ml-1 uppercase">Cancelled</span>
                                                 ) : quote.deliveryOrder.status === 'COMPLETED' ? (
                                                     <span className="text-[10px] ml-1 uppercase">Shipped</span>
                                                 ) : null}

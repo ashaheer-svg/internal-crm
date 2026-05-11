@@ -377,7 +377,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                                             {acceptedQuote.deliveryOrder && (
                                                                 <p className={cn(
                                                                     "text-[10px] font-black uppercase tracking-tighter mt-0.5",
-                                                                    acceptedQuote.deliveryOrder.isActive === false ? "text-red-500" : "text-emerald-600"
+                                                                    (acceptedQuote.deliveryOrder.isActive === false || acceptedQuote.deliveryOrder.status === 'CANCELLED') ? "text-red-500" : "text-emerald-600"
                                                                 )}>
                                                                     Status: {acceptedQuote.deliveryOrder.isActive === false ? 'DEACTIVATED' : acceptedQuote.deliveryOrder.status}
                                                                 </p>
