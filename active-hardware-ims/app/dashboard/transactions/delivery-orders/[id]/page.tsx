@@ -1366,14 +1366,20 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                             {fulfillingItem.product.category?.toUpperCase().startsWith('LICEN') && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">License Key</label>
-                                    <input
-                                        type="text"
+                                    <textarea
                                         value={serviceLicenseKey}
                                         onChange={(e) => setServiceLicenseKey(e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border font-mono"
+                                        maxLength={256}
+                                        rows={3}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border font-mono resize-none"
                                         placeholder="XXXX-XXXX-XXXX-XXXX"
                                     />
-                                    <p className="mt-1 text-[10px] text-gray-500 italic">Enter the license key</p>
+                                    <div className="flex justify-between mt-1">
+                                        <p className="text-[10px] text-gray-500 italic">Enter the license key</p>
+                                        <p className="text-[10px] text-gray-500 font-medium">
+                                            {serviceLicenseKey.length}/256
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </div>
