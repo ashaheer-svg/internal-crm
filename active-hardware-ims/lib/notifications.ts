@@ -8,6 +8,7 @@ interface SystemMessageOptions {
     senderId?: string;
     recipientUserId?: string;
     recipientRoleId?: string;
+    recipientRoleIds?: string[];
     deadline?: Date;
     customerName?: string | null;
     deliveryOrderNumber?: string | null;
@@ -28,6 +29,7 @@ export async function sendSystemMessage(options: SystemMessageOptions) {
         senderId,
         recipientUserId,
         recipientRoleId,
+        recipientRoleIds,
         deadline,
         customerName,
         deliveryOrderNumber,
@@ -61,7 +63,7 @@ export async function sendSystemMessage(options: SystemMessageOptions) {
             isSystemGenerated: true,
             senderId: finalSenderId,
             recipientUserId: recipientUserId || null,
-            recipientRoleId: recipientRoleId || null,
+            recipientRoleId: recipientRoleId || (recipientRoleIds && recipientRoleIds.length > 0 ? recipientRoleIds[0] : null),
             customerName: customerName || null,
             deliveryOrderNumber: deliveryOrderNumber || null,
             invoiceNumber: invoiceNumber || null,
@@ -79,18 +81,23 @@ export async function sendSystemMessage(options: SystemMessageOptions) {
         });
     }
 
-    // Create receipts for all users in recipient role
-    if (recipientRoleId) {
-        const usersInRole = await prisma.user.findMany({
-            where: { roleId: recipientRoleId, isActive: true },
+    // Create receipts for all users in recipient roles
+    const allRoleIds = [recipientRoleId, ...(recipientRoleIds || [])].filter(Boolean) as string[];
+    
+    if (allRoleIds.length > 0) {
+        const usersInRoles = await prisma.user.findMany({
+            where: { roleId: { in: allRoleIds }, isActive: true },
             select: { id: true }
         });
 
-        if (usersInRole.length > 0) {
+        if (usersInRoles.length > 0) {
+            // Deduplicate users just in case
+            const uniqueUserIds = Array.from(new Set(usersInRoles.map(u => u.id)));
+            
             await prisma.messageReceipt.createMany({
-                data: usersInRole.map(u => ({
+                data: uniqueUserIds.map(userId => ({
                     messageId: message.id,
-                    userId: u.id
+                    userId
                 }))
             });
         }

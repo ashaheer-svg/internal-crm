@@ -124,8 +124,18 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
                 partnerName: order.saleType === 'PARTNER' ? order.customerName : null,
                 invoiceNumber: order.invoiceNumber || null
             };
-            if (techRole) await sendSystemMessage({ subject: `DO DEACTIVATED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
-            if (salesMgrRole) await sendSystemMessage({ subject: `DO DEACTIVATED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+            const recipientRoleIds = [techRole?.id, salesMgrRole?.id].filter(Boolean) as string[];
+            if (recipientRoleIds.length > 0) {
+                await sendSystemMessage({
+                    subject: `DO DEACTIVATED: ${order.orderNumber}`,
+                    content,
+                    recipientRoleIds,
+                    category: 'UPDATE',
+                    priority: 'HIGH',
+                    senderId: user.id,
+                    ...metadata
+                });
+            }
         } catch (err) {
             console.error('Failed to send deactivation notification:', err);
         }
@@ -232,8 +242,18 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
                         partnerName: ((body as any).saleType || order.saleType) === 'PARTNER' ? (customerName || order.customerName) : null,
                         invoiceNumber: invoiceNumber !== undefined ? invoiceNumber : (order.invoiceNumber || null)
                     };
-                    if (techRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: techRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
-                    if (salesMgrRole) await sendSystemMessage({ subject: `DO CANCELLED: ${order.orderNumber}`, content, recipientRoleId: salesMgrRole.id, category: 'UPDATE', priority: 'HIGH', senderId: user.id, ...metadata });
+                    const recipientRoleIds = [techRole?.id, salesMgrRole?.id].filter(Boolean) as string[];
+                    if (recipientRoleIds.length > 0) {
+                        await sendSystemMessage({
+                            subject: `DO CANCELLED: ${order.orderNumber}`,
+                            content,
+                            recipientRoleIds,
+                            category: 'UPDATE',
+                            priority: 'HIGH',
+                            senderId: user.id,
+                            ...metadata
+                        });
+                    }
                 } catch (err) {
                     console.error('Failed to send cancellation notification:', err);
                 }
