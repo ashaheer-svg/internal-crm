@@ -140,7 +140,7 @@ export default function ProductSelector({
                                     <div className="flex-1 overflow-hidden">
                                         <div className="flex justify-between items-start gap-2">
                                             <p className="text-sm font-semibold text-gray-900 truncate">
-                                                {product.brand} {product.name}
+                                                 {product.name}
                                             </p>
                                             <div className="flex items-center gap-2 shrink-0">
                                                 {product._count && (
