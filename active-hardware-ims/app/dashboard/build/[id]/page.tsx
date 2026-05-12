@@ -309,14 +309,22 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                                                 </button>
                                             )}
                                         </div>
-                                    ) : !item.reservedItems || item.reservedItems.length === 0 ? (
-                                        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded border border-amber-100 text-xs italic">
-                                            <AlertCircle className="w-4 h-4" />
-                                            No items allocated yet for this product.
-                                        </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {item.reservedItems.map((sn: any) => (
+                                            {/* Hardware Rental Dates */}
+                                            {!item.product?.serviceDefinition && item.product.category?.toUpperCase().includes('RENTAL') && item.serviceStartDate && (
+                                                <div className="mb-3 text-[15px] text-blue-700 bg-blue-50 p-2 rounded border border-blue-100 font-bold flex items-center gap-2">
+                                                    <Package className="w-3 h-3" />
+                                                    RENTAL PERIOD: {formatDate(item.serviceStartDate)} TO {formatDate(item.serviceEndDate!)}
+                                                </div>
+                                            )}
+
+                                            {!item.reservedItems || item.reservedItems.length === 0 ? (
+                                                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded border border-amber-100 text-xs italic">
+                                                    <AlertCircle className="w-4 h-4" />
+                                                    No items allocated yet for this product.
+                                                </div>
+                                            ) : item.reservedItems.map((sn: any) => (
                                                 <div
                                                     key={sn.id}
                                                     className={`flex items-center justify-between p-3 rounded border transition-all ${verifyingSerials[sn.id] ? 'bg-green-50 border-green-200 shadow-sm' : 'bg-gray-50 border-gray-200'}`}

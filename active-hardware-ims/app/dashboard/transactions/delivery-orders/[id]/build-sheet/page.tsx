@@ -200,6 +200,11 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
                                                 {item.product?.serviceDefinition?.type} Service
                                             </span>
                                         )}
+                                        {!isService && item.product?.category?.toUpperCase() === 'RENTAL' && item.serviceStartDate && (
+                                            <span className="block text-[15px] text-blue-700 font-bold">
+                                                RENTAL PERIOD: {new Date(item.serviceStartDate).toLocaleDateString()} TO {new Date(item.serviceEndDate!).toLocaleDateString()}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="py-3 px-4 text-center font-bold text-gray-800">{item.quantity}</td>
                                     <td className="py-3 px-4 text-center">

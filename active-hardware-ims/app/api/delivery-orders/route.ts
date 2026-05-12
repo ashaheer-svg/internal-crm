@@ -30,7 +30,10 @@ export async function GET(request: Request) {
             where.items = {
                 some: {
                     product: {
-                        serviceDefinition: { isNot: null }
+                        OR: [
+                            { serviceDefinition: { isNot: null } },
+                            { category: { contains: 'Rental' } }
+                        ]
                     }
                 }
             }
@@ -38,7 +41,10 @@ export async function GET(request: Request) {
             where.items = {
                 none: {
                     product: {
-                        serviceDefinition: { isNot: null }
+                        OR: [
+                            { serviceDefinition: { isNot: null } },
+                            { category: { contains: 'Rental' } }
+                        ]
                     }
                 }
             }
@@ -89,6 +95,7 @@ export async function GET(request: Request) {
             const safeOrders = orders.map((order: any) => ({
                 ...order,
                 hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinition),
+                hasRentalItem: order.items?.some((i: any) => i.product?.category?.toUpperCase().includes('RENTAL')),
                 _count: { items: order.items?.length || 0 }
             }))
 
@@ -112,6 +119,7 @@ export async function GET(request: Request) {
         const safeOrders = orders.map((order: any) => ({
             ...order,
             hasServiceItem: order.items?.some((i: any) => i.product?.serviceDefinition),
+            hasRentalItem: order.items?.some((i: any) => i.product?.category?.toUpperCase().includes('RENTAL')),
             _count: { items: order.items?.length || 0 }
         }))
 

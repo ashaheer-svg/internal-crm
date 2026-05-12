@@ -8,7 +8,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { itemId, inventoryItemIds } = body // itemId is DeliveryOrderItem ID
+        const { itemId, inventoryItemIds, startDate, endDate } = body // itemId is DeliveryOrderItem ID
 
         if (!itemId || !Array.isArray(inventoryItemIds)) {
             return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
@@ -98,7 +98,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             await tx.deliveryOrderItem.update({
                 where: { id: itemId },
                 data: {
-                    quantityFulfilled: totalReserved
+                    quantityFulfilled: totalReserved,
+                    serviceStartDate: startDate ? new Date(startDate) : undefined,
+                    serviceEndDate: endDate ? new Date(endDate) : undefined,
                 } as any
             })
 

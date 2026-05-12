@@ -162,6 +162,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     const [allocatingItem, setAllocatingItem] = useState<DeliveryOrderItem | null>(null)
     const [availableStock, setAvailableStock] = useState<any[]>([])
     const [selectedSerials, setSelectedSerials] = useState<string[]>([])
+    const [allocStartDate, setAllocStartDate] = useState("")
+    const [allocEndDate, setAllocEndDate] = useState("")
 
     // Location Filter State
     const [locations, setLocations] = useState<any[]>([])
@@ -277,6 +279,8 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     async function handleOpenAllocate(item: DeliveryOrderItem) {
         setAllocatingItem(item)
         setSelectedSerials(item.reservedItems.map(i => i.id))
+        setAllocStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : "")
+        setAllocEndDate(item.serviceEndDate ? item.serviceEndDate.split('T')[0] : "")
 
         // Reset location filter and fetch stock
         setSelectedLocation("")
@@ -428,7 +432,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     itemId: allocatingItem.id,
-                    inventoryItemIds: selectedSerials
+                    inventoryItemIds: selectedSerials,
+                    startDate: allocStartDate || undefined,
+                    endDate: allocEndDate || undefined
                 })
             })
 
@@ -1000,6 +1006,16 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                                         )}
                                                     </div>
                                                 )}
+
+                                                {/* Hardware Rental Dates */}
+                                                {!item.product?.serviceDefinition && item.product.category?.toUpperCase() === 'RENTAL' && item.serviceStartDate && (
+                                                    <div className="mt-3 text-sm text-blue-700 bg-blue-50 p-2 rounded border border-blue-100">
+                                                        <div className="flex justify-between">
+                                                            <span className="font-semibold uppercase tracking-tight">Rental Period:</span>
+                                                            <span className="font-medium">{formatDate(item.serviceStartDate)} TO {formatDate(item.serviceEndDate!)}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="text-right">
@@ -1259,6 +1275,29 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 ))}
                             </select>
                         </div>
+ 
+                        {allocatingItem.product.category?.toUpperCase() === 'RENTAL' && (
+                            <div className="p-4 border-b bg-blue-50 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-blue-700 uppercase mb-1">Rental Start Date</label>
+                                    <input
+                                        type="date"
+                                        value={allocStartDate}
+                                        onChange={(e) => setAllocStartDate(e.target.value)}
+                                        className="block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-blue-700 uppercase mb-1">Rental End Date</label>
+                                    <input
+                                        type="date"
+                                        value={allocEndDate}
+                                        onChange={(e) => setAllocEndDate(e.target.value)}
+                                        className="block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="p-4 overflow-y-auto flex-1">
                             <div className="flex justify-between items-center mb-4">

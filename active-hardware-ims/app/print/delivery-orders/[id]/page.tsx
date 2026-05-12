@@ -236,6 +236,11 @@ export default async function PrintDeliveryOrderPage({ params }: PageProps) {
                                         <div style={{ fontSize: '12px', color: '#666' }}>
                                             Model: {item.product.model} | SKU: <span style={{ fontWeight: 600 }}>{item.product.sku}</span>
                                         </div>
+                                        {item.serviceStartDate && (
+                                            <div style={{ fontSize: '15px', color: '#1e40af', marginTop: '4px', fontWeight: 'bold' }}>
+                                                RENTAL PERIOD : {new Date(item.serviceStartDate).toLocaleDateString()} TO {new Date(item.serviceEndDate!).toLocaleDateString()}
+                                            </div>
+                                        )}
                                     </td>
                                     <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                                     <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{shippedQty}</td>

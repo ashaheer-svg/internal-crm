@@ -18,9 +18,12 @@ interface BuildQueueOrder {
         items: number
     }
     hasServiceItem?: boolean
+    hasRentalItem?: boolean
     items?: {
         id: string
         licenseKey?: string | null
+        serviceStartDate?: string | null
+        serviceEndDate?: string | null
         product: {
             name: string
             category?: string
@@ -256,8 +259,25 @@ export default function BuildListingPage() {
                                                             Service Linked
                                                         </span>
                                                     )}
+                                                    {order.items?.some(i => i.product.category?.toUpperCase().includes('RENTAL') && !order.hasServiceItem) && (
+                                                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter bg-blue-100 text-blue-700 rounded border border-blue-200">
+                                                            Rental
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-gray-500 font-medium group-hover:text-blue-600 transition-colors">{order.customerName}</p>
+                                                
+                                                {/* Rental Period Display */}
+                                                {order.items?.some(i => i.product.category?.toUpperCase().includes('RENTAL') && i.serviceStartDate) && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {order.items.filter(i => i.product.category?.toUpperCase().includes('RENTAL') && i.serviceStartDate).map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1 bg-amber-50 text-[10px] text-amber-700 px-1.5 py-0.5 rounded border border-amber-100 font-bold">
+                                                                <span className="opacity-70">RENTAL:</span>
+                                                                <span>{formatDate(item.serviceStartDate!)} - {formatDate(item.serviceEndDate!)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 {order.items?.some(i => i.licenseKey) && (
                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                         {order.items.filter(i => i.licenseKey).map((item, idx) => (
