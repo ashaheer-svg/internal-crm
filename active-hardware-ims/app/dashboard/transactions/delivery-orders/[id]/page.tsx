@@ -372,19 +372,49 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
         }
     }
 
+    const calculateEndDate = (startDateStr: string, durationValue: number, durationUnit: string) => {
+        const start = new Date(startDateStr)
+        const end = new Date(start)
+
+        if (durationUnit === 'YEAR') {
+            end.setFullYear(end.getFullYear() + durationValue)
+        } else if (durationUnit === 'MONTH') {
+            end.setMonth(end.getMonth() + durationValue)
+        } else if (durationUnit === 'DAY') {
+            end.setDate(end.getDate() + durationValue)
+        } else {
+            // Default to 1 year if unknown
+            end.setFullYear(end.getFullYear() + 1)
+        }
+
+        // Subtract 1 day for inclusive dates (e.g., 1 year from Jan 1 ends Dec 31)
+        if (durationUnit !== 'DAY') {
+            end.setDate(end.getDate() - 1)
+        }
+
+        return end.toISOString().split('T')[0]
+    }
+
     async function handleOpenServiceFulfill(item: DeliveryOrderItem) {
         setFulfillingItem(item)
-        setServiceStartDate(item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0])
+        const start = item.serviceStartDate ? item.serviceStartDate.split('T')[0] : new Date().toISOString().split('T')[0]
+        setServiceStartDate(start)
         setServiceUnitCost(item.unitPrice ? item.unitPrice.toString() : "")
         setServiceLicenseKey(item.licenseKey || "")
 
-        // Default end date (e.g. +1 year) if not set
         if (item.serviceEndDate) {
             setServiceEndDate(item.serviceEndDate.split('T')[0])
         } else {
-            const end = new Date()
-            end.setFullYear(end.getFullYear() + 1)
-            setServiceEndDate(end.toISOString().split('T')[0])
+            const def = item.product.serviceDefinition
+            if (def && def.durationValue && def.durationUnit) {
+                setServiceEndDate(calculateEndDate(start, def.durationValue, def.durationUnit))
+            } else {
+                // Fallback to +1 year - 1 day
+                const end = new Date(start)
+                end.setFullYear(end.getFullYear() + 1)
+                end.setDate(end.getDate() - 1)
+                setServiceEndDate(end.toISOString().split('T')[0])
+            }
         }
     }
 
@@ -536,7 +566,7 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
     // --- VAT/Tax Logic ---
     const linkedQuote = order.quotes?.[0] ?? null
     const vatNumber = order.endCustomer?.taxId || order.customer?.taxId || null
-    
+
     let vatEntries: { name: string; rate: number; amount: number }[] = []
     if (linkedQuote?.taxDetails) {
         try {
@@ -544,9 +574,9 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
             if (Array.isArray(parsed)) {
                 vatEntries = parsed
             }
-        } catch {}
+        } catch { }
     }
-    
+
     const showVat = !!(vatNumber && vatEntries.length > 0)
     // ---------------------
 
@@ -700,14 +730,14 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                         </h3>
                         {isInvoiced && (
                             <div className="flex items-center gap-2">
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="Enter Invoice Number"
                                     defaultValue={order.invoiceNumber || ""}
                                     onChange={(e) => setInvoiceNumberInput(e.target.value)}
                                     className="px-3 py-1.5 text-sm border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                 />
-                                <button 
+                                <button
                                     onClick={async () => {
                                         const value = invoiceNumberInput.trim() || order.invoiceNumber || ""
                                         if (!value) { alert("Please enter a valid Invoice Number"); return; }
@@ -1328,7 +1358,16 @@ export default function DeliveryOrderDetailPage({ params }: { params: Promise<{ 
                                 <input
                                     type="date"
                                     value={serviceStartDate}
-                                    onChange={(e) => setServiceStartDate(e.target.value)}
+                                    onChange={(e) => {
+                                        const newStart = e.target.value
+                                        setServiceStartDate(newStart)
+
+                                        // Auto-recalculate end date if duration metadata is available
+                                        const def = fulfillingItem.product.serviceDefinition
+                                        if (def && def.durationValue && def.durationUnit) {
+                                            setServiceEndDate(calculateEndDate(newStart, def.durationValue, def.durationUnit))
+                                        }
+                                    }}
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                                 />
                             </div>
