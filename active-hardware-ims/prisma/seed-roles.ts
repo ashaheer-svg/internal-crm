@@ -12,7 +12,7 @@ const DEFAULT_ROLES = [
 ]
 
 const ALL_RESOURCES = [
-    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'services', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations', 'backorders', 'stock_movements', 'grn_lookup',
+    'inventory', 'quotes', 'projects', 'users', 'roles', 'settings', 'reports', 'delivery_orders', 'purchase_orders', 'customers', 'invoices', 'service', 'audit_logs', 'warranty_rma', 'general_lookup', 'build', 'locations', 'backorders', 'stock_movements', 'grn_lookup',
     'reports:inventory-valuation', 'reports:stock-movement', 'reports:sales', 'reports:purchase', 'reports:warranty', 'reports:location', 'reports:backorder', 'reports:profitability'
 ]
 
@@ -87,9 +87,9 @@ async function main() {
         const defaultPermissions: Record<string, Array<{ action: string; resource: string }>> = {
             SALES: [
                 { action: 'read', resource: 'reports' },
-                { action: 'read', resource: 'services' },
-                { action: 'create', resource: 'services' },
-                { action: 'update', resource: 'services' },
+                { action: 'read', resource: 'service' },
+                { action: 'create', resource: 'service' },
+                { action: 'update', resource: 'service' },
                 // Warranty & RMA management
                 { action: 'read', resource: 'warranty_rma' },
                 { action: 'create', resource: 'warranty_rma' },

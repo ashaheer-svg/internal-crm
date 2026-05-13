@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         const { searchParams } = new URL(request.url);
         const isPreview = searchParams.get('preview') === 'true';
 
-        const user = await requirePermission('services:create')
+        const user = await requirePermission('service:create')
         const contentType = request.headers.get('content-type') || ''
 
         // Handle JSON Batch Import (Chunked)
