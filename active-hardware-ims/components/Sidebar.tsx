@@ -39,7 +39,8 @@ const navigation: NavItem[] = [
     { name: "GRN Lookup", href: "/dashboard/inventory/grn-lookup", icon: Search, permission: 'grn_lookup:read' },
     { name: "Inventory", href: "/dashboard/inventory", icon: Package, permission: 'inventory:read' },
     { name: "CRM", href: "/dashboard/crm", icon: Users, permission: 'customers:read' },
-    { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
+    // { name: "Services", href: "/dashboard/services", icon: Calendar, permission: 'services:read' },
+    { name: "Service", href: "/dashboard/service", icon: Calendar, permission: 'service:read' },
     { name: "Transactions", href: "/dashboard/transactions", icon: Receipt, permission: 'invoices:read' },
     { name: "Technical Build Queue", href: "/dashboard/build", icon: Hammer, permission: 'build:read' },
     // { name: "Backorders", href: "/dashboard/backorders", icon: Package, permission: 'backorders:read' },
@@ -104,7 +105,7 @@ export function Sidebar() {
             setCollapsed(JSON.parse(savedState))
         }
     }, [pathname])
-    
+
     useEffect(() => {
         const interval = setInterval(fetchUnreadCount, 15000) // Poll every 15s
         return () => clearInterval(interval)

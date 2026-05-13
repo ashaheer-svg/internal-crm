@@ -17,11 +17,13 @@ export async function GET(request: Request) {
         const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc'
         const includeInactive = searchParams.get('includeInactive') === 'true'
         const type = searchParams.get('type') || 'product'
+        const categoryFilter = searchParams.get('category') || ''
 
         const where: any = {
             AND: [
                 !includeInactive ? { isActive: true } : {},
                 type === 'product' ? { serviceDefinition: null } : (type === 'service' ? { serviceDefinition: { isNot: null } } : {}),
+                categoryFilter ? { category: categoryFilter } : {},
                 search ? {
                     OR: [
                         { sku: { contains: search } },
