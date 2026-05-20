@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Search, Filter, AlertTriangle, AlertCircle, Calendar, 
-  Clock, CheckCircle2, Package, LayoutDashboard, Database
+  Clock, CheckCircle2, Package, LayoutDashboard, Database,
+  Bell, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BackButton from "@/components/BackButton";
@@ -25,6 +26,8 @@ export default function ServicesDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [error, setError] = useState("");
+  const [sendingAlerts, setSendingAlerts] = useState(false);
+  const [alertResult, setAlertResult] = useState(null);
 
   // Inventory State
   const [inventoryProducts, setInventoryProducts] = useState([]);
@@ -49,6 +52,37 @@ export default function ServicesDashboard() {
       setLoading(false);
     }
   }, []);
+
+  const handleSendAlerts = async () => {
+    if (!confirm("Are you sure you want to scan for expiring/expired items and send alerts to Sales Reps and Accounts Managers?")) return;
+    
+    setSendingAlerts(true);
+    setAlertResult(null);
+    try {
+        const res = await fetch("/api/service/alerts", { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to send alerts");
+        
+        setAlertResult({
+            success: true,
+            count: data.alertsSent,
+            message: data.message
+        });
+        
+        // Refresh items to show new alert sent timestamps
+        fetchItems();
+        
+        // Clear result after 5s
+        setTimeout(() => setAlertResult(null), 5000);
+    } catch (err) {
+        setAlertResult({
+            success: false,
+            message: err.message
+        });
+    } finally {
+        setSendingAlerts(false);
+    }
+  };
 
   const fetchInventoryProducts = useCallback(async (page = 1) => {
     setInventoryLoading(true);
@@ -136,8 +170,8 @@ export default function ServicesDashboard() {
     const matchesSearch = 
       item.deliveryOrder?.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.deliveryOrder?.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.licenseKey?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.product?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+      item.licenseKey?.toLowerCase()?.includes(searchTerm.toLowerCase());
     
     const matchesCategory = selectedCategory === "All" || item.product?.category === selectedCategory;
 
@@ -326,7 +360,36 @@ export default function ServicesDashboard() {
                         ))}
                     </select>
                 </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-gray-100 pt-3 sm:pt-0 sm:pl-4">
+                    <button
+                        onClick={handleSendAlerts}
+                        disabled={sendingAlerts}
+                        className={cn(
+                            "flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all w-full sm:w-auto",
+                            sendingAlerts 
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                        )}
+                    >
+                        {sendingAlerts ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Bell className="w-4 h-4" />
+                        )}
+                        {sendingAlerts ? "Processing Alerts..." : "Check & Send Alerts"}
+                    </button>
+                </div>
             </div>
+
+            {alertResult && (
+                <div className={cn(
+                    "p-3 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-top-2",
+                    alertResult.success ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+                )}>
+                    {alertResult.message}
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-xl">
@@ -412,10 +475,18 @@ export default function ServicesDashboard() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
-                                                    {statusInfo.icon}
-                                                    {statusInfo.label}
-                                                </span>
+                                                <div className="flex flex-col gap-1.5 items-start">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
+                                                        {statusInfo.icon}
+                                                        {statusInfo.label}
+                                                    </span>
+                                                    {(item.expiryAlertSentAt || item.expiredAlertSentAt) && (
+                                                        <span className="inline-flex items-center text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 font-medium">
+                                                            <Bell className="w-2.5 h-2.5 mr-1" />
+                                                            Alert Sent: {new Date(item.expiredAlertSentAt || item.expiryAlertSentAt).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -493,33 +564,33 @@ export default function ServicesDashboard() {
                             <tbody className="divide-y divide-gray-50 bg-white">
                                 {inventoryProducts.map((product) => (
                                     <tr 
-                                        key={product.id} 
-                                        onDoubleClick={() => router.push(`/dashboard/inventory/${product.id}`)}
+                                        key={product?.id} 
+                                        onDoubleClick={() => product?.id && router.push(`/dashboard/inventory/${product.id}`)}
                                         className={cn(
                                             "transition-all hover:bg-gray-50/50 group cursor-pointer",
-                                            product._count.inventory < product.minStock ? "bg-red-50/30" : ""
+                                            (product?._count?.inventory || 0) < (product?.minStock || 0) ? "bg-red-50/30" : ""
                                         )}
                                     >
-                                        <td className="whitespace-nowrap py-4 px-6 text-sm font-bold text-gray-900 font-mono tracking-tighter uppercase">{product.sku}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-xs font-bold text-gray-900 uppercase tracking-tight">{product.name}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-xs text-gray-500 uppercase">{product.brand}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.category}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-xs text-gray-500 uppercase">{product.model}</td>
+                                        <td className="whitespace-nowrap py-4 px-6 text-sm font-bold text-gray-900 font-mono tracking-tighter uppercase">{product?.sku}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-xs font-bold text-gray-900 uppercase tracking-tight">{product?.name}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-xs text-gray-500 uppercase">{product?.brand}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product?.category}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-xs text-gray-500 uppercase">{product?.model}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm">
                                             <span className={cn(
                                                 "px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-tighter border",
-                                                product.isActive
+                                                product?.isActive
                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                     : 'bg-rose-50 text-rose-700 border-rose-200'
                                             )}>
-                                                {product.isActive ? 'Active' : 'Inactive'}
+                                                {product?.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4 text-xs font-bold text-gray-400 text-center tabular-nums">
-                                            {product.minStock?.toLocaleString() || 0}
+                                            {product?.minStock?.toLocaleString() || 0}
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900 text-center tabular-nums">
-                                            {product._count.inventory.toLocaleString()}
+                                            {product?._count?.inventory?.toLocaleString() || 0}
                                         </td>
                                     </tr>
                                 ))}

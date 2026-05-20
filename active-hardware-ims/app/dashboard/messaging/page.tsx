@@ -516,7 +516,7 @@ export default function MessagingPage() {
                                                         <User className="w-4 h-4 text-gray-500" />
                                                     </div>
                                                     <span className={cn("text-sm truncate", isUnread ? "font-bold text-gray-900" : "text-gray-600 font-medium")}>
-                                                        {m.sender.name}
+                                                        {m.sender?.name || "System"}
                                                     </span>
                                                 </div>
 
