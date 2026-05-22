@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, JSX } from "react"
+import { useState, useEffect, useCallback, useRef, JSX } from "react"
 import { useRouter } from "next/navigation"
 import {
     Mail,
@@ -127,9 +127,13 @@ export default function MessagingPage() {
 
     // Lightweight stats-only refresh — updates badge counts WITHOUT replacing the message list.
     // Use this after read/done actions to avoid wiping the user's current view.
-    // If the server reports MORE messages than are currently loaded (e.g. new role-targeted messages
-    // became accessible via the backfill), a silent list refresh is triggered to pull them in.
-    const fetchStats = useCallback(async (currentMessagesCount?: number) => {
+    // NOTE: We intentionally do NOT trigger a silent list reload from here.
+    // The previous implementation compared global stats.total against the current
+    // *filtered* message count (e.g. 3 unread tasks vs 50 total), which is ALWAYS
+    // mismatched and caused an immediate silent fetchMessages() every time a message
+    // was read in a filtered view — making the expanded message vanish instantly.
+    // The 15-second polling interval already handles pulling in new messages when idle.
+    const fetchStats = useCallback(async () => {
         try {
             const params = new URLSearchParams({
                 type: tab,
@@ -145,22 +149,27 @@ export default function MessagingPage() {
             if (res.ok) {
                 const data = await res.json()
                 if (data.stats) setStats(data.stats)
-                // If the server total exceeds what is currently displayed, new messages are
-                // available (e.g. the role backfill just created receipts for this user).
-                // Trigger a silent background refresh to pull the new messages into the list.
-                if (currentMessagesCount !== undefined && (data.stats?.total ?? 0) > currentMessagesCount) {
-                    fetchMessages(1, true)
-                }
             }
         } catch (error) {
             console.error('Failed to refresh stats:', error)
         }
-    }, [tab, fetchMessages])
+    }, [tab])
 
 
     useEffect(() => {
         fetchMessages()
     }, [fetchMessages])
+
+    // Stable refs — always point to latest values without re-subscribing
+    const fetchMessagesRef = useRef(fetchMessages)
+    const fetchStatsRef = useRef(fetchStats)
+    const expandedIdsRef = useRef(expandedIds)
+    const metaPageRef = useRef(meta.page)
+
+    useEffect(() => { fetchMessagesRef.current = fetchMessages }, [fetchMessages])
+    useEffect(() => { fetchStatsRef.current = fetchStats }, [fetchStats])
+    useEffect(() => { expandedIdsRef.current = expandedIds }, [expandedIds])
+    useEffect(() => { metaPageRef.current = meta.page }, [meta.page])
 
     // Smart polling: if the user is actively reading (any message expanded),
     // only refresh stats — never wipe the message list mid-read.
@@ -168,14 +177,16 @@ export default function MessagingPage() {
     // Either way, pass the current message count so fetchStats can detect new arrivals.
     useEffect(() => {
         const interval = setInterval(() => {
-            if (expandedIds.size > 0) {
-                fetchStats(messages.length)
+            if (expandedIdsRef.current.size > 0) {
+                // Message is open — only refresh badge counts, never reload the list
+                fetchStatsRef.current()
             } else {
-                fetchMessages(meta.page, true)
+                // Nothing expanded — safe to do a full background reload
+                fetchMessagesRef.current(metaPageRef.current, true)
             }
         }, 15000)
         return () => clearInterval(interval)
-    }, [fetchMessages, fetchStats, meta.page, expandedIds, messages.length])
+    }, [])
 
 
     const handleReadMessage = async (messageId: string) => {
