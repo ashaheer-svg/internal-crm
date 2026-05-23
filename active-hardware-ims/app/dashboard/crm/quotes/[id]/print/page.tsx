@@ -62,7 +62,7 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
         <>
             {/* Print actions — fixed bottom-right, hidden on print via .print-actions */}
             <div className="print-actions">
-                <BackButton className="print-btn print-btn-secondary" />
+                {/* <BackButton className="print-btn print-btn-secondary" /> */}
                 <button onClick={() => window.close()} className="print-btn print-btn-secondary">
                     Close
                 </button>
