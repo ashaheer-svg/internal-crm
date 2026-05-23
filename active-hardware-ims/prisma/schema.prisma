@@ -668,6 +668,7 @@ model ProjectTask {
   assignedToRole   Role?      @relation(fields: [assignedToRoleId], references: [id])
   assignedTo       User?      @relation("TaskAssignee", fields: [assignedToId], references: [id])
   project          CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages         Message[]
 }
 
 model CRMActivity {
@@ -786,10 +787,13 @@ model Message {
   sender              User?               @relation("SentMessages", fields: [senderId], references: [id], onDelete: SetNull)
   attachments         MessageAttachment[]
   receipts            MessageReceipt[]
+  projectTaskId       String?
+  projectTask         ProjectTask?        @relation(fields: [projectTaskId], references: [id], onDelete: SetNull)
 
   @@index([senderId])
   @@index([recipientUserId])
   @@index([recipientRoleId])
+  @@index([projectTaskId])
 }
 
 model MessageAttachment {
