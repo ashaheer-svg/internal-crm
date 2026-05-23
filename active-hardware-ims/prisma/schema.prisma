@@ -665,13 +665,10 @@ model ProjectTask {
   updatedAt        DateTime   @updatedAt
   attachmentUrl    String?
   project          CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-<<<<<<< HEAD
+  messages         Message[]
   assignedTo       User?      @relation("TaskAssignee", fields: [assignedToId], references: [id])
   assignedToRole   Role?      @relation(fields: [assignedToRoleId], references: [id])
   createdBy        User       @relation("TaskCreator", fields: [createdById], references: [id])
-=======
-  messages         Message[]
->>>>>>> 841d6ec1b66cd59a8da2427c4066cb2f3dd1f80d
 }
 
 model CRMActivity {
