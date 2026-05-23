@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { projectId, validUntil, items, terms, saleType, billToId, shipToId, taxDetails } = body
+        const { projectId, validUntil, items, terms, saleType, billToId, shipToId, taxDetails, comment } = body
 
         if (!projectId) {
             return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
@@ -98,6 +98,7 @@ export async function POST(request: Request) {
                 saleType: saleType || 'DIRECT',
                 billToId: billToId || null,
                 shipToId: shipToId || null,
+                comment: comment || null,
                 subTotal,
                 taxAmount,
                 taxDetails: storedTaxDetails,

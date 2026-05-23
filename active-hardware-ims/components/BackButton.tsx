@@ -1,8 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 interface BackButtonProps {
@@ -13,6 +13,16 @@ interface BackButtonProps {
 
 export default function BackButton({ label = 'Back', className = '', href }: BackButtonProps) {
     const router = useRouter()
+    const pathname = usePathname()
+    const [canGoBack, setCanGoBack] = useState(false)
+
+    useEffect(() => {
+        // In the client, detect if there is a valid in-app referrer in history
+        if (typeof window !== 'undefined') {
+            const hasReferrer = document.referrer && document.referrer.includes(window.location.origin)
+            setCanGoBack(!!hasReferrer)
+        }
+    }, [])
 
     if (href) {
         return (
@@ -26,9 +36,26 @@ export default function BackButton({ label = 'Back', className = '', href }: Bac
         )
     }
 
+    // Compute dynamic fallback path based on current pathname
+    const segments = pathname ? pathname.split('/').filter(Boolean) : []
+    let computedFallback = '/dashboard'
+    if (segments.length > 1) {
+        computedFallback = '/' + segments.slice(0, -1).join('/')
+    }
+
+    const handleBack = (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (canGoBack) {
+            router.back()
+        } else {
+            router.push(computedFallback)
+        }
+    }
+
     return (
         <button
-            onClick={() => router.back()}
+            type="button"
+            onClick={handleBack}
             className={`flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors ${className}`}
         >
             <ChevronLeft className="w-4 h-4 mr-1" />
@@ -36,3 +63,4 @@ export default function BackButton({ label = 'Back', className = '', href }: Bac
         </button>
     )
 }
+

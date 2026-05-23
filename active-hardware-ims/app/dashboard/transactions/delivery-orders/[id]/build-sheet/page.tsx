@@ -43,9 +43,9 @@ export default function BuildSheetPage({ params }: { params: Promise<{ id: strin
         <div className="max-w-4xl mx-auto p-6 bg-white space-y-6">
             {/* Action Bar (Hidden in Print) */}
             <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 no-print">
-                <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm">
+                {/* <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm">
                     <ArrowLeft className="w-4 h-4" /> Back Details
-                </button>
+                </button> */}
                 <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 text-sm">
                     <Printer className="w-4 h-4" /> Print Sheet
                 </button>

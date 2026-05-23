@@ -17,6 +17,7 @@ interface Quote {
     poDocumentUrl?: string
     expectedDeliveryDate?: string | Date | null
     urgency?: string
+    comment?: string
     deliveryOrder?: {
         id: string
         orderNumber: string
@@ -138,13 +139,14 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                         }).map((quote) => (
                             <li 
                                 key={quote.id} 
-                                className={`p-4 flex items-center justify-between hover:bg-opacity-50 transition-colors ${quote.status === 'ACCEPTED' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
+                                className={`p-4 flex items-start hover:bg-opacity-50 transition-colors ${quote.status === 'ACCEPTED' ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
                                 title={quote.items && quote.items.length > 0 
                                     ? `📌 Items in Quote:\n${quote.items.map(i => `• ${i.product?.sku || 'N/A'}: ${i.quantity} qty`).join('\n')}`
                                     : 'No hardware items in quote'
                                 }
                             >
-                                <div className="space-y-1">
+                                {/* 1st Column: Details */}
+                                <div className="w-[40%] shrink-0 space-y-1 min-w-0 pr-4">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => router.push(`/dashboard/crm/projects/${projectId}/quotes/${quote.id}`)}
@@ -202,7 +204,19 @@ export default function CRMQuoteSection({ projectId, quotes, onUpdate }: QuoteSe
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1">
+
+                                {/* 2nd Column: Comment */}
+                                <div className="flex-1 min-w-0 px-4 border-l border-gray-100 flex items-start">
+                                    {quote.comment && (
+                                        <div className="flex gap-1.5 text-sm text-gray-600 italic line-clamp-3" title={quote.comment}>
+                                            <span className="font-semibold text-gray-500 not-italic shrink-0">Comment:</span> 
+                                            <span className="break-words">{quote.comment}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 3rd Column: Actions */}
+                                <div className="w-[160px] shrink-0 flex items-center gap-1 justify-end">
                                     <button
                                         onClick={() => handleEdit(quote)}
                                         className={`p-2 transition-colors ${quote.deliveryOrder?.status === 'COMPLETED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-blue-600'}`}
