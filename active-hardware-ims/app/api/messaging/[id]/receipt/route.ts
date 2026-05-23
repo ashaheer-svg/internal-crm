@@ -51,6 +51,50 @@ export async function PATCH(
                 }
             })
 
+            // Fetch the message and check if it has an associated projectTaskId
+            const message = await (prisma as any).message.findUnique({
+                where: { id: messageId },
+                include: {
+                    projectTask: {
+                        include: {
+                            project: {
+                                include: {
+                                    customer: true
+                                }
+                            },
+                            createdBy: true
+                        }
+                    }
+                }
+            })
+
+            if (message?.projectTaskId && message.projectTask) {
+                const task = message.projectTask
+
+                // 1. Sync ProjectTask status
+                await (prisma as any).projectTask.update({
+                    where: { id: task.id },
+                    data: { status: 'DONE' }
+                })
+
+                // 2. Notify the task creator (if different from the person completing it)
+                if (task.createdById !== user.id) {
+                    await (prisma as any).message.create({
+                        data: {
+                            subject: `Task Completed: ${task.title}`,
+                            content: `${(user as any).name || 'An assignee'} has completed the task "${task.title}" in project "${task.project.title}".\n\nResolution comment:\n${comment}`,
+                            category: 'UPDATE',
+                            priority: 'MEDIUM',
+                            senderId: user.id,
+                            customerName: task.project.customer?.name ?? null,
+                            receipts: {
+                                create: { userId: task.createdById }
+                            }
+                        }
+                    })
+                }
+            }
+
             // Audit Log
             await logUpdate('MESSAGE', messageId, user.id, (user as any).name, { status: 'PENDING' }, { status: 'DONE', comment })
         } else {

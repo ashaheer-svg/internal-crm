@@ -45,6 +45,7 @@ export async function POST(request: Request) {
                     customerName: task.project.customer?.name || null,
                     priority: priority.toUpperCase(),
                     senderId: user.id,
+                    projectTaskId: task.id,
                     receipts: {
                         create: { userId: assignedToId }
                     }
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
                         priority: priority.toUpperCase(),
                         senderId: user.id,
                         recipientRoleId: assignedToRoleId,
+                        projectTaskId: task.id,
                         receipts: {
                             createMany: {
                                 data: usersInRole.map(u => ({ userId: u.id }))

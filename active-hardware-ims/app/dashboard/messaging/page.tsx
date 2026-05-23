@@ -249,7 +249,7 @@ export default function MessagingPage() {
                 }))
                 // Only refresh badge counts — same reason as in handleReadMessage.
                 fetchStats()
-                setNotification({ type: 'success', message: "Task completed successfully!" })
+                setNotification({ type: 'success', message: "Task completed and synced to CRM Project successfully!" })
                 setTimeout(() => setNotification(null), 3000)
             }
         } catch (error) {
