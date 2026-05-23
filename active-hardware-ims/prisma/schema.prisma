@@ -708,6 +708,7 @@ model CRMQuote {
   saleType             String         @default("DIRECT")
   billToId             String?
   shipToId             String?
+  comment              String?
   project              CRMProject     @relation(fields: [projectId], references: [id])
   createdBy            User           @relation(fields: [createdById], references: [id])
   deliveryOrder        DeliveryOrder? @relation(fields: [deliveryOrderId], references: [id])

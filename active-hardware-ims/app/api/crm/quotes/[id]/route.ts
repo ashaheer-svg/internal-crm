@@ -63,7 +63,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     try {
         const user = await requireAuth()
         const body = await request.json()
-        const { quoteNumber, validUntil, items, terms, saleType, billToId, shipToId, taxDetails } = body
+        const { quoteNumber, validUntil, items, terms, saleType, billToId, shipToId, taxDetails, comment } = body
 
         // Calculate Totals
         let subTotal = 0
@@ -171,6 +171,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                     saleType: saleType || 'DIRECT',
                     billToId: billToId || null,
                     shipToId: shipToId || null,
+                    comment: comment || null,
                     subTotal,
                     taxAmount,
                     taxDetails: storedTaxDetails,

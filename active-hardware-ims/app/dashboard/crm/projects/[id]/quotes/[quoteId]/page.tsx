@@ -288,6 +288,16 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                 </div>
 
+                {/* Comment View */}
+                {quote.comment && (
+                    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                        <h3 className="text-sm font-medium text-gray-900 mb-2 uppercase tracking-wide">Comments & Notes</h3>
+                        <div className="text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 p-4 rounded border border-gray-100">
+                            {quote.comment}
+                        </div>
+                    </div>
+                )}
+
                 {/* Terms View */}
                 {quote.terms && (
                     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">

@@ -48,6 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 totalAmount: originalQuote.totalAmount,
                 validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Reset validity
                 terms: originalQuote.terms,
+                comment: originalQuote.comment,
                 createdById: user.id,
                 items: {
                     create: (originalQuote as any).items.map((item: any) => ({
