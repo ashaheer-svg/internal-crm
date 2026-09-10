@@ -39,7 +39,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
     // State
     const [validUntil, setValidUntil] = useState(initialData?.validUntil || '')
-    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply.\nValidity: 30 Days.\nPayment: 100% Advance.')
+    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply.\nValidity: 14 Days.\nPayment: 100% Advance.\nDelivery : Deliver within 3 days.')
     const [quoteNumber, setQuoteNumber] = useState(initialData?.quoteNumber || '')
     const [comment, setComment] = useState(initialData?.comment || '')
 
@@ -90,7 +90,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
         if (!validUntil) {
             const date = new Date()
-            date.setDate(date.getDate() + 30)
+            date.setDate(date.getDate() + 14)
             setValidUntil(date.toISOString().split('T')[0])
         }
 
