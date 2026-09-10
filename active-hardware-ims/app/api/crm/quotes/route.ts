@@ -57,6 +57,7 @@ export async function POST(request: Request) {
                 description: item.description,
                 productModel: item.productModel || null,
                 serialNumbers: item.serialNumbers || null,
+                warrantyMonths: Number(item.warrantyMonths || 0),
                 quantity,
                 unitPrice,
                 discount,
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
                 taxAmount,
                 taxDetails: storedTaxDetails,
                 totalAmount,
-                validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
+                validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default 14 days
                 terms: terms || 'Standard Terms Apply',
                 createdById: user.id,
                 items: {

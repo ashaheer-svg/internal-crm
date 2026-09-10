@@ -76,6 +76,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                 description: item.description,
                 productModel: item.productModel || null,
                 serialNumbers: item.serialNumbers || null,
+                warrantyMonths: Number(item.warrantyMonths || 0),
                 quantity: Number(item.quantity),
                 unitPrice: Number(item.unitPrice),
                 total: lineTotal,

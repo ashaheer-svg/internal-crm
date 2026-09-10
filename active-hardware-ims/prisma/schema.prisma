@@ -731,6 +731,7 @@ model CRMQuoteItem {
   total         Float
   productModel  String?
   serialNumbers String?
+  warrantyMonths Int                 @default(0)
   quote         CRMQuote             @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   product       Product?             @relation(fields: [productId], references: [id])
   details       CRMQuoteItemDetail[]

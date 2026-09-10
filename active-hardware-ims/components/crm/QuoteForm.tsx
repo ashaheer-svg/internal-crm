@@ -15,6 +15,7 @@ export interface QuoteItem {
     description: string
     productModel?: string | null
     serialNumbers?: string | null
+    warrantyMonths?: number
     details?: { modelName: string; serialNumbers: string }[]
     quantity: number
     unitPrice: number
@@ -39,7 +40,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
     // State
     const [validUntil, setValidUntil] = useState(initialData?.validUntil || '')
-    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply.\nValidity: 14 Days.\nPayment: 100% Advance.\nDelivery : Deliver within 3 days.')
+    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply. \nPayment: 100% Advance.\nDelivery : Deliver within 3 days.')
     const [quoteNumber, setQuoteNumber] = useState(initialData?.quoteNumber || '')
     const [comment, setComment] = useState(initialData?.comment || '')
 
@@ -54,7 +55,11 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
     const [shipToCustomer, setShipToCustomer] = useState<any>(initialData?.shipTo || null)
 
     // Items State
-    const [items, setItems] = useState<QuoteItem[]>(initialData?.items || [])
+    const [items, setItems] = useState<QuoteItem[]>(
+        initialData?.items
+            ? initialData.items.map((i: any) => ({ ...i, warrantyMonths: i.warrantyMonths ?? 0 }))
+            : []
+    )
 
     const [availableTaxes, setAvailableTaxes] = useState<any[]>([])
     const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([])
@@ -183,6 +188,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             description: `${product.brand} ${product.name}`,
             productModel: product.model || '',
             serialNumbers: '',
+            warrantyMonths: product.warrantyMonths || 0,
             quantity: 1,
             unitPrice: product.resellerPrice || 0,
             discount: 0,
@@ -210,6 +216,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             description: 'New Item',
             productModel: '',
             serialNumbers: '',
+            warrantyMonths: 0,
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -227,6 +234,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
             description: 'Additional Charge (Shipping/Installation)',
             productModel: '',
             serialNumbers: '',
+            warrantyMonths: 0,
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -494,6 +502,28 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                         )}
                                                     </div>
                                                 )}
+                                                <div className="flex items-center gap-2 mt-2 px-1">
+                                                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Warranty:</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            className="w-16 border-gray-300 rounded text-xs px-2 py-0.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                                                            placeholder="0"
+                                                            value={item.warrantyMonths ?? 0}
+                                                            onChange={(e) => updateItem(item.id, 'warrantyMonths', Math.max(0, parseInt(e.target.value) || 0))}
+                                                        />
+                                                        <span className="text-xs text-gray-500">
+                                                            {item.warrantyMonths && item.warrantyMonths > 0 ? (
+                                                                item.warrantyMonths >= 12 && item.warrantyMonths % 12 === 0
+                                                                    ? `Months (${item.warrantyMonths / 12} ${item.warrantyMonths === 12 ? 'Year' : 'Years'})`
+                                                                    : `Months`
+                                                            ) : (
+                                                                <span className="text-gray-400">Months (No Warranty)</span>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                                 {mode === 'SERVICE' && (
                                                     <div className="col-span-2 space-y-3 mt-2">
                                                         <div className="flex items-center justify-between">

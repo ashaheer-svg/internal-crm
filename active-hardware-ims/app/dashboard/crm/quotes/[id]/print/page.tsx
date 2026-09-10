@@ -31,12 +31,22 @@ interface Quote {
         description: string
         productModel: string | null
         serialNumbers: string | null
+        warrantyMonths?: number
         quantity: number
         unitPrice: number
         discount: number
         total: number
         product: { name: string; sku: string } | null
     }[]
+}
+
+function formatWarranty(months?: number): string | null {
+    if (!months || months <= 0) return null
+    if (months >= 12 && months % 12 === 0) {
+        const years = months / 12
+        return `Warranty: ${years} Year${years > 1 ? 's' : ''}`
+    }
+    return `Warranty: ${months} Month${months > 1 ? 's' : ''}`
 }
 
 export default function QuotePrintPage({ params }: { params: Promise<{ id: string }> }) {
@@ -115,6 +125,11 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                                     <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--print-text-base)' }}>
                                         {item.product?.sku ? `[${item.product.sku}] ` : ''}{item.product?.name || 'Custom Item'}
                                     </p>
+                                    {formatWarranty(item.warrantyMonths) && (
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--print-brand-primary)', fontWeight: 600, marginTop: '0.15rem' }}>
+                                            {formatWarranty(item.warrantyMonths)}
+                                        </p>
+                                    )}
                                     <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{item.description}</p>
                                 </td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{item.quantity}</td>

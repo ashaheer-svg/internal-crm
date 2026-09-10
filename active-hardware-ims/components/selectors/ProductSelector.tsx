@@ -11,6 +11,7 @@ type Product = {
     category: string
     model: string
     resellerPrice?: number
+    warrantyMonths?: number
     _count?: {
         inventory: number
     }
