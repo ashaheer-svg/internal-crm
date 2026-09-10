@@ -130,7 +130,7 @@ export default function QuotePrintPage({ params }: { params: Promise<{ id: strin
                                             {formatWarranty(item.warrantyMonths)}
                                         </p>
                                     )}
-                                    <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{item.description}</p>
+                                    {/* <p style={{ fontSize: '0.875rem', color: 'var(--print-text-muted)', marginTop: '0.25rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{item.description}</p> */}
                                 </td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{item.quantity}</td>
                                 <td style={{ textAlign: 'right', fontSize: '0.875rem' }}>{formatCurrency(item.unitPrice)}</td>

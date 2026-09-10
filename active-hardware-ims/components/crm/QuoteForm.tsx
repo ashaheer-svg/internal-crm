@@ -40,7 +40,7 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
 
     // State
     const [validUntil, setValidUntil] = useState(initialData?.validUntil || '')
-    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply. \nPayment: 100% Advance.\nDelivery : Deliver within 3 days.')
+    const [terms, setTerms] = useState(initialData?.terms || 'Standard Terms & Conditions Apply. \nPayment: 100% Advance.\nDelivery : Deliver within 8 weeks.')
     const [quoteNumber, setQuoteNumber] = useState(initialData?.quoteNumber || '')
     const [comment, setComment] = useState(initialData?.comment || '')
 
