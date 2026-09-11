@@ -12,10 +12,13 @@ import FormattedNumberInput from "@/components/FormattedNumberInput"
 export interface QuoteItem {
     id: string
     productId: string | null
+    brand?: string
     description: string
     productModel?: string | null
     serialNumbers?: string | null
     warrantyMonths?: number
+    addonPercent?: number
+    baseUnitPrice?: number
     details?: { modelName: string; serialNumbers: string }[]
     quantity: number
     unitPrice: number
@@ -57,7 +60,13 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
     // Items State
     const [items, setItems] = useState<QuoteItem[]>(
         initialData?.items
-            ? initialData.items.map((i: any) => ({ ...i, warrantyMonths: i.warrantyMonths ?? 0 }))
+            ? initialData.items.map((i: any) => ({
+                ...i,
+                warrantyMonths: i.warrantyMonths ?? 0,
+                addonPercent: i.addonPercent ?? 0,
+                baseUnitPrice: i.baseUnitPrice ?? i.unitPrice,
+                brand: i.brand || i.product?.brand || ''
+            }))
             : []
     )
 
@@ -160,10 +169,33 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
         }
     }
 
+    const isBDCOM = (item: QuoteItem) => {
+        const brand = (item.brand || '').trim().toUpperCase()
+        const desc = (item.description || '').trim().toUpperCase()
+        return brand === 'BDCOM' || brand.includes('BDCOM') || desc.startsWith('BDCOM') || desc.includes('BDCOM')
+    }
+
     const updateItem = (id: string, field: keyof QuoteItem, value: any) => {
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const updated = { ...item, [field]: value }
+
+                if (field === 'addonPercent') {
+                    const pct = Number(value) || 0
+                    const base = item.baseUnitPrice !== undefined ? item.baseUnitPrice : item.unitPrice
+                    updated.baseUnitPrice = base
+                    // Calculate unit price with addon percent added
+                    const calculatedUnitPrice = Math.round((base * (1 + pct / 100)) * 100) / 100
+                    updated.unitPrice = calculatedUnitPrice
+                } else if (field === 'unitPrice') {
+                    const numUnitPrice = Number(value) || 0
+                    const pct = item.addonPercent || 0
+                    if (pct > 0) {
+                        updated.baseUnitPrice = Math.round((numUnitPrice / (1 + pct / 100)) * 100) / 100
+                    } else {
+                        updated.baseUnitPrice = numUnitPrice
+                    }
+                }
 
                 // Recalculate total
                 // Total = (Qty * UnitPrice) - Discount
@@ -185,10 +217,13 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
         const newItem: QuoteItem = {
             id: Math.random().toString(),
             productId: product.id,
+            brand: product.brand,
             description: `${product.brand} ${product.name}`,
             productModel: product.model || '',
             serialNumbers: '',
             warrantyMonths: product.warrantyMonths || 0,
+            addonPercent: 0,
+            baseUnitPrice: product.resellerPrice || 0,
             quantity: 1,
             unitPrice: product.resellerPrice || 0,
             discount: 0,
@@ -213,10 +248,13 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
         const newItem: QuoteItem = {
             id: Math.random().toString(),
             productId: null,
+            brand: '',
             description: 'New Item',
             productModel: '',
             serialNumbers: '',
             warrantyMonths: 0,
+            addonPercent: 0,
+            baseUnitPrice: 0,
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -231,10 +269,13 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
         const newItem: QuoteItem = {
             id: Math.random().toString(),
             productId: null,
+            brand: '',
             description: 'Additional Charge (Shipping/Installation)',
             productModel: '',
             serialNumbers: '',
             warrantyMonths: 0,
+            addonPercent: 0,
+            baseUnitPrice: 0,
             quantity: 1,
             unitPrice: 0,
             discount: 0,
@@ -502,27 +543,52 @@ export default function QuoteForm({ initialData, projectId, onSubmit, loading, t
                                                         )}
                                                     </div>
                                                 )}
-                                                <div className="flex items-center gap-2 mt-2 px-1">
-                                                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Warranty:</span>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            className="w-16 border-gray-300 rounded text-xs px-2 py-0.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
-                                                            placeholder="0"
-                                                            value={item.warrantyMonths ?? 0}
-                                                            onChange={(e) => updateItem(item.id, 'warrantyMonths', Math.max(0, parseInt(e.target.value) || 0))}
-                                                        />
-                                                        <span className="text-xs text-gray-500">
-                                                            {item.warrantyMonths && item.warrantyMonths > 0 ? (
-                                                                item.warrantyMonths >= 12 && item.warrantyMonths % 12 === 0
-                                                                    ? `Months (${item.warrantyMonths / 12} ${item.warrantyMonths === 12 ? 'Year' : 'Years'})`
-                                                                    : `Months`
-                                                            ) : (
-                                                                <span className="text-gray-400">Months (No Warranty)</span>
-                                                            )}
-                                                        </span>
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 px-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-tight">Warranty:</span>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                className="w-16 border-gray-300 rounded text-xs px-2 py-0.5 border focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                                                                placeholder="0"
+                                                                value={item.warrantyMonths ?? 0}
+                                                                onChange={(e) => updateItem(item.id, 'warrantyMonths', Math.max(0, parseInt(e.target.value) || 0))}
+                                                            />
+                                                            <span className="text-xs text-gray-500">
+                                                                {item.warrantyMonths && item.warrantyMonths > 0 ? (
+                                                                    item.warrantyMonths >= 12 && item.warrantyMonths % 12 === 0
+                                                                        ? `Months (${item.warrantyMonths / 12} ${item.warrantyMonths === 12 ? 'Year' : 'Years'})`
+                                                                        : `Months`
+                                                                ) : (
+                                                                    <span className="text-gray-400">Months (No Warranty)</span>
+                                                                )}
+                                                            </span>
+                                                        </div>
                                                     </div>
+
+                                                    {isBDCOM(item) && (
+                                                        <div className="flex items-center gap-1.5 bg-blue-50/70 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                                                            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-tight">Add-on %:</span>
+                                                            <select
+                                                                value={item.addonPercent ?? 0}
+                                                                onChange={(e) => updateItem(item.id, 'addonPercent', Number(e.target.value))}
+                                                                className="bg-white border border-blue-300 text-blue-900 text-xs font-semibold rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+                                                            >
+                                                                <option value={0}>0%</option>
+                                                                <option value={5}>5%</option>
+                                                                <option value={10}>10%</option>
+                                                                <option value={15}>15%</option>
+                                                                <option value={20}>20%</option>
+                                                                <option value={25}>25%</option>
+                                                            </select>
+                                                            {item.addonPercent && item.addonPercent > 0 ? (
+                                                                <span className="text-[10px] font-medium text-blue-600">
+                                                                    (+{item.addonPercent}%)
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {mode === 'SERVICE' && (
                                                     <div className="col-span-2 space-y-3 mt-2">
